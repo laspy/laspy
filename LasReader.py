@@ -1,5 +1,6 @@
 import struct
 import sys
+import random
 
 
 
@@ -68,11 +69,14 @@ class PointDataRecord():
             self.X_t = reader.ReadWords("<f",1,4)
             self.Y_t = reader.ReadWords("<f",1,4)
             self.Z_t = reader.ReadWords("<f",1,4)
-        
-    
-        
-        
-        
+    def summary(self):
+        sys.stdout.write("\n### Point Record Information ###\n")
+        sys.stdout.write("### X:         "+str(self.X)+"\n")       
+        sys.stdout.write("### Y:         "+str(self.Y)+"\n")   
+        sys.stdout.write("### Z:         "+str(self.Z)+"\n")       
+        sys.stdout.write("### Intensity: "+str(self.Intensity)+"\n")       
+        sys.stdout.write("\n")       
+
 class ByteReader():
     def __init__(self, fileref):
         self.fileref = fileref
@@ -210,7 +214,7 @@ class LasFileRec():
             self.VariableLengthRecords.append(NewHeader)
         if (self.Header.OffsetToPointData > self.Reader.bytesRead):
             sys.stdout.write("Warning: extra data encountered between last header and first record!\n") 
-            self.ExtraData = reader.read(self.Header.OffsetToPointData - self.Reader.BytesRead)
+            self.ExtraData = self.Reader.read(self.Header.OffsetToPointData - self.Reader.bytesRead)
         elif (self.Header.OffsetToPointData < self.Reader.bytesRead):
             sys.stdout.write("Warning: last header extends past first record! Resetting reader...\n")
             self.Reader.reset()
@@ -223,7 +227,12 @@ class LasFileRec():
         self.PointData = []
         for ptRec in xrange(self.Header.NumPtRecs):
             self.PointData.append(PointDataRecord(self.Reader, self.Header.PtDatFormatID))
-
+    def randomPtSummary(self,n):
+        sys.stdout.write("\n Printing random selection of "+str(n)+" point record summaries. \n")
+        for PR in xrange(n):
+            # This doesn't guarantee unique random draws, but it really shouldn't matter.
+            random.choice(self.PointData).summary()
+            
 
                 
             
@@ -237,6 +246,10 @@ if __name__ == "__main__":
         LASFile.Header.summary()
         for VLR in LASFile.VariableLengthRecords:
             VLR.summary()
+
+        LASFile.randomPtSummary(10)
+
+        
 
 
 #        except:
