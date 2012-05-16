@@ -130,13 +130,13 @@ class VarLenHeader():
         return
 
     def summary(self):
-        print("\n")
-        print("##########################################")
-        print("### Variable Length Record Information ###")
-        print("##########################################\n")
-        print("User ID:                       " + self.UserID)
-        print("Length of record after header: " +  str(self.RecLenAfterHeader))
-        print("Description:                   " + self.Description)
+        sys.stdout.write("\n")
+        sys.stdout.write("##########################################\n")
+        sys.stdout.write("### Variable Length Record Information ###\n")
+        sys.stdout.write("##########################################\n")
+        sys.stdout.write("User ID:                       " + self.UserID+"\n")
+        sys.stdout.write("Length of record after header: " +  str(self.RecLenAfterHeader)+"\n")
+        sys.stdout.write("Description:                   " + self.Description+"\n")
 
 class Header():
     def __init__(self, reader):
@@ -182,22 +182,22 @@ class Header():
             self.StWavefmDatPktRec = reader.ReadWords("<Q",1,8)
 
     def summary(self):
-        print("###############################")
-        print("##### Summary Information #####")
-        print("###############################\n")
-        print("### File Signiture:                    "+self.FileSig)
-        print("### LAS Version:                       "+ str(self.VersionMajor)+"."+str(self.VersionMinor))
-        print("### Project ID Pt 1:                   "+ str(self.ProjID1))
-        print("### Project ID Pt 2:                   "+ str(self.ProjID2))
-        print("### Project ID Pt 3:                   "+ str(self.ProjID3))
-        print("### Project ID pt 4:                   "+ self.ProjID4)
-        print("### Number of Variable Length Records: "+str(self.NumVariableLenRecs))
-        print("### Size of header:                    "+ str(self.HeaderSize))
-        print("\n")
-        print("###   Coordnate Stats: (Scale, Offset, Max, Min) ")
-        print("###             X: " + str((self.XScale, self.XOffset, self.XMax, self.XMin)))
-        print("###             Y: " + str((self.YScale, self.YOffset, self.YMax, self.YMin)))
-        print("###             Z: " + str((self.ZScale, self.ZOffset, self.ZMax, self.ZMin)))
+        sys.stdout.write("###############################"+"\n")
+        sys.stdout.write("##### Summary Information #####"+"\n")
+        sys.stdout.write("###############################\n")
+        sys.stdout.write("### File Signiture:                    "+self.FileSig+"\n")
+        sys.stdout.write("### LAS Version:                       "+ str(self.VersionMajor)+"."+str(self.VersionMinor)+"\n")
+        sys.stdout.write("### Project ID Pt 1:                   "+ str(self.ProjID1)+"\n")
+        sys.stdout.write("### Project ID Pt 2:                   "+ str(self.ProjID2)+"\n")
+        sys.stdout.write("### Project ID Pt 3:                   "+ str(self.ProjID3)+"\n")
+        sys.stdout.write("### Project ID pt 4:                   "+ self.ProjID4+"\n")
+        sys.stdout.write("### Number of Variable Length Records: "+str(self.NumVariableLenRecs)+"\n")
+        sys.stdout.write("### Size of header:                    "+ str(self.HeaderSize)+"\n")
+        sys.stdout.write("\n")
+        sys.stdout.write("###   Coordnate Stats: (Scale, Offset, Max, Min) "+"\n")
+        sys.stdout.write("###             X: " + str((self.XScale, self.XOffset, self.XMax, self.XMin))+"\n")
+        sys.stdout.write("###             Y: " + str((self.YScale, self.YOffset, self.YMax, self.YMin))+"\n")
+        sys.stdout.write("###             Z: " + str((self.ZScale, self.ZOffset, self.ZMax, self.ZMin))+"\n")
 
 class LasFileRec():
     def __init__(self, fileref):
@@ -208,13 +208,13 @@ class LasFileRec():
             NewHeader = VarLenHeader(self.Reader)
             self.VariableLengthRecords.append(NewHeader)
         if (self.Header.OffsetToPointData > self.Reader.bytesRead):
-            print("Warning: extra data encountered between last header and first record!") 
+            sys.stdout.write("Warning: extra data encountered between last header and first record!\n") 
             self.ExtraData = reader.read(self.Header.OffsetToPointData - self.Reader.BytesRead)
         elif (self.Header.OffsetToPointData < self.Reader.bytesRead):
-            print("Warning: last header extends past first record! Resetting reader...")
+            sys.stdout.write("Warning: last header extends past first record! Resetting reader...\n")
             self.Reader.reset()
             self.Reader.read(self.Header.OffsetToPointData)
-        print("Reading point data...")
+        sys.stdout.write("Reading point data...\n")
             
             
 
@@ -229,8 +229,8 @@ if __name__ == "__main__":
 
 
 #        except:
-#            print("Sorry, something broke.")
+#            sys.stdout.write("Sorry, something broke.")
 #        finally:
-#            print("End of Header")
+#            sys.stdout.write("End of Header")
 #    else:
-#        print("Error: script requires one argument, referring to path of a LAS formatted file.")
+#        sys.stdout.write("Error: script requires one argument, referring to path of a LAS formatted file.")
