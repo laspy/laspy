@@ -3,12 +3,81 @@ import sys
 
 
 
+def binaryFmt(N, outArr):
+    if N == 0:
+        return(0)
+    i = 0
+    while 2**i <= N:
+        i += 1
+    i -= 1
+    outArr.append(i)
+    N -= 2**i
+    if N == 0:
+        return(outArr)
+    return(binaryFmt(N, outArr))
+    
+def binaryStr(N):
+    arr = binaryFmt(N, [])
+    if arr == 0:
+        return("0")
+    outstr = ["0"]*(max(arr)+1)
+    for i in arr:
+        outstr[i] = "1"
+    outstr.reverse() 
+    outstr = "".join(outstr)
+    return(outstr)
+        
+        
+        
 
+
+class PointDataRecord():
+    def __init__(self, reader, version):
+        self.Version = version
+        self.X = reader.ReadWords("<L", 1, 4)
+        self.Y = reader.ReadWords("<L", 1, 4)
+        self.Z = reader.ReadWords("<L", 1, 4)
+        self.Intensity = reader.ReadWords("<H", 1, 2)
+        ## This next part might not be right - I think it needs to be 
+        ## big endian to get this in the right order, but I don't know.
+        ## Needs testing.
+        BitPart = binaryString(ord(reader.ReadWords(">s",1,1)))
+        if len(BitPart) > 8:
+            BitPart = "Z"*8
+        BitPart = "0"*(8-len(BitPart))+BitPart
+        self.ReturnNum = BitPart[0:3]
+        self.NumReturns = BitPart[4:7]
+        self.ScanDirFlag = BitPart[8]
+        self.EdgeFlightFlag = BitPart[9]
+        ###########################
+        self.Classification = reader.ReadWords("<B", 1,1)
+        self.ScanAngleRnk = reader.ReadWords("<c",1,1)
+        self.UserData = reader.ReadWords("<B",1,1)
+        self.PtSrcID = reader.ReadWords("<H",1,2)
+        if self.Version in (1,3,4,5):
+            self.GPSTime = reader.ReadWords("<d",1,8)
+        if self.Version in (2,3,5):
+            self.Red = reader.ReadWords("<H",1,2)
+            self.Green = reader.ReadWords("<H",1,2)
+            self.Blue = reader.ReadWords("<H",1,2)
+        if self.Version in (4,5):
+            self.WavePacketDescritproIdx = reader.ReadWords("<B",1,1)
+            self.ByteOffsetToWaveFmData = reader.ReadWords("<Q",1,8)
+            self.WaveFmPktSize = reader.ReadWords("<L",1,4)
+            self.ReturnPtWavefmLoc = reader.ReadWords("<f",1,4)
+            self.X_t = reader.ReadWords("<f",1,4)
+            self.Y_t = reader.ReadWords("<f",1,4)
+            self.Z_t = reader.ReadWords("<f",1,4)
+        
+    
+        
+        
         
 class ByteReader():
     def __init__(self, fileref):
         self.fileref = fileref
         self.Source = open(fileref, "rb")
+        self.bytesRead = 0
         return
 
     def close(self):
@@ -16,7 +85,9 @@ class ByteReader():
         return
 
     def read(self, bytes):
+        self.bytesRead += bytes
         return(self.Source.read(bytes))
+        
         
     def reset(self):
         self.Source.close()
@@ -108,22 +179,9 @@ class Header():
         self.ZMax = reader.ReadWords("<d",1,8)
         self.ZMin = reader.ReadWords("<d",1,8)
         if self.Version == "1.3":
-            print("Version 1.3 Detected, grabbing StWavefmDatPktRec.")
             self.StWavefmDatPktRec = reader.ReadWords("<Q",1,8)
 
-        self.VariableLengthRecords = []
-        if self.NumVariableLenRecs == 0:
-            print("Warning: zero variable length records requested - GeoKeyDirectoryTag is mandatory.")
-            #self.VariableLengthRecords.append(VarLenHeader(reader))
-            #self.VariableLengthRecords[0].summary()
-        else:
-            for i in range(self.NumVariableLenRecs):
-                NewHeader = VarLenHeader(reader)
-                self.VariableLengthRecords.append(NewHeader)
-        return
-
     def summary(self):
-        
         print("###############################")
         print("##### Summary Information #####")
         print("###############################\n")
@@ -140,15 +198,36 @@ class Header():
         print("###             X: " + str((self.XScale, self.XOffset, self.XMax, self.XMin)))
         print("###             Y: " + str((self.YScale, self.YOffset, self.YMax, self.YMin)))
         print("###             Z: " + str((self.ZScale, self.ZOffset, self.ZMax, self.ZMin)))
-        for VarLenRec in self.VariableLengthRecords:
-            VarLenRec.summary()
+
+class LasFileRec():
+    def __init__(self, fileref):
+        self.Reader = ByteReader(fileref)
+        self.Header = Header(self.Reader)
+        self.VariableLengthRecords = []
+        for VarLenRec in xrange(self.Header.NumVariableLenRecs):
+            NewHeader = VarLenHeader(self.Reader)
+            self.VariableLengthRecords.append(NewHeader)
+        if (self.Header.OffsetToPointData > self.Reader.bytesRead):
+            print("Warning: extra data encountered between last header and first record!") 
+            self.ExtraData = reader.read(self.Header.OffsetToPointData - self.Reader.BytesRead)
+        elif (self.Header.OffsetToPointData < self.Reader.bytesRead):
+            print("Warning: last header extends past first record! Resetting reader...")
+            self.Reader.reset()
+            self.Reader.read(self.Header.OffsetToPointData)
+        print("Reading point data...")
+            
+            
+
 
 
 if __name__ == "__main__":
     if (len(sys.argv)==2):
-        Reader = ByteReader(sys.argv[1])
-        Hdr = Header(Reader)
-        Hdr.summary()
+        LASFile = LasFileRec(sys.argv[1])
+        LASFile.Header.summary()
+        for VLR in LASFile.VariableLengthRecords:
+            VLR.summary()
+
+
 #        except:
 #            print("Sorry, something broke.")
 #        finally:
