@@ -220,14 +220,18 @@ class LasFileRec():
             self.Reader.reset()
             self.Reader.read(self.Header.OffsetToPointData)
         sys.stdout.write("Reading point data...\n")
+        self.PointData = []
         if not (self.Header.PtDatFormatID in range(6)):
             sys.stdout.write("Error: Unrecognized Foramt Detected: "+ str(self.Header.PtDatFormatID)+"\n")
             sys.stdout.write("No points will be read, exiting.\n")
             return
-        self.PointData = []
         for ptRec in xrange(self.Header.NumPtRecs):
             self.PointData.append(PointDataRecord(self.Reader, self.Header.PtDatFormatID))
     def randomPtSummary(self,n):
+        if len(self.PointData)==0:
+            sys.stdout.write("There is no point data to sample.\n")
+            return
+            
         sys.stdout.write("\n Printing random selection of "+str(n)+" point record summaries. \n")
         for PR in xrange(n):
             # This doesn't guarantee unique random draws, but it really shouldn't matter.
