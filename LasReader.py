@@ -41,14 +41,14 @@ class PointDataRecord():
         ## This next part might not be right - I think it needs to be 
         ## big endian to get this in the right order, but I don't know.
         ## Needs testing.
-        BitPart = binaryString(ord(reader.ReadWords(">s",1,1)))
+        BitPart = binaryStr(ord(reader.ReadWords(">s",1,1)))
         if len(BitPart) > 8:
             BitPart = "Z"*8
         BitPart = "0"*(8-len(BitPart))+BitPart
         self.ReturnNum = BitPart[0:3]
-        self.NumReturns = BitPart[4:7]
-        self.ScanDirFlag = BitPart[8]
-        self.EdgeFlightFlag = BitPart[9]
+        self.NumReturns = BitPart[3:6]
+        self.ScanDirFlag = BitPart[6]
+        self.EdgeFlightFlag = BitPart[7]
         ###########################
         self.Classification = reader.ReadWords("<B", 1,1)
         self.ScanAngleRnk = reader.ReadWords("<c",1,1)
@@ -192,6 +192,7 @@ class Header():
         sys.stdout.write("### Project ID Pt 3:                   "+ str(self.ProjID3)+"\n")
         sys.stdout.write("### Project ID pt 4:                   "+ self.ProjID4+"\n")
         sys.stdout.write("### Number of Variable Length Records: "+str(self.NumVariableLenRecs)+"\n")
+        sys.stdout.write("### Number of Point Records:           "+str(self.NumPtRecs)+"\n")
         sys.stdout.write("### Size of header:                    "+ str(self.HeaderSize)+"\n")
         sys.stdout.write("\n")
         sys.stdout.write("###   Coordnate Stats: (Scale, Offset, Max, Min) "+"\n")
@@ -215,6 +216,16 @@ class LasFileRec():
             self.Reader.reset()
             self.Reader.read(self.Header.OffsetToPointData)
         sys.stdout.write("Reading point data...\n")
+        if not (self.Header.PtDatFormatID in range(6)):
+            sys.stdout.write("Error: Unrecognized Foramt Detected: "+ str(self.Header.PtDatFormatID)+"\n")
+            sys.stdout.write("No points will be read, exiting.\n")
+            return
+        self.PointData = []
+        for ptRec in xrange(self.Header.NumPtRecs):
+            self.PointData.append(PointDataRecord(self.Reader, self.Header.PtDatFormatID))
+
+
+                
             
             
 
