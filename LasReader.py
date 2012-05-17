@@ -108,7 +108,23 @@ class ByteReader():
         return(outData[0])
 
 
-class VarLenHeader():
+class GeoKeyDirectoryTag():
+    def __init__(self,reader):
+        self.wKeyDirectoryVersion = reader.ReadWords("<H",1,2)
+        self.wKeyRevision = reader.ReadWords("<H",1,2)
+        self.wMinorRevision = reader.ReadWords("<H",1,2)
+        self.wNumberOfKeys = reader.ReadWords("<H",1,2)
+        self.Keys = []
+        for i in xrange(self.wNumberOfKeys):
+            #Tuples:  (wKeyID, wTIFFTagLocation, wCount, wValue_Offset)
+            self.Keys.append(reader.ReadWords("<H",4,2))
+        return        
+        
+        
+        
+
+
+class VarLenRec():
     def __init__(self,reader):
         self.Reserved = reader.ReadWords("<H", 1, 2)
         self.UserID = "".join(reader.ReadWords("<s", 16, 1))
@@ -117,20 +133,22 @@ class VarLenHeader():
         self.Description = "".join(reader.ReadWords("<s",32,1))
         ## Act on known VarLenRec Types
         if "GeoKeyDirectoryTag" in self.Description:
-            pass
-        elif "GeoAsciiParamsTag" in self.Description:
-            pass
-        elif "GeoAsciiDoubleParamsTag" in self.Description:
-            pass
-        elif "Classification" in self.Description:
-            pass
-        elif "Histogram" in self.Description:
-            pass
-        elif "Text area description" in self.Description:
-            pass
 
-        ### Temporary Cop out - just store the data in binary
-        self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+            self.Body = GeoKeyDirectoryTag(reader)
+        elif "GeoAsciiParamsTag" in self.Description:
+            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+        elif "GeoAsciiDoubleParamsTag" in self.Description:
+            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+        elif "Classification" in self.Description:
+            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+        elif "Histogram" in self.Description:
+            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader) 
+        elif "Text area description" in self.Description:
+            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+        else:
+            sys.stdout.write("Unknown VarLenRec Type: " + self.Description+"\n")
+            ### Temporary Cop out - just store the data in binary
+            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
         return
 
     def summary(self):
@@ -209,9 +227,9 @@ class LasFileRec():
         self.Reader = ByteReader(fileref)
         self.Header = Header(self.Reader)
         self.VariableLengthRecords = []
-        for VarLenRec in xrange(self.Header.NumVariableLenRecs):
-            NewHeader = VarLenHeader(self.Reader)
-            self.VariableLengthRecords.append(NewHeader)
+        for record in xrange(self.Header.NumVariableLenRecs):
+            NewRec = VarLenRec(self.Reader)
+            self.VariableLengthRecords.append(NewRec)
         if (self.Header.OffsetToPointData > self.Reader.bytesRead):
             sys.stdout.write("Warning: extra data encountered between last header and first record!\n") 
             self.ExtraData = self.Reader.read(self.Header.OffsetToPointData - self.Reader.bytesRead)
