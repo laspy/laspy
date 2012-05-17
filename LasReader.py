@@ -120,6 +120,24 @@ class GeoKeyDirectoryTag():
             self.Keys.append(reader.ReadWords("<H",4,2))
         return        
         
+class GeoAsciiParamsTag():
+    def __init__(self,reader,recLen):
+        outputStrings = []
+        currentStr = ""
+        for i in xrange(recLen):
+            newChar = reader.ReadWords("<c",1,1)
+            print(newChar)
+            if newChar == "\0":
+                outputStrings.append(currentStr)
+                currentStr = ""
+            else:
+                currentStr += newChar
+        if currentStr != "":
+            outputStrings.append(currentStr)
+        self.Data = outputStrings
+        print(self.Data)
+        return
+        
         
         
 
@@ -136,7 +154,8 @@ class VarLenRec():
 
             self.Body = GeoKeyDirectoryTag(reader)
         elif "GeoAsciiParamsTag" in self.Description:
-            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+            # Does this need to use data from the GeoKeyDirectoryTag?
+            self.Body = GeoAsciiParamsTag(reader, self.RecLenAfterHeader)
         elif "GeoAsciiDoubleParamsTag" in self.Description:
             self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
         elif "Classification" in self.Description:
