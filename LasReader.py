@@ -126,7 +126,7 @@ class GeoAsciiParamsTag():
         currentStr = ""
         for i in xrange(recLen):
             newChar = reader.ReadWords("<c",1,1)
-            print(newChar)
+
             if newChar == "\0":
                 outputStrings.append(currentStr)
                 currentStr = ""
@@ -135,9 +135,18 @@ class GeoAsciiParamsTag():
         if currentStr != "":
             outputStrings.append(currentStr)
         self.Data = outputStrings
-        print(self.Data)
+
         return
         
+class GeoDoubleParamsTag():
+    def __init__(self,reader,recLen):
+        if recLen % 8 != 0:
+            sys.stdout.write("Warning: Invalid Record Length in GeoDoubleParamsTag\n")
+            self.Data = reader.read(recLen)
+        else:
+            self.Data = reader.ReadWords("<d",recLen/8,8)
+        return
+         
         
         
 
@@ -156,8 +165,9 @@ class VarLenRec():
         elif "GeoAsciiParamsTag" in self.Description:
             # Does this need to use data from the GeoKeyDirectoryTag?
             self.Body = GeoAsciiParamsTag(reader, self.RecLenAfterHeader)
-        elif "GeoAsciiDoubleParamsTag" in self.Description:
-            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+        elif "GeoDoubleParamsTag" in self.Description:
+            # Same question here, need reference from GeoKeyDirectoryTag?
+            self.Body = GeoDoubleParamsTag(reader,self.RecLenAfterHeader)
         elif "Classification" in self.Description:
             self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
         elif "Histogram" in self.Description:
