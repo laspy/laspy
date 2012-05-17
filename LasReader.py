@@ -147,8 +147,19 @@ class GeoDoubleParamsTag():
             self.Data = reader.ReadWords("<d",recLen/8,8)
         return
          
-        
-        
+class ClassificationLookup():
+    def __init__(self,reader,reclen):
+        if 255*16 != reclen:
+            self.Data = reader.read(reclen)
+            sys.stdout.write("Warning: Invalid Record Length in Classification Lookup.\n")
+        else:
+            self.Data = []
+            for i in xrange(255):
+                ClassNumber = reader.ReadWords("<B",1,1)       
+                Description = "".join(reader.ReadWords("<c",15,1))
+                self.Data.append((ClassNumber, Description))
+
+        return
 
 
 class VarLenRec():
@@ -169,7 +180,7 @@ class VarLenRec():
             # Same question here, need reference from GeoKeyDirectoryTag?
             self.Body = GeoDoubleParamsTag(reader,self.RecLenAfterHeader)
         elif "Classification" in self.Description:
-            self.VARLENRECDAT = reader.read(self.RecLenAfterHeader)
+            self.Body = ClassificationLookup(reader, self.RecLenAfterHeader)
         elif "Histogram" in self.Description:
             self.VARLENRECDAT = reader.read(self.RecLenAfterHeader) 
         elif "Text area description" in self.Description:
