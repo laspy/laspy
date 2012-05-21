@@ -41,13 +41,7 @@
  * OF SUCH DAMAGE.
  ****************************************************************************/
  """
-
-import core
 import datetime
-import guid
-import vlr
-import srs
-import schema
 
 
 def leap_year(year):
@@ -63,6 +57,7 @@ def leap_year(year):
 ## to update the file using reader/mmap. 
 class Header(object):
     def __init__(self,reader, copy=False):
+        self.Reader = reader
         self.FileSig = "".join(reader.ReadWords("<s", 4, 1))
         self.FileSrc = reader.ReadWords("<H",1,2)
         self.GlobalEncoding = reader.ReadWords("<H",1,2)
@@ -138,7 +133,7 @@ class Header(object):
     file_source_id = filesource_id
 
     def get_global_encoding(self):
-        return core.las.LASHeader_GetReserved(self.handle)
+        return self.GlobalEncoding
 
     def set_global_encoding(self, value):
         return
@@ -355,8 +350,10 @@ class Header(object):
         """
         delta = value - datetime.datetime(value.year, 1, 1)
         if not leap_year(value.year):
+            pass
             #core.las.LASHeader_SetCreationDOY(self.handle, delta.days)
         else:
+            pass
             #core.las.LASHeader_SetCreationDOY(self.handle, delta.days + 1)
         #core.las.LASHeader_SetCreationYear(self.handle, value.year)
         return
@@ -447,7 +444,7 @@ class Header(object):
 
     def set_dataformatid(self, value):
         if value not in range(6):
-            raise core.LASException("Format ID must be 3, 2, 1, or 0")
+            raise Exception("Format ID must be 3, 2, 1, or 0")
         return 
     doc = """The point format as an integer. See the specification_ for more
     detail.

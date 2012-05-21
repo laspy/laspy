@@ -41,10 +41,10 @@
  ****************************************************************************/
  """
 
-import core
+
 import base
 import header as lasheader
-import point
+
 
 import os
 import types
@@ -98,9 +98,7 @@ class File(object):
         self._header = None
         self.ownheader = True
 
-
         if header != None:
-            
             self.ownheader = False
             self._header = header.handle
         
@@ -114,7 +112,7 @@ class File(object):
         if mode == 'r':
             for f in files['write'] + files['append']:
                 if f == self.filename:
-                    raise core.LASException("File %s is already open for "
+                    raise Exception("File %s is already open for "
                                             "write.  Close the file or delete "
                                             "the reference to it" % filename)
         else:
@@ -122,7 +120,7 @@ class File(object):
             # file open, complain to the user.
             for f in files['read'].keys() + files['append'] + files['write']:
                 if f == self.filename:
-                    raise core.LASException("File %s is already open. "
+                    raise Exception("File %s is already open. "
                                             "Close the file or delete the "
                                             "reference to it" % filename)
         self.open()
@@ -136,7 +134,7 @@ class File(object):
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
 
-            self.Reader = base.LASReader(self.filename)            
+            self.Reader = base.Reader(self.filename)            
 
             if self._header == None:
                 self._header = self.Reader.GetHeader()
@@ -159,9 +157,9 @@ class File(object):
         if '+' in self._mode and 'r' not in self._mode:
             pass
 
-    def __del__(self):
-        # Allow GC to clean up?
-        self.close()
+    #def __del__(self):
+    #    # Allow GC to clean up?
+    #    self.close()
 
     def close(self):
         """Closes the LAS file
@@ -172,8 +170,7 @@ class File(object):
                 if files['read'][self.filename] == 0:
                     files['read'].pop(self.filename)
             except KeyError:
-                raise core.LASException("File %s was not found in accounting dictionary!" % self.filename)
-
+                raise Exception("File %s was not found in accounting dictionary!" % self.filename)
             self.Reader.close()           
         else:
             try:
@@ -191,7 +188,7 @@ class File(object):
             return
 
     def set_output_srs(self,value):
-        return(set_srs(value)
+        return(set_srs(value))
 
     def get_output_srs(self):
         return self.out_srs
@@ -220,9 +217,9 @@ class File(object):
     def get_header(self):
         """Returns the liblas.header.Header for the file""" 
         if self.mode == 0:
-            return self.Reader.get_header()
+            return self.Reader.GetHeader()
         else:
-            return self.Writer.get_header()
+            return self.Writer.GetHeader()
         return None
 
     def set_header(self, header):
@@ -232,7 +229,7 @@ class File(object):
         if mode == 2: 
             self.Writer.set_header(header)
             return True
-        raise core.LASException("The header can only be set "
+        raise Exception("The header can only be set "
                                 "after file creation for files in append mode")
     doc = """The file's :obj:`liblas.header.Header`
 
@@ -325,11 +322,12 @@ class File(object):
 
         """
         if not isinstance(pt, point.Point):
-            raise core.LASException('cannot write %s, it must '
+            raise Exception('cannot write %s, it must '
                                     'be of type liblas.point.Point' % pt)
         if self.mode == 1 or self.mode == 2:
-            core.las.LASWriter_WritePoint(self.handle, pt.handle)
-            
+            #core.las.LASWriter_WritePoint(self.handle, pt.handle)
+            pass
+
     def get_xmlsummary(self):
         """Returns an XML string summarizing all of the points in the reader
         
@@ -338,7 +336,14 @@ class File(object):
             point to summarize the entire file, and it will again reset the 
             read position to the 0th point upon completion."""
         if self.mode != 0:
-            raise core.LASException("file must be in read mode, not append or write mode to provide xml summary")
-        return  core.las.LASReader_GetSummaryXML(self.handle)
+            raise Exception("file must be in read mode, not append or write mode to provide xml summary")
+        return
         
     summary = property(get_xmlsummary, None, None, None)
+
+if __name__ == "__main__":
+    if (len(sys.argv)==2):
+        LasFile = File(sys.argv[1])
+    else:
+        print("You're clearly doing something wrong.")
+

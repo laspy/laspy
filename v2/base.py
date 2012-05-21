@@ -1,13 +1,16 @@
 #
 # Provides base functions for manipulating files. 
 import mmap
-import Header
+from header import Header, leap_year
 import numpy as np
+import sys
+import struct
+
 
 class _reader():
     def __init__(self, filename):
         self.filename = filename
-        self.fileref = open(filename, "rb")
+        self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         self.bytesRead = 0
         return
@@ -37,19 +40,53 @@ class _reader():
 
 class Reader():
     def __init__(self,filename):
-        self._reader = _reader(filename)
         self.Header = False
+        self.VLRs = False
         self.bytesRead = 0
-        return        
+        self.filename = filename
+        self.fileref = open(filename, "r+b")
+        self._map = mmap.mmap(self.fileref.fileno(), 0)
+        self.bytesRead = 0
+        return
+    
+    def close(self):
+        self._map.close()
+        return
+
+    def read(self, bytes):
+        self.bytesRead += bytes
+        return(self._map.read(bytes))
+    
+    def reset(self):
+        self._map.close()
+        self.fileref.close()
+        self.fileref = open(self.filename, "rb")
+        self._map = mmap.mmap(self.fileref.fileno(), 0)
+        return
+
+    def ReadWords(self, fmt, num, bytes):
+        outData = []
+        for i in xrange(num):
+            dat = self.read(bytes)
+            outData.append(struct.unpack(fmt, dat)[0])
+        if len(outData) > 1:
+            return(outData)
+        return(outData[0])
+
 
     def GetHeader(self):
-        if self.Header:
+        ## Why is this != neccesary?
+        if self.Header != False:
             return(self.Header)
         else:
-            self.Header = Header(self._reader)
-            
-            
+            self.Header = Header(self)
+
+    def GetVLRs(self):
+        pass 
     
+    def get_pointrecordscount(self):
+        pass
+       
     def SetInputSRS(self):
         pass
     
@@ -84,8 +121,3 @@ class Writer():
 
 def CreateWithHeader(filename, header):
     pass
-
-
-
-
-
