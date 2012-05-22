@@ -20,19 +20,16 @@ def binaryFmt(N, outArr):
 def binaryStr(N):
     arr = binaryFmt(N, [])
     if arr == 0:
-        return("0")
+        return("0"*8)
     outstr = ["0"]*(max(arr)+1)
     for i in arr:
         outstr[i] = "1"
     outstr.reverse() 
     outstr = "".join(outstr)
-    return(outstr)
-        
+    return('0'*(8-len(outstr)) + outstr)
         
         
 
-
-class PointDataRecord():
     def __init__(self, reader, version):
         self.Version = version
         self.X = reader.ReadWords("<L", 1, 4)
@@ -52,7 +49,7 @@ class PointDataRecord():
         self.EdgeFlightFlag = BitPart[7]
         ###########################
         self.Classification = reader.ReadWords("<B", 1,1)
-        self.ScanAngleRnk = reader.ReadWords("<c",1,1)
+        self.ScanAngleRnk = reader.ReadWords("<B",1,1)
         self.UserData = reader.ReadWords("<B",1,1)
         self.PtSrcID = reader.ReadWords("<H",1,2)
         if self.Version in (1,3,4,5):
@@ -75,6 +72,19 @@ class PointDataRecord():
         sys.stdout.write("### Y:         "+str(self.Y)+"\n")   
         sys.stdout.write("### Z:         "+str(self.Z)+"\n")       
         sys.stdout.write("### Intensity: "+str(self.Intensity)+"\n")       
+        sys.stdout.write("### Classification: "+ str(self.Classification) +"\n")
+        sys.stdout.write("### Scan AngleRank: " + 
+                        str(self.ScanAngleRnk)+ "\n")
+        sys.stdout.write("### PtSrcID: " + str(self.PtSrcID) +"\n")
+        if self.Version in (1,3,4,5):
+            sys.stdout.write("### GPS Time: " + str(self.GPSTime) + "\n")
+        if self.Version in (2,3,5):
+            sys.stdout.write("### Red: " + str(self.Red) + "\n")
+            sys.stdout.write("### Green: " + str(self.Green) + "\n")
+            sys.stdout.write("### Blue: " + str(self.Blue) + "\n")
+
+
+
         sys.stdout.write("\n")       
 
 class ByteReader():
@@ -285,15 +295,19 @@ class LasFileRec():
             return
         for ptRec in xrange(self.Header.NumPtRecs):
             self.PointData.append(PointDataRecord(self.Reader, self.Header.PtDatFormatID))
-    def randomPtSummary(self,n):
+    def randomPtSummary(self,n, fixedPts = []):
         if len(self.PointData)==0:
             sys.stdout.write("There is no point data to sample.\n")
             return
-            
-        sys.stdout.write("\n Printing random selection of "+str(n)+" point record summaries. \n")
-        for PR in xrange(n):
-            # This doesn't guarantee unique random draws, but it really shouldn't matter.
-            random.choice(self.PointData).summary()
+        if fixedPts == []:
+            sys.stdout.write("\n Printing random selection of "+str(n)+" point record summaries. \n")
+            for PR in xrange(n):
+                # This doesn't guarantee unique random draws, but it really shouldn't matter.
+                random.choice(self.PointData).summary()
+        else:
+            for pt in fixedPts:
+                print("Point " + str(pt))
+                print(self.PointData[pt].summary())
             
 
                 
@@ -309,7 +323,7 @@ if __name__ == "__main__":
         for VLR in LASFile.VariableLengthRecords:
             VLR.summary()
 
-        LASFile.randomPtSummary(10)
+        LASFile.randomPtSummary(10, [100, 976])
 
         
 

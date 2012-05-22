@@ -240,14 +240,7 @@ class File(object):
     def read(self, index):
         """Reads the point at the given index"""
         if self.mode == 0:
-            self.Reader.GetPoint(index)
-            return p
-            
-    def seek(self, index):
-        """Seeks to the point at the given index.  Subsequent calls \
-	   to :meth:`next` will then start at that point."""
-        if self.mode == 0:
-            return self.Reader.seek(index)
+            return(self.Reader.GetPoint(index)) 
 
     def get_x(self, scale = False):
         return(self.Reader.GetX(scale))
@@ -269,6 +262,197 @@ class File(object):
         return
     Z = property(get_z, set_z, None, None)
     z = Z
+
+    def get_intensity(self):
+        return(self.Reader.GetIntensity())
+    def set_intensity(self):
+        return
+    
+    intensity = property(get_intensity, set_intensity, None, None)
+    Intensity = intensity
+
+    def get_flag_byte(self):
+        return(self.Reader.GetFlagByte())
+    def set_flag_byte(self):
+        return
+    
+    flag_byte = property(get_flag_byte, set_flag_byte, None, None)
+    
+    def get_return_num(self):
+        return(self.Reader.GetReturnNum())
+    def set_return_num(self):
+        return
+
+    return_num = property(get_return_num, set_return_num, None, None)
+
+    def get_num_returns(self):
+        return(self.Reader.GetNumReturns())
+    def set_num_returns(self):
+        return
+
+    num_returns = property(get_return_num, set_num_returns, None, None)
+
+    def get_scan_dir_flag(self):
+        return(self.Reader.GetNumReturns())
+    def set_scan_dir_flag(self):
+        return
+
+    scan_dir_flag = property(get_scan_dir_flag, set_scan_dir_flag, None, None)
+
+    def get_scan_dir_flag(self):
+        return(self.Reader.GetScanDirFlag())
+    def set_scan_dir_flag(self):
+        return
+
+    scan_dir_flag = property(get_scan_dir_flag, set_scan_dir_flag, None, None)
+
+    def get_edge_flight_line(self):
+        return(self.Reader.GetEdgeFlightLine)
+    def set_edge_flight_line(self):
+        return
+
+    edge_flight_line = property(get_edge_flight_line,
+                                set_edge_flight_line, None, None)
+
+    def get_raw_classification(self):
+        return(self.Reader.GetClassification())
+    def set_raw_classification(self):
+        return
+    raw_classification = property(get_raw_classification, 
+                                  set_raw_classification, None, None)
+    Raw_Classification = raw_classification
+
+    def get_classification(self):
+        return(self.Reader.GetClassification())
+    def set_classification(self):
+        return
+    classification = property(get_classification, 
+                              set_classification, None, None)
+    Classification = classification
+
+    def get_synthetic(self):
+        return(self.Reader.GetSynthetic())
+    def set_synthetic(self):
+        return
+    synthetic = property(get_synthetic, set_synthetic, None, None)
+    Synthetic = synthetic 
+
+    def get_key_point(self):
+        return(self.Reader.GetKeyPoint())
+    def set_key_point(self):
+        return(self.Reader.SetKeyPoint())
+    key_point = property(get_key_point, set_key_point, None, None)
+    Key_Point = key_point
+
+    def get_withheld(self):
+        return(self.Reader.GetWithheld())
+    def set_withheld(self):
+        return
+    withheld = property(get_withheld, set_withheld, None, None)
+    Withheld = withheld
+
+    def get_scan_angle_rank(self):
+        return(self.Reader.GetScanAngleRank())
+    def set_scan_angle_rank(self):
+        return
+
+    scan_angle_rank = property(get_scan_angle_rank, set_scan_angle_rank,None,None)
+
+    def get_user_data(self):
+        return(self.Reader.GetUserData())
+    def set_user_data(self):
+        return
+
+    user_data = property(get_user_data, set_user_data, None, None)
+
+    def get_pt_src_id(self):
+        return(self.Reader.GetPTSrcId())
+    def set_pt_src_id(self):
+        pass
+
+    pt_src_id = property(get_pt_src_id, set_pt_src_id, None, None)
+
+    def get_gps_time(self):
+        return(self.Reader.GetGPSTime())
+    def set_gps_time(self):
+        return
+    
+    gps_time = property(get_gps_time, set_gps_time, None, None)
+
+    def get_red(self):
+        return(self.Reader.GetRed())
+    def set_red(self):
+        return
+    red = property(get_red, set_red, None, None)
+    Red = red
+
+    def get_green(self):
+        return(self.Reader.GetGreen())
+    def set_green(self):
+        return
+    
+    green = property(get_green, set_green, None, None)
+    Green = green
+
+    def get_blue(self):
+        return(self.Reader.GetBlue())
+    def set_blue(self):
+        return
+
+    blue = property(get_blue, set_blue)
+    Blue = blue
+
+    def get_wave_packet_desc_index(self):
+        return(self.Reader.GetWavePacketDescpIdx())
+    def set_wave_packet_desc_index(self):
+        return
+
+    wave_packet_desc_index = property(get_wave_packet_desc_index,
+                                      set_wave_packet_desc_index, None, None)
+    
+    def get_byte_offset_to_waveform_data(self):
+        return(self.Reader.GetByteOffsetToWaveFmData())
+    def set_byte_offset_to_waveform_data(self):
+        return
+
+    byte_offset_to_waveform_data = property(get_byte_offset_to_waveform_data,
+                                            set_byte_offset_to_waveform_data,
+                                            None, None)
+    
+    def get_waveform_packet_size(self):
+        return(self.Reader.GetWavefmPktSize())
+    def set_waveform_packet_size(self):
+        return
+
+    waveform_packet_size = property(get_waveform_packet_size, 
+                                    set_waveform_packet_size, 
+                                    None, None)
+    
+    def get_x_t(self):
+        return(self.Reader.GetX_t())
+    def set_x_t(self):
+        return
+
+    x_t = property(get_x_t, set_x_t, None, None)
+
+    def get_y_t(self):
+        return(self.Reader.GetY_t())
+    def set_y_t(self):
+        return
+    
+    y_t = property(get_y_t, set_y_t, None, None)
+
+    def get_z_t(self):
+        return(self.Reader.GetZ_t())
+    def set_z_t(self):
+        return
+
+    z_t = property(get_z_t, set_z_t, None, None)
+
+
+    
+    
+
 
 
 
@@ -362,16 +546,109 @@ if __name__ == "__main__":
     if (len(sys.argv)==2):
         LasFile = File(sys.argv[1])
         print(LasFile.header.get_pointrecordscount())
+        print("Getting X")
         X = LasFile.X
+        print("Getting Y")
         Y = LasFile.Y
+        print("Getting Z")
         Z = LasFile.Z
-        if ("simple.las" in sys.argv[1]):
-            print("Test 1:")
-            assert(297813179 == X[1000][0] + X[4][0] + 
-                                Y[2][0] + Y[1002][0] + 
-                                Z[100][0] + Z[1][0])
-            print("...passed.") 
+        print("Getting Intensity")
+        intensity = LasFile.intensity
+        print("Getting Flag")
+        flag_byte = LasFile.flag_byte
+        print("Getting Raw Classification")
+        raw_classification = LasFile.raw_classification
+        print("Getting Classification")
+        classification = LasFile.classification
+        print("Getting Synthetic")
+        synthetic = LasFile.synthetic
+        print("Getting Key Point")
+        key_point = LasFile.key_point
+        print("Getting Withheld")
+        withheld = LasFile.key_point
+        print("Getting Scan Angle Rank")
+        scan_angle_rank = LasFile.scan_angle_rank
+        print("Gettng User Data")
+        user_data = LasFile.user_data
+        print("Getting Pt Src Id")
+        pt_src_id = LasFile.pt_src_id
+        if LasFile._header.PtDatFormatID in (1,2,3,4,5):
+            print("Getting GPS Time")
+            gps_time = LasFile.gps_time
+        if LasFile._header.PtDatFormatID in (2,3,5):
+            print("Getting Red")
+            red = LasFile.red
+            print("Getting Green")
+            green = LasFile.green
+            print("Getting Blue")
+            blue = LasFile.blue
+        if LasFile._header.PtDatFormatID in (4,5):
+            print("Getting Wave Packet Descr Index")
+            wave_form_packet_Desc_index = LasFile.wave_packet_desc_index
+            print("Getting Byte Offset to Waveform")
+            byte_offset_to_waveform = LasFile.byte_offset_to_waveform
+            print("Getting Waveform Packet Size")
+            waveform_packet_size = LasFile.waveform_packet_size
+            print("Getting X(t)")
+            x_t = LasFile.x_t
+            print("Getting Y(t)")
+            y_t = LasFile.y_t
+            print("Getting Z(t)")
+            z_t = LasFile.z_t
+            
+                        
         
+        if ("simple.las" in sys.argv[1]):
+            print("Tests, Looking at Points 100 and 976")
+            
+            idx1 = 100
+            idx2 = 976
+            p1 = LasFile.read(idx1)
+            p2 = LasFile.read(idx2)
+            print("Comparing X Y Z")
+            assert(p1.X == 63666106 == X[idx1])
+            assert(p1.Y == 84985413 == Y[idx1])
+            assert(p1.Z == 42490 == Z[idx1])
+
+            assert(p2.X == 63714022 == X[idx2])
+            assert(p2.Y == 85318232 == Y[idx2])
+            assert(p2.Z == 42306 == Z[idx2])
+            print("...Passed")
+            print("Comparing Intensity:")
+            assert(p1.Intensity == 233 == intensity[idx1])
+            assert(p2.Intensity == 1 == intensity[idx2])
+            print("...Passed")
+            print("Comparing Scan Angle Rank")
+            assert(p1.ScanAngleRnk == 2 == scan_angle_rank[idx1])
+            assert(p2.ScanAngleRnk == 12 == scan_angle_rank[idx2]) 
+            print("...Passed")
+            #print("Comparing Classification")
+            #assert(p1.Classification == 1 == classification[idx1])
+            #assert(p2.Classification == 2 == classification[idx2])
+            #print("...Passed")
+            print("Comparing Point Source ID")
+            assert(p1.PtSrcID == 7328 == pt_src_id[idx1])
+            assert(p2.PtSrcID == 7334 == pt_src_id[idx2])
+            print("...Passed")
+            print("Comparing GPS Time")
+            assert(p1.GPSTime - 2*246504.221932 + gps_time[idx1] < 0.00001)
+            assert(p2.GPSTime - 2*249774.658254 + gps_time[idx2] < 0.00001)
+            print("...Passed")
+            print("Comparing Red")
+            assert(p1.Red == 92 == red[idx1])
+            assert(p2.Red == 94 == red[idx2])
+            print("...Passed")
+            print("Comparing Green")
+            assert(p1.Green == 100 == green[idx1])
+            assert(p2.Green == 84 == green[idx2])
+            print("...Passed")
+            print("Comparing Blue")
+            assert(p1.Blue == 110 == blue[idx1])
+            assert(p2.Blue == 94 == blue[idx2])
+            print("...Passed")
+            
+        
+         
     else:
         print("You're clearly doing something wrong.")
 

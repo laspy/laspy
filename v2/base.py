@@ -6,6 +6,37 @@ import numpy as np
 import sys
 import struct
 
+class Point():
+    def __init__(self, reader, startIdx ,version):
+        self.Version = version
+        self.X = reader.ReadWords("<L", 1, 4)
+        self.Y = reader.ReadWords("<L", 1, 4)
+        self.Z = reader.ReadWords("<L", 1, 4)
+        self.Intensity = reader.ReadWords("<H", 1, 2)
+        ###########################
+        self.bitFlags = reader.read(1)
+        ###########################
+        self.Classification = reader.ReadWords("<B", 1,1)
+        self.ScanAngleRnk = reader.ReadWords("<B",1,1)
+        self.UserData = reader.ReadWords("<B",1,1)
+        self.PtSrcID = reader.ReadWords("<H",1,2)
+        if self.Version in (1,3,4,5):
+            self.GPSTime = reader.ReadWords("<d",1,8)
+        if self.Version in (2,3,5):
+            self.Red = reader.ReadWords("<H",1,2)
+            self.Green = reader.ReadWords("<H",1,2)
+            self.Blue = reader.ReadWords("<H",1,2)
+        if self.Version in (4,5):
+            self.WavePacketDescritproIdx = reader.ReadWords("<B",1,1)
+            self.ByteOffsetToWaveFmData = reader.ReadWords("<Q",1,8)
+            self.WaveFmPktSize = reader.ReadWords("<L",1,4)
+            self.ReturnPtWavefmLoc = reader.ReadWords("<f",1,4)
+            self.X_t = reader.ReadWords("<f",1,4)
+            self.Y_t = reader.ReadWords("<f",1,4)
+            self.Z_t = reader.ReadWords("<f",1,4)
+
+
+
 
 
 class VarLenRec():
@@ -27,12 +58,41 @@ class Reader():
         self.bytesRead = 0
         self.GetHeader()
         self.populateVLRs()
-        self.X = False
-        self.Y = False
-        self.Z = False
         self.PointRefs = False
         return
     
+    def binaryFmt(self,N, outArr):
+        if N == 0:
+            return(0)
+        i = 0
+        while 2**i <= N:
+            i += 1
+        i -= 1
+        outArr.append(i)
+        N -= 2**i
+        if N == 0:
+            return(outArr)
+        return(self.binaryFmt(N, outArr))
+    
+    def packedStr(self, string):
+        pwr = len(string)-1
+        out = 0
+        for item in string:
+            out += int(item)*(2**pwr)
+            pwr -= 1
+        return(out)
+
+    def binaryStr(self,N):
+        arr = self.binaryFmt(N, [])
+        if arr == 0:
+            return("0"*8)
+        outstr = ["0"]*(max(arr)+1)
+        for i in arr:
+            outstr[i] = "1"
+        outstr.reverse()
+        outstr = "".join(outstr)
+        return('0'*(8-len(outstr)) + outstr)
+
     def close(self):
         self._map.close()
         return
@@ -48,10 +108,13 @@ class Reader():
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         return
      
-    def seek(self, bytes):
+    def seek(self, bytes, rel = True):
         # Seek relative to current pos
-        self._map.seek(bytes,1)
-
+        if rel:
+            self._map.seek(bytes,1)
+            return
+        self._map.seek(bytes, 0)
+        
     def ReadWords(self, fmt, num, bytes):
         outData = []
         for i in xrange(num):
@@ -111,8 +174,11 @@ class Reader():
         return(self._map[start : start +
              self.Header.data_record_length])
 
+#self, reader, startIdx ,version
     def GetPoint(self, index):
-        pass
+        seekDex = self.GetRawPointIndex(index)
+        self.seek(seekDex, rel = False)
+        return(Point(self, seekDex, self.Header.PtDatFormatID))
     
     def GetNextPoint(self):
         pass
@@ -127,8 +193,8 @@ class Reader():
             self.buildPointRefs()
         if not raw:            
             return(map(lambda x: struct.unpack(fmt, 
-                self._map[x+offs:x+offs+length]),self.PointRefs))
-        return(map(lambda x: _map[x+ofs:x+ofs+length], self.PointRefs))
+                self._map[x+offs:x+offs+length])[0],self.PointRefs))
+        return(map(lambda x: self._map[x+offs:x+offs+length], self.PointRefs))
                 
 
     def GetX(self, scale=False):
@@ -140,19 +206,47 @@ class Reader():
     def GetZ(self, scale=False):
         return(self.GetDimension(8,"<L",4))
     
-    ## To Be Implemented
-    
     def GetIntensity(self):
         return(self.GetDimension(12, "<H", 2))
     
     def GetFlagByte(self):
-        return(self.GetDimension(14,"NA", 1, raw = True))
+        return(self.GetDimension(14,"<B", 1))
     
-    def GetClassification(self):
+    def GetReturnNum(self):
+        pass
+
+    def GetNumReturns(self):
+        pass
+
+    def GetScanDirFlag(self):
+        pass
+
+    def GetEdgeFlightLine(self):
+        pass
+            
+    
+    def GetRawClassification(self):
         return(self.GetDimension(15, "<B",1))
     
+    def GetClassification(self):
+        return(map(lambda x:
+            self.packedStr(self.binaryStr(x)[0:5]),
+            self.GetRawClassification()))
+
+    def GetSynthetic(self):
+        return(map(lambda x: int(self.binaryStr(x)[5]), 
+                             self.GetRawClassification()))
+    
+    def GetKeyPoint(self):
+        return(map(lambda x: int(self.binaryStr(x)[6]), 
+                             self.GetRawClassification()))
+
+    def GetWithheld(self):
+        return(map(lambda x: int(self.binaryStr(x)[7]), 
+                             self.GetRawClassification())) 
+
     def GetScanAngleRank(self):
-        return(self.GetDimension(16, "<c",1))
+        return(self.GetDimension(16, "<B",1))
     
     def GetUserData(self):
         return(self.GetDimension(17, "<B", 1))
