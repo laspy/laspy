@@ -7,6 +7,12 @@ import sys
 import struct
 import ctypes
 
+
+
+def unpackLong(dat):
+    return(struct.unpack("<L",dat)[0])
+
+
 class Point():
     def __init__(self, bytestr,version, deepRead = False):
         self.Version = version
@@ -141,26 +147,27 @@ class Reader():
 
     def buildPointRefs(self):
         pts = self.get_pointrecordscount()
-        self.PointRefs = np.array(xrange(pts))
-        self.PointRefs = [self.GetRawPoint(i) for i in self.PointRefs]
+        self.PointRefs = np.array([self.GetRawPointIndex(i) for i in xrange(pts)])
         return
 
-    def GetX(self, scale=False):
-        if self.PointRefs == False:
-            self.buildPointRefs()
-        return([struct.unpack("<L",x[0:4]) for x in self.PointRefs])
-       
+    def GetDimension(self,offs, fmt, length):
+        if type(self.PointRefs) == bool:
+            self.buildPointRefs()            
+        return(map(lambda x: struct.unpack(fmt, 
+            self._map[x+offs:x+offs+length]),self.PointRefs))
+    
+                
 
-    def GetY(self, scale=False):
-        if self.PointRefs == False:
-            self.buildPointRefs()       
-        return([struct.unpack("<L",x[4:8]) for x in self.PointRefs])
+    def GetX(self, scale=False):
+        return(self.GetDimension(0,"<L",4))
        
+    def GetY(self, scale=False):
+        return(self.GetDimension(4,"<L",4))
 
     def GetZ(self, scale=False):
-       if self.PointRefs == False:
-           self.buildPointRefs()
-       return([struct.unpack("<L",x[8:12]) for x in self.PointRefs])
+        return(self.GetDimension(8,"<L",4))
+    
+   
        
 
 
