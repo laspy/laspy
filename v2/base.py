@@ -5,7 +5,7 @@ from header import Header, leap_year
 import numpy as np
 import sys
 import struct
-
+import ctypes
 
 class Point():
     def __init__(self, bytestr,version, deepRead = False):
@@ -123,9 +123,15 @@ class Reader():
     def close(self):
         pass
 
+    def GetRawPointIndex(self,index):
+        return(self.Header.data_offset + 
+            index*self.Header.data_record_length)
+
     def GetRawPoint(self, index):
-        start = (self.Header.data_offset + index * self.Header.data_record_length)
-        return(self._map[start : start + self.Header.data_record_length])
+        start = (self.Header.data_offset + 
+            index * self.Header.data_record_length)
+        return(self._map[start : start +
+             self.Header.data_record_length])
 
     def GetPoint(self, index):
         pass
@@ -135,26 +141,27 @@ class Reader():
 
     def buildPointRefs(self):
         pts = self.get_pointrecordscount()
-        print(pts)
         self.PointRefs = np.array(xrange(pts))
-        print(self.PointRefs)
-        self.PointRefs = self.GetRawPoint(self.PointRefs)
-        print(self.PointRefs)
+        self.PointRefs = [self.GetRawPoint(i) for i in self.PointRefs]
         return
 
     def GetX(self, scale=False):
         if self.PointRefs == False:
             self.buildPointRefs()
-        
+        return([struct.unpack("<L",x[0:4]) for x in self.PointRefs])
        
 
-    def GetX(self, scale=False):
-         if self.PointRefs == False:
-            self.buildPointRefs()       
-
-    def GetX(self, scale=False):
+    def GetY(self, scale=False):
         if self.PointRefs == False:
-            self.buildPointRefs()
+            self.buildPointRefs()       
+        return([struct.unpack("<L",x[4:8]) for x in self.PointRefs])
+       
+
+    def GetZ(self, scale=False):
+       if self.PointRefs == False:
+           self.buildPointRefs()
+       return([struct.unpack("<L",x[8:12]) for x in self.PointRefs])
+       
 
 
 
@@ -168,9 +175,9 @@ class Writer():
 
     def get_header(self):
         pass
+       
 
-    def set_header(self):
-        pass
+
 
 
 def CreateWithHeader(filename, header):

@@ -251,14 +251,24 @@ class File(object):
 
     def get_x(self, scale = False):
         return(self.Reader.GetX(scale))
+    def set_x(self, scale=False):
+        return
+    X = property(get_x, set_x, None, None)
+    x = X
 
     def get_y(self, scale = False):
         return(self.Reader.GetY(scale))
+    def set_y(self, scale = False):
+        return
+    Y = property(get_y, set_y, None, None)
+    y = Y
 
     def get_z(self, scale = False):
         return(self.Reader.GetZ(scale))
-
-
+    def set_z(self, scale = False):
+        return
+    Z = property(get_z, set_z, None, None)
+    z = Z
 
 
 
@@ -352,7 +362,15 @@ if __name__ == "__main__":
     if (len(sys.argv)==2):
         LasFile = File(sys.argv[1])
         print(LasFile.header.get_pointrecordscount())
-        print(LasFile.get_x())
+        X = LasFile.X
+        Y = LasFile.Y
+        Z = LasFile.Z
+        print("Test 1:")
+        assert(297813179 == X[1000][0] + X[4][0] + 
+                            Y[2][0] + Y[1002][0] + 
+                            Z[100][0] + Z[1][0])
+        print("...passed.") 
+        
     else:
         print("You're clearly doing something wrong.")
 
