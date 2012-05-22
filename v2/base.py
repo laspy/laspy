@@ -9,33 +9,6 @@ import ctypes
 
 
 
-def unpackLong(dat):
-    return(struct.unpack("<L",dat)[0])
-
-
-class Point():
-    def __init__(self, bytestr,version, deepRead = False):
-        self.Version = version
-        self.X = self.ReadWords("<L", 1,bytestr, 4, 0)
-        self.Y = self.ReadWords("<L", 1,bytestr, 4, 4)
-        self.Z = self.ReadWords("<L", 1,bytestr, 4, 8)
-
-            
-    def ReadWords(self, fmt, num,dat,bytes, offs):
-        outData = []
-        idx = (0,4)
-        for i in xrange(num):
-            outData.append(struct.unpack(fmt,
-                dat[idx[0]+bytes*i+offs:idx[1]+bytes*i+offs])[0])
-        if len(outData > 1):
-            return(outData)
-        return(outData[0])
-
-
-            
-
-
-
 class VarLenRec():
     def __init__(self, reader):
         self.Reserved = reader.ReadWords("<H", 1, 2)
@@ -167,8 +140,56 @@ class Reader():
     def GetZ(self, scale=False):
         return(self.GetDimension(8,"<L",4))
     
-   
-       
+    ## To Be Implemented
+    
+    def GetIntensity(self):
+        pass
+    
+    def GetFlagByte(self):
+        pass
+    
+    def GetClassification(self):
+        pass
+    
+    def GetScanAngleRank(self):
+        pass
+    
+    def GetUserData(self):
+        pass 
+    
+    def GetPTSrcId(self):
+        pass
+    
+    def GetGPSTime(self):
+        pass
+    
+    def GetRed(self):
+        pass
+    
+    def GetGreen(self):
+        pass
+    
+    def GetBlue(self):
+        pass
+
+    def GetWavePacketDescpIdx(self):
+        pass
+
+    def GetByteOffsetToWaveFmData(self):
+        pass
+
+    def GetWavefmPktSize(self):
+        pass
+
+    def GetX_t(self):
+        pass
+
+    def GetY_t(self):
+        pass
+
+    def GetZ_t(self):
+        pass
+
 
 
 
