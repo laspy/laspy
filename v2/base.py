@@ -5,7 +5,6 @@ from header import Header, leap_year
 import numpy as np
 import sys
 import struct
-import ctypes
 
 
 
@@ -123,12 +122,13 @@ class Reader():
         self.PointRefs = np.array([self.GetRawPointIndex(i) for i in xrange(pts)])
         return
 
-    def GetDimension(self,offs, fmt, length):
+    def GetDimension(self,offs, fmt, length, raw = False):
         if type(self.PointRefs) == bool:
-            self.buildPointRefs()            
-        return(map(lambda x: struct.unpack(fmt, 
-            self._map[x+offs:x+offs+length]),self.PointRefs))
-    
+            self.buildPointRefs()
+        if not raw:            
+            return(map(lambda x: struct.unpack(fmt, 
+                self._map[x+offs:x+offs+length]),self.PointRefs))
+        return(map(lambda x: _map[x+ofs:x+ofs+length], self.PointRefs))
                 
 
     def GetX(self, scale=False):
@@ -143,28 +143,36 @@ class Reader():
     ## To Be Implemented
     
     def GetIntensity(self):
-        pass
+        return(self.GetDimension(12, "<H", 2))
     
     def GetFlagByte(self):
-        pass
+        return(self.GetDimension(14,"NA", 1, raw = True))
     
     def GetClassification(self):
-        pass
+        return(self.GetDimension(15, "<B",1))
     
     def GetScanAngleRank(self):
-        pass
+        return(self.GetDimension(16, "<c",1))
     
     def GetUserData(self):
-        pass 
+        return(self.GetDimension(17, "<B", 1))
     
     def GetPTSrcId(self):
-        pass
+        return(self.GetDimension(18, "<H", 2))
     
     def GetGPSTime(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt in (1,2,3,4,5):
+            return(self.GetDimension(20, "<d", 8))
+        raise Exception("GPS Time is not defined on pt format: "
+                        + str(fmt))
     
     def GetRed(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt in (3,5):
+            return(self.GetDimension(28, "<H", 2))
+        elif fmt == 2:
+            return(self.GetDimension(20, "<H",2))
     
     def GetGreen(self):
         pass

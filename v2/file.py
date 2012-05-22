@@ -365,11 +365,12 @@ if __name__ == "__main__":
         X = LasFile.X
         Y = LasFile.Y
         Z = LasFile.Z
-        print("Test 1:")
-        assert(297813179 == X[1000][0] + X[4][0] + 
-                            Y[2][0] + Y[1002][0] + 
-                            Z[100][0] + Z[1][0])
-        print("...passed.") 
+        if ("simple.las" in sys.argv[1]):
+            print("Test 1:")
+            assert(297813179 == X[1000][0] + X[4][0] + 
+                                Y[2][0] + Y[1002][0] + 
+                                Z[100][0] + Z[1][0])
+            print("...passed.") 
         
     else:
         print("You're clearly doing something wrong.")
