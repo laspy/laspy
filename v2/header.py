@@ -415,7 +415,7 @@ class Header(object):
     def get_padding(self):
         """Returns number of bytes between the end of the VLRs and the 
            beginning of the point data."""
-        return self.reader.get_padding() 
+        return self.Reader.get_padding() 
 
     def set_padding(self, value):
         """Sets the header's padding.

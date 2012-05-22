@@ -95,14 +95,8 @@ class File(object):
         >>> f2.close()
         """
         self.filename = os.path.abspath(filename)
-        self._header = None
-        self.ownheader = True
-
-        if header != None:
-            self.ownheader = False
-            self._header = header.handle
-        
-
+        self._header = header
+     
         self._mode = mode.lower()
         self.in_srs = in_srs
         self.out_srs = out_srs
@@ -255,6 +249,19 @@ class File(object):
         if self.mode == 0:
             return self.Reader.seek(index)
 
+    def get_x(self, scale = False):
+        return(self.Reader.GetX(scale))
+
+    def get_y(self, scale = False):
+        return(self.Reader.GetY(scale))
+
+    def get_z(self, scale = False):
+        return(self.Reader.GetZ(scale))
+
+
+
+
+
     def __iter__(self):
         """Iterator support (read mode only)
 
@@ -344,6 +351,8 @@ class File(object):
 if __name__ == "__main__":
     if (len(sys.argv)==2):
         LasFile = File(sys.argv[1])
+        print(LasFile.header.get_pointrecordscount())
+        print(LasFile.get_x())
     else:
         print("You're clearly doing something wrong.")
 
