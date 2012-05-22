@@ -167,36 +167,86 @@ class Reader():
         raise Exception("GPS Time is not defined on pt format: "
                         + str(fmt))
     
+    ColException = "Color is not available for point format: "
     def GetRed(self):
         fmt = self.Header.PtDatFormatID
         if fmt in (3,5):
             return(self.GetDimension(28, "<H", 2))
         elif fmt == 2:
             return(self.GetDimension(20, "<H",2))
+        raise Exception(ColException + str(fmt))
     
     def GetGreen(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt in (3,5):
+            return(self.GetDimension(30, "<H", 2))
+        elif fmt == 2:
+            return(self.GetDimension(22, "<H",2))
+        raise Exception(ColException + str(fmt))
+
     
     def GetBlue(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt in (3,5):
+            return(self.GetDimension(32, "<H", 2))
+        elif fmt == 2:
+            return(self.GetDimension(24, "<H",2))
+        raise Exception(ColException + str(fmt))
+
 
     def GetWavePacketDescpIdx(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt == 5:
+            return(self.GetDimension(34, "<B", 1))
+        elif fmt == 4:
+            return(self.GetDimension(28, "<B", 1))
+        raise Exception("Wave Packet Description Index Not"
+                       + " Available for Pt Fmt: " + str(fmt))
 
     def GetByteOffsetToWaveFmData(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt == 5:
+            return(self.GetDimension(35, "<Q", 8))
+        elif fmt == 4:
+            return(self.GetDimension(29, "<Q", 8))
+        raise Exception("Byte Offset to Waveform Data Not"
+                       + " Available for Pt Fmt: " + str(fmt))
 
     def GetWavefmPktSize(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt == 5:
+            return(self.GetDimension(43, "<L", 4))
+        elif fmt == 4:
+            return(self.GetDimension(37, "<L", 4))
+        raise Exception("Wave Packet Description Index Not"
+                       + " Available for Pt Fmt: " + str(fmt))
 
     def GetX_t(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt == 5:
+            return(self.GetDimension(47, "<f", 4))
+        elif fmt == 4:
+            return(self.GetDimension(41, "<f", 4))
+        raise Exception("X(t) Not"
+                       + " Available for Pt Fmt: " +str(fmt))
 
     def GetY_t(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt == 5:
+            return(self.GetDimension(51, "<f", 4))
+        elif fmt == 4:
+            return(self.GetDimension(45, "<f", 4))
+        raise Exception("Y(t) Not"
+                       + " Available for Pt Fmt: " +str(fmt))
 
     def GetZ_t(self):
-        pass
+        fmt = self.Header.PtDatFormatID
+        if fmt == 5:
+            return(self.GetDimension(56, "<f", 4))
+        elif fmt == 4:
+            return(self.GetDimension(49, "<f", 4))
+        raise Exception("Z(t) Not"
+                       + " Available for Pt Fmt: " +str(fmt))
 
 
 
