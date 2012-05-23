@@ -184,6 +184,7 @@ class File(object):
     def set_output_srs(self,value):
         return(set_srs(value))
 
+
     def get_output_srs(self):
         return self.out_srs
 
@@ -193,6 +194,7 @@ class File(object):
     not set.  The header's SRS must be valid and exist for reprojection
     to occur. GDAL support must also be enabled for the library for
     reprojection to happen."""
+    
     output_srs = property(get_output_srs, set_output_srs, None, doc)
 
     def set_input_srs(self, value):
@@ -473,7 +475,7 @@ class File(object):
             while p and not self.at_end:
                 
                 yield p
-                p = self.Reader.GetNextPoint(self.handle)
+                p = self.Reader.GetNextPoint()
                 if not p:
                     self.at_end = True
             else:
@@ -674,6 +676,12 @@ if __name__ == "__main__":
             assert(p1.blue == 110 == blue[idx1])
             assert(p2.blue == 94 == blue[idx2])
             print("...Passed")
+            print("Testing Iterator: ")
+            k = 0
+            for pt in LasFile:
+                k += 1
+                if k % 100 == 0:
+                    print("Point: " + str(k))
             
         
          

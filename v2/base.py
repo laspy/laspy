@@ -49,10 +49,6 @@ class Point():
             self.y_t = reader.ReadWords("<f",1,4)
             self.z_t = reader.ReadWords("<f",1,4)
 
-
-
-
-
 class VarLenRec():
     def __init__(self, reader):
         self.Reserved = reader.ReadWords("<H", 1, 2)
@@ -73,6 +69,7 @@ class Reader():
         self.GetHeader()
         self.populateVLRs()
         self.PointRefs = False
+        self._current = 0
         return
     
     def binaryFmt(self,N, outArr):
@@ -126,6 +123,7 @@ class Reader():
      
     def seek(self, bytes, rel = True):
         # Seek relative to current pos
+        self._current = None
         if rel:
             self._map.seek(bytes,1)
             return
@@ -168,16 +166,14 @@ class Reader():
 
     def get_pointrecordscount(self):
         if self.Header.get_version != "1.3": 
-            return((self._map.size()-self.Header.data_offset)/self.Header.data_record_length)
-        return((self.Header.StWavefmDatPktRec - self.Header.data_offset)/self.Header.data_record_length)       
-
+            return((self._map.size()-
+                self.Header.data_offset)/self.Header.data_record_length)
+        return((self.Header.StWavefmDatPktRec-
+                self.Header.data_offset)/self.Header.data_record_length)       
     def SetInputSRS(self):
         pass
     
     def SetOutputSRS(self):
-        pass
-
-    def close(self):
         pass
 
     def GetRawPointIndex(self,index):
@@ -192,16 +188,23 @@ class Reader():
 
 #self, reader, startIdx ,version
     def GetPoint(self, index):
+        if index >= self.get_pointrecordscount():
+            return
         seekDex = self.GetRawPointIndex(index)
         self.seek(seekDex, rel = False)
+        self._current = index
         return(Point(self, seekDex, self.Header.PtDatFormatID))
     
     def GetNextPoint(self):
-        pass
+        if self._current == None:
+            raise Exception("No Current Point Specified," + 
+                            " use Reader.GetPoint(0) first")
+        return self.GetPoint(self._current + 1)
 
     def buildPointRefs(self):
         pts = self.get_pointrecordscount()
-        self.PointRefs = np.array([self.GetRawPointIndex(i) for i in xrange(pts)])
+        self.PointRefs = np.array([self.GetRawPointIndex(i) 
+                                     for i in xrange(pts)])
         return
 
     def GetDimension(self,offs, fmt, length, raw = False):
@@ -210,9 +213,9 @@ class Reader():
         if not raw:            
             return(map(lambda x: struct.unpack(fmt, 
                 self._map[x+offs:x+offs+length])[0],self.PointRefs))
-        return(map(lambda x: self._map[x+offs:x+offs+length], self.PointRefs))
+        return(map(lambda x: self._map[x+offs:x+offs+length]
+            , self.PointRefs))
                 
-
     def GetX(self, scale=False):
         return(self.GetDimension(0,"<L",4))
        
@@ -379,10 +382,6 @@ class Reader():
             return(self.GetDimension(54, "<f", 4))
         raise Exception("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
-
-
-
-
 
 class Writer():
     def __init__(self,filename):
