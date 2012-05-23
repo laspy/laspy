@@ -416,7 +416,7 @@ class File(object):
                                       set_wave_packet_desc_index, None, None)
     
     def get_byte_offset_to_waveform_data(self):
-        return(self.Reader.GetByteOffsetToWaveFmData())
+        return(self.Reader.GetByteOffsetToWavefmData())
     def set_byte_offset_to_waveform_data(self):
         return
 

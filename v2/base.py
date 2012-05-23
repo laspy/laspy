@@ -387,10 +387,101 @@ class Reader():
 class Writer(Reader):
 
     def close(self):
+        self._map.flush
+        self._map.close()
+        self.fileref.close()
+
+    
+    def set_padding(self, padding):
+        pass
+    
+    def set_input_srs(self, srs):
+        pass
+    
+    def set_output_srs(self, srs):
         pass
 
-    def get_header(self):
+    def SetX(self, scale = False):
         pass
+
+    def SetY(self, scale = False):
+        pass
+
+    def SetIntensity(self, intensity):
+        pass
+    
+    def SetFlagByte(self, byte):
+        pass
+    
+    def SetReturnNum(self, num):
+        pass
+
+    def SetNumReturns(self, num):
+        pass
+
+    def SetScanDirFlag(self, flag):
+        pass
+
+    def SetEdgeFlightLine(self, line):
+        pass
+
+    def SetRawClassification(self, classification):
+        pass
+    
+    def SetSynthetic(self, synthetic):
+        pass
+
+    def SetKeyPoint(self, pt):
+        pass
+
+    def SetWithheld(self, withheld):
+        pass
+    
+    def SetScanAngleRank(self, rank):
+        pass
+
+    def SetUserData(self, data):
+        pass
+    
+    def SetPtSrcId(self, data):
+        pass
+    
+    def SetGPSTime(self, data):
+        pass
+    
+    def SetRed(self, red):
+        pass
+    
+    def SetGreen(self, green):
+        pass
+    
+    def SetBlue(self, blue):
+        pass
+    
+    def SetWavePacketDescpIdx(self, idx):
+        pass
+    
+    def SetByteOffsetToWavefmData(self, idx):
+        pass
+    
+    def SetWavefmPktSize(self, size):
+        pass
+    
+    def SetReturnPtWavefmLoc(self, loc):
+        pass
+    
+    def SetX_t(self, x):
+        pass
+    
+    def SetY_t(self, y):
+        pass
+    
+    def SetZ_t(self, z):
+        pass
+    
+    
+
+
        
 
 
