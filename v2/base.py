@@ -57,7 +57,7 @@ class VarLenRec():
         self.RecLenAfterHeader = reader.ReadWords("<H",1,2)
         self.Description = "".join(reader.ReadWords("<s",32,1))
 
-class Reader():
+class FileManager():
     def __init__(self,filename):
         self.Header = False
         self.VLRs = False
@@ -105,11 +105,6 @@ class Reader():
             outstr[i] = "1"
         outstr = "".join(outstr)
         return(outstr + '0'*(8-len(outstr)))
-
-    def close(self):
-        self._map.close()
-        self.fileref.close()
-        return
 
     def read(self, bytes):
         self.bytesRead += bytes
@@ -384,7 +379,12 @@ class Reader():
         raise Exception("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
-class Writer(Reader):
+class Reader(FileManager):
+    def close(self):
+        self._map.close()
+        self.fileref.close()
+
+class Writer(FileManager):
 
     def close(self):
         self._map.flush
