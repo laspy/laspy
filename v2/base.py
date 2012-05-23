@@ -391,6 +391,8 @@ class Writer(Reader):
         self._map.close()
         self.fileref.close()
 
+    def SetHeader(self, header):
+        pass    
     
     def set_padding(self, padding):
         pass
@@ -401,10 +403,13 @@ class Writer(Reader):
     def set_output_srs(self, srs):
         pass
 
-    def SetX(self, scale = False):
+    def SetX(self,X, scale = False):
         pass
 
-    def SetY(self, scale = False):
+    def SetY(self,Y, scale = False):
+        pass
+
+    def SetZ(self, Z, scale = False):
         pass
 
     def SetIntensity(self, intensity):
@@ -428,6 +433,9 @@ class Writer(Reader):
     def SetRawClassification(self, classification):
         pass
     
+    def SetClassificaton(self, classification):
+        pass
+
     def SetSynthetic(self, synthetic):
         pass
 

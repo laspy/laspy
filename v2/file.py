@@ -182,7 +182,10 @@ class File(object):
             except:
                 files['write'].remove(self.filename)
             self.Writer.close()    
-     
+    
+    def assertWriteMode(self):
+        if self.mode == 0:
+            raise Exception("File is opened in read mode.")         
 
     # TO BE IMPLEMENTED
     def set_srs(self, value):
@@ -256,64 +259,83 @@ class File(object):
 
     def get_x(self, scale = False):
         return(self.Reader.GetX(scale))
-    def set_x(self, scale=False):
+    def set_x(self,x, scale=False):
+        self.assertWriteMode()
+        self.Writer.SetX(x, scale)
         return
+
     X = property(get_x, set_x, None, None)
     x = X
 
     def get_y(self, scale = False):
         return(self.Reader.GetY(scale))
-    def set_y(self, scale = False):
+    def set_y(self, y, scale = False):
+        self.assertWriteMode()
+        self.Writer.SetY(y, scale)
         return
+
     Y = property(get_y, set_y, None, None)
     y = Y
 
     def get_z(self, scale = False):
         return(self.Reader.GetZ(scale))
-    def set_z(self, scale = False):
+    def set_z(self, z, scale = False):
+        self.assertWriteMode()
+        self.Writer.SetZ(z, scale)    
         return
     Z = property(get_z, set_z, None, None)
     z = Z
 
     def get_intensity(self):
         return(self.Reader.GetIntensity())
-    def set_intensity(self):
+    def set_intensity(self, intensity):
+        self.assertWriteMode()
+        self.Writer.SetIntensity(intensity)
         return
-    
+
     intensity = property(get_intensity, set_intensity, None, None)
     Intensity = intensity
 
     def get_flag_byte(self):
         return(self.Reader.GetFlagByte())
-    def set_flag_byte(self):
+    def set_flag_byte(self, byte):
+        self.assertWriteMode()
+        self.Writer.SetFlagByte(byte)
         return
     
     flag_byte = property(get_flag_byte, set_flag_byte, None, None)
     
     def get_return_num(self):
         return(self.Reader.GetReturnNum())
-    def set_return_num(self):
-        return
+    def set_return_num(self, num):
+        self.assertWriteMode()
+        self.Writer.SetReturnNum(num)
 
     return_num = property(get_return_num, set_return_num, None, None)
 
     def get_num_returns(self):
         return(self.Reader.GetNumReturns())
-    def set_num_returns(self):
+    def set_num_returns(self, num):
+        self.assertWriteMode()
+        self.Writer.SetNumReturns(num)
         return
 
     num_returns = property(get_return_num, set_num_returns, None, None)
 
     def get_scan_dir_flag(self):
         return(self.Reader.GetScanDirFlag())
-    def set_scan_dir_flag(self):
+    def set_scan_dir_flag(self,flag):
+        self.assertWriteMode()
+        self.Writer.SetScanDirFlag(flag)
         return
 
     scan_dir_flag = property(get_scan_dir_flag, set_scan_dir_flag, None, None)
 
     def get_edge_flight_line(self):
         return(self.Reader.GetEdgeFlightLine())
-    def set_edge_flight_line(self):
+    def set_edge_flight_line(self,line):
+        self.assertWriteMode()
+        self.Writer.SetEdgeFlightLine(line)
         return
 
     edge_flight_line = property(get_edge_flight_line,
@@ -321,15 +343,20 @@ class File(object):
 
     def get_raw_classification(self):
         return(self.Reader.GetRawClassification())
-    def set_raw_classification(self):
+    def set_raw_classification(self, classification):
+        self.assertWriteMode()
+        self.Writer.SetRawClassification(classification)
         return
+
     raw_classification = property(get_raw_classification, 
                                   set_raw_classification, None, None)
     Raw_Classification = raw_classification
 
     def get_classification(self):
         return(self.Reader.GetClassification())
-    def set_classification(self):
+    def set_classification(self, classification):
+        self.assertWriteMode()
+        self.Writer.SetClassification(classificaton)
         return
     classification = property(get_classification, 
                               set_classification, None, None)
@@ -337,63 +364,83 @@ class File(object):
 
     def get_synthetic(self):
         return(self.Reader.GetSynthetic())
-    def set_synthetic(self):
+    def set_synthetic(self, synthetic):
+        self.assertWriteMode()
+        self.Writer.SetSynthetic(synthetic)
         return
+
     synthetic = property(get_synthetic, set_synthetic, None, None)
     Synthetic = synthetic 
 
     def get_key_point(self):
         return(self.Reader.GetKeyPoint())
-    def set_key_point(self):
-        return(self.Reader.SetKeyPoint())
+    def set_key_point(self, pt):
+        self.assertWriteMode()
+        self.Writer.SetKeyPoint(pt)
+        return
+
     key_point = property(get_key_point, set_key_point, None, None)
     Key_Point = key_point
 
     def get_withheld(self):
         return(self.Reader.GetWithheld())
-    def set_withheld(self):
+    def set_withheld(self, withheld):
+        self.assertWriteMode()
+        self.Writer.SetWithheld(withheld)
         return
+
     withheld = property(get_withheld, set_withheld, None, None)
     Withheld = withheld
 
     def get_scan_angle_rank(self):
         return(self.Reader.GetScanAngleRank())
-    def set_scan_angle_rank(self):
+    def set_scan_angle_rank(self, rank):
+        self.assertWriteMode()
+        self.Writer.SetScanAngleRank(rank)
         return
 
     scan_angle_rank = property(get_scan_angle_rank, set_scan_angle_rank,None,None)
 
     def get_user_data(self):
         return(self.Reader.GetUserData())
-    def set_user_data(self):
+    def set_user_data(self, data):
+        self.assertWriteMode()
+        self.Writer.SetUserData(data)
         return
 
     user_data = property(get_user_data, set_user_data, None, None)
 
     def get_pt_src_id(self):
         return(self.Reader.GetPTSrcId())
-    def set_pt_src_id(self):
-        pass
+    def set_pt_src_id(self, data):
+        self.assertWriteMode()
+        self.Writer.SetPtSrcId(data)
+        return
 
     pt_src_id = property(get_pt_src_id, set_pt_src_id, None, None)
 
     def get_gps_time(self):
         return(self.Reader.GetGPSTime())
-    def set_gps_time(self):
+    def set_gps_time(self, data):
+        self.assertWriteMode()
+        self.Writer.SetGPSTime(data)
         return
     
     gps_time = property(get_gps_time, set_gps_time, None, None)
 
     def get_red(self):
         return(self.Reader.GetRed())
-    def set_red(self):
-        return
+    def set_red(self, red):
+        self.assertWriteMode()
+        self.Writer.SetRed(red)
     red = property(get_red, set_red, None, None)
     Red = red
 
     def get_green(self):
         return(self.Reader.GetGreen())
-    def set_green(self):
+    def set_green(self, green):
+        self.assertWriteMode()
+        self.Writer.SetGreen(green)
         return
     
     green = property(get_green, set_green, None, None)
@@ -401,7 +448,9 @@ class File(object):
 
     def get_blue(self):
         return(self.Reader.GetBlue())
-    def set_blue(self):
+    def set_blue(self, blue):
+        self.assertWriteMode()
+        self.Writer.SetBlue(blue)
         return
 
     blue = property(get_blue, set_blue)
@@ -409,7 +458,9 @@ class File(object):
 
     def get_wave_packet_desc_index(self):
         return(self.Reader.GetWavePacketDescpIdx())
-    def set_wave_packet_desc_index(self):
+    def set_wave_packet_desc_index(self,idx):
+        self.assertWriteMode()
+        self.Writer.SetWavePacketDescpIdx(idx)
         return
 
     wave_packet_desc_index = property(get_wave_packet_desc_index,
@@ -417,7 +468,9 @@ class File(object):
     
     def get_byte_offset_to_waveform_data(self):
         return(self.Reader.GetByteOffsetToWavefmData())
-    def set_byte_offset_to_waveform_data(self):
+    def set_byte_offset_to_waveform_data(self, idx):
+        self.assertWriteMode()
+        self.Writer.SetByteOffsetToWavefmData(idx)
         return
 
     byte_offset_to_waveform_data = property(get_byte_offset_to_waveform_data,
@@ -426,7 +479,9 @@ class File(object):
     
     def get_waveform_packet_size(self):
         return(self.Reader.GetWavefmPktSize())
-    def set_waveform_packet_size(self):
+    def set_waveform_packet_size(self, size):
+        self.assertWriteMode()
+        self.Writer.SetWavefmPktSize(size)
         return
 
     waveform_packet_size = property(get_waveform_packet_size, 
@@ -435,7 +490,9 @@ class File(object):
     
     def get_return_pt_waveform_loc(self):
         return(self.Reader.GetReturnPtWavefmLoc())
-    def set_return_pt_waveform_loc(self):
+    def set_return_pt_waveform_loc(self, loc):
+        self.assertWriteMode()
+        self.Writer.SetReturnPtWavefmLoc(loc)
         return
 
     return_pt_waveform_loc = property(get_return_pt_waveform_loc, 
@@ -444,22 +501,27 @@ class File(object):
     
     def get_x_t(self):
         return(self.Reader.GetX_t())
-    def set_x_t(self):
+    def set_x_t(self,x):
+        self.assertWriteMode()
+        self.Writer.SetX_t(x)
         return
 
     x_t = property(get_x_t, set_x_t, None, None)
 
     def get_y_t(self):
         return(self.Reader.GetY_t())
-    def set_y_t(self):
+    def set_y_t(self,y):
+        self.assertWriteMode()
+        self.Writer.SetY_t(y)
         return
-    
+
     y_t = property(get_y_t, set_y_t, None, None)
 
     def get_z_t(self):
         return(self.Reader.GetZ_t())
-    def set_z_t(self):
-        return
+    def set_z_t(self, z):
+        self.assertWriteMode()
+        self.Writer.SetZ_t(z)
 
     z_t = property(get_z_t, set_z_t, None, None)
 
