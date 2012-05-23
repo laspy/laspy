@@ -12,28 +12,38 @@ class Point():
         self.X = reader.ReadWords("<L", 1, 4)
         self.Y = reader.ReadWords("<L", 1, 4)
         self.Z = reader.ReadWords("<L", 1, 4)
-        self.Intensity = reader.ReadWords("<H", 1, 2)
+        self.intensity = reader.ReadWords("<H", 1, 2)
         ###########################
-        self.bitFlags = reader.read(1)
+        self.bitFlags = reader.ReadWords("<B",1,1)
+        bstr = reader.binaryStr(self.bitFlags)
+        self.return_num = reader.packedStr(bstr[0:3])
+        self.num_returns = reader.packedStr(bstr[3:6])
+        self.scan_dir_flag = reader.packedStr(bstr[6])
+        self.edge_flight_line = reader.packedStr(bstr[7])
         ###########################
-        self.Classification = reader.ReadWords("<B", 1,1)
-        self.ScanAngleRnk = reader.ReadWords("<B",1,1)
-        self.UserData = reader.ReadWords("<B",1,1)
-        self.PtSrcID = reader.ReadWords("<H",1,2)
+        self.raw_classification = reader.ReadWords("<B", 1,1)
+        ##########################
+        
+
+        #########################
+
+        self.scan_angle_rank = reader.ReadWords("<B",1,1)
+        self.user_data = reader.ReadWords("<B",1,1)
+        self.pt_src_id = reader.ReadWords("<H",1,2)
         if self.Version in (1,3,4,5):
-            self.GPSTime = reader.ReadWords("<d",1,8)
+            self.gps_time = reader.ReadWords("<d",1,8)
         if self.Version in (2,3,5):
-            self.Red = reader.ReadWords("<H",1,2)
-            self.Green = reader.ReadWords("<H",1,2)
-            self.Blue = reader.ReadWords("<H",1,2)
+            self.red = reader.ReadWords("<H",1,2)
+            self.green = reader.ReadWords("<H",1,2)
+            self.blue = reader.ReadWords("<H",1,2)
         if self.Version in (4,5):
-            self.WavePacketDescritproIdx = reader.ReadWords("<B",1,1)
-            self.ByteOffsetToWaveFmData = reader.ReadWords("<Q",1,8)
-            self.WaveFmPktSize = reader.ReadWords("<L",1,4)
-            self.ReturnPtWavefmLoc = reader.ReadWords("<f",1,4)
-            self.X_t = reader.ReadWords("<f",1,4)
-            self.Y_t = reader.ReadWords("<f",1,4)
-            self.Z_t = reader.ReadWords("<f",1,4)
+            self.wave_packet_desc_index = reader.ReadWords("<B",1,1)
+            self.byte_offset_to_waveform_data = reader.ReadWords("<Q",1,8)
+            self.waveform_packet_size = reader.ReadWords("<L",1,4)
+            self.return_pt_waveform_loc = reader.ReadWords("<f",1,4)
+            self.x_t = reader.ReadWords("<f",1,4)
+            self.y_t = reader.ReadWords("<f",1,4)
+            self.z_t = reader.ReadWords("<f",1,4)
 
 
 
@@ -213,18 +223,29 @@ class Reader():
         return(self.GetDimension(14,"<B", 1))
     
     def GetReturnNum(self):
-        pass
+        rawDim = self.GetFlagByte()
+        return(map(lambda x: 
+                    self.packedStr(self.binaryStr(x)[0:3]),
+                    rawDim))
 
     def GetNumReturns(self):
-        pass
+        rawDim = self.GetFlagByte()
+        return(map(lambda x: 
+                    self.packedStr(self.binaryStr(x)[3:6]),
+                    rawDim))
 
     def GetScanDirFlag(self):
-        pass
+        rawDim = self.GetFlagByte()
+        return(map(lambda x:
+                    self.packedStr(self.binaryStr(x)[6]),
+                    rawDim))
 
     def GetEdgeFlightLine(self):
-        pass
-            
-    
+        rawDim = self.GetFlagByte()
+        return(map(lambda x:
+                    self.packedStr(self.binaryStr(x)[7]),
+                    rawDim))
+
     def GetRawClassification(self):
         return(self.GetDimension(15, "<B",1))
     
@@ -314,6 +335,10 @@ class Reader():
             return(self.GetDimension(37, "<L", 4))
         raise Exception("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
+
+    def GetReturnPtWavefmLoc(self):
+        return
+
 
     def GetX_t(self):
         fmt = self.Header.PtDatFormatID

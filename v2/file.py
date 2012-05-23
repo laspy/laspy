@@ -299,13 +299,6 @@ class File(object):
 
     scan_dir_flag = property(get_scan_dir_flag, set_scan_dir_flag, None, None)
 
-    def get_scan_dir_flag(self):
-        return(self.Reader.GetScanDirFlag())
-    def set_scan_dir_flag(self):
-        return
-
-    scan_dir_flag = property(get_scan_dir_flag, set_scan_dir_flag, None, None)
-
     def get_edge_flight_line(self):
         return(self.Reader.GetEdgeFlightLine)
     def set_edge_flight_line(self):
@@ -315,7 +308,7 @@ class File(object):
                                 set_edge_flight_line, None, None)
 
     def get_raw_classification(self):
-        return(self.Reader.GetClassification())
+        return(self.Reader.GetRawClassification())
     def set_raw_classification(self):
         return
     raw_classification = property(get_raw_classification, 
@@ -427,6 +420,15 @@ class File(object):
     waveform_packet_size = property(get_waveform_packet_size, 
                                     set_waveform_packet_size, 
                                     None, None)
+    
+    def get_return_pt_waveform_loc(self):
+        return(self.Reader.GetReturnPtWavefmLoc())
+    def set_return_pt_waveform_loc(self):
+        return
+
+    return_pt_waveform_loc = property(get_return_pt_waveform_loc, 
+                                      set_return_pt_waveform_loc,
+                                      None, None)
     
     def get_x_t(self):
         return(self.Reader.GetX_t())
@@ -554,8 +556,16 @@ if __name__ == "__main__":
         Z = LasFile.Z
         print("Getting Intensity")
         intensity = LasFile.intensity
-        print("Getting Flag")
+        print("Getting Raw Flag Byte")
         flag_byte = LasFile.flag_byte
+        print("Getting Return Num")
+        return_num = LasFile.return_num
+        print("Getting Num Returns")
+        num_returns = LasFile.num_returns
+        print("Getting Scan Dir Flag")
+        scan_dir_flag = LasFile.scan_dir_flag
+        print("Getting Edge Flight Line")
+        edge_flight_line = LasFile.edge_flight_line
         print("Getting Raw Classification")
         raw_classification = LasFile.raw_classification
         print("Getting Classification")
@@ -589,6 +599,8 @@ if __name__ == "__main__":
             byte_offset_to_waveform = LasFile.byte_offset_to_waveform
             print("Getting Waveform Packet Size")
             waveform_packet_size = LasFile.waveform_packet_size
+            print("Getting Return Pt Waveform Location")
+            return_pt_waveform_loc = LasFile.return_pt_waveform_loc
             print("Getting X(t)")
             x_t = LasFile.x_t
             print("Getting Y(t)")
@@ -615,36 +627,40 @@ if __name__ == "__main__":
             assert(p2.Z == 42306 == Z[idx2])
             print("...Passed")
             print("Comparing Intensity:")
-            assert(p1.Intensity == 233 == intensity[idx1])
-            assert(p2.Intensity == 1 == intensity[idx2])
+            assert(p1.intensity == 233 == intensity[idx1])
+            assert(p2.intensity == 1 == intensity[idx2])
             print("...Passed")
             print("Comparing Scan Angle Rank")
-            assert(p1.ScanAngleRnk == 2 == scan_angle_rank[idx1])
-            assert(p2.ScanAngleRnk == 12 == scan_angle_rank[idx2]) 
+            assert(p1.scan_angle_rank == 2 == scan_angle_rank[idx1])
+            assert(p2.scan_angle_rank == 12 == scan_angle_rank[idx2]) 
             print("...Passed")
-            #print("Comparing Classification")
-            #assert(p1.Classification == 1 == classification[idx1])
-            #assert(p2.Classification == 2 == classification[idx2])
-            #print("...Passed")
+            print("Comparing Raw Classification")  
+            assert(p1.raw_classification == 1 == 
+                    raw_classification[idx1])
+            assert(p2.raw_classification == 2 == 
+                    raw_classification[idx2])
+            print("...Passed")
             print("Comparing Point Source ID")
-            assert(p1.PtSrcID == 7328 == pt_src_id[idx1])
-            assert(p2.PtSrcID == 7334 == pt_src_id[idx2])
+            assert(p1.pt_src_id == 7328 == pt_src_id[idx1])
+            assert(p2.pt_src_id == 7334 == pt_src_id[idx2])
             print("...Passed")
             print("Comparing GPS Time")
-            assert(p1.GPSTime - 2*246504.221932 + gps_time[idx1] < 0.00001)
-            assert(p2.GPSTime - 2*249774.658254 + gps_time[idx2] < 0.00001)
+            assert(p1.gps_time - 2*246504.221932 
+                    + gps_time[idx1] < 0.00001)
+            assert(p2.gps_time - 2*249774.658254 
+                    + gps_time[idx2] < 0.00001)
             print("...Passed")
             print("Comparing Red")
-            assert(p1.Red == 92 == red[idx1])
-            assert(p2.Red == 94 == red[idx2])
+            assert(p1.red == 92 == red[idx1])
+            assert(p2.red == 94 == red[idx2])
             print("...Passed")
             print("Comparing Green")
-            assert(p1.Green == 100 == green[idx1])
-            assert(p2.Green == 84 == green[idx2])
+            assert(p1.green == 100 == green[idx1])
+            assert(p2.green == 84 == green[idx2])
             print("...Passed")
             print("Comparing Blue")
-            assert(p1.Blue == 110 == blue[idx1])
-            assert(p2.Blue == 94 == blue[idx2])
+            assert(p1.blue == 110 == blue[idx1])
+            assert(p2.blue == 94 == blue[idx2])
             print("...Passed")
             
         
