@@ -14,8 +14,8 @@ class Point():
         self.Z = reader.ReadWords("<L", 1, 4)
         self.intensity = reader.ReadWords("<H", 1, 2)
         ###########################
-        self.bitFlags = reader.ReadWords("<B",1,1)
-        bstr = reader.binaryStr(self.bitFlags)
+        self.flag_byte = reader.ReadWords("<B",1,1)
+        bstr = reader.binaryStr(self.flag_byte)
         self.return_num = reader.packedStr(bstr[0:3])
         self.num_returns = reader.packedStr(bstr[3:6])
         self.scan_dir_flag = reader.packedStr(bstr[6])
@@ -23,7 +23,11 @@ class Point():
         ###########################
         self.raw_classification = reader.ReadWords("<B", 1,1)
         ##########################
-        
+        bstr = reader.binaryStr(self.raw_classification)
+        self.classification = reader.packedStr(bstr[0:5])
+        self.synthetic = reader.packedStr(bstr[5])
+        self.key_point = reader.packedStr(bstr[6])
+        self.withheld = reader.packedStr(bstr[7])       
 
         #########################
 
@@ -84,7 +88,10 @@ class Reader():
             return(outArr)
         return(self.binaryFmt(N, outArr))
     
-    def packedStr(self, string):
+    def packedStr(self, string, reverse = True):
+        if reverse:
+            string = "".join(reversed([x for x in string]))
+            
         pwr = len(string)-1
         out = 0
         for item in string:
@@ -99,9 +106,8 @@ class Reader():
         outstr = ["0"]*(max(arr)+1)
         for i in arr:
             outstr[i] = "1"
-        outstr.reverse()
         outstr = "".join(outstr)
-        return('0'*(8-len(outstr)) + outstr)
+        return(outstr + '0'*(8-len(outstr)))
 
     def close(self):
         self._map.close()
@@ -337,33 +343,40 @@ class Reader():
                        + " Available for Pt Fmt: " + str(fmt))
 
     def GetReturnPtWavefmLoc(self):
-        return
-
-
-    def GetX_t(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
             return(self.GetDimension(47, "<f", 4))
         elif fmt == 4:
             return(self.GetDimension(41, "<f", 4))
+        raise Exception("ReturnPtWavefmLoc Not"
+                       + " Available for Pt Fmt: " +str(fmt))
+
+
+
+    def GetX_t(self):
+        fmt = self.Header.PtDatFormatID
+        if fmt == 5:
+            return(self.GetDimension(51, "<f", 4))
+        elif fmt == 4:
+            return(self.GetDimension(45, "<f", 4))
         raise Exception("X(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def GetY_t(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(51, "<f", 4))
+            return(self.GetDimension(56, "<f", 4))
         elif fmt == 4:
-            return(self.GetDimension(45, "<f", 4))
+            return(self.GetDimension(49, "<f", 4))
         raise Exception("Y(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def GetZ_t(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(56, "<f", 4))
+            return(self.GetDimension(60, "<f", 4))
         elif fmt == 4:
-            return(self.GetDimension(49, "<f", 4))
+            return(self.GetDimension(54, "<f", 4))
         raise Exception("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 

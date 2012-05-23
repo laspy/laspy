@@ -293,14 +293,14 @@ class File(object):
     num_returns = property(get_return_num, set_num_returns, None, None)
 
     def get_scan_dir_flag(self):
-        return(self.Reader.GetNumReturns())
+        return(self.Reader.GetScanDirFlag())
     def set_scan_dir_flag(self):
         return
 
     scan_dir_flag = property(get_scan_dir_flag, set_scan_dir_flag, None, None)
 
     def get_edge_flight_line(self):
-        return(self.Reader.GetEdgeFlightLine)
+        return(self.Reader.GetEdgeFlightLine())
     def set_edge_flight_line(self):
         return
 
@@ -626,10 +626,22 @@ if __name__ == "__main__":
             assert(p2.Y == 85318232 == Y[idx2])
             assert(p2.Z == 42306 == Z[idx2])
             print("...Passed")
-            print("Comparing Intensity:")
+            print("Comparing Intensity")
             assert(p1.intensity == 233 == intensity[idx1])
             assert(p2.intensity == 1 == intensity[idx2])
             print("...Passed")
+            print("Comparing Bit Flags")
+            assert(p1.flag_byte == flag_byte[idx1])
+            assert(p2.flag_byte == flag_byte[idx2])
+            assert(p1.return_num == return_num[idx1] == 1)
+            assert(p2.return_num == return_num[idx2] == 2)
+            assert(p1.num_returns == num_returns[idx1] == 1)
+            assert(p2.num_returns == num_returns[idx2] == 2)
+            assert(p1.scan_dir_flag == scan_dir_flag[idx1] == 0)
+            assert(p2.scan_dir_flag == scan_dir_flag[idx2] == 1)
+            assert(p1.edge_flight_line == edge_flight_line[idx1] == 0)
+            assert(p2.edge_flight_line == edge_flight_line[idx2] == 0)
+            
             print("Comparing Scan Angle Rank")
             assert(p1.scan_angle_rank == 2 == scan_angle_rank[idx1])
             assert(p2.scan_angle_rank == 12 == scan_angle_rank[idx2]) 
