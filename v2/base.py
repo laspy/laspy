@@ -57,6 +57,40 @@ class VarLenRec():
         self.RecLenAfterHeader = reader.ReadWords("<H",1,2)
         self.Description = "".join(reader.ReadWords("<s",32,1))
 
+Formats={
+"X":(0,"<L",4),
+"Y":(4,"<L",4),
+"Z":(8,"<L",4),
+"Intensity":(12,"<H",2),
+"FlagByte":(14,"<B",1),
+"RawClassification":(15,"<B",1),
+"ScanAngleRank":(16,"<B",1),
+"UserData":(17,"<B",1),
+"PtSrcId":(18,"<H",2),
+"GPSTime":(20,"<d",8),
+"Red_35":(28,"<H",2),
+"Red_2":(20,"<H",2),
+"Green_35":(30,"<H",2),
+"Green_2":(22,"<H",2),
+"Blue_35":(32,"<H",2),
+"Blue_2":(24,"<H",2),
+"WavePacketDescpIdx_5":(34,"<B",1),
+"WavePacketDescpIdx_4":(28,"<B",1),
+"ByteOffsetToWavefmData_5":(35,"<Q",8),
+"ByteOffsetToWavefmData_4":(29,"<Q",8),
+"WavefmPktSize_5":(43,"<L",4),
+"WavefmPktSize_4":(37,"<L",4),
+"ReturnPtWavefmLoc_5":(47,"<f",4),
+"ReturnPtWavefmLoc_4":(41,"<f",4),
+"X_t_5":(51,"<f",4),
+"X_t_4":(45,"<f",4),
+"Y_t_5":(56,"<f",4),
+"Y_t_4":(49,"<f",4),
+"Z_t_5":(60,"<f",4),
+"Z_t_4":(54,"<f",4)}
+
+
+
 class FileManager():
     def __init__(self,filename):
         self.Header = False
@@ -71,7 +105,7 @@ class FileManager():
         self.PointRefs = False
         self._current = 0
         return
-    
+   
     def binaryFmt(self,N, outArr):
         if N == 0:
             return(0)
@@ -203,7 +237,17 @@ class FileManager():
                                      for i in xrange(pts)])
         return
 
-    def GetDimension(self,offs, fmt, length, raw = False):
+    def GetDimension(self, name):
+        try:
+            specs = Formats[name]
+            return(self._GetDimension(specs[0], specs[1], 
+                                     specs[2]))
+        except KeyError:
+            raise Exception("Dimension: " + str(name) + 
+                            "not found.")
+
+
+    def _GetDimension(self,offs, fmt, length, raw = False):
         if type(self.PointRefs) == bool:
             self.buildPointRefs()
         if not raw:            
@@ -213,19 +257,19 @@ class FileManager():
             , self.PointRefs))
                 
     def GetX(self, scale=False):
-        return(self.GetDimension(0,"<L",4))
+        return(self.GetDimension("X"))
        
     def GetY(self, scale=False):
-        return(self.GetDimension(4,"<L",4))
+        return(self.GetDimension("Y"))
 
     def GetZ(self, scale=False):
-        return(self.GetDimension(8,"<L",4))
+        return(self.GetDimension("Z"))
     
     def GetIntensity(self):
-        return(self.GetDimension(12, "<H", 2))
+        return(self.GetDimension("Intensity"))
     
     def GetFlagByte(self):
-        return(self.GetDimension(14,"<B", 1))
+        return(self.GetDimension("FlagByte"))
     
     def GetReturnNum(self):
         rawDim = self.GetFlagByte()
@@ -252,7 +296,7 @@ class FileManager():
                     rawDim))
 
     def GetRawClassification(self):
-        return(self.GetDimension(15, "<B",1))
+        return(self.GetDimension("RawClassification"))
     
     def GetClassification(self):
         return(map(lambda x:
@@ -272,18 +316,18 @@ class FileManager():
                              self.GetRawClassification())) 
 
     def GetScanAngleRank(self):
-        return(self.GetDimension(16, "<B",1))
+        return(self.GetDimension("ScanAngleRank"))
     
     def GetUserData(self):
-        return(self.GetDimension(17, "<B", 1))
+        return(self.GetDimension("UserData"))
     
     def GetPTSrcId(self):
-        return(self.GetDimension(18, "<H", 2))
+        return(self.GetDimension("PtSrcId"))
     
     def GetGPSTime(self):
         fmt = self.Header.PtDatFormatID
         if fmt in (1,2,3,4,5):
-            return(self.GetDimension(20, "<d", 8))
+            return(self.GetDimension("GPSTime"))
         raise Exception("GPS Time is not defined on pt format: "
                         + str(fmt))
     
@@ -291,62 +335,62 @@ class FileManager():
     def GetRed(self):
         fmt = self.Header.PtDatFormatID
         if fmt in (3,5):
-            return(self.GetDimension(28, "<H", 2))
+            return(self.GetDimension("Red_35"))
         elif fmt == 2:
-            return(self.GetDimension(20, "<H",2))
+            return(self.GetDimension("Red_2"))
         raise Exception(ColException + str(fmt))
     
     def GetGreen(self):
         fmt = self.Header.PtDatFormatID
         if fmt in (3,5):
-            return(self.GetDimension(30, "<H", 2))
+            return(self.GetDimension("Green_35"))
         elif fmt == 2:
-            return(self.GetDimension(22, "<H",2))
+            return(self.GetDimension("Green_2"))
         raise Exception(ColException + str(fmt))
 
     
     def GetBlue(self):
         fmt = self.Header.PtDatFormatID
         if fmt in (3,5):
-            return(self.GetDimension(32, "<H", 2))
+            return(self.GetDimension("Blue_35"))
         elif fmt == 2:
-            return(self.GetDimension(24, "<H",2))
+            return(self.GetDimension("Blue_2"))
         raise Exception(ColException + str(fmt))
 
 
     def GetWavePacketDescpIdx(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(34, "<B", 1))
+            return(self.GetDimension("WavePacketDescpIdx_5"))
         elif fmt == 4:
-            return(self.GetDimension(28, "<B", 1))
+            return(self.GetDimension("WavePacketDescpIdx_4"))
         raise Exception("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
-    def GetByteOffsetToWaveFmData(self):
+    def GetByteOffsetToWavefmData(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(35, "<Q", 8))
+            return(self.GetDimension("ByteOffsetToWavefmData_5"))
         elif fmt == 4:
-            return(self.GetDimension(29, "<Q", 8))
+            return(self.GetDimension("ByteOffsetToWavefmData_4"))
         raise Exception("Byte Offset to Waveform Data Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def GetWavefmPktSize(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(43, "<L", 4))
+            return(self.GetDimension("WavefmPktSize_5"))
         elif fmt == 4:
-            return(self.GetDimension(37, "<L", 4))
+            return(self.GetDimension("WavefmPktSize_4"))
         raise Exception("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def GetReturnPtWavefmLoc(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(47, "<f", 4))
+            return(self.GetDimension("ReturnPtWavefmLoc_5"))
         elif fmt == 4:
-            return(self.GetDimension(41, "<f", 4))
+            return(self.GetDimension("ReturnPtWavefmLoc_4"))
         raise Exception("ReturnPtWavefmLoc Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
@@ -355,27 +399,27 @@ class FileManager():
     def GetX_t(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(51, "<f", 4))
+            return(self.GetDimension("X_t_5"))
         elif fmt == 4:
-            return(self.GetDimension(45, "<f", 4))
+            return(self.GetDimension("X_t_4"))
         raise Exception("X(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def GetY_t(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(56, "<f", 4))
+            return(self.GetDimension("Y_t_5"))
         elif fmt == 4:
-            return(self.GetDimension(49, "<f", 4))
+            return(self.GetDimension("Y_t_4"))
         raise Exception("Y(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def GetZ_t(self):
         fmt = self.Header.PtDatFormatID
         if fmt == 5:
-            return(self.GetDimension(60, "<f", 4))
+            return(self.GetDimension("Z_t_5"))
         elif fmt == 4:
-            return(self.GetDimension(54, "<f", 4))
+            return(self.GetDimension("Z_t_4"))
         raise Exception("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
