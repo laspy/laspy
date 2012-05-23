@@ -454,12 +454,6 @@ class File(object):
     z_t = property(get_z_t, set_z_t, None, None)
 
 
-    
-    
-
-
-
-
     def __iter__(self):
         """Iterator support (read mode only)
 
@@ -526,7 +520,7 @@ class File(object):
             something). You have to take care of this adaptation yourself.
 
         """
-        if not isinstance(pt, point.Point):
+        if not isinstance(pt, base.Point):
             raise Exception('cannot write %s, it must '
                                     'be of type liblas.point.Point' % pt)
         if self.mode == 1 or self.mode == 2:
@@ -643,7 +637,7 @@ if __name__ == "__main__":
             assert(p2.scan_dir_flag == scan_dir_flag[idx2] == 1)
             assert(p1.edge_flight_line == edge_flight_line[idx1] == 0)
             assert(p2.edge_flight_line == edge_flight_line[idx2] == 0)
-            
+            print("...Passed")
             print("Comparing Scan Angle Rank")
             assert(p1.scan_angle_rank == 2 == scan_angle_rank[idx1])
             assert(p2.scan_angle_rank == 12 == scan_angle_rank[idx2]) 
@@ -676,13 +670,19 @@ if __name__ == "__main__":
             assert(p1.blue == 110 == blue[idx1])
             assert(p2.blue == 94 == blue[idx2])
             print("...Passed")
-            print("Testing Iterator: ")
+            print("Testing Iterator ")
             k = 0
             for pt in LasFile:
                 k += 1
                 if k % 100 == 0:
                     print("Point: " + str(k))
-            
+            print("Testing Slicing")
+            k = 0
+            for i in xrange(len(LasFile)):
+                J = LasFile[i]
+                k += 1
+                if k % 100 == 0:
+                    print("Point: " + str(k))
         
          
     else:

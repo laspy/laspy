@@ -107,7 +107,9 @@ class Reader():
         return(outstr + '0'*(8-len(outstr)))
 
     def close(self):
-        self._map.close()
+        if self.mode == 0:
+            self._map.close()
+            self.fileref.close()
         return
 
     def read(self, bytes):
