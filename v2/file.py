@@ -133,8 +133,7 @@ class File(object):
             if self._header == None:
                 self._header = self.Reader.GetHeader()
             else:
-                base.CreateWithHeader(self.filename,
-                                                        self._header)
+                base.CreateWithHeader(self.filename, self._header)
             self.mode = 0
             try:
                 files['read'][self.filename] += 1
@@ -147,7 +146,18 @@ class File(object):
                 self.Reader.SetOutputSRS(self.out_srs)
 
         if self._mode == 'w':
-            pass
+            self.Writer = base.Writer(self.filename)
+            self.Reader = self.Writer
+            if self._header == none:
+                self._header = self.Reader.GetHeader()
+            else:
+                base.CreateWithHeader(self.filename, self._header)
+            self.mode = 1
+            try:
+                files['write'][self.filename] += 1
+            except KeyError:
+                files['read'][self.filename] = 1
+
         if '+' in self._mode and 'r' not in self._mode:
             pass
 

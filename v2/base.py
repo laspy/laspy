@@ -107,9 +107,8 @@ class Reader():
         return(outstr + '0'*(8-len(outstr)))
 
     def close(self):
-        if self.mode == 0:
-            self._map.close()
-            self.fileref.close()
+        self._map.close()
+        self.fileref.close()
         return
 
     def read(self, bytes):
@@ -385,9 +384,7 @@ class Reader():
         raise Exception("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
-class Writer():
-    def __init__(self,filename):
-        pass
+class Writer(Reader):
 
     def close(self):
         pass
