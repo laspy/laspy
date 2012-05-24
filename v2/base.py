@@ -577,13 +577,36 @@ class Writer(FileManager):
         return
 
     def SetNumReturns(self, num):
-        pass        
+        flagByte = self.binaryStr(self.GetFlagByte())
+        newbits = map(lambda x: self.binaryStr(x, 3), num)
+        outByte = map(lambda x:
+            self.packetStr( 
+            flagByte[x][0:3]
+            + newbits[x][3:6] 
+            + flagByte[x][6:8]), xrange(len(newBits)))
+        self.SetDimension("FlagByte", byte)
+        return       
 
     def SetScanDirFlag(self, flag):
-        pass
+        flagByte = self.binaryStr(self.GetFlagByte())
+        newbits = map(lambda x: self.binaryStr(x, 1), flag)
+        outByte = map(lambda x: 
+            self.packetStr( 
+            flagByte[x][0:6]
+            + newbits[x][6]
+            + flagByte[x][6:8]), xrange(len(newBits)))
+        self.SetDimension("FlagByte", outByte)
+        return 
 
     def SetEdgeFlightLine(self, line):
-        pass
+        flagByte = self.binaryStr(self.GetFlagByte())
+        newbits = map(lambda x: self.binaryStr(x, 1), line)
+        outByte = map(lambda x: self.packetStr(
+            flagBytep[x][0:7]
+            + newbits[x][7] 
+            ), xrange(len(newBits)))
+        self.SetDimension("FlagByte", outByte)
+        return 
 
     def SetRawClassification(self, classification):
         self.SetDimension("RawClassification", classification)
