@@ -25,6 +25,9 @@ class LasReaderTestCase(unittest.TestCase):
         self.scan_angle_rank = LasFile.scan_angle_rank
         self.user_data = LasFile.user_data
         self.pt_src_id = LasFile.pt_src_id
+        ## The following conditional code is redundant for 
+        ## simple.las, which of course has only one pt. format.
+        ## Perhaps find several other files?
         if LasFile._header.PtDatFormatID in (1,2,3,4,5):
             self.gps_time = LasFile.gps_time
         if LasFile._header.PtDatFormatID in (2,3,5):
@@ -61,26 +64,38 @@ class LasReaderTestCase(unittest.TestCase):
         
         
     def test_intensity(self):
-        self.assertEqual(self.p1.intensity , 233 , self.intensity[self.idx1])
-        self.assertEqual(self.p2.intensity , 1 , self.intensity[self.idx2])
+        self.assertEqual(self.p1.intensity , 233 ,
+             self.intensity[self.idx1])
+        self.assertEqual(self.p2.intensity , 1 , 
+            self.intensity[self.idx2])
      
     
     def test_bit_flags(self):
         self.assertEqual(self.p1.flag_byte , self.flag_byte[self.idx1])
         self.assertEqual(self.p2.flag_byte , self.flag_byte[self.idx2])
-        self.assertEqual(self.p1.return_num , self.return_num[self.idx1] , 1)
-        self.assertEqual(self.p2.return_num , self.return_num[self.idx2] , 2)
-        self.assertEqual(self.p1.num_returns , self.num_returns[self.idx1] , 1)
-        self.assertEqual(self.p2.num_returns , self.num_returns[self.idx2] , 2)
-        self.assertEqual(self.p1.scan_dir_flag , self.scan_dir_flag[self.idx1] , 0)
-        self.assertEqual(self.p2.scan_dir_flag , self.scan_dir_flag[self.idx2] , 1)
-        self.assertEqual(self.p1.edge_flight_line , self.edge_flight_line[self.idx1] , 0)
-        self.assertEqual(self.p2.edge_flight_line , self.edge_flight_line[self.idx2] , 0)
+        self.assertEqual(self.p1.return_num , 
+            self.return_num[self.idx1] , 1)
+        self.assertEqual(self.p2.return_num , 
+            self.return_num[self.idx2] , 2)
+        self.assertEqual(self.p1.num_returns , 
+            self.num_returns[self.idx1] , 1)
+        self.assertEqual(self.p2.num_returns , 
+            self.num_returns[self.idx2] , 2)
+        self.assertEqual(self.p1.scan_dir_flag , 
+            self.scan_dir_flag[self.idx1] , 0)
+        self.assertEqual(self.p2.scan_dir_flag , 
+            self.scan_dir_flag[self.idx2] , 1)
+        self.assertEqual(self.p1.edge_flight_line , 
+            self.edge_flight_line[self.idx1] , 0)
+        self.assertEqual(self.p2.edge_flight_line , 
+            self.edge_flight_line[self.idx2] , 0)
    
   
     def test_scan_angle_rank(self):
-        self.assertEqual(self.p1.scan_angle_rank , 2 , self.scan_angle_rank[self.idx1])
-        self.assertEqual(self.p2.scan_angle_rank , 12 , self.scan_angle_rank[self.idx2]) 
+        self.assertEqual(self.p1.scan_angle_rank , 2 , 
+            self.scan_angle_rank[self.idx1])
+        self.assertEqual(self.p2.scan_angle_rank , 12 , 
+            self.scan_angle_rank[self.idx2]) 
  
 
     def test_raw_classification(self):
@@ -91,8 +106,10 @@ class LasReaderTestCase(unittest.TestCase):
 
 
     def test_ptstrcid(self):
-        self.assertEqual(self.p1.pt_src_id , 7328 , self.pt_src_id[self.idx1])
-        self.assertEqual(self.p2.pt_src_id , 7334 , self.pt_src_id[self.idx2])
+        self.assertEqual(self.p1.pt_src_id , 7328 , 
+            self.pt_src_id[self.idx1])
+        self.assertEqual(self.p2.pt_src_id , 7334 , 
+            self.pt_src_id[self.idx2])
 
 
     def test_GPSTime(self):

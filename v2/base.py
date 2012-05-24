@@ -435,6 +435,29 @@ class Writer(FileManager):
         self._map.close()
         self.fileref.close()
 
+    def SetDimension(self, name,dim):
+        ptrecs = self.get_pointrecordscount()
+        if len(dim) != ptrecs:
+            raise Exception("Error, new dimension length (%s) does not match"%str(len(dim)) + " the number of points (%s)" % str(ptrecs))
+        try:
+            specs = Formats[name]
+            return(self._SetDimension(dim,specs[0], specs[1], 
+                                     specs[2]))
+        except KeyError:
+            raise Exception("Dimension: " + str(name) + 
+                            "not found.")
+
+    def _SetDimension(self,dim,offs, fmt, length):
+        if type(self.PointRefs) == bool:
+            self.buildPointRefs()
+        idx = xrange(len(self.PointRefs))
+        def f(x):
+            self._map[self.PointRefs[x]+offs:self.PointRefs[x]
+                +offs+length] = struct.pack(fmt,dim[x])
+        map(f,idx)
+        return True
+
+
     def SetHeader(self, header):
         pass    
     
