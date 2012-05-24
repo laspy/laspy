@@ -325,7 +325,9 @@ class FileManager():
                 self._map[x+offs:x+offs+length])[0],self.PointRefs))
         return(map(lambda x: self._map[x+offs:x+offs+length]
             , self.PointRefs))
-                
+    
+
+    ### To Implement: Scale            
     def GetX(self, scale=False):
         return(self.GetDimension("X"))
        
@@ -542,26 +544,29 @@ class Writer(FileManager):
     def set_output_srs(self, srs):
         pass
 
+    ##  To Implement: Scale
     def SetX(self,X, scale = False):
-        pass
+        self.SetDimension("X", X)
 
     def SetY(self,Y, scale = False):
-        pass
+        self.SetDimension("Y", Y)
 
     def SetZ(self, Z, scale = False):
-        pass
+        self.SetDimension("Z", Z)
 
     def SetIntensity(self, intensity):
-        pass
+        self.SetDimension("Intensity", intensity)
     
     def SetFlagByte(self, byte):
-        pass
+        self.SetDimension("FlagByte", byte)
     
+    ## To Implement: Set Bits
+
     def SetReturnNum(self, num):
         pass
 
     def SetNumReturns(self, num):
-        pass
+        pass        
 
     def SetScanDirFlag(self, flag):
         pass
@@ -570,8 +575,9 @@ class Writer(FileManager):
         pass
 
     def SetRawClassification(self, classification):
-        pass
+        self.SetDimension("RawClassification", classification)
     
+    ## To Implement: Set Bits
     def SetClassificaton(self, classification):
         pass
 
@@ -585,46 +591,134 @@ class Writer(FileManager):
         pass
     
     def SetScanAngleRank(self, rank):
-        pass
+        self.SetDimension("ScanAngleRank", rank)
 
     def SetUserData(self, data):
-        pass
+        self.SetDimension("UserData", data)
     
     def SetPtSrcId(self, data):
-        pass
+        self.SetDimension("PtSrcId", data)
     
     def SetGPSTime(self, data):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn in (1,2,3,4,5):    
+            self.SetDimension("GPSTime_12345", data)
+            return
+        raise Exception("GPS Time is not available for point format: " + str(vsn))
     
     def SetRed(self, red):
-        pass
-    
+        vsn = self.Header.PtDatFormatID
+        if vsn in (3,5):
+            self.SetDimension("Red_35", red)
+            return
+        elif vsn in (2):
+            self.SetDimension("Red_2", red)
+            return
+        raise Exception("Color Data Not Available for Point Format: " + str(vsn))
+
     def SetGreen(self, green):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn in (3,5):
+            self.SetDimension("Green_35", green)
+            return
+        elif vsn in (2):
+            self.SetDimension("Green_2", green)
+            return
+        raise Exception("Color Data Not Available for Point Format: " + str(vsn))
+
+
     
     def SetBlue(self, blue):
-        pass
-    
+        vsn = self.Header.PtDatFormatID
+        if vsn in (3,5):
+            self.SetDimension("Blue_35", blue)
+            return
+        elif vsn in (2):
+            self.SetDimension("Blue_2", blue)
+            return
+        raise Exception("Color Data Not Available for Point Format: " + str(vsn))
+
     def SetWavePacketDescpIdx(self, idx):
-        pass
-    
+        vsn = self.Header.PtDatFormatID
+        if vsn == 5:
+            self.SetDimension("WavePacketDescpIndex_5", idx)
+            return
+        elif vsn == 4:
+            self.SetDimension("WavePacketDescpIndex_4", idx)
+            return
+        raise Exception("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
+
     def SetByteOffsetToWavefmData(self, idx):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn == 5:
+            self.SetDimension("ByteOffsetToWavefmData_5", idx)
+            return
+        elif vsn == 4:
+            self.SetDimension("ByteOffsetToWavefmData_4", idx)
+            return
+        raise Exception("Byte Offset To Waveform Data Not Available for Point Format: " + str(vsn))
+
+
     
     def SetWavefmPktSize(self, size):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn == 5:
+            self.SetDimension("WavefmPktSize_5", size)
+            return
+        elif vsn == 4:
+            self.SetDimension("WavefmPktSize_4", size)
+            return
+        raise Exception("Waveform Packet Size Not Available for Point Format: " + str(vsn))
+
+
     
     def SetReturnPtWavefmLoc(self, loc):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn == 5:
+            self.SetDimension("ReturnPtWavefmLoc_5", loc)
+            return
+        elif vsn == 4:
+            self.SetDimension("ReturnPtWavefmLoc_4", loc)
+            return
+        raise Exception("Return Point Waveform Loc Not Available for Point Format: " + str(vsn))
+
+
     
     def SetX_t(self, x):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn == 5:
+            self.SetDimension("X_t_5", x)
+            return
+        elif vsn == 4:
+            self.SetDimension("X_t_4", x)
+            return
+        raise Exception("X_t Not Available for Point Format: " + str(vsn))
+
+
     
     def SetY_t(self, y):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn == 5:
+            self.SetDimension("Y_t_5", y)
+            return
+        elif vsn == 4:
+            self.SetDimension("Y_t_4", y)
+            return
+        raise Exception("Y_t Not Available for Point Format: " + str(vsn))
+
+
     
     def SetZ_t(self, z):
-        pass
+        vsn = self.Header.PtDatFormatID
+        if vsn == 5:
+            self.SetDimension("Z_t_5", z)
+            return
+        elif vsn == 4:
+            self.SetDimension("Z_t_4", z)
+            return
+        raise Exception("Z_t Not Available for Point Format: " + str(vsn))
+
+
     
     
 
