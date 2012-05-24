@@ -9,19 +9,19 @@ import struct
 class Point():
     def __init__(self, reader, startIdx ,version):
         self.Version = version
-        self.X = reader.ReadWords("<L", 1, 4)
-        self.Y = reader.ReadWords("<L", 1, 4)
-        self.Z = reader.ReadWords("<L", 1, 4)
-        self.intensity = reader.ReadWords("<H", 1, 2)
+        self.X = reader.ReadWords("X")
+        self.Y = reader.ReadWords("Y")
+        self.Z = reader.ReadWords("Z")
+        self.intensity = reader.ReadWords("Intensity")
         ###########################
-        self.flag_byte = reader.ReadWords("<B",1,1)
+        self.flag_byte = reader.ReadWords("FlagByte")
         bstr = reader.binaryStr(self.flag_byte)
         self.return_num = reader.packedStr(bstr[0:3])
         self.num_returns = reader.packedStr(bstr[3:6])
         self.scan_dir_flag = reader.packedStr(bstr[6])
         self.edge_flight_line = reader.packedStr(bstr[7])
         ###########################
-        self.raw_classification = reader.ReadWords("<B", 1,1)
+        self.raw_classification = reader.ReadWords("RawClassification")
         ##########################
         bstr = reader.binaryStr(self.raw_classification)
         self.classification = reader.packedStr(bstr[0:5])
@@ -31,63 +31,125 @@ class Point():
 
         #########################
 
-        self.scan_angle_rank = reader.ReadWords("<B",1,1)
-        self.user_data = reader.ReadWords("<B",1,1)
-        self.pt_src_id = reader.ReadWords("<H",1,2)
+        self.scan_angle_rank = reader.ReadWords("ScanAngleRank")
+        self.user_data = reader.ReadWords("UserData")
+        self.pt_src_id = reader.ReadWords("PtSrcId")
         if self.Version in (1,3,4,5):
-            self.gps_time = reader.ReadWords("<d",1,8)
+            self.gps_time = reader.ReadWords("GPSTime_12345")
         if self.Version in (2,3,5):
-            self.red = reader.ReadWords("<H",1,2)
-            self.green = reader.ReadWords("<H",1,2)
-            self.blue = reader.ReadWords("<H",1,2)
+            ## These formats (_35) don't matter to the ReadWords method, 
+            ## wich relies on sequential reading. It ignores offset data
+            ## which is specific to the _35's vs _2's etc.
+            self.red = reader.ReadWords("Red_35")
+            self.green = reader.ReadWords("Green_35")
+            self.blue = reader.ReadWords("Blue_35")
         if self.Version in (4,5):
-            self.wave_packet_desc_index = reader.ReadWords("<B",1,1)
-            self.byte_offset_to_waveform_data = reader.ReadWords("<Q",1,8)
-            self.waveform_packet_size = reader.ReadWords("<L",1,4)
-            self.return_pt_waveform_loc = reader.ReadWords("<f",1,4)
-            self.x_t = reader.ReadWords("<f",1,4)
-            self.y_t = reader.ReadWords("<f",1,4)
-            self.z_t = reader.ReadWords("<f",1,4)
+            self.wave_packet_desc_index = reader.ReadWords("WavePacketDescpIndex_5")
+            self.byte_offset_to_waveform_data = reader.ReadWords("ByteOffsetToWavefmData_5")
+            self.waveform_packet_size = reader.ReadWords("WavefmPktSize_5")
+            self.return_pt_waveform_loc = reader.ReadWords("ReturnPtWavefmLoc_5")
+            self.x_t = reader.ReadWords("X_t_5")
+            self.y_t = reader.ReadWords("Y_t_5")
+            self.z_t = reader.ReadWords("Z_t_5")
 
 class VarLenRec():
     def __init__(self, reader):
-        self.Reserved = reader.ReadWords("<H", 1, 2)
-        self.UserID = "".join(reader.ReadWords("<s",16,1))
-        self.RecordID = reader.ReadWords("<H", 1,2)
-        self.RecLenAfterHeader = reader.ReadWords("<H",1,2)
-        self.Description = "".join(reader.ReadWords("<s",32,1))
+        self.Reserved = reader.ReadWords("Reserved")
+        self.UserID = "".join(reader.ReadWords("UserID"))
+        self.RecordID = reader.ReadWords("RecordID")
+        self.RecLenAfterHeader = reader.ReadWords("RecLenAfterHeader")
+        self.Description = "".join(reader.ReadWords("Description"))
 
 Formats={
-"X":(0,"<L",4),
-"Y":(4,"<L",4),
-"Z":(8,"<L",4),
-"Intensity":(12,"<H",2),
-"FlagByte":(14,"<B",1),
-"RawClassification":(15,"<B",1),
-"ScanAngleRank":(16,"<B",1),
-"UserData":(17,"<B",1),
-"PtSrcId":(18,"<H",2),
-"GPSTime":(20,"<d",8),
-"Red_35":(28,"<H",2),
-"Red_2":(20,"<H",2),
-"Green_35":(30,"<H",2),
-"Green_2":(22,"<H",2),
-"Blue_35":(32,"<H",2),
-"Blue_2":(24,"<H",2),
-"WavePacketDescpIdx_5":(34,"<B",1),
-"WavePacketDescpIdx_4":(28,"<B",1),
-"ByteOffsetToWavefmData_5":(35,"<Q",8),
-"ByteOffsetToWavefmData_4":(29,"<Q",8),
-"WavefmPktSize_5":(43,"<L",4),
-"WavefmPktSize_4":(37,"<L",4),
-"ReturnPtWavefmLoc_5":(47,"<f",4),
-"ReturnPtWavefmLoc_4":(41,"<f",4),
-"X_t_5":(51,"<f",4),
-"X_t_4":(45,"<f",4),
-"Y_t_5":(56,"<f",4),
-"Y_t_4":(49,"<f",4),
-"Z_t_5":(60,"<f",4),
-"Z_t_4":(54,"<f",4)}
+### Point Fields
+"X":(0,"<L",4,1),
+"Y":(4,"<L",4,1),
+"Z":(8,"<L",4,1),
+"Intensity":(12,"<H",2,1),
+"FlagByte":(14,"<B",1,1),
+"RawClassification":(15,"<B",1,1),
+"ScanAngleRank":(16,"<B",1,1),
+"UserData":(17,"<B",1,1),
+"PtSrcId":(18,"<H",2,1),
+"GPSTime_12345":(20,"<d",8,1),
+"Red_35":(28,"<H",2,1),
+"Red_2":(20,"<H",2,1),
+"Green_35":(30,"<H",2,1),
+"Green_2":(22,"<H",2,1),
+"Blue_35":(32,"<H",2,1),
+"Blue_2":(24,"<H",2,1),
+"WavePacketDescpIdx_5":(34,"<B",1,1),
+"WavePacketDescpIdx_4":(28,"<B",1,1),
+"ByteOffsetToWavefmData_5":(35,"<Q",8,1),
+"ByteOffsetToWavefmData_4":(29,"<Q",8,1),
+"WavefmPktSize_5":(43,"<L",4,1),
+"WavefmPktSize_4":(37,"<L",4,1),
+"ReturnPtWavefmLoc_5":(47,"<f",4,1),
+"ReturnPtWavefmLoc_4":(41,"<f",4,1),
+"X_t_5":(51,"<f",4,1),
+"X_t_4":(45,"<f",4,1),
+"Y_t_5":(56,"<f",4,1),
+"Y_t_4":(49,"<f",4,1),
+"Z_t_5":(60,"<f",4,1),
+"Z_t_4":(54,"<f",4,1),
+
+### VLR Header Fields
+"Reserved":(0, "<H", 2, 1),
+"UserID":(2, "s", 1, 16),
+"RecordID":(18,"<H",2,1),
+"RecLenAfterHeader":(20,"<H",2,1),
+"Description":(22, "<s",1,32),
+
+### Header Fields
+"FileSig":(0,"<s",1,4),
+"FileSrc":(4,"<H",2,1),
+"GlobalEncoding":(6,"<H",2,1),
+"ProjID1":(8,"<L",4,1),
+"ProjID2":(12,"<H",2,1),
+"ProjID3":(14,"<H",2,1),
+"ProjID4":(16,"<B",1,8,),
+"VersionMajor":(24,"<B",1,1),
+"VersionMinor":(25,"<B",1,1),
+"SysId":(26,"<s",1,32),
+"GenSoft":(58,"<s",1,32),
+"CreatedDay":(90,"<H",2,1),
+"CreatedYear":(92,"<H",2,1),
+"HeaderSize":(94,"<H",2,1),
+"OffsetToPointData":(96,"<L",4,1),
+"NumVariableLenRecs":(100,"<L",4,1),
+"PtDatFormatID":(104,"<B",1,1),
+"PtDatRecLen":(105,"<H",2,1),
+"NumPtRecs":(107,"<L",4,1),
+"NumPtsByReturn_3":(108,"<L",4,7),
+"NumPtsByReturn_x":(108,"<L",4,5),
+#_3 denotes LAS version 1.3, _x denotes 1.0,1.1,or1.2
+"XScale_3":(136,"<d",8,1),
+"XScale_x":(128,"<d",8,1),
+"YScale_3":(144,"<d",8,1),
+"YScale_x":(136,"<d",8,1),
+"ZScale_3":(152,"<d",8,1),
+"ZScale_x":(144,"<d",8,1),
+"XOffset_3":(160,"<d",8,1),
+"XOffset_x":(152,"<d",8,1),
+"YOffset_3":(168,"<d",8,1),
+"YOffset_x":(160,"<d",8,1),
+"ZOffset_3":(176,"<d",8,1),
+"ZOffset_x":(168,"<d",8,1),
+"XMax_3":(184,"<d",8,1),
+"XMax_x":(176,"<d",8,1),
+"XMin_3":(192,"<d",8,1),
+"XMin_x":(184,"<d",8,1),
+"YMax_3":(200,"<d",8,1),
+"YMax_x":(192,"<d",8,1),
+"YMin_3":(208,"<d",8,1),
+"YMin_x":(200,"<d",8,1),
+"ZMax_3":(216,"<d",8,1),
+"ZMax_x":(208,"<d",8,1),
+"ZMin_3":(224,"<d",8,1),
+"ZMin_x":(216,"<d",8,1),
+"StWavefmDatPktRec_3":(232,"<Q",8,1),
+"StWavefmDatPktRec_x":(224,"<Q",8,1)
+}
 
 
 
@@ -159,7 +221,15 @@ class FileManager():
             return
         self._map.seek(bytes, 0)
         
-    def ReadWords(self, fmt, num, bytes):
+    def ReadWords(self, name):
+        try:
+            spec = Formats[name]
+        except KeyError:
+            raise Exception("Dimension " + name + "not found.")
+        return(self._ReadWords(spec[1], spec[3], spec[2]))
+
+
+    def _ReadWords(self, fmt, num, bytes):
         outData = []
         for i in xrange(num):
             dat = self.read(bytes)
@@ -327,7 +397,7 @@ class FileManager():
     def GetGPSTime(self):
         fmt = self.Header.PtDatFormatID
         if fmt in (1,2,3,4,5):
-            return(self.GetDimension("GPSTime"))
+            return(self.GetDimension("GPSTime_12345"))
         raise Exception("GPS Time is not defined on pt format: "
                         + str(fmt))
     
@@ -455,7 +525,8 @@ class Writer(FileManager):
             self._map[self.PointRefs[x]+offs:self.PointRefs[x]
                 +offs+length] = struct.pack(fmt,dim[x])
         map(f,idx)
-        self._map.flush()
+        # Is this desireable
+        #self._map.flush()
         return True
 
 
