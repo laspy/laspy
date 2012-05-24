@@ -192,7 +192,7 @@ class FileManager():
             pwr -= 1
         return(out)
 
-    def binaryStr(self,N):
+    def binaryStr(self,N, zerolen = 8):
         arr = self.binaryFmt(N, [])
         if arr == 0:
             return("0"*8)
@@ -200,7 +200,10 @@ class FileManager():
         for i in arr:
             outstr[i] = "1"
         outstr = "".join(outstr)
-        return(outstr + '0'*(8-len(outstr)))
+        padding = zerolen-len(outstr)
+        if padding < 0:
+            raise Exception("Invalid Data: Packed Length is Greater than allowed.")
+        return(outstr + '0'*(zerolen-len(outstr)))
 
     def read(self, bytes):
         self.bytesRead += bytes
@@ -547,23 +550,31 @@ class Writer(FileManager):
     ##  To Implement: Scale
     def SetX(self,X, scale = False):
         self.SetDimension("X", X)
+        return
 
     def SetY(self,Y, scale = False):
         self.SetDimension("Y", Y)
+        return
 
     def SetZ(self, Z, scale = False):
         self.SetDimension("Z", Z)
+        return
 
     def SetIntensity(self, intensity):
         self.SetDimension("Intensity", intensity)
+        return
     
     def SetFlagByte(self, byte):
         self.SetDimension("FlagByte", byte)
-    
-    ## To Implement: Set Bits
+        return
 
     def SetReturnNum(self, num):
-        pass
+        flagByte = self.binaryStr(self.GetFlagByte())
+        newbits = map(lambda x: self.binaryStr(x, 3), num)
+        outByte = map(lambda x: self.packetStr(newbits[x][0:3] 
+            + flagByte[x][3:8]), xrange(len(newBits)))
+        self.SetDimension("FlagByte", byte)
+        return
 
     def SetNumReturns(self, num):
         pass        
@@ -592,12 +603,15 @@ class Writer(FileManager):
     
     def SetScanAngleRank(self, rank):
         self.SetDimension("ScanAngleRank", rank)
+        return
 
     def SetUserData(self, data):
         self.SetDimension("UserData", data)
+        return
     
     def SetPtSrcId(self, data):
         self.SetDimension("PtSrcId", data)
+        return
     
     def SetGPSTime(self, data):
         vsn = self.Header.PtDatFormatID
