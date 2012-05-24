@@ -613,16 +613,50 @@ class Writer(FileManager):
     
     ## To Implement: Set Bits
     def SetClassificaton(self, classification):
-        pass
+        classByte = self.binaryStr(self.GetRawClassification())
+        newbits = map(lambda x: self.binaryStr(x, 5), 
+            classification)
+        outByte = map(lambda x: 
+            self.packetStr( 
+            + newbits[x][0:5]
+            + classByte[x][5:8]), xrange(len(newBits)))
+        self.SetDimension("FlagByte", outByte)
+        return
 
     def SetSynthetic(self, synthetic):
-        pass
+        classByte = self.binaryStr(self.GetRawClassification())
+        newbits = map(lambda x: self.binaryStr(x, 1), 
+            synthetic)
+        outByte = map(lambda x: 
+            self.packetStr( 
+            + classByte[x][0:5]
+            + newbits[x][5]
+            + classByte[x][6:8]), xrange(len(newBits)))
+        self.SetDimension("FlagByte", outByte)
+        return
 
     def SetKeyPoint(self, pt):
-        pass
+        classByte = self.binaryStr(self.GetRawClassification())
+        newbits = map(lambda x: self.binaryStr(x, 1), 
+            pt)
+        outByte = map(lambda x: 
+            self.packetStr( 
+            + classByte[x][0:6]
+            + newbits[x][6]
+            + classByte[x][7]), xrange(len(newBits)))
+        self.SetDimension("FlagByte", outByte)
+        return
 
     def SetWithheld(self, withheld):
-        pass
+        classByte = self.binaryStr(self.GetRawClassification())
+        newbits = map(lambda x: self.binaryStr(x, 1), 
+            withheld)
+        outByte = map(lambda x: 
+            self.packetStr( 
+            + classByte[x][0:7]
+            + newbits[x][7]), xrange(len(newBits)))
+        self.SetDimension("FlagByte", outByte)
+        return
     
     def SetScanAngleRank(self, rank):
         self.SetDimension("ScanAngleRank", rank)
