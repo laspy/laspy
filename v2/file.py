@@ -49,7 +49,7 @@ import header as lasheader
 import os
 import types
 
-files = {'append': [], 'write': [], 'read': {}}
+files = {'append': {}, 'write': {}, 'read': {}}
 import sys
 
 
@@ -104,7 +104,7 @@ class File(object):
 
         #check in the registry if we already have the file open
         if mode == 'r':
-            for f in files['write'] + files['append']:
+            for f in files['write'].keys() + files['append'].keys():
                 if f == self.filename:
                     raise Exception("File %s is already open for "
                                             "write.  Close the file or delete "
@@ -112,7 +112,7 @@ class File(object):
         else:
             # we're in some kind of write mode, and if we already have the
             # file open, complain to the user.
-            for f in files['read'].keys() + files['append'] + files['write']:
+            for f in files['read'].keys() + files['append'].keys() + files['write'].keys():
                 if f == self.filename:
                     raise Exception("File %s is already open. "
                                             "Close the file or delete the "
@@ -148,7 +148,7 @@ class File(object):
         if self._mode == 'w':
             self.Writer = base.Writer(self.filename)
             self.Reader = self.Writer
-            if self._header == none:
+            if self._header == None:
                 self._header = self.Reader.GetHeader()
             else:
                 base.CreateWithHeader(self.filename, self._header)
@@ -178,9 +178,13 @@ class File(object):
             self.Reader.close()           
         else:
             try:
-                files['append'].remove(self.filename)
+                files['append'][self.filename] -= 1
+                if files['append'][self.filename] == 0:
+                    files['append'].pop(self.filename)
             except:
-                files['write'].remove(self.filename)
+                files['write'][self.filename]-=1
+                if files['write'][self.filename] == 0:
+                    files['write'].pop(self.filename)
             self.Writer.close()    
     
     def assertWriteMode(self):

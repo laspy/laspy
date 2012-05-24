@@ -455,6 +455,7 @@ class Writer(FileManager):
             self._map[self.PointRefs[x]+offs:self.PointRefs[x]
                 +offs+length] = struct.pack(fmt,dim[x])
         map(f,idx)
+        self._map.flush()
         return True
 
 
