@@ -143,8 +143,24 @@ class LasReaderTestCase(unittest.TestCase):
             self.assertEqual(pt1.Z, pt2.Z)
             self.assertEqual(pt1.gps_time, pt2.gps_time)
             k += 1
-       
 
+    def tearDown(self):
+        self.FileObject.close()
+       
+class LasWriterTestCase(unittest.TestCase):
+    def setUp(self):
+        self.FileObject = File.File("simple.las", mode= "w")
+    
+    def test_x(self):
+        x = self.FileObject.X
+        self.FileObject.X = x
+        self.assertEqual(x, self.FileObject.X)        
+    def test_y(self):
+        y = self.FileObject.Y
+        self.FileObject.Y = y
+        self.assertEqual(y, self.FileObject.Y)
+    def tearDown(self):
+        self.FileObject.close()
 
 if __name__=="__main__":
     unittest.main()
