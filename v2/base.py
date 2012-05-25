@@ -587,87 +587,100 @@ class Writer(FileManager):
         return
 
     def SetNumReturns(self, num):
-        flagByte = self.binaryStr(self.GetFlagByte())
-        newbits = map(lambda x: self.binaryStr(x, 3), num)
-        outByte = map(lambda x:
-            self.packetStr( 
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,3))
+        vfunc3 = np.vectorize(lambda x: 
+            self.packedStr(
             flagByte[x][0:3]
-            + newbits[x][3:6] 
-            + flagByte[x][6:8]), xrange(len(newBits)))
-        self.SetDimension("FlagByte", byte)
-        return       
+            + newbits[x][3:6]
+            + flagByte[x][6:8]))
+        flagByte = vfunc1(self.GetFlagByte())
+        newbits = vfunc2(num)
+        outByte = vfunc3(np.array(xrange(len(newbits))))
+        self.SetDimension("FlagByte", outByte)
+        return
 
     def SetScanDirFlag(self, flag):
-        flagByte = self.binaryStr(self.GetFlagByte())
-        newbits = map(lambda x: self.binaryStr(x, 1), flag)
-        outByte = map(lambda x: 
-            self.packetStr( 
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,1))
+        vfunc3 = np.vectorize(lambda x: 
+            self.packedStr(
             flagByte[x][0:6]
             + newbits[x][6]
-            + flagByte[x][6:8]), xrange(len(newBits)))
+            + flagByte[x][6:8]))
+        flagByte = vfunc1(self.GetFlagByte())
+        newbits = vfunc2(num)
+        outByte = vfunc3(np.array(xrange(len(newbits))))
         self.SetDimension("FlagByte", outByte)
-        return 
+        return
+
 
     def SetEdgeFlightLine(self, line):
-        flagByte = self.binaryStr(self.GetFlagByte())
-        newbits = map(lambda x: self.binaryStr(x, 1), line)
-        outByte = map(lambda x: self.packetStr(
-            flagBytep[x][0:7]
-            + newbits[x][7] 
-            ), xrange(len(newBits)))
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,1))
+        vfunc3 = np.vectorize(lambda x: 
+            self.packedStr(
+            flagByte[x][0:7]
+            + newbits[x][7]))
+        flagByte = vfunc1(self.GetFlagByte())
+        newbits = vfunc2(num)
+        outByte = vfunc3(np.array(xrange(len(newbits))))
         self.SetDimension("FlagByte", outByte)
-        return 
+        return       
+
 
     def SetRawClassification(self, classification):
         self.SetDimension("RawClassification", classification)
     
-    ## To Implement: Set Bits
     def SetClassificaton(self, classification):
-        classByte = self.binaryStr(self.GetRawClassification())
-        newbits = map(lambda x: self.binaryStr(x, 5), 
-            classification)
-        outByte = map(lambda x: 
-            self.packetStr( 
-            + newbits[x][0:5]
-            + classByte[x][5:8]), xrange(len(newBits)))
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 5))
+        vfunc3 = np.vectorize(lambda x: self.packedStr(newbits[x][0:5]
+                          + classByte[x][5:8]))          
+        classByte = vfunc1(self.GetRawClassification())
+        newbits = vfunc2(classification)
+        outByte = vfunc3(np.array(xrange(len(newBits))))
         self.SetDimension("FlagByte", outByte)
         return
 
     def SetSynthetic(self, synthetic):
-        classByte = self.binaryStr(self.GetRawClassification())
-        newbits = map(lambda x: self.binaryStr(x, 1), 
-            synthetic)
-        outByte = map(lambda x: 
-            self.packetStr( 
-            + classByte[x][0:5]
-            + newbits[x][5]
-            + classByte[x][6:8]), xrange(len(newBits)))
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
+        vfunc3 = np.vectorize(lambda x: self.packedStr(
+            classByte[x][0:5]
+          + newbits[x][5]
+          + classByte[x][6:8]))          
+        classByte = vfunc1(self.GetRawClassification())
+        newbits = vfunc2(synthetic)
+        outByte = vfunc3(np.array(xrange(len(newBits))))
         self.SetDimension("FlagByte", outByte)
         return
 
     def SetKeyPoint(self, pt):
-        classByte = self.binaryStr(self.GetRawClassification())
-        newbits = map(lambda x: self.binaryStr(x, 1), 
-            pt)
-        outByte = map(lambda x: 
-            self.packetStr( 
-            + classByte[x][0:6]
-            + newbits[x][6]
-            + classByte[x][7]), xrange(len(newBits)))
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
+        vfunc3 = np.vectorize(lambda x: self.packedStr(
+            classByte[x][0:6]
+          + newbits[x][6]
+          + classByte[x][7]))          
+        classByte = vfunc1(self.GetRawClassification())
+        newbits = vfunc2(pt)
+        outByte = vfunc3(np.array(xrange(len(newBits))))
+        self.SetDimension("FlagByte", outByte)
+        return
+   
+    def SetWithheld(self, withheld):
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
+        vfunc3 = np.vectorize(lambda x: self.packedStr(
+            classByte[x][0:7]
+          + newbits[x][7]))          
+        classByte = vfunc1(self.GetRawClassification())
+        newbits = vfunc2(withheld)
+        outByte = vfunc3(np.array(xrange(len(newBits))))
         self.SetDimension("FlagByte", outByte)
         return
 
-    def SetWithheld(self, withheld):
-        classByte = self.binaryStr(self.GetRawClassification())
-        newbits = map(lambda x: self.binaryStr(x, 1), 
-            withheld)
-        outByte = map(lambda x: 
-            self.packetStr( 
-            + classByte[x][0:7]
-            + newbits[x][7]), xrange(len(newBits)))
-        self.SetDimension("FlagByte", outByte)
-        return
-    
     def SetScanAngleRank(self, rank):
         self.SetDimension("ScanAngleRank", rank)
         return

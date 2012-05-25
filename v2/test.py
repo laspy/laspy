@@ -191,7 +191,14 @@ class LasWriterTestCase(unittest.TestCase):
         self.FileObject.return_num = rn
         rn2 = self.FileObject.get_return_num()
         self.assertTrue(all(rn == rn2))
-        
+    def test_overflow_return_num(self):
+        rn = self.FileObject.return_num + 100000
+        self.assertRaises(self.FileObject.return_num = rn)
+    def test_num_returns(self):
+        nr = self.FileObject.num_returns + 1
+        self.FileObject.num_returns = nr
+        nr2 = self.FileObject.get_num_returns()
+        assertTrue(all(nr == nr2))
     
     
 
