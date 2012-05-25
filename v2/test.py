@@ -156,11 +156,15 @@ class LasWriterTestCase(unittest.TestCase):
     def test_x(self):
         x = self.FileObject.X + 1
         self.FileObject.X = x
-        self.assertEqual(x, self.FileObject.get_x())        
+        x2 = self.FileObject.get_x()        
+        self.FileObject.X = x - 1
+        self.assertTrue(all(x == x2))        
     def test_y(self):
-        y = self.FileObject.Y
+        y = self.FileObject.Y + 1
         self.FileObject.Y = y
-        self.assertEqual(y, self.FileObject.Y)
+        y2 = self.FileObject.get_y()        
+        self.FileObject.Y = y - 1
+        self.assertTrue(all(y == y2))
     def tearDown(self):
         self.FileObject.close()
 
