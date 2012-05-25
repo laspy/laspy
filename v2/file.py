@@ -94,6 +94,7 @@ class File(object):
         ...     f2.write(p)
         >>> f2.close()
         """
+
         self.filename = os.path.abspath(filename)
         self._header = header
      
@@ -113,7 +114,7 @@ class File(object):
             # we're in some kind of write mode, and if we already have the
             # file open, complain to the user.
             for f in files['read'].keys() + files['append'].keys() + files['write'].keys():
-                if f == self.filename:
+                if f == self.filename: 
                     raise Exception("File %s is already open. "
                                             "Close the file or delete the "
                                             "reference to it" % filename)
@@ -156,7 +157,7 @@ class File(object):
             try:
                 files['write'][self.filename] += 1
             except KeyError:
-                files['read'][self.filename] = 1
+                files['write'][self.filename] = 1
 
         if '+' in self._mode and 'r' not in self._mode:
             pass
@@ -172,10 +173,11 @@ class File(object):
             try: 
                 files['read'][self.filename] -= 1
                 if files['read'][self.filename] == 0:
+                    
                     files['read'].pop(self.filename)
             except KeyError:
                 raise Exception("File %s was not found in accounting dictionary!" % self.filename)
-            self.Reader.close()           
+            self.Reader.close()
         else:
             try:
                 files['append'][self.filename] -= 1

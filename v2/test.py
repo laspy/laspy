@@ -4,7 +4,7 @@ import header as lasheader
 import unittest
 
 class LasReaderTestCase(unittest.TestCase):
-    def setUp(self):
+    def setUp(self): 
         self.FileObject = File.File("simple.las")
         LasFile = self.FileObject
 
@@ -144,11 +144,13 @@ class LasReaderTestCase(unittest.TestCase):
             self.assertEqual(pt1.gps_time, pt2.gps_time)
             k += 1
 
-    def tearDown(self):
-        self.FileObject.close()
-       
+    def tearDown(self): 
+        self.FileObject.close()       
+        
+
 class LasWriterTestCase(unittest.TestCase):
     def setUp(self):
+        
         self.FileObject = File.File("simple.las", mode= "w")
     
     def test_x(self):
