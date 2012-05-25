@@ -193,13 +193,33 @@ class LasWriterTestCase(unittest.TestCase):
         self.assertTrue(all(rn == rn2))
     def test_overflow_return_num(self):
         rn = self.FileObject.return_num + 100000
-        self.assertRaises(self.FileObject.return_num = rn)
+        with self.assertRaises(Exception):
+            self.FileObject.return_num = rn
     def test_num_returns(self):
         nr = self.FileObject.num_returns + 1
         self.FileObject.num_returns = nr
         nr2 = self.FileObject.get_num_returns()
-        assertTrue(all(nr == nr2))
-    
+        self.assertTrue(all(nr == nr2))
+    def test_scan_dir_flag(self):
+        def f(x):
+            if x == 1:
+                return(0)
+            return(1)
+        vf = np.vectorize(f) 
+        sdf = vf(self.FileObject.scan_dir_flag)
+        self.FileObject.scan_dir_flag = sdf
+        sdf2 = self.FileObject.get_scan_dir_flag()
+        self.assertTrue(all(sdf == sdf2))
+    def test_edge_flight_line(self):
+        def f(x):
+            if x == 1:
+                return(0)
+            return(1)
+        vf = np.vectorize(f)
+        efl = vf(self.FileObject.edge_flight_line)
+        self.FileObject.edge_flight_line = efl
+        efl2 = self.FileObject.get_edge_flight_line()
+        self.assertTrue(all(efl == efl2))
     
 
 

@@ -195,7 +195,7 @@ class FileManager():
     def binaryStr(self,N, zerolen = 8):
         arr = self.binaryFmt(N, [])
         if arr == 0:
-            return("0"*8)
+            return("0"*zerolen)
         outstr = ["0"]*(max(arr)+1)
         for i in arr:
             outstr[i] = "1"
@@ -346,7 +346,7 @@ class FileManager():
         return(self.GetDimension("Intensity"))
     
     def GetFlagByte(self):
-        return(self.GetDimension("FlagByte"))
+        return(np.array(self.GetDimension("FlagByte"), dtype="int64"))
     
     def GetReturnNum(self):
         rawDim = self.GetFlagByte()
@@ -373,7 +373,7 @@ class FileManager():
         return(vfunc(rawDim))
 
     def GetRawClassification(self):
-        return(self.GetDimension("RawClassification"))
+        return(np.array(self.GetDimension("RawClassification"), dtype="int64"))
     
     def GetClassification(self): 
         vfunc = np.vectorize(lambda x: 
@@ -573,61 +573,70 @@ class Writer(FileManager):
     def SetFlagByte(self, byte):
         self.SetDimension("FlagByte", byte)
         return
+    ##########
+    # Utility Function, refactor
+    
+    def binaryStrArr(self, arr, length = 8):
+        outArr = np.array(["0"*length]*len(arr))
+        idx = 0
+        for i in arr:
+            outArr[idx] = self.binaryStr(i, length)
+            idx += 1
+        return(outArr)
+        
+    def compress(self,arrs,idx, pack = True):
+        if pack:
+            outArr = np.array([1]*len(arrs[0]))
+        else:
+            outArr = np.array(["0"*8]*len(arrs[0]))
+       
+        for i in xrange(len(arrs[0])):
+            tmp = ""
+            j = 0
+            for arr in arrs:
+                tmp += arr[i][idx[j][0]:idx[j][1]]
+                j += 1
+            if pack:
+                tmp = self.packedStr(tmp)
+            outArr[i] = tmp 
+        
+        return(outArr)
+
+
+    ########
+
 
     def SetReturnNum(self, num):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,3))
-        vfunc3 = np.vectorize(lambda x: 
-            self.packedStr(newbits[x][0:3]
-            + flagByte[x][3:8]))
-        flagByte = vfunc1(self.GetFlagByte())
-        newbits = vfunc2(num)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
+        flagByte = self.binaryStrArr(self.GetFlagByte())
+        newBits = self.binaryStrArr(num, 3)
+        outByte = self.compress((newBits,flagByte), ((0,3), (3,8)))
         self.SetDimension("FlagByte", outByte)
         return
 
     def SetNumReturns(self, num):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,3))
-        vfunc3 = np.vectorize(lambda x: 
-            self.packedStr(
-            flagByte[x][0:3]
-            + newbits[x][3:6]
-            + flagByte[x][6:8]))
-        flagByte = vfunc1(self.GetFlagByte())
-        newbits = vfunc2(num)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
+        flagByte = self.binaryStrArr(self.GetFlagByte())
+        newBits = self.binaryStrArr(num, 3)
+        outByte = self.compress((flagByte,newBits,flagByte), 
+            ((0,3),(0,3), (6,8)))
         self.SetDimension("FlagByte", outByte)
         return
 
-    def SetScanDirFlag(self, flag):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,1))
-        vfunc3 = np.vectorize(lambda x: 
-            self.packedStr(
-            flagByte[x][0:6]
-            + newbits[x][6]
-            + flagByte[x][6:8]))
-        flagByte = vfunc1(self.GetFlagByte())
-        newbits = vfunc2(num)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
+    def SetScanDirFlag(self, flag): 
+        flagByte = self.binaryStrArr(self.GetFlagByte())
+        newBits = self.binaryStrArr(flag, 1)
+        outByte = self.compress((flagByte,newBits,flagByte), 
+            ((0,6),(0,1), (7,8)))
         self.SetDimension("FlagByte", outByte)
         return
 
 
     def SetEdgeFlightLine(self, line):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,1))
-        vfunc3 = np.vectorize(lambda x: 
-            self.packedStr(
-            flagByte[x][0:7]
-            + newbits[x][7]))
-        flagByte = vfunc1(self.GetFlagByte())
-        newbits = vfunc2(num)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
+        flagByte = self.binaryStrArr(self.GetFlagByte())
+        newBits = self.binaryStrArr(line, 1)
+        outByte = self.compress((flagByte,newBits), 
+            ((0,7),(0,1)))
         self.SetDimension("FlagByte", outByte)
-        return       
-
+        return
 
     def SetRawClassification(self, classification):
         self.SetDimension("RawClassification", classification)
@@ -635,7 +644,7 @@ class Writer(FileManager):
     def SetClassificaton(self, classification):
         vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
         vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 5))
-        vfunc3 = np.vectorize(lambda x: self.packedStr(newbits[x][0:5]
+        vfunc3 = np.vectorize(lambda x: self.packedStr(newbits[x]
                           + classByte[x][5:8]))          
         classByte = vfunc1(self.GetRawClassification())
         newbits = vfunc2(classification)
@@ -648,7 +657,7 @@ class Writer(FileManager):
         vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
         vfunc3 = np.vectorize(lambda x: self.packedStr(
             classByte[x][0:5]
-          + newbits[x][5]
+          + newbits[x]
           + classByte[x][6:8]))          
         classByte = vfunc1(self.GetRawClassification())
         newbits = vfunc2(synthetic)
@@ -661,7 +670,7 @@ class Writer(FileManager):
         vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
         vfunc3 = np.vectorize(lambda x: self.packedStr(
             classByte[x][0:6]
-          + newbits[x][6]
+          + newbits[x]
           + classByte[x][7]))          
         classByte = vfunc1(self.GetRawClassification())
         newbits = vfunc2(pt)
@@ -674,7 +683,7 @@ class Writer(FileManager):
         vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
         vfunc3 = np.vectorize(lambda x: self.packedStr(
             classByte[x][0:7]
-          + newbits[x][7]))          
+          + newbits[x]))          
         classByte = vfunc1(self.GetRawClassification())
         newbits = vfunc2(withheld)
         outByte = vfunc3(np.array(xrange(len(newBits))))
