@@ -578,12 +578,12 @@ class Writer(FileManager):
         vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
         vfunc2 = np.vectorize(lambda x: self.binaryStr(x,3))
         vfunc3 = np.vectorize(lambda x: 
-            self.packedStr(newbits[x][0:3])
-            + flagByte[x][3:8])
+            self.packedStr(newbits[x][0:3]
+            + flagByte[x][3:8]))
         flagByte = vfunc1(self.GetFlagByte())
         newbits = vfunc2(num)
-        outByte = vfunc3(np.array(xrange(len(newBits))))
-        self.SetDimension("FlagByte", byte)
+        outByte = vfunc3(np.array(xrange(len(newbits))))
+        self.SetDimension("FlagByte", outByte)
         return
 
     def SetNumReturns(self, num):

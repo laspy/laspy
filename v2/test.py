@@ -2,10 +2,17 @@ from base import *
 import file as File
 import header as lasheader
 import unittest
+import os
 
 class LasReaderTestCase(unittest.TestCase):
     def setUp(self): 
-        self.FileObject = File.File("simple.las")
+        inFile = open("../simple.las", "r")
+        inData = inFile.read()
+        outFile = open("./.temp.las", "w")
+        outFile.write(inData)
+        outFile.close()
+        inFile.close()
+        self.FileObject = File.File("./.temp.las")
         LasFile = self.FileObject
 
         self.X = LasFile.X
@@ -145,13 +152,19 @@ class LasReaderTestCase(unittest.TestCase):
             k += 1
 
     def tearDown(self): 
-        self.FileObject.close()       
+        self.FileObject.close() 
+        os.remove("./.temp.las")      
         
 
 class LasWriterTestCase(unittest.TestCase):
     def setUp(self):
-        
-        self.FileObject = File.File("simple.las", mode= "w")
+        inFile = open("../simple.las", "r")
+        inData = inFile.read()
+        outFile = open("./.temp.las", "w")
+        outFile.write(inData)
+        outFile.close()
+        inFile.close()
+        self.FileObject = File.File("./.temp.las", mode = "w")
     
     def test_x(self):
         x = self.FileObject.X + 1
@@ -165,8 +178,33 @@ class LasWriterTestCase(unittest.TestCase):
         y2 = self.FileObject.get_y()        
         self.FileObject.Y = y - 1
         self.assertTrue(all(y == y2))
+    def test_z(self):
+        z = self.FileObject.Z + 1
+        self.FileObject.Z = z
+        z2 = self.FileObject.get_z()
+        self.FileObject.Z = z - 1
+        self.assertTrue(all(z == z2))
+    def test_intensity(self):
+        i = self.FileObject.intensity + 1
+        self.FileObject.intensity = i
+        i2 = self.FileObject.intensity
+        self.FileObject.intensity = i - 1
+        self.assertTrue(all(i == i2))
+    def test_return_num(self):
+        rn = self.FileObject.return_num + 1
+        self.FileObject.return_num = rn
+        rn2 = self.FileObject.get_return_num()
+        self.FileObject.return_num = rn - 1
+        self.assertTrue(all(rn == rn2))
+        
+    
+    
+
+
     def tearDown(self):
         self.FileObject.close()
+        os.remove("./.temp.las")
+
 
 if __name__=="__main__":
     unittest.main()
