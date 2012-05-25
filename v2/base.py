@@ -346,7 +346,7 @@ class FileManager():
         return(self.GetDimension("Intensity"))
     
     def GetFlagByte(self):
-        return(np.array(self.GetDimension("FlagByte"), dtype="int64"))
+        return(self.GetDimension("FlagByte"))
     
     def GetReturnNum(self):
         rawDim = self.GetFlagByte()
@@ -373,7 +373,7 @@ class FileManager():
         return(vfunc(rawDim))
 
     def GetRawClassification(self):
-        return(np.array(self.GetDimension("RawClassification"), dtype="int64"))
+        return(self.GetDimension("RawClassification"))
     
     def GetClassification(self): 
         vfunc = np.vectorize(lambda x: 
