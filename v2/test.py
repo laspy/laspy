@@ -169,32 +169,27 @@ class LasWriterTestCase(unittest.TestCase):
     def test_x(self):
         x = self.FileObject.X + 1
         self.FileObject.X = x
-        x2 = self.FileObject.get_x()        
-        self.FileObject.X = x - 1
+        x2 = self.FileObject.get_x()         
         self.assertTrue(all(x == x2))        
     def test_y(self):
         y = self.FileObject.Y + 1
         self.FileObject.Y = y
         y2 = self.FileObject.get_y()        
-        self.FileObject.Y = y - 1
         self.assertTrue(all(y == y2))
     def test_z(self):
         z = self.FileObject.Z + 1
         self.FileObject.Z = z
         z2 = self.FileObject.get_z()
-        self.FileObject.Z = z - 1
         self.assertTrue(all(z == z2))
     def test_intensity(self):
         i = self.FileObject.intensity + 1
         self.FileObject.intensity = i
         i2 = self.FileObject.intensity
-        self.FileObject.intensity = i - 1
         self.assertTrue(all(i == i2))
     def test_return_num(self):
         rn = self.FileObject.return_num + 1
         self.FileObject.return_num = rn
         rn2 = self.FileObject.get_return_num()
-        self.FileObject.return_num = rn - 1
         self.assertTrue(all(rn == rn2))
         
     
