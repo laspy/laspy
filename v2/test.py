@@ -154,9 +154,9 @@ class LasWriterTestCase(unittest.TestCase):
         self.FileObject = File.File("simple.las", mode= "w")
     
     def test_x(self):
-        x = self.FileObject.X
+        x = self.FileObject.X + 1
         self.FileObject.X = x
-        self.assertEqual(x, self.FileObject.X)        
+        self.assertEqual(x, self.FileObject.get_x())        
     def test_y(self):
         y = self.FileObject.Y
         self.FileObject.Y = y

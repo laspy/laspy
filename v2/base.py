@@ -323,11 +323,13 @@ class FileManager():
     def _GetDimension(self,offs, fmt, length, raw = False):
         if type(self.PointRefs) == bool:
             self.buildPointRefs()
-        if not raw:            
-            return(map(lambda x: struct.unpack(fmt, 
-                self._map[x+offs:x+offs+length])[0],self.PointRefs))
-        return(map(lambda x: self._map[x+offs:x+offs+length]
-            , self.PointRefs))
+        if not raw:
+            vfunc = np.vectorize(lambda x: struct.unpack(fmt, 
+                self._map[x+offs:x+offs+length])[0])            
+            return(vfunc(self.PointRefs))
+        vfunc = np.vectorize(lambda x: 
+            self._map[x+offs:x+offs+length])
+        return(vfunc(self.PointRefs))
     
 
     ### To Implement: Scale            
@@ -348,47 +350,50 @@ class FileManager():
     
     def GetReturnNum(self):
         rawDim = self.GetFlagByte()
-        return(map(lambda x: 
-                    self.packedStr(self.binaryStr(x)[0:3]),
-                    rawDim))
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[0:3]))
+        return(vfunc(rawDim))
 
     def GetNumReturns(self):
         rawDim = self.GetFlagByte()
-        return(map(lambda x: 
-                    self.packedStr(self.binaryStr(x)[3:6]),
-                    rawDim))
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[3:6]))
+        return(vfunc(rawDim))
 
     def GetScanDirFlag(self):
         rawDim = self.GetFlagByte()
-        return(map(lambda x:
-                    self.packedStr(self.binaryStr(x)[6]),
-                    rawDim))
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[6]))
+        return(vfunc(rawDim))
 
     def GetEdgeFlightLine(self):
         rawDim = self.GetFlagByte()
-        return(map(lambda x:
-                    self.packedStr(self.binaryStr(x)[7]),
-                    rawDim))
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[7]))
+        return(vfunc(rawDim))
 
     def GetRawClassification(self):
         return(self.GetDimension("RawClassification"))
     
-    def GetClassification(self):
-        return(map(lambda x:
-            self.packedStr(self.binaryStr(x)[0:5]),
-            self.GetRawClassification()))
+    def GetClassification(self): 
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[0:5]))
+        return(vfunc(self.GetRawClassification()))
 
     def GetSynthetic(self):
-        return(map(lambda x: int(self.binaryStr(x)[5]), 
-                             self.GetRawClassification()))
-    
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[5]))
+        return(vfunc(self.GetRawClassification()))
+
     def GetKeyPoint(self):
-        return(map(lambda x: int(self.binaryStr(x)[6]), 
-                             self.GetRawClassification()))
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[6]))
+        return(vfunc(self.GetRawClassification()))
 
     def GetWithheld(self):
-        return(map(lambda x: int(self.binaryStr(x)[7]), 
-                             self.GetRawClassification())) 
+        vfunc = np.vectorize(lambda x: 
+            self.packedStr(self.binaryStr(x)[7]))
+        return(vfunc(self.GetRawClassification()))
 
     def GetScanAngleRank(self):
         return(self.GetDimension("ScanAngleRank"))
@@ -525,11 +530,12 @@ class Writer(FileManager):
     def _SetDimension(self,dim,offs, fmt, length):
         if type(self.PointRefs) == bool:
             self.buildPointRefs()
-        idx = xrange(len(self.PointRefs))
+        idx = np.array(xrange(len(self.PointRefs)))
         def f(x):
             self._map[self.PointRefs[x]+offs:self.PointRefs[x]
                 +offs+length] = struct.pack(fmt,dim[x])
-        map(f,idx)
+        vfunc = np.vectorize(f)
+        vfunc(idx)
         # Is this desireable
         #self._map.flush()
         return True
@@ -569,10 +575,14 @@ class Writer(FileManager):
         return
 
     def SetReturnNum(self, num):
-        flagByte = self.binaryStr(self.GetFlagByte())
-        newbits = map(lambda x: self.binaryStr(x, 3), num)
-        outByte = map(lambda x: self.packetStr(newbits[x][0:3] 
-            + flagByte[x][3:8]), xrange(len(newBits)))
+        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
+        vfunc2 = np.vectorize(lambda x: self.binaryStr(x,3))
+        vfunc3 = np.vectorize(lambda x: 
+            self.packedStr(newbits[x][0:3])
+            + flagByte[x][3:8])
+        flagByte = vfunc1(self.GetFlagByte())
+        newbits = vfunc2(num)
+        outByte = vfunc3(np.array(xrange(len(newBits))))
         self.SetDimension("FlagByte", byte)
         return
 
