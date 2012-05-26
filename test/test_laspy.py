@@ -1,12 +1,14 @@
-from base import *
-import file as File
-import header as lasheader
+from laspy.base import *
+import laspy.file as File
+import laspy.header as lasheader
+
 import unittest
 import os
 
 class LasReaderTestCase(unittest.TestCase):
+    simple = "./test/data/simple.las"
     def setUp(self): 
-        inFile = open("../simple.las", "r")
+        inFile = open(self.simple, "r")
         inData = inFile.read()
         outFile = open("./.temp.las", "w")
         outFile.write(inData)
@@ -157,8 +159,9 @@ class LasReaderTestCase(unittest.TestCase):
         
 
 class LasWriterTestCase(unittest.TestCase):
+    simple = './test/data/simple.las'
     def setUp(self):
-        inFile = open("../simple.las", "r")
+        inFile = open(self.simple, "r")
         inData = inFile.read()
         outFile = open("./.temp.las", "w")
         outFile.write(inData)
@@ -228,5 +231,13 @@ class LasWriterTestCase(unittest.TestCase):
         os.remove("./.temp.las")
 
 
-if __name__=="__main__":
-    unittest.main()
+def test_laspy():
+    reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
+    writer = unittest.TestLoader().loadTestsFromTestCase(LasWriterTestCase)
+    return unittest.TestSuite([reader, writer])
+
+# if __name__=="__main__":
+#     runner = unittest.TextTestRunner()
+#     runner.run(test_laspy())
+    
+    # unittest.main()
