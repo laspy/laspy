@@ -13,18 +13,17 @@ class LaspyException(Exception):
 
 
 fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
-LEfmt = {"c_ulong":"<L", "c_ushort":"<H", "c_ubyte":"<B"
+LEfmt = {"c_long":"<L", "c_ushort":"<H", "c_ubyte":"<B"
         ,"c_float":"<f", "c_char":"<s", "c_double":"<d", "c_ulonglong":"<Q"}
 
 class Dimension():
     def __init__(self,name,offs, fmt, num,ltl_endian = True):
         if ltl_endian:
-            self.name = name
             self.offs = offs
             self.Format = fmt
             self.fmt = LEfmt[fmt]
             self.length = fmtLen[self.fmt]
-            self.num
+            self.num = num
         else:
             raise(LaspyException("Big endian files are not currently supported."))
     def __str__(self):
@@ -37,7 +36,7 @@ class Dimension():
 
 class Format():
     def __init__(self, fmt):
-        self.dimensons = []
+        self.dimensions = []
         ## Point Fields
         if fmt in ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5"):
             self.dimensions.append(Dimension("X", 0, "c_long", 1))
@@ -306,6 +305,7 @@ class FileManager():
         self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         self.bytesRead = 0
+        self.header_format = Format(self.grab_file_version()) 
         self.get_header()
         self.populateVLRs()
         self.PointRefs = False
@@ -385,7 +385,13 @@ class FileManager():
         if len(outData) > 1:
             return(outData)
         return(outData[0])
-
+    
+    def grab_file_version(self):
+        self.seek(24, rel = False)
+        v1 = self._ReadWords("<B", 1, 1)
+        v2 = self._ReadWords("<B", 1, 1)
+        self.seek(0, rel = False)
+        return(str(v1) + str(v2))
 
     def get_header(self):
         ## Why is this != neccesary?
@@ -393,7 +399,6 @@ class FileManager():
             return(self.Header)
         else:
             self.Header = Header(self)
-    
     def populateVLRs(self):
         self.VLRs = []
         for i in xrange(self.Header.NumVariableLenRecs):
@@ -656,7 +661,7 @@ class Reader(FileManager):
 class Writer(FileManager):
 
     def close(self):
-        self._map.flush
+        self._map.flush()
         self._map.close()
         self.fileref.close()
 

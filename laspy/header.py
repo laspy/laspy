@@ -43,7 +43,6 @@
  """
 import datetime
 
-
 def leap_year(year):
     if (year % 400) == 0:
         return True
@@ -57,6 +56,7 @@ def leap_year(year):
 ## to update the file using reader/mmap. 
 class Header(object):
     def __init__(self,reader, copy=False):
+        self.Format = reader.header_format        
         self.Reader = reader
         self.FileSig = "".join(reader.ReadWords("FileSig"))
         self.FileSrc = reader.ReadWords("FileSrc")
