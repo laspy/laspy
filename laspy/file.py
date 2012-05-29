@@ -132,7 +132,7 @@ class File(object):
             self.Reader = base.Reader(self.filename)            
 
             if self._header == None:
-                self._header = self.Reader.GetHeader()
+                self._header = self.Reader.get_header()
             else:
                 base.CreateWithHeader(self.filename, self._header)
             self.mode = 0
@@ -150,7 +150,7 @@ class File(object):
             self.Writer = base.Writer(self.filename)
             self.Reader = self.Writer
             if self._header == None:
-                self._header = self.Reader.GetHeader()
+                self._header = self.Reader.get_header()
             else:
                 base.CreateWithHeader(self.filename, self._header)
             self.mode = 1

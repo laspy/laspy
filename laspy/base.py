@@ -6,59 +6,6 @@ import numpy as np
 import sys
 import struct
 
-class Point():
-    def __init__(self, reader, startIdx ,version):
-        self.Version = version
-        self.X = reader.ReadWords("X")
-        self.Y = reader.ReadWords("Y")
-        self.Z = reader.ReadWords("Z")
-        self.intensity = reader.ReadWords("Intensity")
-        ###########################
-        self.flag_byte = reader.ReadWords("FlagByte")
-        bstr = reader.binaryStr(self.flag_byte)
-        self.return_num = reader.packedStr(bstr[0:3])
-        self.num_returns = reader.packedStr(bstr[3:6])
-        self.scan_dir_flag = reader.packedStr(bstr[6])
-        self.edge_flight_line = reader.packedStr(bstr[7])
-        ###########################
-        self.raw_classification = reader.ReadWords("RawClassification")
-        ##########################
-        bstr = reader.binaryStr(self.raw_classification)
-        self.classification = reader.packedStr(bstr[0:5])
-        self.synthetic = reader.packedStr(bstr[5])
-        self.key_point = reader.packedStr(bstr[6])
-        self.withheld = reader.packedStr(bstr[7])       
-
-        #########################
-
-        self.scan_angle_rank = reader.ReadWords("ScanAngleRank")
-        self.user_data = reader.ReadWords("UserData")
-        self.pt_src_id = reader.ReadWords("PtSrcId")
-        if self.Version in (1,3,4,5):
-            self.gps_time = reader.ReadWords("GPSTime_12345")
-        if self.Version in (2,3,5):
-            ## These formats (_35) don't matter to the ReadWords method, 
-            ## wich relies on sequential reading. It ignores offset data
-            ## which is specific to the _35's vs _2's etc.
-            self.red = reader.ReadWords("Red_35")
-            self.green = reader.ReadWords("Green_35")
-            self.blue = reader.ReadWords("Blue_35")
-        if self.Version in (4,5):
-            self.wave_packet_desc_index = reader.ReadWords("WavePacketDescpIndex_5")
-            self.byte_offset_to_waveform_data = reader.ReadWords("ByteOffsetToWavefmData_5")
-            self.waveform_packet_size = reader.ReadWords("WavefmPktSize_5")
-            self.return_pt_waveform_loc = reader.ReadWords("ReturnPtWavefmLoc_5")
-            self.x_t = reader.ReadWords("X_t_5")
-            self.y_t = reader.ReadWords("Y_t_5")
-            self.z_t = reader.ReadWords("Z_t_5")
-
-class VarLenRec():
-    def __init__(self, reader):
-        self.Reserved = reader.ReadWords("Reserved")
-        self.UserID = "".join(reader.ReadWords("UserID"))
-        self.RecordID = reader.ReadWords("RecordID")
-        self.RecLenAfterHeader = reader.ReadWords("RecLenAfterHeader")
-        self.Description = "".join(reader.ReadWords("Description"))
 
 class LaspyException(Exception):
     '''LaspyException: indicates a laspy related error.'''
@@ -68,6 +15,7 @@ class LaspyException(Exception):
 fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
 LEfmt = {"c_ulong":"<L", "c_ushort":"<H", "c_ubyte":"<B"
         ,"c_float":"<f", "c_char":"<s", "c_double":"<d", "c_ulonglong":"<Q"}
+
 class Dimension():
     def __init__(self,name,offs, fmt, num,ltl_endian = True):
         if ltl_endian:
@@ -145,7 +93,7 @@ class Format():
             self.dimensions.append("ProjID3", 14, "c_ushort", 1)
             self.dimensions.append("ProjID4", 16, "c_ubyte", 8)
             self.dimensions.append("VersionMajor", 24, "c_ubyte", 1)
-            self.dimensions.append("VersionMinor", 25), "c_ubyte", 1)
+            self.dimensions.append("VersionMinor", 25, "c_ubyte", 1)
             self.dimensions.append("SysId", 26, "c_char", 32)
             self.dimensions.append("GenSoft", 58, "c_char", 32)
             self.dimensions.append("CreatedDay", 90, "c_ushort", 1)
@@ -156,7 +104,7 @@ class Format():
             self.dimensions.append("PtDatFormatID", 104, "c_ubyte", 1)
             self.dimensions.append("PtDatRecLen", 105, "c_ushort", 1)
             self.dimensions.append("NumPtRecs", 107, "c_long", 1)
-            version = str(self.dimensions[7]) + str(self.dimensions[8]):
+            version = str(self.dimensions[7]) + str(self.dimensions[8])
             if version == "1.3":
                 self.dimensions.append("NumPtsByReturn", 108, "c_long", 7)
                 self.dimensions.append("XScale", 136, "c_double", 1)
@@ -186,10 +134,72 @@ class Format():
                 self.dimensions.append("ZMax", 208, "c_double", 1)
                 self.dimensions.append("ZMin", 216, "c_double", 1)
 
+            self.lookup = {}
+            for dim in self.dimensions:
+                self.lookup[dim[0]] = dim[1:4]
+
+
         def __str__(self):
             for dim in self.dimensions:
                 dim.__str__()
 
+
+
+
+
+class Point():
+    def __init__(self, reader, startIdx ,version):
+        self.Version = version
+        self.X = reader.ReadWords("X")
+        self.Y = reader.ReadWords("Y")
+        self.Z = reader.ReadWords("Z")
+        self.intensity = reader.ReadWords("Intensity")
+        ###########################
+        self.flag_byte = reader.ReadWords("FlagByte")
+        bstr = reader.binaryStr(self.flag_byte)
+        self.return_num = reader.packedStr(bstr[0:3])
+        self.num_returns = reader.packedStr(bstr[3:6])
+        self.scan_dir_flag = reader.packedStr(bstr[6])
+        self.edge_flight_line = reader.packedStr(bstr[7])
+        ###########################
+        self.raw_classification = reader.ReadWords("RawClassification")
+        ##########################
+        bstr = reader.binaryStr(self.raw_classification)
+        self.classification = reader.packedStr(bstr[0:5])
+        self.synthetic = reader.packedStr(bstr[5])
+        self.key_point = reader.packedStr(bstr[6])
+        self.withheld = reader.packedStr(bstr[7])       
+
+        #########################
+
+        self.scan_angle_rank = reader.ReadWords("ScanAngleRank")
+        self.user_data = reader.ReadWords("UserData")
+        self.pt_src_id = reader.ReadWords("PtSrcId")
+        if self.Version in (1,3,4,5):
+            self.gps_time = reader.ReadWords("GPSTime_12345")
+        if self.Version in (2,3,5):
+            ## These formats (_35) don't matter to the ReadWords method, 
+            ## wich relies on sequential reading. It ignores offset data
+            ## which is specific to the _35's vs _2's etc.
+            self.red = reader.ReadWords("Red_35")
+            self.green = reader.ReadWords("Green_35")
+            self.blue = reader.ReadWords("Blue_35")
+        if self.Version in (4,5):
+            self.wave_packet_desc_index = reader.ReadWords("WavePacketDescpIndex_5")
+            self.byte_offset_to_waveform_data = reader.ReadWords("ByteOffsetToWavefmData_5")
+            self.waveform_packet_size = reader.ReadWords("WavefmPktSize_5")
+            self.return_pt_waveform_loc = reader.ReadWords("ReturnPtWavefmLoc_5")
+            self.x_t = reader.ReadWords("X_t_5")
+            self.y_t = reader.ReadWords("Y_t_5")
+            self.z_t = reader.ReadWords("Z_t_5")
+
+class VarLenRec():
+    def __init__(self, reader):
+        self.Reserved = reader.ReadWords("Reserved")
+        self.UserID = "".join(reader.ReadWords("UserID"))
+        self.RecordID = reader.ReadWords("RecordID")
+        self.RecLenAfterHeader = reader.ReadWords("RecLenAfterHeader")
+        self.Description = "".join(reader.ReadWords("Description"))
 
 
 
@@ -296,10 +306,11 @@ class FileManager():
         self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         self.bytesRead = 0
-        self.GetHeader()
+        self.get_header()
         self.populateVLRs()
         self.PointRefs = False
         self._current = 0
+        self.point_format = Format(self.Header.PtDatFormatID)
         return
    
     def binaryFmt(self,N, outArr):
@@ -376,7 +387,7 @@ class FileManager():
         return(outData[0])
 
 
-    def GetHeader(self):
+    def get_header(self):
         ## Why is this != neccesary?
         if self.Header != False:
             return(self.Header)
