@@ -17,130 +17,137 @@ LEfmt = {"c_long":"<L", "c_ushort":"<H", "c_ubyte":"<B"
         ,"c_float":"<f", "c_char":"<s", "c_double":"<d", "c_ulonglong":"<Q"}
 
 class Dimension():
-    def __init__(self,name,offs, fmt, num,ltl_endian = True):
+    def __init__(self,name,offs, fmt, num,compress = False,ltl_endian = True):
         if ltl_endian:
+            self.name = name
             self.offs = offs
             self.Format = fmt
             self.fmt = LEfmt[fmt]
             self.length = fmtLen[self.fmt]
             self.num = num
+            self.compress = compress
         else:
             raise(LaspyException("Big endian files are not currently supported."))
     def __str__(self):
-        sys.stdout.write("Dimension Attributes \n")
-        sys.stdout.write("Name: " + self.name + "\n")
-        sys.stdout.write("Format: " + self.Format + "\n")
-        sys.stdout.write("Number: " + self.num + "\n")
+        return("Dimension Attributes \n" +
+        "Name: " + self.name + "\n"+
+        "Format: " + self.Format + "\n" +
+        "Number: " + str(self.num) + "\n")
         
 
 
 class Format():
     def __init__(self, fmt):
+        fmt = str(fmt)
         self.dimensions = []
+        if not (fmt in ("0", "1", "2", "3", "4", "5", "VLR", "header")):
+            raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
-        if fmt in ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5"):
-            self.dimensions.append(Dimension("X", 0, "c_long", 1))
-            self.dimensions.append(Dimension("Y", 4, "c_long", 1))
-            self.dimensions.append(Dimension("Z", 8, "c_long", 1))
-            self.dimensions.append(Dimension("Intensity", 12, "c_ushort", 1))
-            self.dimensions.append(Dimension("FlagByte", 14,"c_ubyte", 1))
-            self.dimensions.append(Dimension("RawClassification", 15,"c_ubyte", 1))
-            self.dimensions.append(Dimension("ScanAngleRank",16, "c_ubyte", 1))
-            self.dimensions.append(Dimension("UserData", 17, "c_ubyte", 1))
-            self.dimensions.append(Dimension("PtSrcId", 18, "c_ubyte", 1))
-        if fmt in ("1.1", "1.3", "1.4", "1.5"):
-            self.dimensions.append(Dimension("GPSTime", 20, "c_double", 1))
-        if fmt in ("1.3", "1.5"):
-            self.dimensions.append(Dimension("Red", 28, "c_ushort", 1))
-            self.dimensions.append(Dimension("Green", 30, "c_ushort", 1))
-            self.dimensions.append(Dimension("Blue" , 32, "c_ushort",1))
-        elif fmt == "1.2":
-            self.dimensions.append(Dimension("Red", 20, "c_ushort", 1))
-            self.dimensions.append(Dimension("Green", 22, "c_ushort", 1))
-            self.dimensions.append(Dimension("Blue" , 24, "c_ushort",1))
-        if fmt == "1.4":
-            self.dimensions.append(Dimension("WavePacketDescpIdx", 28, "c_ubyte", 1))
-            self.dimensions.append(Dimension("ByteOffsetToWavefmData", 29, "c_ulonglong",1))
-            self.dimensions.append(Dimension("WavefmPktSize", 37, "c_long", 1))
-            self.dimensions.append(Dimension("ReturnPtWavefmLoc", 41, "c_float", 1))
-            self.dimensions.apend(Dimension("X_t", 45, "c_float", 1))
-            self.dimensions.apend(Dimension("Y_t", 56, "c_float", 1))           
-            self.dimensions.apend(Dimension("Z_t", 54, "c_float", 1))
-        elif fmt == "1.5":
-            self.dimensions.append(Dimension("WavePacketDescpIdx", 34, "c_ubyte", 1))
-            self.dimensions.append(Dimension("ByteOffsetToWavefmData", 35, "c_ulonglong",1))
-            self.dimensions.append(Dimension("WavefmPktSize", 43, "c_long", 1))
-            self.dimensions.append(Dimension("ReturnPtWavefmLoc", 47, "c_float", 1))
-            self.dimensions.apend(Dimension("X_t", 51, "c_float", 1))
-            self.dimensions.apend(Dimension("Y_t", 56, "c_float", 1))           
-            self.dimensions.apend(Dimension("Z_t", 60, "c_float", 1))
+        if fmt in ("0", "1", "2", "3", "4", "5"):
+            self.add("X", 0, "c_long", 1)
+            self.add("Y", 4, "c_long", 1)
+            self.add("Z", 8, "c_long", 1)
+            self.add("Intensity", 12, "c_ushort", 1)
+            self.add("FlagByte", 14,"c_ubyte", 1)
+            self.add("RawClassification", 15,"c_ubyte", 1)
+            self.add("ScanAngleRank",16, "c_ubyte", 1)
+            self.add("UserData", 17, "c_ubyte", 1)
+            self.add("PtSrcId", 18, "c_ubyte", 1)
+        if fmt in ("1", "3", "4", "5"):
+            self.add("GPSTime", 20, "c_double", 1)
+        if fmt in ("3", "5"):
+            self.add("Red", 28, "c_ushort", 1)
+            self.add("Green", 30, "c_ushort", 1)
+            self.add("Blue" , 32, "c_ushort",1)
+        elif fmt == "2":
+            self.add("Red", 20, "c_ushort", 1)
+            self.add("Green", 22, "c_ushort", 1)
+            self.add("Blue" , 24, "c_ushort",1)
+        if fmt == "4":
+            self.add("WavePacketDescpIdx", 28, "c_ubyte", 1)
+            self.add("ByteOffsetToWavefmData", 29, "c_ulonglong",1)
+            self.add("WavefmPktSize", 37, "c_long", 1)
+            self.add("ReturnPtWavefmLoc", 41, "c_float", 1)
+            self.add("X_t", 45, "c_float", 1)
+            self.add("Y_t", 56, "c_float", 1)           
+            self.add("Z_t", 54, "c_float", 1)
+        elif fmt == "5":
+            self.add("WavePacketDescpIdx", 34, "c_ubyte", 1)
+            self.add("ByteOffsetToWavefmData", 35, "c_ulonglong",1)
+            self.add("WavefmPktSize", 43, "c_long", 1)
+            self.add("ReturnPtWavefmLoc", 47, "c_float", 1)
+            self.add("X_t", 51, "c_float", 1)
+            self.add("Y_t", 56, "c_float", 1)          
+            self.add("Z_t", 60, "c_float", 1)
         ## VLR Fields
         if fmt == "VLR":
-            self.dimensions.append("Reserved", 0, "c_ushort", 1)
-            self.dimensions.append("UserID", 2, "c_char", 16)
-            self.dimensions.append("RecordID", 18, "c_ushort", 1)
-            self.dimensions.append("RecLenAfterHeader", 20, "c_ushort", 1)
-            self.dimensions.append("Descriptions", 22, "c_char", 32)
+            self.add("Reserved", 0, "c_ushort", 1)
+            self.add("UserID", 2, "c_char", 16)
+            self.add("RecordID", 18, "c_ushort", 1)
+            self.add("RecLenAfterHeader", 20, "c_ushort", 1)
+            self.add("Descriptions", 22, "c_char", 32, compress = True)
         
         ## Header Fields
-        if fmt == "Header":
-            self.dimensions.append("FileSig", 0, "c_char", 4)
-            self.dimensions.append("FileSrc", 4, "c_ushort", 1)
-            self.dimensions.append("GlobalEncoding", 6, "c_ushort", 1)
-            self.dimensions.append("ProjID1", 8, "c_long", 1)
-            self.dimensions.append("ProjID2", 12, "c_ushort", 1)
-            self.dimensions.append("ProjID3", 14, "c_ushort", 1)
-            self.dimensions.append("ProjID4", 16, "c_ubyte", 8)
-            self.dimensions.append("VersionMajor", 24, "c_ubyte", 1)
-            self.dimensions.append("VersionMinor", 25, "c_ubyte", 1)
-            self.dimensions.append("SysId", 26, "c_char", 32)
-            self.dimensions.append("GenSoft", 58, "c_char", 32)
-            self.dimensions.append("CreatedDay", 90, "c_ushort", 1)
-            self.dimensions.append("CreatedYear", 92, "c_ushort",1)
-            self.dimensions.append("HeaderSize", 94, "c_ushort", 1)
-            self.dimensions.append("OffsetToPointData", 96, "c_long", 1)
-            self.dimensions.append("NumVariableLenRecs", 100, "c_long", 1)
-            self.dimensions.append("PtDatFormatID", 104, "c_ubyte", 1)
-            self.dimensions.append("PtDatRecLen", 105, "c_ushort", 1)
-            self.dimensions.append("NumPtRecs", 107, "c_long", 1)
+        if fmt == "header":
+            self.add("FileSig", 0, "c_char", 4, compress = True)
+            self.add("FileSrc", 4, "c_ushort", 1)
+            self.add("GlobalEncoding", 6, "c_ushort", 1)
+            self.add("ProjID1", 8, "c_long", 1)
+            self.add("ProjID2", 12, "c_ushort", 1)
+            self.add("ProjID3", 14, "c_ushort", 1)
+            self.add("ProjID4", 16, "c_ubyte", 8)
+            self.add("VersionMajor", 24, "c_ubyte", 1)
+            self.add("VersionMinor", 25, "c_ubyte", 1)
+            self.add("SysId", 26, "c_char", 32, compress=True)
+            self.add("GenSoft", 58, "c_char", 32, compress = True)
+            self.add("CreatedDay", 90, "c_ushort", 1)
+            self.add("CreatedYear", 92, "c_ushort",1)
+            self.add("HeaderSize", 94, "c_ushort", 1)
+            self.add("OffsetToPointData", 96, "c_long", 1)
+            self.add("NumVariableLenRecs", 100, "c_long", 1)
+            self.add("PtDatFormatID", 104, "c_ubyte", 1)
+            self.add("PtDatRecLen", 105, "c_ushort", 1)
+            self.add("NumPtRecs", 107, "c_long", 1)
             version = str(self.dimensions[7]) + str(self.dimensions[8])
             if version == "1.3":
-                self.dimensions.append("NumPtsByReturn", 108, "c_long", 7)
-                self.dimensions.append("XScale", 136, "c_double", 1)
-                self.dimensions.append("YScale", 144, "c_double", 1)
-                self.dimensions.append("ZScale", 152, "c_double", 1)
-                self.dimensions.append("XOffset", 160, "c_double", 1)
-                self.dimensions.append("YOffset", 168, "c_double", 1)
-                self.dimensions.append("ZOffset", 176, "c_double", 1) 
-                self.dimensions.append("XMax", 184, "c_double", 1)
-                self.dimensions.append("XMin", 192, "c_double", 1)
-                self.dimensions.append("YMax", 200, "c_double", 1)
-                self.dimensions.append("YMin", 208, "c_double", 1)
-                self.dimensions.append("ZMax", 216, "c_double", 1)
-                self.dimensions.append("ZMin", 224, "c_double", 1)
+                self.add("NumPtsByReturn", 108, "c_long", 7)
+                self.add("XScale", 136, "c_double", 1)
+                self.add("YScale", 144, "c_double", 1)
+                self.add("ZScale", 152, "c_double", 1)
+                self.add("XOffset", 160, "c_double", 1)
+                self.add("YOffset", 168, "c_double", 1)
+                self.add("ZOffset", 176, "c_double", 1) 
+                self.add("XMax", 184, "c_double", 1)
+                self.add("XMin", 192, "c_double", 1)
+                self.add("YMax", 200, "c_double", 1)
+                self.add("YMin", 208, "c_double", 1)
+                self.add("ZMax", 216, "c_double", 1)
+                self.add("ZMin", 224, "c_double", 1)
             elif version in ("1.0", "1.1", "1.2"):
-                self.dimensions.append("NumPtsByReturn", 108, "c_long", 5)
-                self.dimensions.append("XScale", 128, "c_double", 1)
-                self.dimensions.append("YScale", 136, "c_double", 1)
-                self.dimensions.append("ZScale", 144, "c_double", 1)
-                self.dimensions.append("XOffset", 152, "c_double", 1)
-                self.dimensions.append("YOffset", 160, "c_double", 1)
-                self.dimensions.append("ZOffset", 168, "c_double", 1) 
-                self.dimensions.append("XMax", 176, "c_double", 1)
-                self.dimensions.append("XMin", 184, "c_double", 1)
-                self.dimensions.append("YMax", 192, "c_double", 1)
-                self.dimensions.append("YMin", 200, "c_double", 1)
-                self.dimensions.append("ZMax", 208, "c_double", 1)
-                self.dimensions.append("ZMin", 216, "c_double", 1)
+                self.add("NumPtsByReturn", 108, "c_long", 5)
+                self.add("XScale", 128, "c_double", 1)
+                self.add("YScale", 136, "c_double", 1)
+                self.add("ZScale", 144, "c_double", 1)
+                self.add("XOffset", 152, "c_double", 1)
+                self.add("YOffset", 160, "c_double", 1)
+                self.add("ZOffset", 168, "c_double", 1) 
+                self.add("XMax", 176, "c_double", 1)
+                self.add("XMin", 184, "c_double", 1)
+                self.add("YMax", 192, "c_double", 1)
+                self.add("YMin", 200, "c_double", 1)
+                self.add("ZMax", 208, "c_double", 1)
+                self.add("ZMin", 216, "c_double", 1)
 
             self.lookup = {}
             for dim in self.dimensions:
-                self.lookup[dim[0]] = dim[1:4]
+                self.lookup[dim.name] = [dim.offs, dim.fmt, dim.length, dim.compress]
 
-
-        def __str__(self):
-            for dim in self.dimensions:
-                dim.__str__()
+    def add(self, name, offs, fmt, num, compress = False):
+        self.dimensions.append(Dimension(name, offs, fmt, num, compress))
+        
+    def __str__(self):
+        for dim in self.dimensions:
+            dim.__str__()
 
 
 
@@ -305,7 +312,7 @@ class FileManager():
         self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         self.bytesRead = 0
-        self.header_format = Format(self.grab_file_version()) 
+        self.header_format = Format("header") 
         self.get_header()
         self.populateVLRs()
         self.PointRefs = False
@@ -390,7 +397,7 @@ class FileManager():
         self.seek(24, rel = False)
         v1 = self._ReadWords("<B", 1, 1)
         v2 = self._ReadWords("<B", 1, 1)
-        self.seek(0, rel = False)
+        self.seek(0, rel = True)
         return(str(v1) + str(v2))
 
     def get_header(self):
@@ -418,7 +425,7 @@ class FileManager():
         return(self.Header.data_offset - self.VLRStop)
 
     def get_pointrecordscount(self):
-        if self.Header.get_version != "1.3": 
+        if self.Header.get_version != "1.3":
             return((self._map.size()-
                 self.Header.data_offset)/self.Header.data_record_length)
         return((self.Header.StWavefmDatPktRec-

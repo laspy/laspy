@@ -57,48 +57,17 @@ def leap_year(year):
 class Header(object):
     def __init__(self,reader, copy=False):
         self.Format = reader.header_format        
-        self.Reader = reader
-        self.FileSig = "".join(reader.ReadWords("FileSig"))
-        self.FileSrc = reader.ReadWords("FileSrc")
-        self.GlobalEncoding = reader.ReadWords("GlobalEncoding")
-        self.ProjID1 = reader.ReadWords("ProjID1")
-        self.ProjID2 = reader.ReadWords("ProjID2")
-        self.ProjID3 = reader.ReadWords("ProjID3")
-        self.ProjID4 = "".join([str(x) for x in reader.ReadWords("ProjID4")])
-        self.VersionMajor = reader.ReadWords("VersionMajor")
-        self.VersionMinor = reader.ReadWords("VersionMinor")
-        self.Version = str(self.VersionMajor)+"."+str(self.VersionMinor)
-        self.SysId = "".join(reader.ReadWords("SysId"))
-        self.GenSoft = "".join(reader.ReadWords("GenSoft"))
-        self.CreatedDay = reader.ReadWords("CreatedDay")
-        self.CreatedYear = reader.ReadWords("CreatedYear")
-        self.HeaderSize = reader.ReadWords("HeaderSize")
-        self.OffsetToPointData = reader.ReadWords("OffsetToPointData")
-        self.NumVariableLenRecs = reader.ReadWords("NumVariableLenRecs")
-        self.PtDatFormatID = reader.ReadWords("PtDatFormatID")
-        self.PtDatRecLen = reader.ReadWords("PtDatRecLen")
-        self.NumPtRecs = reader.ReadWords("NumPtRecs")
-
-        if self.Version == "1.3":
-            self.NumPtsByReturn = reader.ReadWords("NumPtsByReturn_3")
-        elif self.Version in ["1.0","1.1", "1.2"]:
-            self.NumPtsByReturn = reader.ReadWords("NumPtsByReturn_3")
+        self.reader = reader
+        for dim in self.Format.dimensions:
+            self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.compress)
+    
+    def read_words(self, offs, fmt,num, length, compress):
+        self.reader.seek(offs,rel=False)
+        out = self.reader._ReadWords(fmt, num, length)
+        if compress:
+            return("".join(out))
+        return(out)
         
-        self.XScale = reader.ReadWords("XScale_3")
-        self.YScale = reader.ReadWords("YScale_3")
-        self.ZScale = reader.ReadWords("ZScale_3")
-        self.XOffset = reader.ReadWords("XOffset_3")
-        self.YOffset = reader.ReadWords("YOffset_3")
-        self.ZOffset = reader.ReadWords("ZOffset_3")
-        self.XMax = reader.ReadWords("XMax_3")
-        self.XMin = reader.ReadWords("XMin_3")
-        self.YMax = reader.ReadWords("YMax_3")
-        self.YMin = reader.ReadWords("YMin_3")
-        self.ZMax = reader.ReadWords("ZMax_3")
-        self.ZMin = reader.ReadWords("ZMin_3")
-        if self.Version == "1.3":
-            self.StWavefmDatPktRec = reader.ReadWords("StWavefmDatPktRec_3")
-
     def get_filesignature(self):
         """Returns the file signature for the file. It should always be
         LASF"""
