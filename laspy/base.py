@@ -60,6 +60,34 @@ class VarLenRec():
         self.RecLenAfterHeader = reader.ReadWords("RecLenAfterHeader")
         self.Description = "".join(reader.ReadWords("Description"))
 
+class LaspyException(Exception):
+    '''LaspyException: indicates a laspy related error.'''
+    pass
+
+
+fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
+LEfmt = {"Long":"<L", "Unsigned Short":"<H", "Unsigned Char":"<B"
+        ,"Float":"<f", "Str":"<s", "Double":"<d", "Unsigned LL":"<Q"}
+class Dimension():
+    def __init__(self,name,offs, fmt, num,ltl_endian = True):
+        if ltl_endian:
+            self.name = name
+            self.offs = offs
+            self.Format = fmt
+            self.fmt = LEfmt[fmt]
+            self.length = fmtLen[self.fmt]
+            self.num
+        else:
+            raise(LaspyException("Big endian files are not currently supported."))
+    def __str__(self):
+        sys.stdout.write("Dimension Attributes \n")
+        sys.stdout.write("Name: " + self.name + "\n")
+        sys.stdout.write("Format: " + self.Format + "\n")
+        sys.stdout.write("Number: " + self.num + "\n")
+        
+
+
+
 Formats={
 ### Point Fields
 "X":(0,"<L",4,1),
