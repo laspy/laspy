@@ -129,10 +129,10 @@ class File(object):
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
 
-            self.Reader = base.Reader(self.filename)            
+            self.reader = base.Reader(self.filename)            
 
             if self._header == None:
-                self._header = self.Reader.get_header()
+                self._header = self.reader.get_header()
             else:
                 base.CreateWithHeader(self.filename, self._header)
             self.mode = 0
@@ -142,15 +142,15 @@ class File(object):
                 files['read'][self.filename] = 1
 
             if self.in_srs:
-                self.Reader.SetInputSRS(self.in_srs)
+                self.reader.SetInputSRS(self.in_srs)
             if self.out_srs:
-                self.Reader.SetOutputSRS(self.out_srs)
+                self.reader.SetOutputSRS(self.out_srs)
 
         if self._mode == 'w':
-            self.Writer = base.Writer(self.filename)
-            self.Reader = self.Writer
+            self.writer = base.Writer(self.filename)
+            self.reader = self.writer
             if self._header == None:
-                self._header = self.Reader.get_header()
+                self._header = self.reader.get_header()
             else:
                 base.CreateWithHeader(self.filename, self._header)
             self.mode = 1
@@ -177,7 +177,7 @@ class File(object):
                     files['read'].pop(self.filename)
             except KeyError:
                 raise base.LaspyException("File %s was not found in accounting dictionary!" % self.filename)
-            self.Reader.close()
+            self.reader.close()
         else:
             try:
                 files['append'][self.filename] -= 1
@@ -187,7 +187,7 @@ class File(object):
                 files['write'][self.filename]-=1
                 if files['write'][self.filename] == 0:
                     files['write'].pop(self.filename)
-            self.Writer.close()    
+            self.writer.close()    
     
     def assertWriteMode(self):
         if self.mode == 0:
@@ -232,9 +232,9 @@ class File(object):
     def get_header(self):
         """Returns the liblas.header.Header for the file""" 
         if self.mode == 0:
-            return self.Reader.GetHeader()
+            return self.reader.GetHeader()
         else:
-            return self.Writer.GetHeader()
+            return self.writer.GetHeader()
         return None
 
     def set_header(self, header):
@@ -242,7 +242,7 @@ class File(object):
         append mode, the header will be overwritten in the file."""
         # append mode
         if mode == 2: 
-            self.Writer.set_header(header)
+            self.writer.set_header(header)
             return True
         raise base.LaspyException("The header can only be set "
                                 "after file creation for files in append mode")
@@ -261,97 +261,97 @@ class File(object):
     def read(self, index):
         """Reads the point at the given index"""
         if self.mode == 0:
-            return(self.Reader.GetPoint(index)) 
+            return(self.reader.get_point(index)) 
 
     def get_x(self, scale = False):
-        return(self.Reader.GetX(scale))
+        return(self.reader.get_x(scale))
     def set_x(self,x, scale=False):
         self.assertWriteMode()
-        self.Writer.SetX(x, scale)
+        self.writer.set_x(x, scale)
         return
 
     X = property(get_x, set_x, None, None)
     x = X
 
     def get_y(self, scale = False):
-        return(self.Reader.GetY(scale))
+        return(self.reader.get_y(scale))
     def set_y(self, y, scale = False):
         self.assertWriteMode()
-        self.Writer.SetY(y, scale)
+        self.writer.set_y(y, scale)
         return
 
     Y = property(get_y, set_y, None, None)
     y = Y
 
     def get_z(self, scale = False):
-        return(self.Reader.GetZ(scale))
+        return(self.reader.get_z(scale))
     def set_z(self, z, scale = False):
         self.assertWriteMode()
-        self.Writer.SetZ(z, scale)    
+        self.writer.set_z(z, scale)    
         return
     Z = property(get_z, set_z, None, None)
     z = Z
 
     def get_intensity(self):
-        return(self.Reader.GetIntensity())
+        return(self.reader.get_intensity())
     def set_intensity(self, intensity):
         self.assertWriteMode()
-        self.Writer.SetIntensity(intensity)
+        self.writer.set_intensity(intensity)
         return
 
     intensity = property(get_intensity, set_intensity, None, None)
     Intensity = intensity
 
     def get_flag_byte(self):
-        return(self.Reader.GetFlagByte())
+        return(self.reader.get_flag_byte())
     def set_flag_byte(self, byte):
         self.assertWriteMode()
-        self.Writer.SetFlagByte(byte)
+        self.writer.set_flag_byte(byte)
         return
     
     flag_byte = property(get_flag_byte, set_flag_byte, None, None)
     
     def get_return_num(self):
-        return(self.Reader.GetReturnNum())
+        return(self.reader.get_return_num())
     def set_return_num(self, num):
         self.assertWriteMode()
-        self.Writer.SetReturnNum(num)
+        self.writer.set_return_num(num)
 
     return_num = property(get_return_num, set_return_num, None, None)
 
     def get_num_returns(self):
-        return(self.Reader.GetNumReturns())
+        return(self.reader.get_num_returns())
     def set_num_returns(self, num):
         self.assertWriteMode()
-        self.Writer.SetNumReturns(num)
+        self.writer.set_num_returns(num)
         return
 
     num_returns = property(get_return_num, set_num_returns, None, None)
 
     def get_scan_dir_flag(self):
-        return(self.Reader.GetScanDirFlag())
+        return(self.reader.get_scan_dir_flag())
     def set_scan_dir_flag(self,flag):
         self.assertWriteMode()
-        self.Writer.SetScanDirFlag(flag)
+        self.writer.set_scan_dir_flag(flag)
         return
 
     scan_dir_flag = property(get_scan_dir_flag, set_scan_dir_flag, None, None)
 
     def get_edge_flight_line(self):
-        return(self.Reader.GetEdgeFlightLine())
+        return(self.reader.get_edge_flight_line())
     def set_edge_flight_line(self,line):
         self.assertWriteMode()
-        self.Writer.SetEdgeFlightLine(line)
+        self.writer.set_edge_flight_line(line)
         return
 
     edge_flight_line = property(get_edge_flight_line,
                                 set_edge_flight_line, None, None)
 
     def get_raw_classification(self):
-        return(self.Reader.GetRawClassification())
+        return(self.reader.get_raw_classification())
     def set_raw_classification(self, classification):
         self.assertWriteMode()
-        self.Writer.SetRawClassification(classification)
+        self.writer.set_raw_classification(classification)
         return
 
     raw_classification = property(get_raw_classification, 
@@ -359,124 +359,124 @@ class File(object):
     Raw_Classification = raw_classification
 
     def get_classification(self):
-        return(self.Reader.GetClassification())
+        return(self.reader.get_classification())
     def set_classification(self, classification):
         self.assertWriteMode()
-        self.Writer.SetClassification(classificaton)
+        self.writer.set_classification(classificaton)
         return
     classification = property(get_classification, 
                               set_classification, None, None)
     Classification = classification
 
     def get_synthetic(self):
-        return(self.Reader.GetSynthetic())
+        return(self.reader.get_synthetic())
     def set_synthetic(self, synthetic):
         self.assertWriteMode()
-        self.Writer.SetSynthetic(synthetic)
+        self.writer.set_synthetic(synthetic)
         return
 
     synthetic = property(get_synthetic, set_synthetic, None, None)
     Synthetic = synthetic 
 
     def get_key_point(self):
-        return(self.Reader.GetKeyPoint())
+        return(self.reader.get_key_point())
     def set_key_point(self, pt):
         self.assertWriteMode()
-        self.Writer.SetKeyPoint(pt)
+        self.writer.set_key_point(pt)
         return
 
     key_point = property(get_key_point, set_key_point, None, None)
     Key_Point = key_point
 
     def get_withheld(self):
-        return(self.Reader.GetWithheld())
+        return(self.reader.get_withheld())
     def set_withheld(self, withheld):
         self.assertWriteMode()
-        self.Writer.SetWithheld(withheld)
+        self.writer.set_withheld(withheld)
         return
 
     withheld = property(get_withheld, set_withheld, None, None)
     Withheld = withheld
 
     def get_scan_angle_rank(self):
-        return(self.Reader.GetScanAngleRank())
+        return(self.reader.get_scan_angle_rank())
     def set_scan_angle_rank(self, rank):
         self.assertWriteMode()
-        self.Writer.SetScanAngleRank(rank)
+        self.writer.set_scan_angle_rank(rank)
         return
 
     scan_angle_rank = property(get_scan_angle_rank, set_scan_angle_rank,None,None)
 
     def get_user_data(self):
-        return(self.Reader.GetUserData())
+        return(self.reader.get_user_data())
     def set_user_data(self, data):
         self.assertWriteMode()
-        self.Writer.SetUserData(data)
+        self.writer.set_user_data(data)
         return
 
     user_data = property(get_user_data, set_user_data, None, None)
 
     def get_pt_src_id(self):
-        return(self.Reader.GetPTSrcId())
+        return(self.reader.get_pt_src_id())
     def set_pt_src_id(self, data):
         self.assertWriteMode()
-        self.Writer.SetPtSrcId(data)
+        self.writer.set_pt_src_id(data)
         return
 
     pt_src_id = property(get_pt_src_id, set_pt_src_id, None, None)
 
     def get_gps_time(self):
-        return(self.Reader.GetGPSTime())
+        return(self.reader.get_gps_time())
     def set_gps_time(self, data):
         self.assertWriteMode()
-        self.Writer.SetGPSTime(data)
+        self.writer.set_gps_time(data)
         return
     
     gps_time = property(get_gps_time, set_gps_time, None, None)
 
     def get_red(self):
-        return(self.Reader.GetRed())
+        return(self.reader.get_red())
     def set_red(self, red):
         self.assertWriteMode()
-        self.Writer.SetRed(red)
+        self.writer.set_red(red)
     red = property(get_red, set_red, None, None)
     Red = red
 
     def get_green(self):
-        return(self.Reader.GetGreen())
+        return(self.reader.get_green())
     def set_green(self, green):
         self.assertWriteMode()
-        self.Writer.SetGreen(green)
+        self.writer.set_green(green)
         return
     
     green = property(get_green, set_green, None, None)
     Green = green
 
     def get_blue(self):
-        return(self.Reader.GetBlue())
+        return(self.reader.get_blue())
     def set_blue(self, blue):
         self.assertWriteMode()
-        self.Writer.SetBlue(blue)
+        self.writer.set_blue(blue)
         return
 
     blue = property(get_blue, set_blue)
     Blue = blue
 
     def get_wave_packet_desc_index(self):
-        return(self.Reader.GetWavePacketDescpIdx())
+        return(self.reader.get_wave_packet_descp_idx())
     def set_wave_packet_desc_index(self,idx):
         self.assertWriteMode()
-        self.Writer.SetWavePacketDescpIdx(idx)
+        self.writer.set_wave_packet_descp_idx(idx)
         return
 
     wave_packet_desc_index = property(get_wave_packet_desc_index,
                                       set_wave_packet_desc_index, None, None)
     
     def get_byte_offset_to_waveform_data(self):
-        return(self.Reader.GetByteOffsetToWavefmData())
+        return(self.reader.get_byte_offset_to_wavefm_data())
     def set_byte_offset_to_waveform_data(self, idx):
         self.assertWriteMode()
-        self.Writer.SetByteOffsetToWavefmData(idx)
+        self.writer.set_byte_offset_to_wavefm_data(idx)
         return
 
     byte_offset_to_waveform_data = property(get_byte_offset_to_waveform_data,
@@ -484,10 +484,10 @@ class File(object):
                                             None, None)
     
     def get_waveform_packet_size(self):
-        return(self.Reader.GetWavefmPktSize())
+        return(self.reader.get_wavefm_pkt_size())
     def set_waveform_packet_size(self, size):
         self.assertWriteMode()
-        self.Writer.SetWavefmPktSize(size)
+        self.writer.set_wavefm_pkt_size(size)
         return
 
     waveform_packet_size = property(get_waveform_packet_size, 
@@ -495,10 +495,10 @@ class File(object):
                                     None, None)
     
     def get_return_pt_waveform_loc(self):
-        return(self.Reader.GetReturnPtWavefmLoc())
+        return(self.reader.get_return_pt_wavefm_loc())
     def set_return_pt_waveform_loc(self, loc):
         self.assertWriteMode()
-        self.Writer.SetReturnPtWavefmLoc(loc)
+        self.writer.set_return_pt_wavefm_loc(loc)
         return
 
     return_pt_waveform_loc = property(get_return_pt_waveform_loc, 
@@ -506,28 +506,28 @@ class File(object):
                                       None, None)
     
     def get_x_t(self):
-        return(self.Reader.GetX_t())
+        return(self.reader.get_x_t())
     def set_x_t(self,x):
         self.assertWriteMode()
-        self.Writer.SetX_t(x)
+        self.writer.set_x_t(x)
         return
 
     x_t = property(get_x_t, set_x_t, None, None)
 
     def get_y_t(self):
-        return(self.Reader.GetY_t())
+        return(self.reader.get_y_t())
     def set_y_t(self,y):
         self.assertWriteMode()
-        self.Writer.SetY_t(y)
+        self.writer.set_y_t(y)
         return
 
     y_t = property(get_y_t, set_y_t, None, None)
 
     def get_z_t(self):
-        return(self.Reader.GetZ_t())
+        return(self.reader.Get_z_t())
     def set_z_t(self, z):
         self.assertWriteMode()
-        self.Writer.SetZ_t(z)
+        self.writer.set_z_t(z)
 
     z_t = property(get_z_t, set_z_t, None, None)
 
@@ -543,11 +543,11 @@ class File(object):
         """
         if self.mode == 0:
             self.at_end = False
-            p = self.Reader.GetPoint(0)
+            p = self.reader.get_point(0)
             while p and not self.at_end:
                 
                 yield p
-                p = self.Reader.GetNextPoint()
+                p = self.reader.get_next_point()
                 if not p:
                     self.at_end = True
             else:

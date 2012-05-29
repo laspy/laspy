@@ -158,17 +158,17 @@ class Point():
             #reader.seek(dim.offs + startIdx, rel = False)
             self.__dict__[dim.name] = reader._ReadWords(dim.fmt, dim.num, dim.length)
 
-        bstr = reader.binaryStr(self.flag_byte)
-        self.return_num = reader.packedStr(bstr[0:3])
-        self.num_returns = reader.packedStr(bstr[3:6])
-        self.scan_dir_flag = reader.packedStr(bstr[6])
-        self.edge_flight_line = reader.packedStr(bstr[7])
+        bstr = reader.binary_str(self.flag_byte)
+        self.return_num = reader.packed_str(bstr[0:3])
+        self.num_returns = reader.packed_str(bstr[3:6])
+        self.scan_dir_flag = reader.packed_str(bstr[6])
+        self.edge_flight_line = reader.packed_str(bstr[7])
 
-        bstr = reader.binaryStr(self.raw_classification)
-        self.classification = reader.packedStr(bstr[0:5])
-        self.synthetic = reader.packedStr(bstr[5])
-        self.key_point = reader.packedStr(bstr[6])
-        self.withheld = reader.packedStr(bstr[7])       
+        bstr = reader.binary_str(self.raw_classification)
+        self.classification = reader.packed_str(bstr[0:5])
+        self.synthetic = reader.packed_str(bstr[5])
+        self.key_point = reader.packed_str(bstr[6])
+        self.withheld = reader.packed_str(bstr[7])       
 
  
 
@@ -198,13 +198,13 @@ class FileManager():
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         self.header_format = Format("h" + self.grab_file_version())
         self.get_header()
-        self.populateVLRs()
-        self.PointRefs = False
+        self.populate_vlrs()
+        self.point_refs = False
         self._current = 0
         self.point_format = Format(self.header.PtDatFormatID)
         return
    
-    def binaryFmt(self,N, outArr):
+    def binary_fmt(self,N, outArr):
         if N == 0:
             return(0)
         i = 0
@@ -215,9 +215,9 @@ class FileManager():
         N -= 2**i
         if N == 0:
             return(outArr)
-        return(self.binaryFmt(N, outArr))
+        return(self.binary_fmt(N, outArr))
     
-    def packedStr(self, string, reverse = True):
+    def packed_str(self, string, reverse = True):
         if reverse:
             string = "".join(reversed([x for x in string]))
             
@@ -228,8 +228,8 @@ class FileManager():
             pwr -= 1
         return(out)
 
-    def binaryStr(self,N, zerolen = 8):
-        arr = self.binaryFmt(N, [])
+    def binary_str(self,N, zerolen = 8):
+        arr = self.binary_fmt(N, [])
         if arr == 0:
             return("0"*zerolen)
         outstr = ["0"]*(max(arr)+1)
@@ -290,23 +290,23 @@ class FileManager():
             return(self.header)
         else:
             self.header = Header(self)
-    def populateVLRs(self):
-        self.VLRs = []
+    def populate_vlrs(self):
+        self.vlrs = []
         for i in xrange(self.header.NumVariableLenRecs):
-            self.VLRs.append(VarLenRec(self))
-            self.seek(self.VLRs[-1].RecLenAfterHeader)
+            self.vlrs.append(VarLenRec(self))
+            self.seek(self.vlrs[-1].RecLenAfterHeader)
             if self._map.tell() > self.header.data_offset:
                 raise LaspyException("Error, Calculated Header Data "
                     "Overlaps The Point Records!")
-        self.VLRStop = self._map.tell()
+        self.vlr_stop = self._map.tell()
         return
 
     def GetVLRs(self):
         # This return needs to be modified
-        return(self.VLRs)
+        return(self.vlrs)
     
     def get_padding(self):
-        return(self.header.data_offset - self.VLRStop)
+        return(self.header.data_offset - self.vlr_stop)
 
     def get_pointrecordscount(self):
         if self.header.get_version != "1.3":
@@ -314,213 +314,213 @@ class FileManager():
                 self.header.data_offset)/self.header.data_record_length)
         return((self.header.StWavefmDatPktRec-
                 self.header.data_offset)/self.header.data_record_length)       
-    def SetInputSRS(self):
+    def set_input_srs(self):
         pass
     
-    def SetOutputSRS(self):
+    def set_output_srsS(self):
         pass
 
-    def GetRawPointIndex(self,index):
+    def get_raw_point_index(self,index):
         return(self.header.data_offset + 
             index*self.header.data_record_length)
 
-    def GetRawPoint(self, index):
+    def get_raw_point(self, index):
         start = (self.header.data_offset + 
             index * self.header.data_record_length)
         return(self._map[start : start +
              self.header.data_record_length])
 
 #self, reader, startIdx ,version
-    def GetPoint(self, index):
+    def get_point(self, index):
         if index >= self.get_pointrecordscount():
             return
-        seekDex = self.GetRawPointIndex(index)
+        seekDex = self.get_raw_point_index(index)
         self.seek(seekDex, rel = False)
         self._current = index
         return(Point(self, seekDex))
     
-    def GetNextPoint(self):
+    def get_next_point(self):
         if self._current == None:
             raise LaspyException("No Current Point Specified," + 
                             " use Reader.GetPoint(0) first")
-        return self.GetPoint(self._current + 1)
+        return self.get_point(self._current + 1)
 
-    def buildPointRefs(self):
+    def build_point_refs(self):
         pts = self.get_pointrecordscount()
-        self.PointRefs = np.array([self.GetRawPointIndex(i) 
+        self.point_refs = np.array([self.get_raw_point_index(i) 
                                      for i in xrange(pts)])
         return
 
-    def GetDimension(self, name):
+    def get_dimension(self, name):
         try:
             specs = self.point_format.lookup[name]
-            return(self._GetDimension(specs[0], specs[1], 
+            return(self._get_dimension(specs[0], specs[1], 
                                      specs[2]))
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
 
 
-    def _GetDimension(self,offs, fmt, length, raw = False):
-        if type(self.PointRefs) == bool:
-            self.buildPointRefs()
+    def _get_dimension(self,offs, fmt, length, raw = False):
+        if type(self.point_refs) == bool:
+            self.build_point_refs()
         if not raw:
             vfunc = np.vectorize(lambda x: struct.unpack(fmt, 
                 self._map[x+offs:x+offs+length])[0])            
-            return(vfunc(self.PointRefs))
+            return(vfunc(self.point_refs))
         vfunc = np.vectorize(lambda x: 
             self._map[x+offs:x+offs+length])
         return(vfunc(self.PointRefs))
     
 
     ### To Implement: Scale            
-    def GetX(self, scale=False):
-        return(self.GetDimension("X"))
+    def get_x(self, scale=False):
+        return(self.get_dimension("X"))
        
-    def GetY(self, scale=False):
-        return(self.GetDimension("Y"))
+    def get_y(self, scale=False):
+        return(self.get_dimension("Y"))
 
-    def GetZ(self, scale=False):
-        return(self.GetDimension("Z"))
+    def get_z(self, scale=False):
+        return(self.get_dimension("Z"))
     
-    def GetIntensity(self):
-        return(self.GetDimension("intensity"))
+    def get_intensity(self):
+        return(self.get_dimension("intensity"))
     
-    def GetFlagByte(self):
-        return(self.GetDimension("flag_byte"))
+    def get_flag_byte(self):
+        return(self.get_dimension("flag_byte"))
     
-    def GetReturnNum(self):
-        rawDim = self.GetFlagByte()
+    def get_return_num(self):
+        rawDim = self.get_flag_byte()
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[0:3]))
+            self.packed_str(self.binary_str(x)[0:3]))
         return(vfunc(rawDim))
 
-    def GetNumReturns(self):
-        rawDim = self.GetFlagByte()
+    def get_num_returns(self):
+        rawDim = self.get_flag_byte()
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[3:6]))
+            self.packed_str(self.binary_str(x)[3:6]))
         return(vfunc(rawDim))
 
-    def GetScanDirFlag(self):
-        rawDim = self.GetFlagByte()
+    def get_scan_dir_flag(self):
+        rawDim = self.get_flag_byte()
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[6]))
+            self.packed_str(self.binary_str(x)[6]))
         return(vfunc(rawDim))
 
-    def GetEdgeFlightLine(self):
-        rawDim = self.GetFlagByte()
+    def get_edge_flight_line(self):
+        rawDim = self.get_flag_byte()
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[7]))
+            self.packed_str(self.binary_str(x)[7]))
         return(vfunc(rawDim))
 
-    def GetRawClassification(self):
-        return(self.GetDimension("raw_classification"))
+    def get_raw_classification(self):
+        return(self.get_dimension("raw_classification"))
     
-    def GetClassification(self): 
+    def get_classification(self): 
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[0:5]))
-        return(vfunc(self.GetRawClassification()))
+            self.packed_str(self.binary_str(x)[0:5]))
+        return(vfunc(self.get_raw_classification()))
 
-    def GetSynthetic(self):
+    def get_synthetic(self):
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[5]))
-        return(vfunc(self.GetRawClassification()))
+            self.packed_str(self.binary_str(x)[5]))
+        return(vfunc(self.get_raw_classification()))
 
-    def GetKeyPoint(self):
+    def get_key_point(self):
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[6]))
-        return(vfunc(self.GetRawClassification()))
+            self.packed_str(self.binary_str(x)[6]))
+        return(vfunc(self.get_raw_classification()))
 
-    def GetWithheld(self):
+    def get_withheld(self):
         vfunc = np.vectorize(lambda x: 
-            self.packedStr(self.binaryStr(x)[7]))
-        return(vfunc(self.GetRawClassification()))
+            self.packed_str(self.binary_str(x)[7]))
+        return(vfunc(self.get_raw_classification()))
 
-    def GetScanAngleRank(self):
-        return(self.GetDimension("scan_angle_rank"))
+    def get_scan_angle_rank(self):
+        return(self.get_dimension("scan_angle_rank"))
     
-    def GetUserData(self):
-        return(self.GetDimension("user_data"))
+    def get_user_data(self):
+        return(self.get_dimension("user_data"))
     
-    def GetPTSrcId(self):
-        return(self.GetDimension("pt_src_id"))
+    def get_pt_src_id(self):
+        return(self.get_dimension("pt_src_id"))
     
-    def GetGPSTime(self):
+    def get_gps_time(self):
         fmt = self.header.PtDatFormatID
         if fmt in (1,2,3,4,5):
-            return(self.GetDimension("gps_time"))
+            return(self.get_dimension("gps_time"))
         raise LaspyException("GPS Time is not defined on pt format: "
                         + str(fmt))
     
     ColException = "Color is not available for point format: "
-    def GetRed(self):
+    def get_red(self):
         fmt = self.header.PtDatFormatID
         if fmt in (2,3,5):
-            return(self.GetDimension("red"))
+            return(self.get_dimension("red"))
         raise LaspyException(ColException + str(fmt))
     
-    def GetGreen(self):
+    def get_green(self):
         fmt = self.header.PtDatFormatID
         if fmt in (2,3,5):
-            return(self.GetDimension("green"))
+            return(self.get_dimension("green"))
         raise LaspyException(ColException + str(fmt))
 
     
-    def GetBlue(self):
+    def get_blue(self):
         fmt = self.header.PtDatFormatID
         if fmt in (2,3,5):
-            return(self.GetDimension("blue"))
+            return(self.get_dimension("blue"))
         raise LaspyException(ColException + str(fmt))
 
 
-    def GetWavePacketDescpIdx(self):
+    def get_wave_packet_descp_idx(self):
         fmt = self.header.PtDatFormatID
         if fmt in (4, 5):
-            return(self.GetDimension("wave_packet_descp_idx"))
+            return(self.get_dimension("wave_packet_descp_idx"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
-    def GetByteOffsetToWavefmData(self):
+    def get_byte_offset_to_wavefm_data(self):
         fmt = self.header.PtDatFormatID
         if fmt in (4, 5):
-            return(self.GetDimension("byte_offset_to_wavefm_data"))
+            return(self.get_dimension("byte_offset_to_wavefm_data"))
         raise LaspyException("Byte Offset to Waveform Data Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
-    def GetWavefmPktSize(self):
+    def get_wavefm_pkt_size(self):
         fmt = self.header.PtDatFormatID
         if fmt in (4, 5):
-            return(self.GetDimension("wavefm_pkt_size"))
+            return(self.get_dimension("wavefm_pkt_size"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
-    def GetReturnPtWavefmLoc(self):
+    def get_return_pt_wavefm_loc(self):
         fmt = self.header.PtDatFormatID
         if fmt in (4, 5):
-            return(self.GetDimension("return_pt_wavefm_loc"))
+            return(self.get_dimension("return_pt_wavefm_loc"))
         raise LaspyException("Return Pointt Waveformm Loc Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
 
 
-    def GetX_t(self):
+    def get_x_t(self):
         fmt = self.header.PtDatFormatID
         if fmt in (4, 5):
-            return(self.GetDimension("X_t"))
+            return(self.get_dimension("X_t"))
         raise LaspyException("X(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
-    def GetY_t(self):
+    def get_y_t(self):
         fmt = self.header.PtDatFormatID
         if fmt in (4, 5):
-            return(self.GetDimension("Y_t"))
+            return(self.get_dimension("Y_t"))
         raise LaspyException("Y(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
-    def GetZ_t(self):
+    def get_z_t(self):
         fmt = self.header.PtDatFormatID
         if fmt in (4, 5):
-            return(self.GetDimension("Z_t"))
+            return(self.get_dimension("Z_t"))
         raise LaspyException("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
@@ -536,24 +536,24 @@ class Writer(FileManager):
         self._map.close()
         self.fileref.close()
 
-    def SetDimension(self, name,dim):
+    def set_dimension(self, name,dim):
         ptrecs = self.get_pointrecordscount()
         if len(dim) != ptrecs:
             raise LaspyException("Error, new dimension length (%s) does not match"%str(len(dim)) + " the number of points (%s)" % str(ptrecs))
         try:
             specs = self.point_format.lookup[name]
-            return(self._SetDimension(dim,specs[0], specs[1], 
+            return(self._set_dimension(dim,specs[0], specs[1], 
                                      specs[2]))
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
 
-    def _SetDimension(self,dim,offs, fmt, length):
-        if type(self.PointRefs) == bool:
-            self.buildPointRefs()
-        idx = np.array(xrange(len(self.PointRefs)))
+    def _set_dimension(self,dim,offs, fmt, length):
+        if type(self.point_refs) == bool:
+            self.build_point_refs()
+        idx = np.array(xrange(len(self.point_refs)))
         def f(x):
-            self._map[self.PointRefs[x]+offs:self.PointRefs[x]
+            self._map[self.point_refs[x]+offs:self.point_refs[x]
                 +offs+length] = struct.pack(fmt,dim[x])
         vfunc = np.vectorize(f)
         vfunc(idx)
@@ -562,7 +562,7 @@ class Writer(FileManager):
         return True
 
 
-    def SetHeader(self, header):
+    def set_Header(self, header):
         pass    
     
     def set_padding(self, padding):
@@ -575,33 +575,33 @@ class Writer(FileManager):
         pass
 
     ##  To Implement: Scale
-    def SetX(self,X, scale = False):
-        self.SetDimension("X", X)
+    def set_x(self,X, scale = False):
+        self.set_dimension("X", X)
         return
 
-    def SetY(self,Y, scale = False):
-        self.SetDimension("Y", Y)
+    def set_y(self,Y, scale = False):
+        self.set_dimension("Y", Y)
         return
 
-    def SetZ(self, Z, scale = False):
-        self.SetDimension("Z", Z)
+    def set_z(self, Z, scale = False):
+        self.set_dimension("Z", Z)
         return
 
-    def SetIntensity(self, intensity):
-        self.SetDimension("intensity", intensity)
+    def set_intensity(self, intensity):
+        self.set_dimension("intensity", intensity)
         return
     
-    def SetFlagByte(self, byte):
-        self.SetDimension("flag_byte", byte)
+    def set_flag_byte(self, byte):
+        self.set_dimension("flag_byte", byte)
         return
     ##########
     # Utility Function, refactor
     
-    def binaryStrArr(self, arr, length = 8):
+    def binary_str_arr(self, arr, length = 8):
         outArr = np.array(["0"*length]*len(arr))
         idx = 0
         for i in arr:
-            outArr[idx] = self.binaryStr(i, length)
+            outArr[idx] = self.binary_str(i, length)
             idx += 1
         return(outArr)
         
@@ -618,7 +618,7 @@ class Writer(FileManager):
                 tmp += arr[i][idx[j][0]:idx[j][1]]
                 j += 1
             if pack:
-                tmp = self.packedStr(tmp)
+                tmp = self.packed_str(tmp)
             outArr[i] = tmp 
         
         return(outArr)
@@ -627,182 +627,182 @@ class Writer(FileManager):
     ########
 
 
-    def SetReturnNum(self, num):
-        flagByte = self.binaryStrArr(self.GetFlagByte())
-        newBits = self.binaryStrArr(num, 3)
-        outByte = self.compress((newBits,flagByte), ((0,3), (3,8)))
-        self.SetDimension("flag_byte", outByte)
+    def set_return_num(self, num):
+        flag_byte = self.binary_str_arr(self.get_flag_byte())
+        newBits = self.binary_str_arr(num, 3)
+        outByte = self.compress((newBits,flag_byte), ((0,3), (3,8)))
+        self.set_dimension("flag_byte", outByte)
         return
 
-    def SetNumReturns(self, num):
-        flagByte = self.binaryStrArr(self.GetFlagByte())
-        newBits = self.binaryStrArr(num, 3)
-        outByte = self.compress((flagByte,newBits,flagByte), 
+    def set_num_returns(self, num):
+        flag_byte = self.binary_str_arr(self.get_flag_byte())
+        newBits = self.binary_str_arr(num, 3)
+        outByte = self.compress((flag_byte,newBits,flag_byte), 
             ((0,3),(0,3), (6,8)))
-        self.SetDimension("flag_byte", outByte)
+        self.set_dimension("flag_byte", outByte)
         return
 
-    def SetScanDirFlag(self, flag): 
-        flagByte = self.binaryStrArr(self.GetFlagByte())
-        newBits = self.binaryStrArr(flag, 1)
-        outByte = self.compress((flagByte,newBits,flagByte), 
+    def set_scan_dir_flag(self, flag): 
+        flag_byte = self.binary_str_arr(self.get_flag_byte())
+        newBits = self.binary_str_arr(flag, 1)
+        outByte = self.compress((flag_byte,newBits,flag_byte), 
             ((0,6),(0,1), (7,8)))
-        self.SetDimension("flag_byte", outByte)
+        self.set_dimension("flag_byte", outByte)
         return
 
 
-    def SetEdgeFlightLine(self, line):
-        flagByte = self.binaryStrArr(self.GetFlagByte())
-        newBits = self.binaryStrArr(line, 1)
-        outByte = self.compress((flagByte,newBits), 
+    def set_edge_flight_line(self, line):
+        flag_byte = self.binary_str_arr(self.get_flag_byte())
+        newBits = self.binary_str_arr(line, 1)
+        outByte = self.compress((flag_byte,newBits), 
             ((0,7),(0,1)))
-        self.SetDimension("flag_byte", outByte)
+        self.set_dimension("flag_byte", outByte)
         return
 
-    def SetRawClassification(self, classification):
-        self.SetDimension("raw_classification", classification)
+    def set_raw_classification(self, classification):
+        self.set_dimension("raw_classification", classification)
     
-    def SetClassificaton(self, classification):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 5))
-        vfunc3 = np.vectorize(lambda x: self.packedStr(newbits[x]
+    def set_classificaton(self, classification):
+        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
+        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 5))
+        vfunc3 = np.vectorize(lambda x: self.packed_str(newbits[x]
                           + classByte[x][5:8]))          
-        classByte = vfunc1(self.GetRawClassification())
+        classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(classification)
         outByte = vfunc3(np.array(xrange(len(newBits))))
-        self.SetDimension("flag_byte", outByte)
+        self.set_dimension("flag_byte", outByte)
         return
 
-    def SetSynthetic(self, synthetic):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
-        vfunc3 = np.vectorize(lambda x: self.packedStr(
+    def set_synthetic(self, synthetic):
+        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
+        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 1))
+        vfunc3 = np.vectorize(lambda x: self.packed_str(
             classByte[x][0:5]
           + newbits[x]
           + classByte[x][6:8]))          
-        classByte = vfunc1(self.GetRawClassification())
+        classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(synthetic)
         outByte = vfunc3(np.array(xrange(len(newBits))))
-        self.SetDimension("flag_byte", outByte)
+        self.set_dimension("flag_byte", outByte)
         return
 
-    def SetKeyPoint(self, pt):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
-        vfunc3 = np.vectorize(lambda x: self.packedStr(
+    def set_key_point(self, pt):
+        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
+        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 1))
+        vfunc3 = np.vectorize(lambda x: self.packed_str(
             classByte[x][0:6]
           + newbits[x]
           + classByte[x][7]))          
-        classByte = vfunc1(self.GetRawClassification())
+        classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(pt)
         outByte = vfunc3(np.array(xrange(len(newBits))))
-        self.SetDimension("flag_byte", outByte)
+        self.set_dimension("flag_byte", outByte)
         return
    
-    def SetWithheld(self, withheld):
-        vfunc1 = np.vectorize(lambda x: self.binaryStr(x))
-        vfunc2 = np.vectorize(lambda x: self.binaryStr(x, 1))
-        vfunc3 = np.vectorize(lambda x: self.packedStr(
+    def set_withheld(self, withheld):
+        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
+        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 1))
+        vfunc3 = np.vectorize(lambda x: self.packed_str(
             classByte[x][0:7]
           + newbits[x]))          
-        classByte = vfunc1(self.GetRawClassification())
+        classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(withheld)
         outByte = vfunc3(np.array(xrange(len(newBits))))
-        self.SetDimension("flag_byte", outByte)
+        self.set_dimension("flag_byte", outByte)
         return
 
-    def SetScanAngleRank(self, rank):
-        self.SetDimension("scan_angle_rank", rank)
+    def set_scan_angle_rank(self, rank):
+        self.set_dimension("scan_angle_rank", rank)
         return
 
-    def SetUserData(self, data):
-        self.SetDimension("user_data", data)
+    def set_user_data(self, data):
+        self.set_dimension("user_data", data)
         return
     
-    def SetPtSrcId(self, data):
-        self.SetDimension("pt_src_id", data)
+    def set_pt_src_id(self, data):
+        self.set_dimension("pt_src_id", data)
         return
     
-    def SetGPSTime(self, data):
+    def set_gps_time(self, data):
         vsn = self.header.PtDatFormatID
         if vsn in (1,2,3,4,5):    
-            self.SetDimension("gps_time", data)
+            self.set_dimension("gps_time", data)
             return
         raise LaspyException("GPS Time is not available for point format: " + str(vsn))
     
-    def SetRed(self, red):
+    def set_red(self, red):
         vsn = self.header.PtDatFormatID
         if vsn in (2,3,5):
-            self.SetDimension("red", red)
+            self.set_dimension("red", red)
             return
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
-    def SetGreen(self, green):
+    def set_green(self, green):
         vsn = self.header.PtDatFormatID
         if vsn in (2,3,5):
-            self.SetDimension("green", green)
+            self.set_dimension("green", green)
             return
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
 
     
-    def SetBlue(self, blue):
+    def set_blue(self, blue):
         vsn = self.header.PtDatFormatID
         if vsn in (2,3,5):
-            self.SetDimension("blue", blue)
+            self.set_dimension("blue", blue)
             return
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
-    def SetWavePacketDescpIdx(self, idx):
+    def set_wave_packet_descp_idx(self, idx):
         vsn = self.header.PtDatFormatID
         if vsn in (4, 5):
-            self.SetDimension("wave_packet_descp_index", idx)
+            self.set_dimension("wave_packet_descp_index", idx)
             return
         raise LaspyException("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
 
-    def SetByteOffsetToWavefmData(self, idx):
+    def set_byte_offset_to_wavefm_data(self, idx):
         vsn = self.header.PtDatFormatID
         if vsn in (4, 5):
-            self.SetDimension("byte_offset_to_wavefm_data", idx)
+            self.set_dimension("byte_offset_to_wavefm_data", idx)
             return
         raise LaspyException("Byte Offset To Waveform Data Not Available for Point Format: " + str(vsn))
 
 
     
-    def SetWavefmPktSize(self, size):
+    def set_wavefm_pkt_size(self, size):
         vsn = self.header.PtDatFormatID
         if vsn in (4, 5):
-            self.SetDimension("wavefm_pkt_size", size)
+            self.set_dimension("wavefm_pkt_size", size)
             return
         raise LaspyException("Waveform Packet Size Not Available for Point Format: " + str(vsn))
     
-    def SetReturnPtWavefmLoc(self, loc):
+    def set_return_pt_wavefm_loc(self, loc):
         vsn = self.header.PtDatFormatID
         if vsn in (4, 5):
-            self.SetDimension("return_pt_wavefm_loc", loc)
+            self.set_dimension("return_pt_wavefm_loc", loc)
             return
         raise LaspyException("Return Point Waveform Loc Not Available for Point Format: " + str(vsn))
 
 
     
-    def SetX_t(self, x):
+    def set_x_t(self, x):
         vsn = self.header.PtDatFormatID
         if vsn in (4, 5):
-            self.SetDimension("X_t_5", x)
+            self.set_dimension("X_t_5", x)
             return
         raise LaspyException("X_t Not Available for Point Format: " + str(vsn))
 
-    def SetY_t(self, y):
+    def set_y_t(self, y):
         vsn = self.header.PtDatFormatID
         if vsn in (4, 5):
-            self.SetDimension("Y_t", y)
+            self.set_dimension("Y_t", y)
             return
         raise LaspyException("Y_t Not Available for Point Format: " + str(vsn))
     
-    def SetZ_t(self, z):
+    def set_z_t(self, z):
         vsn = self.header.PtDatFormatID
         if vsn in (4, 5):
-            self.SetDimension("Z_t_5", z)
+            self.set_dimension("Z_t_5", z)
             return
         raise LaspyException("Z_t Not Available for Point Format: " + str(vsn))
 
