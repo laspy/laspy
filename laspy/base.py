@@ -40,42 +40,42 @@ class Format():
     def __init__(self, fmt):
         fmt = str(fmt)
         self.dimensions = []
-        if not (fmt in ("0", "1", "2", "3", "4", "5", "VLR", "header")):
+        if not (fmt in ("0", "1", "2", "3", "4", "5", "VLR", "h1.0", "h1.1", "h1.2", "h1.3")):
             raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
         if fmt in ("0", "1", "2", "3", "4", "5"):
             self.add("X", 0, "c_long", 1)
             self.add("Y", 4, "c_long", 1)
             self.add("Z", 8, "c_long", 1)
-            self.add("Intensity", 12, "c_ushort", 1)
-            self.add("FlagByte", 14,"c_ubyte", 1)
-            self.add("RawClassification", 15,"c_ubyte", 1)
-            self.add("ScanAngleRank",16, "c_ubyte", 1)
-            self.add("UserData", 17, "c_ubyte", 1)
-            self.add("PtSrcId", 18, "c_ubyte", 1)
+            self.add("intensity", 12, "c_ushort", 1)
+            self.add("flag_byte", 14,"c_ubyte", 1)
+            self.add("raw_classification", 15,"c_ubyte", 1)
+            self.add("scan_angle_rank",16, "c_ubyte", 1)
+            self.add("user_data", 17, "c_ubyte", 1)
+            self.add("pt_src_id", 18, "c_ushort", 1)
         if fmt in ("1", "3", "4", "5"):
-            self.add("GPSTime", 20, "c_double", 1)
+            self.add("gps_time", 20, "c_double", 1)
         if fmt in ("3", "5"):
-            self.add("Red", 28, "c_ushort", 1)
-            self.add("Green", 30, "c_ushort", 1)
-            self.add("Blue" , 32, "c_ushort",1)
+            self.add("red", 28, "c_ushort", 1)
+            self.add("green", 30, "c_ushort", 1)
+            self.add("blue" , 32, "c_ushort",1)
         elif fmt == "2":
-            self.add("Red", 20, "c_ushort", 1)
-            self.add("Green", 22, "c_ushort", 1)
-            self.add("Blue" , 24, "c_ushort",1)
+            self.add("red", 20, "c_ushort", 1)
+            self.add("green", 22, "c_ushort", 1)
+            self.add("blue" , 24, "c_ushort",1)
         if fmt == "4":
-            self.add("WavePacketDescpIdx", 28, "c_ubyte", 1)
-            self.add("ByteOffsetToWavefmData", 29, "c_ulonglong",1)
-            self.add("WavefmPktSize", 37, "c_long", 1)
-            self.add("ReturnPtWavefmLoc", 41, "c_float", 1)
+            self.add("wave_packet_descp_idx", 28, "c_ubyte", 1)
+            self.add("byte_offset_to_wavefm_data", 29, "c_ulonglong",1)
+            self.add("wavefm_pkt_size", 37, "c_long", 1)
+            self.add("return_pt_wavefm_loc", 41, "c_float", 1)
             self.add("X_t", 45, "c_float", 1)
             self.add("Y_t", 56, "c_float", 1)           
             self.add("Z_t", 54, "c_float", 1)
         elif fmt == "5":
-            self.add("WavePacketDescpIdx", 34, "c_ubyte", 1)
-            self.add("ByteOffsetToWavefmData", 35, "c_ulonglong",1)
-            self.add("WavefmPktSize", 43, "c_long", 1)
-            self.add("ReturnPtWavefmLoc", 47, "c_float", 1)
+            self.add("wave_packet_descp_idx", 34, "c_ubyte", 1)
+            self.add("byte_offset_to_wavefm_data", 35, "c_ulonglong",1)
+            self.add("wavefm_pkt_size", 43, "c_long", 1)
+            self.add("return_pt_wavefm_loc", 47, "c_float", 1)
             self.add("X_t", 51, "c_float", 1)
             self.add("Y_t", 56, "c_float", 1)          
             self.add("Z_t", 60, "c_float", 1)
@@ -88,7 +88,7 @@ class Format():
             self.add("Descriptions", 22, "c_char", 32, compress = True)
         
         ## Header Fields
-        if fmt == "header":
+        if fmt[0] == "h":
             self.add("FileSig", 0, "c_char", 4, compress = True)
             self.add("FileSrc", 4, "c_ushort", 1)
             self.add("GlobalEncoding", 6, "c_ushort", 1)
@@ -107,9 +107,8 @@ class Format():
             self.add("NumVariableLenRecs", 100, "c_long", 1)
             self.add("PtDatFormatID", 104, "c_ubyte", 1)
             self.add("PtDatRecLen", 105, "c_ushort", 1)
-            self.add("NumPtRecs", 107, "c_long", 1)
-            version = str(self.dimensions[7]) + str(self.dimensions[8])
-            if version == "1.3":
+            self.add("NumPtRecs", 107, "c_long", 1)         
+            if fmt == "h1.3":
                 self.add("NumPtsByReturn", 108, "c_long", 7)
                 self.add("XScale", 136, "c_double", 1)
                 self.add("YScale", 144, "c_double", 1)
@@ -123,7 +122,7 @@ class Format():
                 self.add("YMin", 208, "c_double", 1)
                 self.add("ZMax", 216, "c_double", 1)
                 self.add("ZMin", 224, "c_double", 1)
-            elif version in ("1.0", "1.1", "1.2"):
+            elif fmt in ("h1.0", "h1.1", "h1.2"):
                 self.add("NumPtsByReturn", 108, "c_long", 5)
                 self.add("XScale", 128, "c_double", 1)
                 self.add("YScale", 136, "c_double", 1)
@@ -154,51 +153,31 @@ class Format():
 
 
 class Point():
-    def __init__(self, reader, startIdx ,version):
-        self.Version = version
-        self.X = reader.ReadWords("X")
-        self.Y = reader.ReadWords("Y")
-        self.Z = reader.ReadWords("Z")
-        self.intensity = reader.ReadWords("Intensity")
-        ###########################
-        self.flag_byte = reader.ReadWords("FlagByte")
+    def __init__(self, reader, startIdx):
+        for dim in reader.point_format.dimensions:
+            #reader.seek(dim.offs + startIdx, rel = False)
+            self.__dict__[dim.name] = reader._ReadWords(dim.fmt, dim.num, dim.length)
+
         bstr = reader.binaryStr(self.flag_byte)
         self.return_num = reader.packedStr(bstr[0:3])
         self.num_returns = reader.packedStr(bstr[3:6])
         self.scan_dir_flag = reader.packedStr(bstr[6])
         self.edge_flight_line = reader.packedStr(bstr[7])
-        ###########################
-        self.raw_classification = reader.ReadWords("RawClassification")
-        ##########################
+
         bstr = reader.binaryStr(self.raw_classification)
         self.classification = reader.packedStr(bstr[0:5])
         self.synthetic = reader.packedStr(bstr[5])
         self.key_point = reader.packedStr(bstr[6])
         self.withheld = reader.packedStr(bstr[7])       
 
-        #########################
+ 
 
-        self.scan_angle_rank = reader.ReadWords("ScanAngleRank")
-        self.user_data = reader.ReadWords("UserData")
-        self.pt_src_id = reader.ReadWords("PtSrcId")
-        if self.Version in (1,3,4,5):
-            self.gps_time = reader.ReadWords("GPSTime_12345")
-        if self.Version in (2,3,5):
-            ## These formats (_35) don't matter to the ReadWords method, 
-            ## wich relies on sequential reading. It ignores offset data
-            ## which is specific to the _35's vs _2's etc.
-            self.red = reader.ReadWords("Red_35")
-            self.green = reader.ReadWords("Green_35")
-            self.blue = reader.ReadWords("Blue_35")
-        if self.Version in (4,5):
-            self.wave_packet_desc_index = reader.ReadWords("WavePacketDescpIndex_5")
-            self.byte_offset_to_waveform_data = reader.ReadWords("ByteOffsetToWavefmData_5")
-            self.waveform_packet_size = reader.ReadWords("WavefmPktSize_5")
-            self.return_pt_waveform_loc = reader.ReadWords("ReturnPtWavefmLoc_5")
-            self.x_t = reader.ReadWords("X_t_5")
-            self.y_t = reader.ReadWords("Y_t_5")
-            self.z_t = reader.ReadWords("Z_t_5")
 
+        
+        
+
+
+        
 class VarLenRec():
     def __init__(self, reader):
         self.Reserved = reader.ReadWords("Reserved")
@@ -312,7 +291,7 @@ class FileManager():
         self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         self.bytesRead = 0
-        self.header_format = Format("header") 
+        self.header_format = Format("h" + self.grab_file_version())
         self.get_header()
         self.populateVLRs()
         self.PointRefs = False
@@ -398,7 +377,7 @@ class FileManager():
         v1 = self._ReadWords("<B", 1, 1)
         v2 = self._ReadWords("<B", 1, 1)
         self.seek(0, rel = True)
-        return(str(v1) + str(v2))
+        return(str(v1) +"." +  str(v2))
 
     def get_header(self):
         ## Why is this != neccesary?
@@ -453,7 +432,7 @@ class FileManager():
         seekDex = self.GetRawPointIndex(index)
         self.seek(seekDex, rel = False)
         self._current = index
-        return(Point(self, seekDex, self.Header.PtDatFormatID))
+        return(Point(self, seekDex))
     
     def GetNextPoint(self):
         if self._current == None:

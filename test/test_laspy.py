@@ -122,7 +122,7 @@ class LasReaderTestCase(unittest.TestCase):
 
 
     def test_ptstrcid(self):
-        '''Fetch and test pts_src_id dimension'''
+        '''Fetch and test pt_src_id dimension'''
         self.assertEqual(self.p1.pt_src_id , 7328 , 
             self.pt_src_id[self.idx1])
         self.assertEqual(self.p2.pt_src_id , 7334 , 
