@@ -54,6 +54,9 @@ def leap_year(year):
 
 ## NOTE: set_attr methods are currently not implemented. These methods need
 ## to update the file using reader/mmap. 
+class LaspyHeaderException(Exception):
+    pass
+
 class Header(object):
     def __init__(self,reader, copy=False):
         self.Format = reader.header_format        
@@ -413,7 +416,7 @@ class Header(object):
 
     def set_dataformatid(self, value):
         if value not in range(6):
-            raise Exception("Format ID must be 3, 2, 1, or 0")
+            raise LaspyHeaderException("Format ID must be 3, 2, 1, or 0")
         return 
     doc = """The point format as an integer. See the specification_ for more
     detail.

@@ -354,7 +354,7 @@ class FileManager():
         outstr = "".join(outstr)
         padding = zerolen-len(outstr)
         if padding < 0:
-            raise Exception("Invalid Data: Packed Length is Greater than allowed.")
+            raise LaspyException("Invalid Data: Packed Length is Greater than allowed.")
         return(outstr + '0'*(zerolen-len(outstr)))
 
     def read(self, bytes):
@@ -380,7 +380,7 @@ class FileManager():
         try:
             spec = Formats[name]
         except KeyError:
-            raise Exception("Dimension " + name + "not found.")
+            raise LaspyException("Dimension " + name + "not found.")
         return(self._ReadWords(spec[1], spec[3], spec[2]))
 
 
@@ -412,7 +412,7 @@ class FileManager():
             self.VLRs.append(VarLenRec(self))
             self.seek(self.VLRs[-1].RecLenAfterHeader)
             if self._map.tell() > self.Header.data_offset:
-                raise Exception("Error, Calculated Header Data "
+                raise LaspyException("Error, Calculated Header Data "
                     "Overlaps The Point Records!")
         self.VLRStop = self._map.tell()
         return
@@ -457,7 +457,7 @@ class FileManager():
     
     def GetNextPoint(self):
         if self._current == None:
-            raise Exception("No Current Point Specified," + 
+            raise LaspyException("No Current Point Specified," + 
                             " use Reader.GetPoint(0) first")
         return self.GetPoint(self._current + 1)
 
@@ -473,7 +473,7 @@ class FileManager():
             return(self._GetDimension(specs[0], specs[1], 
                                      specs[2]))
         except KeyError:
-            raise Exception("Dimension: " + str(name) + 
+            raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
 
 
@@ -565,7 +565,7 @@ class FileManager():
         fmt = self.Header.PtDatFormatID
         if fmt in (1,2,3,4,5):
             return(self.GetDimension("GPSTime_12345"))
-        raise Exception("GPS Time is not defined on pt format: "
+        raise LaspyException("GPS Time is not defined on pt format: "
                         + str(fmt))
     
     ColException = "Color is not available for point format: "
@@ -575,7 +575,7 @@ class FileManager():
             return(self.GetDimension("Red_35"))
         elif fmt == 2:
             return(self.GetDimension("Red_2"))
-        raise Exception(ColException + str(fmt))
+        raise LaspyException(ColException + str(fmt))
     
     def GetGreen(self):
         fmt = self.Header.PtDatFormatID
@@ -583,7 +583,7 @@ class FileManager():
             return(self.GetDimension("Green_35"))
         elif fmt == 2:
             return(self.GetDimension("Green_2"))
-        raise Exception(ColException + str(fmt))
+        raise LaspyException(ColException + str(fmt))
 
     
     def GetBlue(self):
@@ -592,7 +592,7 @@ class FileManager():
             return(self.GetDimension("Blue_35"))
         elif fmt == 2:
             return(self.GetDimension("Blue_2"))
-        raise Exception(ColException + str(fmt))
+        raise LaspyException(ColException + str(fmt))
 
 
     def GetWavePacketDescpIdx(self):
@@ -601,7 +601,7 @@ class FileManager():
             return(self.GetDimension("WavePacketDescpIdx_5"))
         elif fmt == 4:
             return(self.GetDimension("WavePacketDescpIdx_4"))
-        raise Exception("Wave Packet Description Index Not"
+        raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def GetByteOffsetToWavefmData(self):
@@ -610,7 +610,7 @@ class FileManager():
             return(self.GetDimension("ByteOffsetToWavefmData_5"))
         elif fmt == 4:
             return(self.GetDimension("ByteOffsetToWavefmData_4"))
-        raise Exception("Byte Offset to Waveform Data Not"
+        raise LaspyException("Byte Offset to Waveform Data Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def GetWavefmPktSize(self):
@@ -619,7 +619,7 @@ class FileManager():
             return(self.GetDimension("WavefmPktSize_5"))
         elif fmt == 4:
             return(self.GetDimension("WavefmPktSize_4"))
-        raise Exception("Wave Packet Description Index Not"
+        raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def GetReturnPtWavefmLoc(self):
@@ -628,7 +628,7 @@ class FileManager():
             return(self.GetDimension("ReturnPtWavefmLoc_5"))
         elif fmt == 4:
             return(self.GetDimension("ReturnPtWavefmLoc_4"))
-        raise Exception("ReturnPtWavefmLoc Not"
+        raise LaspyException("ReturnPtWavefmLoc Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
 
@@ -639,7 +639,7 @@ class FileManager():
             return(self.GetDimension("X_t_5"))
         elif fmt == 4:
             return(self.GetDimension("X_t_4"))
-        raise Exception("X(t) Not"
+        raise LaspyException("X(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def GetY_t(self):
@@ -648,7 +648,7 @@ class FileManager():
             return(self.GetDimension("Y_t_5"))
         elif fmt == 4:
             return(self.GetDimension("Y_t_4"))
-        raise Exception("Y(t) Not"
+        raise LaspyException("Y(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def GetZ_t(self):
@@ -657,7 +657,7 @@ class FileManager():
             return(self.GetDimension("Z_t_5"))
         elif fmt == 4:
             return(self.GetDimension("Z_t_4"))
-        raise Exception("Z(t) Not"
+        raise LaspyException("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
 class Reader(FileManager):
@@ -675,13 +675,13 @@ class Writer(FileManager):
     def SetDimension(self, name,dim):
         ptrecs = self.get_pointrecordscount()
         if len(dim) != ptrecs:
-            raise Exception("Error, new dimension length (%s) does not match"%str(len(dim)) + " the number of points (%s)" % str(ptrecs))
+            raise LaspyException("Error, new dimension length (%s) does not match"%str(len(dim)) + " the number of points (%s)" % str(ptrecs))
         try:
             specs = Formats[name]
             return(self._SetDimension(dim,specs[0], specs[1], 
                                      specs[2]))
         except KeyError:
-            raise Exception("Dimension: " + str(name) + 
+            raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
 
     def _SetDimension(self,dim,offs, fmt, length):
@@ -864,7 +864,7 @@ class Writer(FileManager):
         if vsn in (1,2,3,4,5):    
             self.SetDimension("GPSTime_12345", data)
             return
-        raise Exception("GPS Time is not available for point format: " + str(vsn))
+        raise LaspyException("GPS Time is not available for point format: " + str(vsn))
     
     def SetRed(self, red):
         vsn = self.Header.PtDatFormatID
@@ -874,7 +874,7 @@ class Writer(FileManager):
         elif vsn in (2):
             self.SetDimension("Red_2", red)
             return
-        raise Exception("Color Data Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
     def SetGreen(self, green):
         vsn = self.Header.PtDatFormatID
@@ -884,7 +884,7 @@ class Writer(FileManager):
         elif vsn in (2):
             self.SetDimension("Green_2", green)
             return
-        raise Exception("Color Data Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
 
     
@@ -896,7 +896,7 @@ class Writer(FileManager):
         elif vsn in (2):
             self.SetDimension("Blue_2", blue)
             return
-        raise Exception("Color Data Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
     def SetWavePacketDescpIdx(self, idx):
         vsn = self.Header.PtDatFormatID
@@ -906,7 +906,7 @@ class Writer(FileManager):
         elif vsn == 4:
             self.SetDimension("WavePacketDescpIndex_4", idx)
             return
-        raise Exception("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
 
     def SetByteOffsetToWavefmData(self, idx):
         vsn = self.Header.PtDatFormatID
@@ -916,7 +916,7 @@ class Writer(FileManager):
         elif vsn == 4:
             self.SetDimension("ByteOffsetToWavefmData_4", idx)
             return
-        raise Exception("Byte Offset To Waveform Data Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Byte Offset To Waveform Data Not Available for Point Format: " + str(vsn))
 
 
     
@@ -928,7 +928,7 @@ class Writer(FileManager):
         elif vsn == 4:
             self.SetDimension("WavefmPktSize_4", size)
             return
-        raise Exception("Waveform Packet Size Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Waveform Packet Size Not Available for Point Format: " + str(vsn))
 
 
     
@@ -940,7 +940,7 @@ class Writer(FileManager):
         elif vsn == 4:
             self.SetDimension("ReturnPtWavefmLoc_4", loc)
             return
-        raise Exception("Return Point Waveform Loc Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Return Point Waveform Loc Not Available for Point Format: " + str(vsn))
 
 
     
@@ -952,7 +952,7 @@ class Writer(FileManager):
         elif vsn == 4:
             self.SetDimension("X_t_4", x)
             return
-        raise Exception("X_t Not Available for Point Format: " + str(vsn))
+        raise LaspyException("X_t Not Available for Point Format: " + str(vsn))
 
 
     
@@ -964,7 +964,7 @@ class Writer(FileManager):
         elif vsn == 4:
             self.SetDimension("Y_t_4", y)
             return
-        raise Exception("Y_t Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Y_t Not Available for Point Format: " + str(vsn))
 
 
     
@@ -976,7 +976,7 @@ class Writer(FileManager):
         elif vsn == 4:
             self.SetDimension("Z_t_4", z)
             return
-        raise Exception("Z_t Not Available for Point Format: " + str(vsn))
+        raise LaspyException("Z_t Not Available for Point Format: " + str(vsn))
 
 
     

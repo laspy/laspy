@@ -107,7 +107,7 @@ class File(object):
         if mode == 'r':
             for f in files['write'].keys() + files['append'].keys():
                 if f == self.filename:
-                    raise Exception("File %s is already open for "
+                    raise base.LaspyException("File %s is already open for "
                                             "write.  Close the file or delete "
                                             "the reference to it" % filename)
         else:
@@ -115,7 +115,7 @@ class File(object):
             # file open, complain to the user.
             for f in files['read'].keys() + files['append'].keys() + files['write'].keys():
                 if f == self.filename: 
-                    raise Exception("File %s is already open. "
+                    raise base.LaspyException("File %s is already open. "
                                             "Close the file or delete the "
                                             "reference to it" % filename)
         self.open()
@@ -176,7 +176,7 @@ class File(object):
                     
                     files['read'].pop(self.filename)
             except KeyError:
-                raise Exception("File %s was not found in accounting dictionary!" % self.filename)
+                raise base.LaspyException("File %s was not found in accounting dictionary!" % self.filename)
             self.Reader.close()
         else:
             try:
@@ -191,7 +191,7 @@ class File(object):
     
     def assertWriteMode(self):
         if self.mode == 0:
-            raise Exception("File is opened in read mode.")         
+            raise base.LaspyException("File is opened in read mode.")         
 
     # TO BE IMPLEMENTED
     def set_srs(self, value):
@@ -244,7 +244,7 @@ class File(object):
         if mode == 2: 
             self.Writer.set_header(header)
             return True
-        raise Exception("The header can only be set "
+        raise base.LaspyException("The header can only be set "
                                 "after file creation for files in append mode")
     doc = """The file's :obj:`liblas.header.Header`
 
@@ -599,7 +599,7 @@ class File(object):
 
         """
         if not isinstance(pt, base.Point):
-            raise Exception('cannot write %s, it must '
+            raise base.LaspyException('cannot write %s, it must '
                                     'be of type liblas.point.Point' % pt)
         if self.mode == 1 or self.mode == 2:
             #core.las.LASWriter_WritePoint(self.handle, pt.handle)
@@ -613,7 +613,7 @@ class File(object):
             point to summarize the entire file, and it will again reset the 
             read position to the 0th point upon completion."""
         if self.mode != 0:
-            raise Exception("file must be in read mode, not append or write mode to provide xml summary")
+            raise base.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
         return
         
     summary = property(get_xmlsummary, None, None, None)
