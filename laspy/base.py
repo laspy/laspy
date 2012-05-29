@@ -66,8 +66,8 @@ class LaspyException(Exception):
 
 
 fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
-LEfmt = {"Long":"<L", "Unsigned Short":"<H", "Unsigned Char":"<B"
-        ,"Float":"<f", "Str":"<s", "Double":"<d", "Unsigned LL":"<Q"}
+LEfmt = {"c_ulong":"<L", "c_ushort":"<H", "c_ubyte":"<B"
+        ,"c_float":"<f", "c_char":"<s", "c_double":"<d", "c_ulonglong":"<Q"}
 class Dimension():
     def __init__(self,name,offs, fmt, num,ltl_endian = True):
         if ltl_endian:
@@ -85,6 +85,69 @@ class Dimension():
         sys.stdout.write("Format: " + self.Format + "\n")
         sys.stdout.write("Number: " + self.num + "\n")
         
+
+
+class Format():
+    def __init__(self, fmt):
+        self.dimensons = []
+        if fmt in ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5"):
+            self.dimensions.append(Dimension("X", 0, "c_long", 1))
+            self.dimensions.append(Dimension("Y", 4, "c_long", 1))
+            self.dimensions.append(Dimension("Z", 8, "c_long", 1))
+            self.dimensions.append(Dimension("Intensity", 12, "c_ushort", 1))
+            self.dimensions.append(Dimension("FlagByte", 14,"c_ubyte", 1))
+            self.dimensions.append(Dimension("RawClassification", 15,"c_ubyte", 1))
+            self.dimensions.append(Dimension("ScanAngleRank",16, "c_ubyte", 1))
+            self.dimensions.append(Dimension("UserData", 17, "c_ubyte", 1))
+            self.dimensions.append(Dimension("PtSrcId", 18, "c_ubyte", 1))
+        if fmt in ("1.1", "1.3", "1.4", "1.5"):
+            self.dimensions.append(Dimension("GPSTime", 20, "c_double", 1))
+        if fmt in ("1.3", "1.5"):
+            self.dimensions.append(Dimension("Red", 28, "c_ushort", 1))
+            self.dimensions.append(Dimension("Green", 30, "c_ushort", 1))
+            self.dimensions.append(Dimension("Blue" , 32, "c_ushort",1))
+        elif fmt == "1.2":
+            self.dimensions.append(Dimension("Red", 20, "c_ushort", 1))
+            self.dimensions.append(Dimension("Green", 22, "c_ushort", 1))
+            self.dimensions.append(Dimension("Blue" , 24, "c_ushort",1))
+        if fmt == "1.4":
+            self.dimensions.append(Dimension("WavePacketDescpIdx", 28, "c_ubyte", 1))
+            self.dimensions.append(Dimension("ByteOffsetToWavefmData", 29, "c_ulonglong",1))
+            self.dimensions.append(Dimension("WavefmPktSize", 37, "c_long", 1))
+            self.dimensions.append(Dimension("ReturnPtWavefmLoc", 41, "c_float", 1))
+            self.dimensions.apend(Dimension("X_t", 45, "c_float", 1))
+            self.dimensions.apend(Dimension("Y_t", 56, "c_float", 1))           
+            self.dimensions.apend(Dimension("Z_t", 54, "c_float", 1))
+        elif fmt == "1.5":
+            self.dimensions.append(Dimension("WavePacketDescpIdx", 34, "c_ubyte", 1))
+            self.dimensions.append(Dimension("ByteOffsetToWavefmData", 35, "c_ulonglong",1))
+            self.dimensions.append(Dimension("WavefmPktSize", 43, "c_long", 1))
+            self.dimensions.append(Dimension("ReturnPtWavefmLoc", 47, "c_float", 1))
+            self.dimensions.apend(Dimension("X_t", 51, "c_float", 1))
+            self.dimensions.apend(Dimension("Y_t", 56, "c_float", 1))           
+            self.dimensions.apend(Dimension("Z_t", 60, "c_float", 1))
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+            pass
+        elif fmt == "1.1":
+            pass
+        elif fmt == "1.2":
+            pass
+        elif fmt == "1.3":
+            pass
 
 
 
