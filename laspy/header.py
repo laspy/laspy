@@ -59,14 +59,14 @@ class LaspyHeaderException(Exception):
 
 class Header(object):
     def __init__(self,reader, copy=False):
-        self.Format = reader.header_format        
+        self.format = reader.header_format        
         self.reader = reader
-        for dim in self.Format.dimensions:
+        for dim in self.format.dimensions:
             self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.compress)
     
     def read_words(self, offs, fmt,num, length, compress):
         self.reader.seek(offs,rel=False)
-        out = self.reader._ReadWords(fmt, num, length)
+        out = self.reader._read_words(fmt, num, length)
         if compress:
             return("".join(out))
         return(out)
@@ -74,7 +74,7 @@ class Header(object):
     def get_filesignature(self):
         """Returns the file signature for the file. It should always be
         LASF"""
-        return self.FileSig
+        return self.file_sig
     doc = """The file signature for the file.  It should always be 'LASF'
 
     From the specification_:
@@ -86,7 +86,7 @@ class Header(object):
     file_signature = property(get_filesignature, None, None, doc)
 
     def get_filesourceid(self):
-        return self.FileSrc
+        return self.file_src
 
     def set_filesourceid(self, value):
         return 
@@ -105,7 +105,7 @@ class Header(object):
     file_source_id = filesource_id
 
     def get_global_encoding(self):
-        return self.GlobalEncoding
+        return self.global_encoding
 
     def set_global_encoding(self, value):
         return
@@ -155,7 +155,7 @@ class Header(object):
     def get_projectid(self):
         """Returns the ProjectID/GUID for the file.  \
         libLAS does not currently support setting this value from Python"""
-        return(str(self.ProjID1) + str(self.ProjID2) + str(self.ProjID3) + str(self.ProjID4))
+        return(str(self.proj_id1) + str(self.proj_id_2) + str(self.proj_id_3) + str(self.proj_id_4))
     doc = """ProjectID for the file.  \
         libLAS does not currently support setting this value from Python, as
         it is the same as :obj:`liblas.header.Header.guid`. Use that to
@@ -204,7 +204,7 @@ class Header(object):
     def get_minorversion(self):
         """Returns the minor version of the file. Expect this value to always
         be 0, 1, or 2"""
-        return self.VersionMinor
+        return self.version_minor
 
     def set_minorversion(self, value):
         """Sets the minor version of the file. The value should be 0 for 1.0
@@ -230,7 +230,7 @@ class Header(object):
 
     def get_systemid(self):
         """Returns the system identifier specified in the file"""
-        return self.SysId
+        return self.sys_id
 
     def set_systemid(self, value):
         """Sets the system identifier. The value is truncated to 31
@@ -268,7 +268,7 @@ class Header(object):
 
     def get_softwareid(self):
         """Returns the software identifier specified in the file"""
-        return self.GenSoft
+        return self.gen_soft
 
     def set_softwareid(self, value):
         """Sets the software identifier.
@@ -308,8 +308,8 @@ class Header(object):
         Note that dates in LAS headers are not transitive because the header
         only stores the year and the day number.
         """
-        day = self.CreatedDay
-        year = self.CreatedYear
+        day = self.created_day
+        year = self.created_year
         if year == 0 and day == 0:
             return None
         if not leap_year(year):
@@ -353,7 +353,7 @@ class Header(object):
 
         Should not be needed in Python land
         """
-        return self.HeaderSize 
+        return self.header_size 
     doc = """The number of bytes that the header contains. For libLAS, this is
     always 227, and it is not configurable."""
     header_size = property(get_headersize, None, None, doc)
@@ -362,7 +362,7 @@ class Header(object):
     def get_dataoffset(self):
         """Returns the location in bytes of where the data block of the LAS
         file starts"""
-        return self.OffsetToPointData
+        return self.offset_to_point_data
 
     def set_dataoffset(self, value):
         """Sets the data offset
@@ -412,7 +412,7 @@ class Header(object):
     def get_dataformatid(self):
         """The point format value as an integer
         """
-        return self.PtDatFormatId 
+        return self.pt_dat_formatId 
 
     def set_dataformatid(self, value):
         if value not in range(6):
@@ -434,7 +434,7 @@ class Header(object):
 
     def get_datarecordlength(self):
         lenDict = {0:20,1:28,2:26,3:34,4:57,5:63}
-        return lenDict[self.PtDatFormatID] 
+        return lenDict[self.pt_dat_format_id] 
 
     doc = """The length in bytes of the point format. Use
     :class:`liblas.schema.Schema` and \ the :obj:`liblas.header.Header.schema`
@@ -598,7 +598,7 @@ class Header(object):
         >>> h.scale
         [0.01, 0.01, 0.01]
         """
-        return [self.XScale, self.YScale, self.ZScale]
+        return [self.x_scale, self.y_scale, self.z_scale]
 
     def set_scale(self, value):
         """Sets the scale factors in [x, y, z] for the point data.
@@ -643,7 +643,7 @@ class Header(object):
     def get_offset(self):
         """Gets the offset factors in [x, y, z] for the point data.
         """
-        return [self.XOffset, self.YOffset, self.ZOffset]
+        return [self.x_offset, self.y_offset, self.z_offset]
 
     def set_offset(self, value):
         """Sets the offset factors in [x, y, z] for the point data.
@@ -682,7 +682,7 @@ class Header(object):
     def get_min(self):
         """Gets the minimum values of [x, y, z] for the data.
         """
-        return [self.XMin, self.YMin, self.ZMin]
+        return [self.x_min, self.y_min, self.z_min]
 
     def set_min(self, value):
         """Sets the minimum values of [x, y, z] for the data.
@@ -707,7 +707,7 @@ class Header(object):
     min = property(get_min, set_min, None, doc)
 
     def get_max(self):
-        return([self.XMax, self.YMax, self.ZMax])
+        return([self.x_max, self.y_max, self.z_max])
     def set_max(self, value):
         """Sets the maximum values of [x, y, z] for the data.
         """

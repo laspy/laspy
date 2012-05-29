@@ -5,6 +5,7 @@ from header import Header, leap_year
 import numpy as np
 import sys
 import struct
+import ctypes
 
 
 class LaspyException(Exception):
@@ -35,7 +36,9 @@ class Dimension():
         "Number: " + str(self.num) + "\n")
         
 
-
+### Note: ctypes formats may behave differently across platforms. 
+### Those specified here follow the bytesize convention given in the
+### LAS specification. 
 class Format():
     def __init__(self, fmt):
         fmt = str(fmt)
@@ -68,74 +71,74 @@ class Format():
             self.add("byte_offset_to_wavefm_data", 29, "c_ulonglong",1)
             self.add("wavefm_pkt_size", 37, "c_long", 1)
             self.add("return_pt_wavefm_loc", 41, "c_float", 1)
-            self.add("X_t", 45, "c_float", 1)
-            self.add("Y_t", 56, "c_float", 1)           
-            self.add("Z_t", 54, "c_float", 1)
+            self.add("x_t", 45, "c_float", 1)
+            self.add("y_t", 56, "c_float", 1)           
+            self.add("z_t", 54, "c_float", 1)
         elif fmt == "5":
             self.add("wave_packet_descp_idx", 34, "c_ubyte", 1)
             self.add("byte_offset_to_wavefm_data", 35, "c_ulonglong",1)
             self.add("wavefm_pkt_size", 43, "c_long", 1)
             self.add("return_pt_wavefm_loc", 47, "c_float", 1)
-            self.add("X_t", 51, "c_float", 1)
-            self.add("Y_t", 56, "c_float", 1)          
-            self.add("Z_t", 60, "c_float", 1)
+            self.add("x_t", 51, "c_float", 1)
+            self.add("y_t", 56, "c_float", 1)          
+            self.add("z_t", 60, "c_float", 1)
         ## VLR Fields
         if fmt == "VLR":
-            self.add("Reserved", 0, "c_ushort", 1)
-            self.add("UserID", 2, "c_char", 16)
-            self.add("RecordID", 18, "c_ushort", 1)
-            self.add("RecLenAfterHeader", 20, "c_ushort", 1)
-            self.add("Descriptions", 22, "c_char", 32, compress = True)
+            self.add("reserved", 0, "c_ushort", 1)
+            self.add("user_id", 2, "c_char", 16)
+            self.add("record_id", 18, "c_ushort", 1)
+            self.add("rec_len_after_header", 20, "c_ushort", 1)
+            self.add("descriptions", 22, "c_char", 32, compress = True)
         
         ## Header Fields
         if fmt[0] == "h":
-            self.add("FileSig", 0, "c_char", 4, compress = True)
-            self.add("FileSrc", 4, "c_ushort", 1)
-            self.add("GlobalEncoding", 6, "c_ushort", 1)
-            self.add("ProjID1", 8, "c_long", 1)
-            self.add("ProjID2", 12, "c_ushort", 1)
-            self.add("ProjID3", 14, "c_ushort", 1)
-            self.add("ProjID4", 16, "c_ubyte", 8)
-            self.add("VersionMajor", 24, "c_ubyte", 1)
-            self.add("VersionMinor", 25, "c_ubyte", 1)
-            self.add("SysId", 26, "c_char", 32, compress=True)
-            self.add("GenSoft", 58, "c_char", 32, compress = True)
-            self.add("CreatedDay", 90, "c_ushort", 1)
-            self.add("CreatedYear", 92, "c_ushort",1)
-            self.add("HeaderSize", 94, "c_ushort", 1)
-            self.add("OffsetToPointData", 96, "c_long", 1)
-            self.add("NumVariableLenRecs", 100, "c_long", 1)
-            self.add("PtDatFormatID", 104, "c_ubyte", 1)
-            self.add("PtDatRecLen", 105, "c_ushort", 1)
-            self.add("NumPtRecs", 107, "c_long", 1)         
+            self.add("file_sig", 0, "c_char", 4, compress = True)
+            self.add("file_src", 4, "c_ushort", 1)
+            self.add("global_encoding", 6, "c_ushort", 1)
+            self.add("proj_id_1", 8, "c_long", 1)
+            self.add("proj_id_2", 12, "c_ushort", 1)
+            self.add("proj_id_3", 14, "c_ushort", 1)
+            self.add("proj_id_4", 16, "c_ubyte", 8)
+            self.add("version_major", 24, "c_ubyte", 1)
+            self.add("version_minor", 25, "c_ubyte", 1)
+            self.add("sys_id", 26, "c_char", 32, compress=True)
+            self.add("gen_soft", 58, "c_char", 32, compress = True)
+            self.add("created_day", 90, "c_ushort", 1)
+            self.add("created_year", 92, "c_ushort",1)
+            self.add("header_size", 94, "c_ushort", 1)
+            self.add("offset_to_point_data", 96, "c_long", 1)
+            self.add("num_variable_len_recs", 100, "c_long", 1)
+            self.add("pt_dat_format_id", 104, "c_ubyte", 1)
+            self.add("pt_dat_rec_len", 105, "c_ushort", 1)
+            self.add("num_pt_recs", 107, "c_long", 1)         
             if fmt == "h1.3":
-                self.add("NumPtsByReturn", 108, "c_long", 7)
-                self.add("XScale", 136, "c_double", 1)
-                self.add("YScale", 144, "c_double", 1)
-                self.add("ZScale", 152, "c_double", 1)
-                self.add("XOffset", 160, "c_double", 1)
-                self.add("YOffset", 168, "c_double", 1)
-                self.add("ZOffset", 176, "c_double", 1) 
-                self.add("XMax", 184, "c_double", 1)
-                self.add("XMin", 192, "c_double", 1)
-                self.add("YMax", 200, "c_double", 1)
-                self.add("YMin", 208, "c_double", 1)
-                self.add("ZMax", 216, "c_double", 1)
-                self.add("ZMin", 224, "c_double", 1)
+                self.add("num_pts_by_return", 108, "c_long", 7)
+                self.add("x_scale", 136, "c_double", 1)
+                self.add("y_scale", 144, "c_double", 1)
+                self.add("z_scale", 152, "c_double", 1)
+                self.add("x_offset", 160, "c_double", 1)
+                self.add("y_offset", 168, "c_double", 1)
+                self.add("z_offset", 176, "c_double", 1) 
+                self.add("x_max", 184, "c_double", 1)
+                self.add("x_min", 192, "c_double", 1)
+                self.add("y_max", 200, "c_double", 1)
+                self.add("y_min", 208, "c_double", 1)
+                self.add("z_max", 216, "c_double", 1)
+                self.add("z_min", 224, "c_double", 1)
             elif fmt in ("h1.0", "h1.1", "h1.2"):
-                self.add("NumPtsByReturn", 108, "c_long", 5)
-                self.add("XScale", 128, "c_double", 1)
-                self.add("YScale", 136, "c_double", 1)
-                self.add("ZScale", 144, "c_double", 1)
-                self.add("XOffset", 152, "c_double", 1)
-                self.add("YOffset", 160, "c_double", 1)
-                self.add("ZOffset", 168, "c_double", 1) 
-                self.add("XMax", 176, "c_double", 1)
-                self.add("XMin", 184, "c_double", 1)
-                self.add("YMax", 192, "c_double", 1)
-                self.add("YMin", 200, "c_double", 1)
-                self.add("ZMax", 208, "c_double", 1)
-                self.add("ZMin", 216, "c_double", 1)
+                self.add("num_pts_by_return", 108, "c_long", 5)
+                self.add("x_scale", 128, "c_double", 1)
+                self.add("y_scale", 136, "c_double", 1)
+                self.add("z_scale", 144, "c_double", 1)
+                self.add("x_offset", 152, "c_double", 1)
+                self.add("y_offset", 160, "c_double", 1)
+                self.add("z_offset", 168, "c_double", 1) 
+                self.add("x_max", 176, "c_double", 1)
+                self.add("x_min", 184, "c_double", 1)
+                self.add("y_max", 192, "c_double", 1)
+                self.add("y_min", 200, "c_double", 1)
+                self.add("z_max", 208, "c_double", 1)
+                self.add("z_min", 216, "c_double", 1)
 
         self.lookup = {}
         for dim in self.dimensions:
@@ -156,7 +159,7 @@ class Point():
     def __init__(self, reader, startIdx):
         for dim in reader.point_format.dimensions:
             #reader.seek(dim.offs + startIdx, rel = False)
-            self.__dict__[dim.name] = reader._ReadWords(dim.fmt, dim.num, dim.length)
+            self.__dict__[dim.name] = reader._read_words(dim.fmt, dim.num, dim.length)
 
         bstr = reader.binary_str(self.flag_byte)
         self.return_num = reader.packed_str(bstr[0:3])
@@ -180,11 +183,11 @@ class Point():
         
 class VarLenRec():
     def __init__(self, reader):
-        self.reserved = reader.ReadWords("Reserved")
-        self.user_id = "".join(reader.ReadWords("UserID"))
-        self.record_id = reader.ReadWords("RecordID")
-        self.rec_len_after_header = reader.ReadWords("RecLenAfterHeader")
-        self.description = "".join(reader.ReadWords("Description"))
+        self.reserved = reader.read_words("reserved")
+        self.user_id = "".join(reader.read_words("user_id"))
+        self.record_id = reader.read_words("record_id")
+        self.rec_len_after_header = reader.read_words("rec_len_after_header")
+        self.description = "".join(reader.read_words("description"))
 
 
 
@@ -201,7 +204,7 @@ class FileManager():
         self.populate_vlrs()
         self.point_refs = False
         self._current = 0
-        self.point_format = Format(self.header.PtDatFormatID)
+        self.point_format = Format(self.header.pt_dat_format_id)
         return
    
     def binary_fmt(self,N, outArr):
@@ -260,15 +263,15 @@ class FileManager():
             return
         self._map.seek(bytes, 0)
         
-    def ReadWords(self, name):
+    def read_words(self, name):
         try:
             spec = Formats[name]
         except KeyError:
             raise LaspyException("Dimension " + name + "not found.")
-        return(self._ReadWords(spec[1], spec[3], spec[2]))
+        return(self._read_words(spec[1], spec[3], spec[2]))
 
 
-    def _ReadWords(self, fmt, num, bytes):
+    def _read_words(self, fmt, num, bytes):
         outData = []
         for i in xrange(num):
             dat = self.read(bytes)
@@ -279,8 +282,8 @@ class FileManager():
     
     def grab_file_version(self):
         self.seek(24, rel = False)
-        v1 = self._ReadWords("<B", 1, 1)
-        v2 = self._ReadWords("<B", 1, 1)
+        v1 = self._read_words("<B", 1, 1)
+        v2 = self._read_words("<B", 1, 1)
         self.seek(0, rel = True)
         return(str(v1) +"." +  str(v2))
 
@@ -292,9 +295,9 @@ class FileManager():
             self.header = Header(self)
     def populate_vlrs(self):
         self.vlrs = []
-        for i in xrange(self.header.NumVariableLenRecs):
+        for i in xrange(self.header.num_variable_len_recs):
             self.vlrs.append(VarLenRec(self))
-            self.seek(self.vlrs[-1].RecLenAfterHeader)
+            self.seek(self.vlrs[-1].rec_len_after_header)
             if self._map.tell() > self.header.data_offset:
                 raise LaspyException("Error, Calculated Header Data "
                     "Overlaps The Point Records!")
@@ -446,7 +449,7 @@ class FileManager():
         return(self.get_dimension("pt_src_id"))
     
     def get_gps_time(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (1,2,3,4,5):
             return(self.get_dimension("gps_time"))
         raise LaspyException("GPS Time is not defined on pt format: "
@@ -454,48 +457,48 @@ class FileManager():
     
     ColException = "Color is not available for point format: "
     def get_red(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("red"))
         raise LaspyException(ColException + str(fmt))
     
     def get_green(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("green"))
         raise LaspyException(ColException + str(fmt))
 
     
     def get_blue(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("blue"))
         raise LaspyException(ColException + str(fmt))
 
 
     def get_wave_packet_descp_idx(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (4, 5):
             return(self.get_dimension("wave_packet_descp_idx"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def get_byte_offset_to_wavefm_data(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (4, 5):
             return(self.get_dimension("byte_offset_to_wavefm_data"))
         raise LaspyException("Byte Offset to Waveform Data Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def get_wavefm_pkt_size(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (4, 5):
             return(self.get_dimension("wavefm_pkt_size"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def get_return_pt_wavefm_loc(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (4, 5):
             return(self.get_dimension("return_pt_wavefm_loc"))
         raise LaspyException("Return Pointt Waveformm Loc Not"
@@ -504,21 +507,21 @@ class FileManager():
 
 
     def get_x_t(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (4, 5):
             return(self.get_dimension("X_t"))
         raise LaspyException("X(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def get_y_t(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (4, 5):
             return(self.get_dimension("Y_t"))
         raise LaspyException("Y(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def get_z_t(self):
-        fmt = self.header.PtDatFormatID
+        fmt = self.header.pt_dat_format_id
         if fmt in (4, 5):
             return(self.get_dimension("Z_t"))
         raise LaspyException("Z(t) Not"
@@ -724,21 +727,21 @@ class Writer(FileManager):
         return
     
     def set_gps_time(self, data):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (1,2,3,4,5):    
             self.set_dimension("gps_time", data)
             return
         raise LaspyException("GPS Time is not available for point format: " + str(vsn))
     
     def set_red(self, red):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (2,3,5):
             self.set_dimension("red", red)
             return
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
     def set_green(self, green):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (2,3,5):
             self.set_dimension("green", green)
             return
@@ -747,21 +750,21 @@ class Writer(FileManager):
 
     
     def set_blue(self, blue):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (2,3,5):
             self.set_dimension("blue", blue)
             return
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
     def set_wave_packet_descp_idx(self, idx):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("wave_packet_descp_index", idx)
             return
         raise LaspyException("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
 
     def set_byte_offset_to_wavefm_data(self, idx):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("byte_offset_to_wavefm_data", idx)
             return
@@ -770,14 +773,14 @@ class Writer(FileManager):
 
     
     def set_wavefm_pkt_size(self, size):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("wavefm_pkt_size", size)
             return
         raise LaspyException("Waveform Packet Size Not Available for Point Format: " + str(vsn))
     
     def set_return_pt_wavefm_loc(self, loc):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("return_pt_wavefm_loc", loc)
             return
@@ -786,21 +789,21 @@ class Writer(FileManager):
 
     
     def set_x_t(self, x):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("X_t_5", x)
             return
         raise LaspyException("X_t Not Available for Point Format: " + str(vsn))
 
     def set_y_t(self, y):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("Y_t", y)
             return
         raise LaspyException("Y_t Not Available for Point Format: " + str(vsn))
     
     def set_z_t(self, z):
-        vsn = self.header.PtDatFormatID
+        vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("Z_t_5", z)
             return
