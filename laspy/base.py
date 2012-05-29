@@ -90,6 +90,7 @@ class Dimension():
 class Format():
     def __init__(self, fmt):
         self.dimensons = []
+        ## Point Fields
         if fmt in ("1.0", "1.1", "1.2", "1.3", "1.4", "1.5"):
             self.dimensions.append(Dimension("X", 0, "c_long", 1))
             self.dimensions.append(Dimension("Y", 4, "c_long", 1))
@@ -126,28 +127,70 @@ class Format():
             self.dimensions.apend(Dimension("X_t", 51, "c_float", 1))
             self.dimensions.apend(Dimension("Y_t", 56, "c_float", 1))           
             self.dimensions.apend(Dimension("Z_t", 60, "c_float", 1))
+        ## VLR Fields
+        if fmt == "VLR":
+            self.dimensions.append("Reserved", 0, "c_ushort", 1)
+            self.dimensions.append("UserID", 2, "c_char", 16)
+            self.dimensions.append("RecordID", 18, "c_ushort", 1)
+            self.dimensions.append("RecLenAfterHeader", 20, "c_ushort", 1)
+            self.dimensions.append("Descriptions", 22, "c_char", 32)
+        
+        ## Header Fields
+        if fmt == "Header":
+            self.dimensions.append("FileSig", 0, "c_char", 4)
+            self.dimensions.append("FileSrc", 4, "c_ushort", 1)
+            self.dimensions.append("GlobalEncoding", 6, "c_ushort", 1)
+            self.dimensions.append("ProjID1", 8, "c_long", 1)
+            self.dimensions.append("ProjID2", 12, "c_ushort", 1)
+            self.dimensions.append("ProjID3", 14, "c_ushort", 1)
+            self.dimensions.append("ProjID4", 16, "c_ubyte", 8)
+            self.dimensions.append("VersionMajor", 24, "c_ubyte", 1)
+            self.dimensions.append("VersionMinor", 25), "c_ubyte", 1)
+            self.dimensions.append("SysId", 26, "c_char", 32)
+            self.dimensions.append("GenSoft", 58, "c_char", 32)
+            self.dimensions.append("CreatedDay", 90, "c_ushort", 1)
+            self.dimensions.append("CreatedYear", 92, "c_ushort",1)
+            self.dimensions.append("HeaderSize", 94, "c_ushort", 1)
+            self.dimensions.append("OffsetToPointData", 96, "c_long", 1)
+            self.dimensions.append("NumVariableLenRecs", 100, "c_long", 1)
+            self.dimensions.append("PtDatFormatID", 104, "c_ubyte", 1)
+            self.dimensions.append("PtDatRecLen", 105, "c_ushort", 1)
+            self.dimensions.append("NumPtRecs", 107, "c_long", 1)
+            version = str(self.dimensions[7]) + str(self.dimensions[8]):
+            if version == "1.3":
+                self.dimensions.append("NumPtsByReturn", 108, "c_long", 7)
+                self.dimensions.append("XScale", 136, "c_double", 1)
+                self.dimensions.append("YScale", 144, "c_double", 1)
+                self.dimensions.append("ZScale", 152, "c_double", 1)
+                self.dimensions.append("XOffset", 160, "c_double", 1)
+                self.dimensions.append("YOffset", 168, "c_double", 1)
+                self.dimensions.append("ZOffset", 176, "c_double", 1) 
+                self.dimensions.append("XMax", 184, "c_double", 1)
+                self.dimensions.append("XMin", 192, "c_double", 1)
+                self.dimensions.append("YMax", 200, "c_double", 1)
+                self.dimensions.append("YMin", 208, "c_double", 1)
+                self.dimensions.append("ZMax", 216, "c_double", 1)
+                self.dimensions.append("ZMin", 224, "c_double", 1)
+            elif version in ("1.0", "1.1", "1.2"):
+                self.dimensions.append("NumPtsByReturn", 108, "c_long", 5)
+                self.dimensions.append("XScale", 128, "c_double", 1)
+                self.dimensions.append("YScale", 136, "c_double", 1)
+                self.dimensions.append("ZScale", 144, "c_double", 1)
+                self.dimensions.append("XOffset", 152, "c_double", 1)
+                self.dimensions.append("YOffset", 160, "c_double", 1)
+                self.dimensions.append("ZOffset", 168, "c_double", 1) 
+                self.dimensions.append("XMax", 176, "c_double", 1)
+                self.dimensions.append("XMin", 184, "c_double", 1)
+                self.dimensions.append("YMax", 192, "c_double", 1)
+                self.dimensions.append("YMin", 200, "c_double", 1)
+                self.dimensions.append("ZMax", 208, "c_double", 1)
+                self.dimensions.append("ZMin", 216, "c_double", 1)
+
+        def __str__(self):
+            for dim in self.dimensions:
+                dim.__str__()
 
 
-
-
-
-
-
-    
-
-
-
-
-
-
-
-            pass
-        elif fmt == "1.1":
-            pass
-        elif fmt == "1.2":
-            pass
-        elif fmt == "1.3":
-            pass
 
 
 
