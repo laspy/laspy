@@ -5,6 +5,10 @@ import laspy.header as lasheader
 import unittest
 import os
 
+def flip_bit(x):
+    return(1*(x==0))
+
+
 class LasReaderTestCase(unittest.TestCase):
     simple = "./test/data/simple.las"
     def setUp(self): 
@@ -225,28 +229,115 @@ class LasWriterTestCase(unittest.TestCase):
         self.assertTrue(all(nr == nr2))
     def test_scan_dir_flag(self):
         '''Writing and testing scan_dir_flag dimension'''
-        def f(x):
-            if x == 1:
-                return(0)
-            return(1)
-        vf = np.vectorize(f) 
+        vf = np.vectorize(flip_bit) 
         sdf = vf(self.FileObject.scan_dir_flag)
         self.FileObject.scan_dir_flag = sdf
         sdf2 = self.FileObject.get_scan_dir_flag()
         self.assertTrue(all(sdf == sdf2))
     def test_edge_flight_line(self):
         '''Writing and testing edge_flight_line dimension'''
-        def f(x):
-            if x == 1:
-                return(0)
-            return(1)
-        vf = np.vectorize(f)
+        vf = np.vectorize(flip_bit)
         efl = vf(self.FileObject.edge_flight_line)
         self.FileObject.edge_flight_line = efl
         efl2 = self.FileObject.get_edge_flight_line()
         self.assertTrue(all(efl == efl2))
-    
+    def test_classification(self):
+        c1 = self.FileObject.classification + 1
+        self.FileObject.classification = c1
+        c2 = self.FileObject.get_classification()
+        self.assertTrue(all(c1 == c2))
+    def test_synthetic(self):
+        vf = np.vectorize(flip_bit)   
+        s1 = vf(self.FileObject.synthetic)
+        self.FileObject.synthetic = s1 
+        s2 = self.FileObject.get_synthetic()
+        self.assertTrue(all(s1 == s2))
+    def test_key_point(self):
+        vf = np.vectorize(flip_bit)
+        k1 = vf(self.FileObject.key_point)
+        self.FileObject.key_point = k1
+        k2 = self.FileObject.get_key_point()
+        self.assertTrue(all(k1 == k2))
+    def test_withheld(self):
+        vf = np.vectorize(flip_bit)
+        w1 = vf(self.FileObject.withheld)
+        self.FileObject.withheld = w1
+        w2 = self.FileObject.get_withheld()
+        self.assertTrue(all(w1 == w2))
+    def test_scan_angle_rank(self):
+        ar1 = self.FileObject.scan_angle_rank + 1
+        self.FileObject.scan_angle_rank = ar1
+        ar2 = self.FileObject.get_scan_angle_rank()
+        self.assertTrue(all(ar1 == ar2))
+    def test_user_data(self):
+        ud1 = self.FileObject.user_data + 1
+        self.FileObject.user_data = ud1
+        ud2 = self.FileObject.get_user_data()
+        self.assertTrue(all(ud1 == ud2))
+    def test_pt_src_id(self):
+        p1 = self.FileObject.user_data + 1
+        self.FileObject.user_data = p1
+        p2 = self.FileObject.get_user_data()
+        self.assertTrue(all(p1 == p2))
+    def test_gps_time(self):
+        g1 = self.FileObject.gps_time + 0.1
+        self.FileObject.gps_time = g1
+        g2 = self.FileObject.get_gps_time()
+        self.assertTrue(all(g1 == g2))
+    def test_red(self):
+        r1 = self.FileObject.red + 1
+        self.FileObject.red = r1
+        r2 = self.FileObject.get_red()
+        self.assertTrue(all(r1 == r2))
+    def test_green(self):
+        g1 = self.FileObject.green + 1
+        self.FileObject.green = g1
+        g2 = self.FileObject.get_green()
+        self.assertTrue(all(g1 == g2))
+    def test_blue(self):
+        b1 = self.FileObject.blue + 1
+        self.FileObject.blue = b1
+        b2 = self.FileObject.get_blue()
+        self.assertTrue(all(b1 == b2))
+    #def test_wave_pkt_descp_idx(self):
+    #    w1 = self.FileObject.wave_packet_descp_idx + 1
+    #    self.FileObject.wave_packet_descp_idx = w1
+    #    w2 = self.FileObject.get_wave_packet_descp_idx()
+    #    self.assertTrue(all(w1 = w2))
+    #def test_byte_offset(self):
+    #    b1 = self.FileObject.byte_offset_to_waveform_data + 1
+    #    self.FileObject.byte_offset_to_waveform_data = b1
+    #    b2 = self.FileObject.get_byte_offset_to_waveform_data
+    #    self.assertTrue(all(b1 == b2))
+    #def test_wavefm_pkt_size(self):
+    #    w1 = self.FileObject.waveform_pkt_size + 1
+    #    self.FileObject.waveform_pkt_size = w1
+    #    w2 = self.FileObject.get_waveform_pkt_size()
+    #    self.assertTrue(all(w1 == w2))
+    #def test_return_pt_wavefm_loc(self):
+    #    w1 = self.FileObject.return_pt_waveform_loc + 1
+    #    self.FileObject.return_pt_waveform_loc = w1
+    #    w2 = self.FileObject.get_return_pt_waveform_loc
+    #    self.assertTrue(all(w1 == w2))
+    #def test_x_t(self):
+    #    x1 = self.FileObject.x_t + 1
+    #    self.FileObject.x_t = x1
+    #    x2 = self.FileObject.get_x_t()
+    #    self.assertTrue(all(x1 == x2))
+    #def test_y_t(self):
+    #    y1 = self.FileObject.y_t + 1
+    #    self.FileObject.y_t = y1
+    #    y2 = self.FileObject.get_y_t()
+    #    self.assertTrue(all(y1 == y2))
+    #def test_z_t(self):
+    #    z1 = self.FileObject.z_t + 1
+    #    self.FileObject.z_t = z
+    #    z2 = self.FileObject.get_z_t()
+    #    self.assertTrue(all(z1 == z2))
 
+        
+        
+        
     
     def tearDown(self):
         self.FileObject.close()

@@ -524,7 +524,7 @@ class File(object):
     y_t = property(get_y_t, set_y_t, None, None)
 
     def get_z_t(self):
-        return(self.reader.Get_z_t())
+        return(self.reader.get_z_t())
     def set_z_t(self, z):
         self.assertWriteMode()
         self.writer.set_z_t(z)
