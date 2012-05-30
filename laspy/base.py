@@ -32,8 +32,9 @@ class Dimension():
     def __str__(self):
         return("Dimension Attributes \n" +
         "Name: " + self.name + "\n"+
-        "Format: " + self.Format + "\n" +
-        "Number: " + str(self.num) + "\n")
+        "Format: " + str(self.Format) + "\n" +
+        "Number: " + str(self.num) + "\n"+
+        "Offset: " + str(self.offs) + "\n")
         
 
 ### Note: ctypes formats may behave differently across platforms. 
@@ -373,6 +374,14 @@ class FileManager():
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
 
+    def _get_datum(self, rec_offs, dim):
+        pass
+    
+    def get_datum(self, name):
+        pass
+
+    def get_header_property(self, name):
+        pass
 
     def _get_dimension(self,offs, fmt, length, raw = False):
         if type(self.point_refs) == bool:
@@ -575,8 +584,9 @@ class Writer(FileManager):
         return True
 
     def _set_datum(self, rec_offs, dim, val):
-        self._map[(rec_offs + dim.offs):(rec_offs + 
-                    dim.offs + dim.length)] = struct.pack(dim.fmt, val)
+        lb = rec_offs + dim.offs
+        ub = lb + dim.length
+        self._map[lb:ub] = struct.pack(dim.fmt, val)
         return True    
 
     def set_header_property(self, name, value):

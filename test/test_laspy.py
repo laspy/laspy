@@ -364,7 +364,7 @@ def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
     writer = unittest.TestLoader().loadTestsFromTestCase(LasWriterTestCase)
     header_writer = unittest.TestLoader().loadTestsFromTestCase(LasHeaderWriterTestCase)
-    return unittest.TestSuite([reader, writer])
+    return unittest.TestSuite([reader, writer, header_writer])
 
 # if __name__=="__main__":
 #     runner = unittest.TextTestRunner()
