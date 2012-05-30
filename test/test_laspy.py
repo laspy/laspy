@@ -184,7 +184,7 @@ class LasWriterTestCase(unittest.TestCase):
         outFile.write(inData)
         outFile.close()
         inFile.close()
-        self.FileObject = File.File("./.temp.las", mode = "w")
+        self.FileObject = File.File("./.temp.las", mode = "rw")
     
     def test_x(self):
         '''Writing and testing X dimenson'''

@@ -45,11 +45,9 @@
 import base
 import header as lasheader
 
-
 import os
 import types
 
-files = {'append': {}, 'write': {}, 'read': {}}
 import sys
 
 
@@ -64,7 +62,7 @@ class File(object):
         :arg filename: The filename to open
         :keyword header: A header open the file with
         :type header: an :obj:`liblas.header.header.Header` instance
-        :keyword mode: "r" for read, "w" for write, and "w+" for append
+        :keyword mode: "r" for read, "rw" for modify/update, "w" for write, and "w+" for append
         :type mode: string
         :keyword in_srs: Input SRS to override the existing file's SRS with
         :type in_srs: an :obj:`liblas.srs.SRS` instance
@@ -102,65 +100,48 @@ class File(object):
         self.in_srs = in_srs
         self.out_srs = out_srs
 
-
-        #check in the registry if we already have the file open
-        if mode == 'r':
-            for f in files['write'].keys() + files['append'].keys():
-                if f == self.filename:
-                    raise base.LaspyException("File %s is already open for "
-                                            "write.  Close the file or delete "
-                                            "the reference to it" % filename)
-        else:
-            # we're in some kind of write mode, and if we already have the
-            # file open, complain to the user.
-            for f in files['read'].keys() + files['append'].keys() + files['write'].keys():
-                if f == self.filename: 
-                    raise base.LaspyException("File %s is already open. "
-                                            "Close the file or delete the "
-                                            "reference to it" % filename)
         self.open()
 
     def open(self):
         """Open the file for processing, called by __init__
         """
         
-        if self._mode == 'r' or self._mode == 'rb':
-            
+        if self._mode == 'r':
+
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
-
             self.reader = base.Reader(self.filename)            
 
             if self._header == None:
                 self._header = self.reader.get_header()
             else:
-                base.CreateWithHeader(self.filename, self._header)
-            self.mode = 0
-            try:
-                files['read'][self.filename] += 1
-            except KeyError:
-                files['read'][self.filename] = 1
+                base.ReadWithHeader(self.filename, self._header)
+
 
             if self.in_srs:
                 self.reader.SetInputSRS(self.in_srs)
             if self.out_srs:
                 self.reader.SetOutputSRS(self.out_srs)
 
-        if self._mode == 'w':
+        if self._mode == 'rw':
             self.writer = base.Writer(self.filename)
             self.reader = self.writer
             if self._header == None:
                 self._header = self.reader.get_header()
             else:
-                base.CreateWithHeader(self.filename, self._header)
-            self.mode = 1
-            try:
-                files['write'][self.filename] += 1
-            except KeyError:
-                files['write'][self.filename] = 1
+                base.ModifyWithHeader(self.filename, self._header)
+    
 
-        if '+' in self._mode and 'r' not in self._mode:
-            pass
+        if self._mode == 'w':
+            if self._header == None:
+                raise LaspyException("Creation of a file in write mode requires a header object.")  
+            base.CreateWithHeader(self.filename, self._header)
+        if self._mode == 'w+':
+            self.extender = base.Extender(self.filename)
+            if self._header == None:
+                self._header = self.reader.get_header()
+            else:
+                base.ExtendWithHeader(self.filename, self._header)
 
     #def __del__(self):
     #    # Allow GC to clean up?
@@ -169,33 +150,18 @@ class File(object):
     def close(self):
         """Closes the LAS file
         """
-        if self.mode == 0:
-            try: 
-                files['read'][self.filename] -= 1
-                if files['read'][self.filename] == 0:
-                    
-                    files['read'].pop(self.filename)
-            except KeyError:
-                raise base.LaspyException("File %s was not found in accounting dictionary!" % self.filename)
+        if self._mode == "r":
             self.reader.close()
         else:
-            try:
-                files['append'][self.filename] -= 1
-                if files['append'][self.filename] == 0:
-                    files['append'].pop(self.filename)
-            except:
-                files['write'][self.filename]-=1
-                if files['write'][self.filename] == 0:
-                    files['write'].pop(self.filename)
             self.writer.close()    
     
     def assertWriteMode(self):
-        if self.mode == 0:
-            raise base.LaspyException("File is opened in read mode.")         
+        if self._mode == "r":
+            raise base.LaspyException("File is not opened in a write mode.")         
 
     # TO BE IMPLEMENTED
     def set_srs(self, value):
-        if self.mode == 0:
+        if self._mode == "r":
             return
         else:
             return
@@ -217,7 +183,7 @@ class File(object):
     output_srs = property(get_output_srs, set_output_srs, None, doc)
 
     def set_input_srs(self, value):
-        if self.mode == 0:
+        if self._mode == "r":
             return
         else:
             return 
@@ -231,7 +197,7 @@ class File(object):
 
     def get_header(self):
         """Returns the liblas.header.Header for the file""" 
-        if self.mode == 0:
+        if self._mode == "r":
             return self.reader.GetHeader()
         else:
             return self.writer.GetHeader()
@@ -241,7 +207,7 @@ class File(object):
         """Sets the liblas.header.Header for the file.  If the file is in \
         append mode, the header will be overwritten in the file."""
         # append mode
-        if mode == 2: 
+        if mode == "w+": 
             self.writer.set_header(header)
             return True
         raise base.LaspyException("The header can only be set "
@@ -260,7 +226,7 @@ class File(object):
 
     def read(self, index):
         """Reads the point at the given index"""
-        if self.mode == 0:
+        if self._mode == "r":
             return(self.reader.get_point(index)) 
 
     def get_x(self, scale = False):
@@ -541,7 +507,7 @@ class File(object):
           ...   print i # doctest: +ELLIPSIS
           <liblas.point.Point object at ...>
         """
-        if self.mode == 0:
+        if self._mode == "r":
             self.at_end = False
             p = self.reader.get_point(0)
             while p and not self.at_end:
@@ -601,7 +567,7 @@ class File(object):
         if not isinstance(pt, base.Point):
             raise base.LaspyException('cannot write %s, it must '
                                     'be of type liblas.point.Point' % pt)
-        if self.mode == 1 or self.mode == 2:
+        if self._mode != "r":
             #core.las.LASWriter_WritePoint(self.handle, pt.handle)
             pass
 
@@ -612,7 +578,7 @@ class File(object):
             This method will reset the reader's read position to the 0th 
             point to summarize the entire file, and it will again reset the 
             read position to the 0th point upon completion."""
-        if self.mode != 0:
+        if self._mode != 0:
             raise base.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
         return
         

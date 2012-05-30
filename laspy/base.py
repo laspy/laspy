@@ -796,14 +796,14 @@ class Writer(FileManager):
         raise LaspyException("Z_t Not Available for Point Format: " + str(vsn))
 
 
+class Extender(FileManager):
+    pass
     
-    
-
-
-       
-
-
-
-
 def CreateWithHeader(filename, header):
+    pass
+
+def ModifyWithHeader(filename, header):
+    pass
+
+def ReadWithHeader(filename, header):
     pass
