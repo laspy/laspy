@@ -613,7 +613,7 @@ class Writer(FileManager):
             idx += 1
         return(outArr)
         
-    def compress(self,arrs,idx, pack = True):
+    def bitpack(self,arrs,idx, pack = True):
         if pack:
             outArr = np.array([1]*len(arrs[0]))
         else:
@@ -638,14 +638,14 @@ class Writer(FileManager):
     def set_return_num(self, num):
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(num, 3)
-        outByte = self.compress((newBits,flag_byte), ((0,3), (3,8)))
+        outByte = self.bitpack((newBits,flag_byte), ((0,3), (3,8)))
         self.set_dimension("flag_byte", outByte)
         return
 
     def set_num_returns(self, num):
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(num, 3)
-        outByte = self.compress((flag_byte,newBits,flag_byte), 
+        outByte = self.bitpack((flag_byte,newBits,flag_byte), 
             ((0,3),(0,3), (6,8)))
         self.set_dimension("flag_byte", outByte)
         return
@@ -653,7 +653,7 @@ class Writer(FileManager):
     def set_scan_dir_flag(self, flag): 
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(flag, 1)
-        outByte = self.compress((flag_byte,newBits,flag_byte), 
+        outByte = self.bitpack((flag_byte,newBits,flag_byte), 
             ((0,6),(0,1), (7,8)))
         self.set_dimension("flag_byte", outByte)
         return
@@ -662,7 +662,7 @@ class Writer(FileManager):
     def set_edge_flight_line(self, line):
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(line, 1)
-        outByte = self.compress((flag_byte,newBits), 
+        outByte = self.bitpack((flag_byte,newBits), 
             ((0,7),(0,1)))
         self.set_dimension("flag_byte", outByte)
         return
@@ -673,14 +673,14 @@ class Writer(FileManager):
     def set_classification(self, classification):
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(classification, 5)
-        out_byte = self.compress((new_bits, class_byte), ((0,5),(5,8)))
+        out_byte = self.bitpack((new_bits, class_byte), ((0,5),(5,8)))
         self.set_dimension("raw_classification", out_byte)
         return
 
     def set_synthetic(self, synthetic):
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(synthetic, 1)
-        out_byte = self.compress((class_byte, new_bits, class_byte),
+        out_byte = self.bitpack((class_byte, new_bits, class_byte),
                                    ((0,5), (0,1), (6,8)))
         self.set_dimension("raw_classification", out_byte)
         return
@@ -688,7 +688,7 @@ class Writer(FileManager):
     def set_key_point(self, pt):
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(pt, 1)
-        out_byte = self.compress((class_byte, new_bits, class_byte), 
+        out_byte = self.bitpack((class_byte, new_bits, class_byte), 
                                 ((0,6),(0,1),(7,8)))
         self.set_dimension("raw_classification", out_byte)
         return
@@ -696,7 +696,7 @@ class Writer(FileManager):
     def set_withheld(self, withheld):
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(withheld, 1)
-        out_byte = self.compress((class_byte, new_bits),
+        out_byte = self.bitpack((class_byte, new_bits),
                                  ((0,7), (0,1)))
         self.set_dimension("raw_classification", out_byte)
 
