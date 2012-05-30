@@ -671,14 +671,10 @@ class Writer(FileManager):
         self.set_dimension("raw_classification", classification)
            
     def set_classification(self, classification):
-        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
-        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 5))
-        vfunc3 = np.vectorize(lambda x: self.packed_str(newbits[x]
-                          + classByte[x][5:8]))          
-        classByte = vfunc1(self.get_raw_classification())
-        newbits = vfunc2(classification)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
-        self.set_dimension("flag_byte", outByte)
+        class_byte = self.binary_str_arr(self.get_raw_classification())
+        new_bits = self.binary_str_arr(classification, 5)
+        out_byte = self.compress((new_bits, class_byte), ((0,5),(5,8)))
+        self.set_dimension("raw_classification", out_byte)
         return
 
     def set_synthetic(self, synthetic):
@@ -701,7 +697,7 @@ class Writer(FileManager):
             classByte[x][0:6]
           + newbits[x]
           + classByte[x][7]))          
-        classByte = vfunc1(self.get_raw_classification())
+        classByte = vfunc1(self.get_raw_classification()) 
         newbits = vfunc2(pt)
         outByte = vfunc3(np.array(xrange(len(newbits))))
         self.set_dimension("flag_byte", outByte)
