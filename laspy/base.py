@@ -677,7 +677,7 @@ class Writer(FileManager):
                           + classByte[x][5:8]))          
         classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(classification)
-        outByte = vfunc3(np.array(xrange(len(newBits))))
+        outByte = vfunc3(np.array(xrange(len(newbits))))
         self.set_dimension("flag_byte", outByte)
         return
 
@@ -690,7 +690,7 @@ class Writer(FileManager):
           + classByte[x][6:8]))          
         classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(synthetic)
-        outByte = vfunc3(np.array(xrange(len(newBits))))
+        outByte = vfunc3(np.array(xrange(len(newbits))))
         self.set_dimension("flag_byte", outByte)
         return
 
@@ -703,7 +703,7 @@ class Writer(FileManager):
           + classByte[x][7]))          
         classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(pt)
-        outByte = vfunc3(np.array(xrange(len(newBits))))
+        outByte = vfunc3(np.array(xrange(len(newbits))))
         self.set_dimension("flag_byte", outByte)
         return
    
@@ -715,7 +715,7 @@ class Writer(FileManager):
           + newbits[x]))          
         classByte = vfunc1(self.get_raw_classification())
         newbits = vfunc2(withheld)
-        outByte = vfunc3(np.array(xrange(len(newBits))))
+        outByte = vfunc3(np.array(xrange(len(newbits))))
         self.set_dimension("flag_byte", outByte)
         return
 
