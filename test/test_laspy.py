@@ -169,6 +169,8 @@ class LasReaderTestCase(unittest.TestCase):
             self.assertEqual(pt1.Z, pt2.Z)
             self.assertEqual(pt1.gps_time, pt2.gps_time)
             k += 1
+        with self.assertRaises(Exception):
+            LasFile[10000]
 
     def tearDown(self): 
         self.FileObject.close() 
@@ -300,6 +302,7 @@ class LasWriterTestCase(unittest.TestCase):
         self.FileObject.blue = b1
         b2 = self.FileObject.get_blue()
         self.assertTrue(all(b1 == b2))
+
     #def test_wave_pkt_descp_idx(self):
     #    w1 = self.FileObject.wave_packet_descp_idx + 1
     #    self.FileObject.wave_packet_descp_idx = w1
