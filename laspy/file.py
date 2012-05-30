@@ -110,10 +110,10 @@ class File(object):
 
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
-            self.reader = base.Reader(self.filename)            
+            self.reader = base.Reader(self.filename, self._mode)            
 
             if self._header == None:
-                self._header = self.reader.get_header()
+                self._header = self.reader.get_header(self._mode)
             else:
                 base.ReadWithHeader(self.filename, self._header)
 
@@ -124,10 +124,10 @@ class File(object):
                 self.reader.SetOutputSRS(self.out_srs)
 
         if self._mode == 'rw':
-            self.writer = base.Writer(self.filename)
+            self.writer = base.Writer(self.filename, self._mode)
             self.reader = self.writer
             if self._header == None:
-                self._header = self.reader.get_header()
+                self._header = self.reader.get_header(self._mode)
             else:
                 base.ModifyWithHeader(self.filename, self._header)
     
@@ -139,7 +139,7 @@ class File(object):
         if self._mode == 'w+':
             self.extender = base.Extender(self.filename)
             if self._header == None:
-                self._header = self.reader.get_header()
+                self._header = self.reader.get_header(self._mode)
             else:
                 base.ExtendWithHeader(self.filename, self._header)
 

@@ -58,12 +58,17 @@ class LaspyHeaderException(Exception):
     pass
 
 class Header(object):
-    def __init__(self,reader, copy=False):
+    def __init__(self,reader,file_mode = "r", copy=False):
         self.format = reader.header_format        
         self.reader = reader
+        self.file_mode = file_mode
         for dim in self.format.dimensions:
             self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
     
+    def assertWriteMode(self):
+        if self.mode == "w":
+            raise LaspyHeaderException("Header instance is not in write mode.")
+
     def read_words(self, offs, fmt,num, length, pack):
         self.reader.seek(offs,rel=False)
         out = self.reader._read_words(fmt, num, length)
@@ -89,7 +94,7 @@ class Header(object):
         return self.file_src
 
     def set_filesourceid(self, value):
-        return 
+        return
     doc = """File Source ID for the file.
 
     From the specification_:

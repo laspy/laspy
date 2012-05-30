@@ -197,7 +197,7 @@ class VarLenRec():
 
 
 class FileManager():
-    def __init__(self,filename):
+    def __init__(self,filename, mode):
         self.header = False
         self.vlrs = False
         self.bytes_read = 0
@@ -205,7 +205,7 @@ class FileManager():
         self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(self.fileref.fileno(), 0)
         self.header_format = Format("h" + self.grab_file_version())
-        self.get_header()
+        self.get_header(mode)
         self.populate_vlrs()
         self.point_refs = False
         self._current = 0
@@ -292,12 +292,14 @@ class FileManager():
         self.seek(0, rel = True)
         return(str(v1) +"." +  str(v2))
 
-    def get_header(self):
+    def get_header(self, mode):
         ## Why is this != neccesary?
         if self.header != False:
+            if self.header.file_mode != mode:
+                raise LaspyException("Header Mode Conflict")
             return(self.header)
         else:
-            self.header = Header(self)
+            self.header = Header(self, mode)
     def populate_vlrs(self):
         self.vlrs = []
         for i in xrange(self.header.num_variable_len_recs):
@@ -571,8 +573,17 @@ class Writer(FileManager):
         #self._map.flush()
         return True
 
+    def _set_datum(self, rec_offs, dim, val):
+        self._map[(rec_offs + dim.offs):(rec_offs + 
+                    dim.offs + dim.length)] = struct.pack(dim.fmt, val)
+        return True    
 
-    def set_Header(self, header):
+    def set_header_property(self, name, value):
+        dim = self.header_format.lookup["name"]
+        self._set_datum(0, dim, value)
+        return
+
+    def set_header(self, header):
         pass    
     
     def set_padding(self, padding):
