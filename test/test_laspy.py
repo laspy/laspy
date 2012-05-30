@@ -265,7 +265,8 @@ class LasWriterTestCase(unittest.TestCase):
         w2 = self.FileObject.get_withheld()
         self.assertTrue(all(w1 == w2))
     def test_scan_angle_rank(self):
-        ar1 = self.FileObject.scan_angle_rank + 1
+        ar1 = self.FileObject.scan_angle_rank - 1
+        ar1 = [max(0, x) for x in ar1]
         self.FileObject.scan_angle_rank = ar1
         ar2 = self.FileObject.get_scan_angle_rank()
         self.assertTrue(all(ar1 == ar2))

@@ -678,42 +678,27 @@ class Writer(FileManager):
         return
 
     def set_synthetic(self, synthetic):
-        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
-        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 1))
-        vfunc3 = np.vectorize(lambda x: self.packed_str(
-            classByte[x][0:5]
-          + newbits[x]
-          + classByte[x][6:8]))          
-        classByte = vfunc1(self.get_raw_classification())
-        newbits = vfunc2(synthetic)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
-        self.set_dimension("flag_byte", outByte)
+        class_byte = self.binary_str_arr(self.get_raw_classification())
+        new_bits = self.binary_str_arr(synthetic, 1)
+        out_byte = self.compress((class_byte, new_bits, class_byte),
+                                   ((0,5), (5, 6), (6,8)))
+        self.set_dimension("raw_classification", out_byte)
         return
 
     def set_key_point(self, pt):
-        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
-        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 1))
-        vfunc3 = np.vectorize(lambda x: self.packed_str(
-            classByte[x][0:6]
-          + newbits[x]
-          + classByte[x][7]))          
-        classByte = vfunc1(self.get_raw_classification()) 
-        newbits = vfunc2(pt)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
-        self.set_dimension("flag_byte", outByte)
+        class_byte = self.binary_str_arr(self.get_raw_classification())
+        new_bits = self.binary_str_arr(pt, 1)
+        out_byte = self.compress((class_byte, new_bits, class_byte), 
+                                ((0,6),(6,7),(7,8)))
+        self.set_dimension("raw_classification", out_byte)
         return
-   
+ 
     def set_withheld(self, withheld):
-        vfunc1 = np.vectorize(lambda x: self.binary_str(x))
-        vfunc2 = np.vectorize(lambda x: self.binary_str(x, 1))
-        vfunc3 = np.vectorize(lambda x: self.packed_str(
-            classByte[x][0:7]
-          + newbits[x]))          
-        classByte = vfunc1(self.get_raw_classification())
-        newbits = vfunc2(withheld)
-        outByte = vfunc3(np.array(xrange(len(newbits))))
-        self.set_dimension("flag_byte", outByte)
-        return
+        class_byte = self.binary_str_arr(self.get_raw_classification())
+        new_bits = self.binary_str_arr(withheld, 1)
+        out_byte = self.compress((class_byte, new_bits),
+                                 ((0,7), (7,8)))
+        self.set_dimension("raw_classification", out_byte)
 
     def set_scan_angle_rank(self, rank):
         self.set_dimension("scan_angle_rank", rank)

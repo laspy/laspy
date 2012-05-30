@@ -362,7 +362,7 @@ class File(object):
         return(self.reader.get_classification())
     def set_classification(self, classification):
         self.assertWriteMode()
-        self.writer.set_classification(classificaton)
+        self.writer.set_classification(classification)
         return
     classification = property(get_classification, 
                               set_classification, None, None)
