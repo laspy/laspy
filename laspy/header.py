@@ -62,12 +62,12 @@ class Header(object):
         self.format = reader.header_format        
         self.reader = reader
         for dim in self.format.dimensions:
-            self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.compress)
+            self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
     
-    def read_words(self, offs, fmt,num, length, compress):
+    def read_words(self, offs, fmt,num, length, pack):
         self.reader.seek(offs,rel=False)
         out = self.reader._read_words(fmt, num, length)
-        if compress:
+        if pack:
             return("".join(out))
         return(out)
         

@@ -18,7 +18,7 @@ LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
         ,ctypes.c_float:"<f", "c_char":"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
 
 class Dimension():
-    def __init__(self,name,offs, fmt, num,compress = False,ltl_endian = True):
+    def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True):
         if ltl_endian:
             self.name = name
             self.offs = offs
@@ -26,7 +26,7 @@ class Dimension():
             self.fmt = LEfmt[fmt]
             self.length = fmtLen[self.fmt]
             self.num = num
-            self.compress = compress
+            self.pack = pack
         else:
             raise(LaspyException("Big endian files are not currently supported."))
     def __str__(self):
@@ -88,11 +88,11 @@ class Format():
             self.add("user_id", "c_char", 16)
             self.add("record_id", ctypes.c_ushort, 1)
             self.add("rec_len_after_header", ctypes.c_ushort, 1)
-            self.add("descriptions", "c_char", 32, compress = True)
+            self.add("descriptions", "c_char", 32, pack = True)
         
         ## Header Fields
         if fmt[0] == "h":
-            self.add("file_sig","c_char", 4, compress = True)
+            self.add("file_sig","c_char", 4, pack = True)
             self.add("file_src", ctypes.c_ushort, 1)
             self.add("global_encoding",ctypes.c_ushort, 1)
             self.add("proj_id_1",ctypes.c_long, 1)
@@ -101,8 +101,8 @@ class Format():
             self.add("proj_id_4", ctypes.c_ubyte, 8)
             self.add("version_major", ctypes.c_ubyte, 1)
             self.add("version_minor", ctypes.c_ubyte, 1)
-            self.add("sys_id", "c_char", 32, compress=True)
-            self.add("gen_soft",  "c_char", 32, compress = True)
+            self.add("sys_id", "c_char", 32, pack=True)
+            self.add("gen_soft",  "c_char", 32, pack = True)
             self.add("created_day", ctypes.c_ushort, 1)
             self.add("created_year", ctypes.c_ushort,1)
             self.add("header_size", ctypes.c_ushort, 1)
@@ -142,15 +142,15 @@ class Format():
 
         self.lookup = {}
         for dim in self.dimensions:
-            self.lookup[dim.name] = [dim.offs, dim.fmt, dim.length, dim.compress]
+            self.lookup[dim.name] = [dim.offs, dim.fmt, dim.length, dim.pack]
 
-    def add(self, name, fmt, num, compress = False):
+    def add(self, name, fmt, num, pack = False):
         if len(self.dimensions) == 0:
             offs = 0
         else:
             last = self.dimensions[-1]
             offs = last.offs + last.num*fmtLen[last.fmt]
-        self.dimensions.append(Dimension(name, offs, fmt, num, compress))
+        self.dimensions.append(Dimension(name, offs, fmt, num, pack))
         
     def __str__(self):
         for dim in self.dimensions:
