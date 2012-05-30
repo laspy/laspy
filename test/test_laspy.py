@@ -337,20 +337,33 @@ class LasWriterTestCase(unittest.TestCase):
     #    z1 = self.FileObject.z_t + 1
     #    self.FileObject.z_t = z
     #    z2 = self.FileObject.get_z_t()
-    #    self.assertTrue(all(z1 == z2))
-
-        
-        
-        
-    
+    #    self.assertTrue(all(z1 == z2))    
     def tearDown(self):
         self.FileObject.close()
         os.remove("./.temp.las")
+
+class LasHeaderWriterTestCase(unittest.TestCase):
+    simple = './test/data/simple.las'
+    def setUp(self):
+        inFile = open(self.simple, "r")
+        inData = inFile.read()
+        outFile = open("./.temp.las", "w")
+        outFile.write(inData)
+        outFile.close()
+        inFile.close()
+        self.FileObject = File.File("./.temp.las", mode = "rw")
+    def test_file_src(self):
+        f1 = self.FileObject.header.filesource_id + 1
+        self.FileObject.header.filesource_id = f1
+        f2 = self.FileObject.header.get_filesourceid()
+        self.assertTrue(f1 == f2)  
+
 
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
     writer = unittest.TestLoader().loadTestsFromTestCase(LasWriterTestCase)
+    header_writer = unittest.TestLoader().loadTestsFromTestCase(LasHeaderWriterTestCase)
     return unittest.TestSuite([reader, writer])
 
 # if __name__=="__main__":

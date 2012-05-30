@@ -198,9 +198,9 @@ class File(object):
     def get_header(self):
         """Returns the liblas.header.Header for the file""" 
         if self._mode == "r":
-            return self.reader.GetHeader()
+            return self.reader.get_header(self._mode)
         else:
-            return self.writer.GetHeader()
+            return self.writer.get_header(self._mode)
         return None
 
     def set_header(self, header):

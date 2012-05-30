@@ -142,8 +142,9 @@ class Format():
 
         self.lookup = {}
         for dim in self.dimensions:
-            self.lookup[dim.name] = [dim.offs, dim.fmt, dim.length, dim.pack]
-
+            #self.lookup[dim.name] = [dim.offs, dim.fmt, dim.length, dim.pack]
+            self.lookup[dim.name] = dim    
+        
     def add(self, name, fmt, num, pack = False):
         if len(self.dimensions) == 0:
             offs = 0
@@ -273,7 +274,7 @@ class FileManager():
             spec = Formats[name]
         except KeyError:
             raise LaspyException("Dimension " + name + "not found.")
-        return(self._read_words(spec[1], spec[3], spec[2]))
+        return(self._read_words(dim.fmt, dim.num, dim.length))
 
 
     def _read_words(self, fmt, num, bytes):
@@ -365,9 +366,9 @@ class FileManager():
 
     def get_dimension(self, name):
         try:
-            specs = self.point_format.lookup[name]
-            return(self._get_dimension(specs[0], specs[1], 
-                                     specs[2]))
+            spec = self.point_format.lookup[name]
+            return(self._get_dimension(spec.offs, spec.fmt, 
+                                     spec.length))
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
@@ -548,25 +549,25 @@ class Writer(FileManager):
         self._map.close()
         self.fileref.close()
 
-    def set_dimension(self, name,dim):
+    def set_dimension(self, name,new_dim):
         ptrecs = self.get_pointrecordscount()
-        if len(dim) != ptrecs:
-            raise LaspyException("Error, new dimension length (%s) does not match"%str(len(dim)) + " the number of points (%s)" % str(ptrecs))
+        if len(new_dim) != ptrecs:
+            raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs))
         try:
-            specs = self.point_format.lookup[name]
-            return(self._set_dimension(dim,specs[0], specs[1], 
-                                     specs[2]))
+            spec = self.point_format.lookup[name]
+            return(self._set_dimension(new_dim,spec.offs, spec.fmt, 
+                                     spec.length))
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
 
-    def _set_dimension(self,dim,offs, fmt, length):
+    def _set_dimension(self,new_dim,offs, fmt, length):
         if type(self.point_refs) == bool:
             self.build_point_refs()
         idx = np.array(xrange(len(self.point_refs)))
         def f(x):
             self._map[self.point_refs[x]+offs:self.point_refs[x]
-                +offs+length] = struct.pack(fmt,dim[x])
+                +offs+length] = struct.pack(fmt,new_dim[x])
         vfunc = np.vectorize(f)
         vfunc(idx)
         # Is this desireable
@@ -579,7 +580,10 @@ class Writer(FileManager):
         return True    
 
     def set_header_property(self, name, value):
-        dim = self.header_format.lookup["name"]
+        try:
+            dim = self.header_format.lookup[name]
+        except(KeyError):
+            raise LaspyException("Header Dimension: " + str(name) + " not found.")
         self._set_datum(0, dim, value)
         return
 
