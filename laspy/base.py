@@ -681,7 +681,7 @@ class Writer(FileManager):
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(synthetic, 1)
         out_byte = self.compress((class_byte, new_bits, class_byte),
-                                   ((0,5), (5, 6), (6,8)))
+                                   ((0,5), (0,1), (6,8)))
         self.set_dimension("raw_classification", out_byte)
         return
 
@@ -689,7 +689,7 @@ class Writer(FileManager):
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(pt, 1)
         out_byte = self.compress((class_byte, new_bits, class_byte), 
-                                ((0,6),(6,7),(7,8)))
+                                ((0,6),(0,1),(7,8)))
         self.set_dimension("raw_classification", out_byte)
         return
  
@@ -697,7 +697,7 @@ class Writer(FileManager):
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(withheld, 1)
         out_byte = self.compress((class_byte, new_bits),
-                                 ((0,7), (7,8)))
+                                 ((0,7), (0,1)))
         self.set_dimension("raw_classification", out_byte)
 
     def set_scan_angle_rank(self, rank):
