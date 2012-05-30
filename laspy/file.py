@@ -226,9 +226,11 @@ class File(object):
 
     def read(self, index):
         """Reads the point at the given index"""
-        if self._mode == "r":
+        if self.reader.get_pointrecordscount() <= index:
             return(self.reader.get_point(index)) 
-
+        else:
+            raise LaspyException("Index greater than point records count")
+        
     def get_x(self, scale = False):
         return(self.reader.get_x(scale))
     def set_x(self,x, scale=False):
