@@ -134,7 +134,7 @@ class File(object):
 
         if self._mode == 'w':
             if self._header == None:
-                raise LaspyException("Creation of a file in write mode requires a header object.")  
+                raise base.LaspyException("Creation of a file in write mode requires a header object.")  
             base.CreateWithHeader(self.filename, self._header)
         if self._mode == 'w+':
             self.extender = base.Extender(self.filename)
@@ -226,10 +226,11 @@ class File(object):
 
     def read(self, index):
         """Reads the point at the given index"""
-        if self.reader.get_pointrecordscount() <= index:
+        if self.reader.get_pointrecordscount() >= index:
+            
             return(self.reader.get_point(index)) 
         else:
-            raise LaspyException("Index greater than point records count")
+            raise base.LaspyException("Index greater than point records count")
         
     def get_x(self, scale = False):
         return(self.reader.get_x(scale))

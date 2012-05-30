@@ -341,7 +341,7 @@ class FileManager():
 #self, reader, startIdx ,version
     def get_point(self, index):
         if index >= self.get_pointrecordscount():
-            raise LaspyException("Index greater than point records count.")
+            return
         seekDex = self.get_raw_point_index(index)
         self.seek(seekDex, rel = False)
         self._current = index
@@ -351,6 +351,8 @@ class FileManager():
         if self._current == None:
             raise LaspyException("No Current Point Specified," + 
                             " use Reader.GetPoint(0) first")
+        if self._current == self.get_pointrecordscount():
+            return
         return self.get_point(self._current + 1)
 
     def build_point_refs(self):
