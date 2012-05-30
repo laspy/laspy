@@ -669,8 +669,8 @@ class Writer(FileManager):
 
     def set_raw_classification(self, classification):
         self.set_dimension("raw_classification", classification)
-    
-    def set_classificaton(self, classification):
+           
+    def set_classification(self, classification):
         vfunc1 = np.vectorize(lambda x: self.binary_str(x))
         vfunc2 = np.vectorize(lambda x: self.binary_str(x, 5))
         vfunc3 = np.vectorize(lambda x: self.packed_str(newbits[x]
