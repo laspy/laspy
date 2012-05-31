@@ -239,17 +239,11 @@ class FileManager():
         return(out)
 
     def binary_str(self,N, zerolen = 8):
-        arr = self.binary_fmt(N, [])
-        if arr == 0:
-            return("0"*zerolen)
-        outstr = ["0"]*(max(arr)+1)
-        for i in arr:
-            outstr[i] = "1"
-        outstr = "".join(outstr)
-        padding = zerolen-len(outstr)
+        raw_bin = bin(N)[2:][::-1]
+        padding = zerolen-len(raw_bin)
         if padding < 0:
             raise LaspyException("Invalid Data: Packed Length is Greater than allowed.")
-        return(outstr + '0'*(zerolen-len(outstr)))
+        return(raw_bin + '0'*(zerolen-len(raw_bin)))
 
     def read(self, bytes):
         self.bytes_read += bytes
@@ -272,7 +266,7 @@ class FileManager():
         
     def read_words(self, name):
         try:
-            spec = Formats[name]
+            dim = Formats[name]
         except KeyError:
             raise LaspyException("Dimension " + name + "not found.")
         return(self._read_words(dim.fmt, dim.num, dim.length))
