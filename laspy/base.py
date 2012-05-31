@@ -365,10 +365,10 @@ class FileManager():
 
     def _get_datum(self, rec_offs, spec):
         raw_data = self._map[(rec_offs + spec.offs):(rec_offs + spec.offs + spec.length)]
-        return(struct.unpack(spec.fmt, raw_data))
+        return(struct.unpack(spec.fmt, raw_data)[0])
 
     def get_header_property(self, name):
-        spec = self.header_format[name]
+        spec = self.header_format.lookup[name]
         return(self._get_datum(0, spec))
 
     def _get_dimension(self,offs, fmt, length, raw = False):

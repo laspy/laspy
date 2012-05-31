@@ -93,7 +93,7 @@ class Header(object):
     file_signature = property(get_filesignature, None, None, doc)
 
     def get_filesourceid(self):
-        return self.file_src
+        return self.reader.get_header_property("file_src")
 
     def set_filesourceid(self, value):
         self.assertWriteMode()
