@@ -66,8 +66,8 @@ class Header(object):
             self.writer = self.reader
         self.file_mode = file_mode
         for dim in self.format.specs:
-            self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
-    
+            #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
+            self.__dict__[dim.name] = reader.get_header_property(dim.name)
     def assertWriteMode(self):
         if self.file_mode == "w":
             raise LaspyHeaderException("Header instance is not in write mode.")

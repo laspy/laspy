@@ -372,7 +372,7 @@ class FileManager():
         if spec.num == 1:
             return(struct.unpack(spec.fmt, data)[0])
         unpacked = map(lambda x: struct.unpack(spec.fmt, 
-            data[x*spec.length + (x+1)*spec.length]), xrange(spec.num))
+            data[x*spec.length:(x+1)*spec.length]), xrange(spec.num))
         if spec.pack:
             return("".join([str(x) for x in unpacked]))
         return(unpacked) 
