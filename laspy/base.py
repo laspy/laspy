@@ -18,7 +18,7 @@ LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
         ,ctypes.c_float:"<f", "c_char":"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
 
 class Dimension():
-    def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True):
+    def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True, overwritable = True):
         if ltl_endian:
             self.name = name
             self.offs = offs
@@ -27,6 +27,7 @@ class Dimension():
             self.length = fmtLen[self.fmt]
             self.num = num
             self.pack = pack
+            self.overwriteable = overwritable
         else:
             raise(LaspyException("Big endian files are not currently supported."))
     def __str__(self):
@@ -93,23 +94,23 @@ class Format():
         
         ## Header Fields
         if fmt[0] == "h":
-            self.add("file_sig","c_char", 4, pack = True)
+            self.add("file_sig","c_char", 4, pack = True, overwritable=False)
             self.add("file_src", ctypes.c_ushort, 1)
             self.add("global_encoding",ctypes.c_ushort, 1)
             self.add("proj_id_1",ctypes.c_long, 1)
             self.add("proj_id_2", ctypes.c_ushort, 1)
             self.add("proj_id_3", ctypes.c_ushort, 1)
             self.add("proj_id_4", ctypes.c_ubyte, 8)
-            self.add("version_major", ctypes.c_ubyte, 1)
-            self.add("version_minor", ctypes.c_ubyte, 1)
+            self.add("version_major", ctypes.c_ubyte, 1, overwritable=False)
+            self.add("version_minor", ctypes.c_ubyte, 1, overwritable=False)
             self.add("sys_id", "c_char", 32, pack=True)
             self.add("gen_soft",  "c_char", 32, pack = True)
             self.add("created_day", ctypes.c_ushort, 1)
             self.add("created_year", ctypes.c_ushort,1)
-            self.add("header_size", ctypes.c_ushort, 1)
-            self.add("offset_to_point_data", ctypes.c_long, 1)
+            self.add("header_size", ctypes.c_ushort, 1, overwritable=False)
+            self.add("offset_to_point_data", ctypes.c_long, 1, overwritable=False)
             self.add("num_variable_len_recs",  ctypes.c_long, 1)
-            self.add("pt_dat_format_id",  ctypes.c_ubyte, 1)
+            self.add("pt_dat_format_id",  ctypes.c_ubyte, 1, overwritable=False)
             self.add("pt_dat_rec_len",  ctypes.c_ushort, 1)
             self.add("num_pt_recs", ctypes.c_long, 1)         
             if fmt == "h1.3":
@@ -146,7 +147,7 @@ class Format():
             #self.lookup[dim.name] = [dim.offs, dim.fmt, dim.length, dim.pack]
             self.lookup[dim.name] = dim    
         
-    def add(self, name, fmt, num, pack = False):
+    def add(self, name, fmt, num, pack = False, overwritable = True):
         if len(self.dimensions) == 0:
             offs = 0
         else:
@@ -197,6 +198,9 @@ class VarLenRec():
         self.description = "".join(reader.read_words("description"))
 
 
+class FileSchema():
+    def __init__(self, header):
+        pass
 
 class FileManager():
     def __init__(self,filename, mode):
