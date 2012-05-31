@@ -606,6 +606,13 @@ class Writer(FileManager):
         map(f, xrange(dim.num))
         return
 
+    def set_raw_header_property(self, name, value):
+        try:
+            spec = self.header_format.lookup[name]
+        except(KeyError):
+            raise(LaspyException("Header Dimension: " + 
+                  str(name) + " not found."))
+        self._set_raw_datum(0, spec, value)
 
     def set_header_property(self, name, value):
         try:
