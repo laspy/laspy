@@ -365,11 +365,24 @@ class FileManager():
 
     def _get_raw_datum(self, rec_offs, spec):
         return(self._map[(rec_offs + spec.offs):(rec_offs + spec.offs 
-                        + spec.length)])
+                        + spec.num*spec.length)])
 
     def _get_datum(self, rec_offs, spec):
-        return(struct.unpack(spec.fmt, self._get_raw_datum(rec_offs, spec))[0])
+        data = self._get_raw_datum(rec_offs, spec)
+        if spec.num == 1:
+            return(struct.unpack(spec.fmt, data)[0])
+        unpacked = map(lambda x: struct.unpack(spec.fmt, 
+            data[x*spec.length + (x+1)*spec.length]), xrange(spec.num))
+        if spec.pack:
+            return("".join([str(x) for x in unpacked]))
+        return(unpacked) 
 
+
+
+    def get_raw_header_property(self, name):
+        spec = self.header_format.lookup[name]
+        return(self._get_raw_datum(0, spec))
+    
     def get_header_property(self, name):
         spec = self.header_format.lookup[name]
         return(self._get_datum(0, spec))
