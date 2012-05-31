@@ -227,16 +227,8 @@ class FileManager():
             return(outArr)
         return(self.binary_fmt(N, outArr))
     
-    def packed_str(self, string, reverse = True):
-        if reverse:
-            string = "".join(reversed([x for x in string]))
-            
-        pwr = len(string)-1
-        out = 0
-        for item in string:
-            out += int(item)*(2**pwr)
-            pwr -= 1
-        return(out)
+    def packed_str(self, string):
+        return(sum([int(string[idx])*(2**idx) for idx in xrange(len(string))]))
 
     def binary_str(self,N, zerolen = 8):
         raw_bin = bin(N)[2:][::-1]
