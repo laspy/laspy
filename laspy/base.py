@@ -588,11 +588,24 @@ class Writer(FileManager):
         #self._map.flush()
         return True
 
+    def _set_raw_datum(self, rec_offs, spec, val):
+        self._map[rec_offs+spec.offs:rec_offs+spec.offs +
+                  spec.num*spec.length] = val
+        return
+
     def _set_datum(self, rec_offs, dim, val):
-        lb = rec_offs + dim.offs
-        ub = lb + dim.length
-        self._map[lb:ub] = struct.pack(dim.fmt, val)
-        return True    
+        if dim.num == 1:
+            lb = rec_offs + dim.offs
+            ub = lb + dim.length
+            self._map[lb:ub] = struct.pack(dim.fmt, val)
+            return
+        def f(x):
+            self._map[(x*dim.length + rec_offs + 
+                    dim.offs):((x+1)*dim.length + rec_offs 
+                    + dim.offs)]=struct.pack(dim.fmt, val[x])
+        map(f, xrange(dim.num))
+        return
+
 
     def set_header_property(self, name, value):
         try:
