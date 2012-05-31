@@ -162,13 +162,15 @@ class Header(object):
     encoding = global_encoding
 
     def get_projectid(self):
-        p1 = self.reader.get_header_property("proj_id_1")
-        p2 = self.reader.get_header_property("proj_id_2")
-        p3 = self.reader.get_header_property("proj_id_3")
-        p4 = self.reader.get_header_property("proj_id_4") 
+        p1 = self.reader.get_raw_header_property("proj_id_1")
+        p2 = self.reader.get_raw_header_property("proj_id_2")
+        p3 = self.reader.get_raw_header_property("proj_id_3")
+        p4 = self.reader.get_raw_header_property("proj_id_4") 
+        return(UUID(bytes =p1+p2+p3+p4))
+        
         """Returns the ProjectID/GUID for the file.  \
         libLAS does not currently support setting this value from Python"""
-        return(str(p1) + str(p2) + str(p3) + str(p4))
+        
     doc = """ProjectID for the file.  \
         libLAS does not currently support setting this value from Python, as
         it is the same as :obj:`liblas.header.Header.guid`. Use that to
