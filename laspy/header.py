@@ -64,7 +64,7 @@ class Header(object):
         if file_mode != "r":
             self.writer = self.reader
         self.file_mode = file_mode
-        for dim in self.format.dimensions:
+        for dim in self.format.specs:
             self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
     
     def assertWriteMode(self):

@@ -17,7 +17,7 @@ fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
 LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
         ,ctypes.c_float:"<f", "c_char":"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
 
-class Dimension():
+class Spec():
     def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True, overwritable = True):
         if ltl_endian:
             self.name = name
@@ -31,7 +31,7 @@ class Dimension():
         else:
             raise(LaspyException("Big endian files are not currently supported."))
     def __str__(self):
-        return("Dimension Attributes \n" +
+        return("Field Spec Attributes \n" +
         "Name: " + self.name + "\n"+
         "Format: " + str(self.Format) + "\n" +
         "Number: " + str(self.num) + "\n"+
@@ -44,7 +44,7 @@ class Dimension():
 class Format():
     def __init__(self, fmt):
         fmt = str(fmt)
-        self.dimensions = []
+        self.specs = []
         if not (fmt in ("0", "1", "2", "3", "4", "5", "VLR", "h1.0", "h1.1", "h1.2", "h1.3")):
             raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
@@ -143,21 +143,20 @@ class Format():
                 self.add("z_min", ctypes.c_double, 1)
 
         self.lookup = {}
-        for dim in self.dimensions:
-            #self.lookup[dim.name] = [dim.offs, dim.fmt, dim.length, dim.pack]
-            self.lookup[dim.name] = dim    
+        for spec in self.specs:
+            self.lookup[spec.name] = spec
         
     def add(self, name, fmt, num, pack = False, overwritable = True):
-        if len(self.dimensions) == 0:
+        if len(self.specs) == 0:
             offs = 0
         else:
-            last = self.dimensions[-1]
+            last = self.specs[-1]
             offs = last.offs + last.num*fmtLen[last.fmt]
-        self.dimensions.append(Dimension(name, offs, fmt, num, pack))
+        self.specs.append(Spec(name, offs, fmt, num, pack))
         
     def __str__(self):
-        for dim in self.dimensions:
-            dim.__str__()
+        for spec in self.specs:
+            spec.__str__()
 
 
 
@@ -165,7 +164,7 @@ class Format():
 
 class Point():
     def __init__(self, reader, startIdx):
-        for dim in reader.point_format.dimensions:
+        for dim in reader.point_format.specs:
             #reader.seek(dim.offs + startIdx, rel = False)
             self.__dict__[dim.name] = reader._read_words(dim.fmt, dim.num, dim.length)
 
