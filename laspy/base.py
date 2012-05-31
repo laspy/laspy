@@ -627,12 +627,13 @@ class Writer(FileManager):
     # Utility Function, refactor
     
     def binary_str_arr(self, arr, length = 8):
-        outArr = np.array(["0"*length]*len(arr))
-        idx = 0
-        for i in arr:
-            outArr[idx] = self.binary_str(i, length)
-            idx += 1
-        return(outArr)
+        return(np.array([self.binary_str(x, length) for x in arr]))
+        #outArr = np.array(["0"*length]*len(arr))
+        #idx = 0
+        #for i in arr:
+        #    outArr[idx] = self.binary_str(i, length)
+        #    idx += 1
+        #return(outArr)
         
     def bitpack(self,arrs,idx, pack = True):
         if pack:
