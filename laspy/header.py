@@ -162,6 +162,7 @@ class Header(object):
     encoding = global_encoding
 
     def get_projectid(self):
+        #UUID.get_bytes_le
         p1 = self.reader.get_raw_header_property("proj_id_1")
         p2 = self.reader.get_raw_header_property("proj_id_2")
         p3 = self.reader.get_raw_header_property("proj_id_3")
@@ -195,11 +196,12 @@ class Header(object):
         return self.get_projectid() 
 
     def set_guid(self, value):
+        #self.reader.set_raw_header_property()
         """Sets the GUID for the file. It must be a :class:`liblas.guid.GUID`
         instance"""
         return
     doc = """The GUID/:obj:`liblas.header.Header.project_id` for the file."""
-    guid = property(get_guid, None, None, doc)
+    guid = property(get_guid, set_guid, None, doc)
 
     def get_majorversion(self):
         """Returns the major version for the file. Expect this value to always
