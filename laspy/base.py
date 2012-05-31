@@ -363,13 +363,17 @@ class FileManager():
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
 
+    def _get_raw_datum(self, rec_offs, spec):
+        return(self._map[(rec_offs + spec.offs):(rec_offs + spec.offs 
+                        + spec.length)])
+
     def _get_datum(self, rec_offs, spec):
-        raw_data = self._map[(rec_offs + spec.offs):(rec_offs + spec.offs + spec.length)]
-        return(struct.unpack(spec.fmt, raw_data)[0])
+        return(struct.unpack(spec.fmt, self._get_raw_datum(rec_offs, spec))[0])
 
     def get_header_property(self, name):
         spec = self.header_format.lookup[name]
         return(self._get_datum(0, spec))
+
 
     def _get_dimension(self,offs, fmt, length, raw = False):
         if type(self.point_refs) == bool:

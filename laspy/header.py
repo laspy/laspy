@@ -42,6 +42,7 @@
  ****************************************************************************/
  """
 import datetime
+from uuid import UUID
 
 def leap_year(year):
     if (year % 400) == 0:
@@ -113,7 +114,7 @@ class Header(object):
     file_source_id = filesource_id
 
     def get_global_encoding(self):
-        return self.global_encoding
+        return(self.reader.get_header_property("global_encoding"))
 
     def set_global_encoding(self, value):
         return
@@ -161,9 +162,13 @@ class Header(object):
     encoding = global_encoding
 
     def get_projectid(self):
+        p1 = self.reader.get_header_property("proj_id_1")
+        p2 = self.reader.get_header_property("proj_id_2")
+        p3 = self.reader.get_header_property("proj_id_3")
+        p4 = self.reader.get_header_property("proj_id_4") 
         """Returns the ProjectID/GUID for the file.  \
         libLAS does not currently support setting this value from Python"""
-        return(str(self.proj_id1) + str(self.proj_id_2) + str(self.proj_id_3) + str(self.proj_id_4))
+        return(str(p1) + str(p2) + str(p3) + str(p4))
     doc = """ProjectID for the file.  \
         libLAS does not currently support setting this value from Python, as
         it is the same as :obj:`liblas.header.Header.guid`. Use that to
@@ -192,7 +197,7 @@ class Header(object):
         instance"""
         return
     doc = """The GUID/:obj:`liblas.header.Header.project_id` for the file."""
-    guid = property(get_guid, set_guid, None, doc)
+    guid = property(get_guid, None, None, doc)
 
     def get_majorversion(self):
         """Returns the major version for the file. Expect this value to always
