@@ -381,7 +381,16 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.system_id = sys1
         sys2 = self.FileObject.header.get_systemid()
         self.assertEqual(sys1, sys2)
-
+    def test_software_id(self):
+        s1 = self.FileObject.header.software_id
+        s1 = "1234567" + s1[7:]
+        self.FileObject.header.software_id = s1
+        s2 = self.FileObject.header.get_softwareid()
+        self.assertEqual(s1, s2)
+        with self.assertRaises(LaspyException):
+            self.FileObject.header.software_id = "123"
+        with self.assertRaises(LaspyException):
+            self.FileObject.header.software_id = "1" * 100
 
 
 def test_laspy():

@@ -305,13 +305,13 @@ class Header(object):
 
     def get_softwareid(self):
         """Returns the software identifier specified in the file"""
-        return self.reader.get_header_property("software_id")
+        return self.reader.get_header_property("gen_soft")
 
     def set_softwareid(self, value):
         """Sets the software identifier.
         """
         self.assertWriteMode()
-        return(self.writer.set_header_property("software_id", value))
+        return(self.writer.set_header_property("gen_soft", value))
 
     doc = """The software identifier. The value is truncated to 31 characters
     and defaults to 'libLAS 1.LASVERSION' (ie, libLAS 1.6 for the 1.6

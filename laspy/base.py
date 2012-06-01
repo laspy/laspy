@@ -599,6 +599,18 @@ class Writer(FileManager):
             ub = lb + dim.length
             self._map[lb:ub] = struct.pack(dim.fmt, val)
             return
+
+        try:
+            dimlen = len(val)
+        except(Exception):
+            dimlen = 1
+
+        if dim.num != dimlen:
+            raise(LaspyException("Fields must be replaced with data of the same length. " + 
+                                str(dim.name) +" should be length " + 
+                                str(dim.num) +", received " + str(dimlen) ))
+
+
         def f(x):
             self._map[(x*dim.length + rec_offs + 
                     dim.offs):((x+1)*dim.length + rec_offs 
