@@ -217,11 +217,13 @@ class Header(object):
     def get_majorversion(self):
         """Returns the major version for the file. Expect this value to always
         be 1"""
-        return self.VersionMajor
+        return self.reader.get_header_property("version_major") 
 
     def set_majorversion(self, value):
         """Sets the major version for the file. Only the value 1 is accepted
         at this time"""
+        self.assertWriteMode()
+        self.writer.set_header_property("version_major", value)
         return
     doc = """Major version number for the file.  For all practical purposes, \
     this is always '1'"""
@@ -232,11 +234,13 @@ class Header(object):
     def get_minorversion(self):
         """Returns the minor version of the file. Expect this value to always
         be 0, 1, or 2"""
-        return self.version_minor
+        return self.reader.get_header_property("version_minor") 
 
     def set_minorversion(self, value):
         """Sets the minor version of the file. The value should be 0 for 1.0
         LAS files, 1 for 1.1 LAS files ..."""
+        self.assertWriteMode()
+        self.writer.set_header_property("version_minor",value)
         return 
     doc = """Minor version for the file. [0, 1, 2] are currently supported."""
     minor_version = property(get_minorversion, set_minorversion, None, doc)
@@ -245,12 +249,13 @@ class Header(object):
 
     def set_version(self, value):
         major, minor = value.split('.')
-        self.major_version = int(major)
-        self.minor_version = int(minor)
+        self.assertWriteMode()
+        self.writer.set_header_property("version_major", major)
+        self.writer.set_header_property("version_minor", minor)
 
     def get_version(self):
-        major = self.major_version
-        minor = self.minor_version
+        major = self.reader.get_header_property("version_major") 
+        minor = self.reader.get_header_property("version_minor") 
         return '%d.%d' % (major, minor)
     doc = """The version as a dotted string for the file (ie, '1.0', '1.1',
     etc)"""
@@ -258,11 +263,13 @@ class Header(object):
 
     def get_systemid(self):
         """Returns the system identifier specified in the file"""
-        return self.sys_id
+        return self.reader.get_header_property("sys_id")
 
     def set_systemid(self, value):
         """Sets the system identifier. The value is truncated to 31
         characters"""
+        self.assertWriteMode()
+        self.writer.set_header_property("sys_id", value)
         return
     doc = """The system identifier. The value is truncated to 31 characters and
             defaults to 'libLAS'
@@ -296,12 +303,14 @@ class Header(object):
 
     def get_softwareid(self):
         """Returns the software identifier specified in the file"""
-        return self.gen_soft
+        return self.reader.get_header_property("software_id")
 
     def set_softwareid(self, value):
         """Sets the software identifier.
         """
-        return 
+        self.assertWriteMode()
+        return(self.writer.set_header_property("software_id", value))
+
     doc = """The software identifier. The value is truncated to 31 characters
     and defaults to 'libLAS 1.LASVERSION' (ie, libLAS 1.6 for the 1.6
     release)
@@ -336,8 +345,9 @@ class Header(object):
         Note that dates in LAS headers are not transitive because the header
         only stores the year and the day number.
         """
-        day = self.created_day
-        year = self.created_year
+        day = self.reader.get_header_property("created_day") 
+        year = self.reader.get_header_property("created_year")
+
         if year == 0 and day == 0:
             return None
         if not leap_year(year):
@@ -348,14 +358,13 @@ class Header(object):
     def set_date(self, value=datetime.datetime.now()):
         """Set the header's date from a datetime.datetime instance.
         """
+        self.assertWriteMode()
         delta = value - datetime.datetime(value.year, 1, 1)
         if not leap_year(value.year):
-            pass
-            #core.las.LASHeader_SetCreationDOY(self.handle, delta.days)
-        else:
-            pass
-            #core.las.LASHeader_SetCreationDOY(self.handle, delta.days + 1)
-        #core.las.LASHeader_SetCreationYear(self.handle, value.year)
+            self.writer.set_header_property("created_day", delta.days)
+        else: 
+            self.writer.set_header_property("created_day", delta.days + 1)
+        self.writer.set_header_property("created_year", delta.year)
         return
 
     doc = """The header's date from a :class:`datetime.datetime` instance.
