@@ -1,7 +1,7 @@
 from laspy.base import *
 import laspy.file as File
 import laspy.header as lasheader
-
+from uuid import UUID
 import unittest
 import os
 
@@ -357,6 +357,15 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.filesource_id = f1
         f2 = self.FileObject.header.get_filesourceid()
         self.assertTrue(f1 == f2)  
+    def test_uuid(self):
+        guid = self.FileObject.header.guid
+        guid2 = self.FileObject.header.project_id
+        self.assertEqual(guid, guid2)
+        newGuid = UUID(bytes="1"*16)
+        self.FileObject.header.guid = newGuid
+        newGuid2 = self.FileObject.header.get_guid()
+        self.assertEqual(newGuid, newGuid2)
+
 
 
 
