@@ -619,6 +619,9 @@ class Writer(FileManager):
             dim = self.header_format.lookup[name]
         except(KeyError):
             raise LaspyException("Header Dimension: " + str(name) + " not found.")
+        if not dim.overwritable:
+            raise(LaspyException("Field " + dim.name + " is not overwritable."))
+        
         self._set_datum(0, dim, value)
         return
 
