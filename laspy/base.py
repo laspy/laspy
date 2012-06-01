@@ -27,7 +27,7 @@ class Spec():
             self.length = fmtLen[self.fmt]
             self.num = num
             self.pack = pack
-            self.overwriteable = overwritable
+            self.overwritable = overwritable
         else:
             raise(LaspyException("Big endian files are not currently supported."))
     def __str__(self):
