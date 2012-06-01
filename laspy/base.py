@@ -562,6 +562,22 @@ class Writer(FileManager):
         self._map.flush()
         self._map.close()
         self.fileref.close()
+    
+    def set_padding(self, value):
+        if self.mode == "w":
+            pass
+        elif self.mode == "rw":
+            new_padding = value - (self.header.data_offset - self.vlr_stop)
+            if new_padding + self.header.data_offset < self.vlr_stop:
+                raise LaspyException("New Padding Value Overwrites VLRs")
+            dat_part_1 = self._map[0:self.vlr_stop] 
+            dat_part_2 = self._map[self.vlr_stop + value:]
+            self.seek(0, rel = False)
+            self._map.write(dat_part_1)
+            for i in xrange(value):
+                self._map.write(struct.pack("<c", "\x00"))
+            self._map.write(dat_part_2)
+            return
 
     def set_dimension(self, name,new_dim):
         ptrecs = self.get_pointrecordscount()

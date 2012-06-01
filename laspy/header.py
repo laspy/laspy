@@ -392,16 +392,23 @@ class Header(object):
 
         Should not be needed in Python land
         """
-        return self.header_size 
+        return self.reader.get_header_property("header_size")
     doc = """The number of bytes that the header contains. For libLAS, this is
     always 227, and it is not configurable."""
-    header_size = property(get_headersize, None, None, doc)
+   
+    def set_headersize(self, val):
+        self.assertWriteMode()
+        self.writer.set_header_property("header size", val)
+   
+
+    header_size = property(get_headersize, set_headersize, None, doc)
     header_length = header_size
+
 
     def get_dataoffset(self):
         """Returns the location in bytes of where the data block of the LAS
         file starts"""
-        return self.offset_to_point_data
+        return self.reader.get_header_property("offset_to_point_data")
 
     def set_dataoffset(self, value):
         """Sets the data offset
@@ -409,6 +416,8 @@ class Header(object):
         Any space between this value and the end of the VLRs will be written
         with 0's
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("offset_to_point_data", value)
         return
     doc = """The number of bytes of offset between the end of the header and
     the start of the point data in the file. Set this to a large value if you
@@ -430,8 +439,9 @@ class Header(object):
 
     def set_padding(self, value):
         """Sets the header's padding.
-
         """
+        self.assertWriteMode()
+        self.writer.set_padding(value)
         return
     doc = """The number of bytes between the end of the VLRs and the 
     beginning of the point data.
@@ -439,7 +449,7 @@ class Header(object):
     padding = property(get_padding, set_padding, None, doc)
 
     def get_recordscount(self):
-        return Reader.get_recordscount()
+        return self.reader.get_recordscount()
     doc = """Returns the number of user-defined header records in the header.
     libLAS will manage this value you for you as you add new
     :class:`liblas.srs.SRS` or :class:`liblas.vlr.VLR` instances to the
