@@ -117,6 +117,8 @@ class Header(object):
         return(self.reader.get_header_property("global_encoding"))
 
     def set_global_encoding(self, value):
+        self.assertWriteMode()
+        self.writer.set_header_property("global_encoding", value)
         return
     doc = """Global encoding for the file.
 

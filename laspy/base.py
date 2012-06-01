@@ -152,7 +152,7 @@ class Format():
         else:
             last = self.specs[-1]
             offs = last.offs + last.num*fmtLen[last.fmt]
-        self.specs.append(Spec(name, offs, fmt, num, pack))
+        self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable))
         
     def __str__(self):
         for spec in self.specs:
@@ -374,7 +374,7 @@ class FileManager():
         unpacked = map(lambda x: struct.unpack(spec.fmt, 
             data[x*spec.length:(x+1)*spec.length]), xrange(spec.num))
         if spec.pack:
-            return("".join([str(x) for x in unpacked]))
+            return("".join([str(x[0]) for x in unpacked]))
         return(unpacked) 
 
 

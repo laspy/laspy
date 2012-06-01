@@ -365,7 +365,22 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.guid = newGuid
         newGuid2 = self.FileObject.header.get_guid()
         self.assertEqual(newGuid, newGuid2)
-
+    def test_glob_encode(self):
+        g1 = self.FileObject.header.global_encoding + 1
+        self.FileObject.header.global_encoding = g1
+        g2 = self.FileObject.header.get_global_encoding()
+        self.assertTrue(g1 == g2)
+    def test_versions(self):
+        v1 = self.FileObject.header.major_version
+        self.assertEqual(v1, 1)
+        with self.assertRaises(LaspyException):
+            self.FileObject.header.major_version = 2
+    def test_system_id(self):
+        sys1 = self.FileObject.header.system_id
+        sys1 = "1234567891" + sys1[10:]
+        self.FileObject.header.system_id = sys1
+        sys2 = self.FileObject.header.get_systemid()
+        self.assertEqual(sys1, sys2)
 
 
 
