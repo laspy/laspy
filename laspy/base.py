@@ -207,14 +207,20 @@ class FileManager():
         self.vlrs = False
         self.bytes_read = 0
         self.filename = filename
-        self.fileref = open(filename, "r+b")
-        self._map = mmap.mmap(self.fileref.fileno(), 0)
+        #self.fileref = open(filename, "r+b")
+        if mode == "r":
+            self.fileref = open(filename, "r+b")
+        else:
+            self.fileref = open(filename, "w+b")
+
+        self._map = mmap.mmap(fileno = self.fileref.fileno(),length= 0)
         self.header_format = Format("h" + self.grab_file_version())
         self.get_header(mode)
         self.populate_vlrs()
         self.point_refs = False
         self._current = 0
         self.point_format = Format(self.header.pt_dat_format_id)
+        self.mode = mode
         return
    
     def binary_fmt(self,N, outArr):
@@ -562,8 +568,8 @@ class Writer(FileManager):
         self._map.flush()
         self._map.close()
         self.fileref.close()
-    
-    def set_padding(self, value):
+
+    def set_padding(self, value): 
         if self.mode == "w":
             pass
         elif self.mode == "rw":
@@ -574,10 +580,17 @@ class Writer(FileManager):
             dat_part_2 = self._map[self.vlr_stop + value:]
             self.seek(0, rel = False)
             self._map.write(dat_part_1)
+            
             for i in xrange(value):
+    
                 self._map.write(struct.pack("<c", "\x00"))
             self._map.write(dat_part_2)
-            return
+            return(len(self._map))
+        elif self.mode == "r+":
+            pass
+        else:
+            raise(LaspyException("Must be in write mode to change padding."))
+        return(len(self._map))
 
     def set_dimension(self, name,new_dim):
         ptrecs = self.get_pointrecordscount()
@@ -654,10 +667,7 @@ class Writer(FileManager):
         return
 
     def set_header(self, header):
-        pass    
-    
-    def set_padding(self, padding):
-        pass
+        pass     
     
     def set_input_srs(self, srs):
         pass
