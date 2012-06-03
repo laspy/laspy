@@ -108,7 +108,7 @@ class Format():
             self.add("created_day", ctypes.c_ushort, 1)
             self.add("created_year", ctypes.c_ushort,1)
             self.add("header_size", ctypes.c_ushort, 1, overwritable=False)
-            self.add("offset_to_point_data", ctypes.c_long, 1, overwritable=False)
+            self.add("offset_to_point_data", ctypes.c_long, 1, overwritable=True)
             self.add("num_variable_len_recs",  ctypes.c_long, 1)
             self.add("pt_dat_format_id",  ctypes.c_ubyte, 1, overwritable=False)
             self.add("pt_dat_rec_len",  ctypes.c_ushort, 1)
@@ -202,17 +202,12 @@ class FileSchema():
         pass
 
 class FileManager():
-    def __init__(self,filename, mode):
+    def __init__(self,filename, mode): 
         self.header = False
         self.vlrs = False
         self.bytes_read = 0
         self.filename = filename
-        #self.fileref = open(filename, "r+b")
-        if mode == "r":
-            self.fileref = open(filename, "r+b")
-        else:
-            self.fileref = open(filename, "w+b")
-
+        self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(fileno = self.fileref.fileno(),length= 0)
         self.header_format = Format("h" + self.grab_file_version())
         self.get_header(mode)
@@ -299,7 +294,8 @@ class FileManager():
             self.header = Header(self, mode)
     def populate_vlrs(self):
         self.vlrs = []
-        for i in xrange(self.header.num_variable_len_recs):
+        self.seek(self.header.header_size, rel = False)
+        for i in xrange(self.header.num_variable_len_recs): 
             self.vlrs.append(VarLenRec(self))
             self.seek(self.vlrs[-1].rec_len_after_header)
             if self._map.tell() > self.header.data_offset:
@@ -569,22 +565,29 @@ class Writer(FileManager):
         self._map.close()
         self.fileref.close()
 
-    def set_padding(self, value): 
+    def set_padding(self, value):
+        if value < 0: 
+            raise LaspyException("New Padding Value Overwrites VLRs")
         if self.mode == "w":
             pass
         elif self.mode == "rw":
-            new_padding = value - (self.header.data_offset - self.vlr_stop)
-            if new_padding + self.header.data_offset < self.vlr_stop:
-                raise LaspyException("New Padding Value Overwrites VLRs")
-            dat_part_1 = self._map[0:self.vlr_stop] 
-            dat_part_2 = self._map[self.vlr_stop + value:]
-            self.seek(0, rel = False)
-            self._map.write(dat_part_1)
-            
-            for i in xrange(value):
-    
-                self._map.write(struct.pack("<c", "\x00"))
-            self._map.write(dat_part_2)
+            old_offset = self.header.data_offset
+            self.header.data_offset = self.vlr_stop + value 
+            self._map.flush() 
+            self.seek(0, rel=False)
+            dat_part_1 = self._map.read(self.vlr_stop)
+            self.seek(old_offset, rel = False)
+            dat_part_2 = self._map.read(len(self._map) - old_offset)
+            self._map.close()
+            self.fileref.close()
+            self.fileref = open(self.filename, "w+b")
+            self.fileref.write(dat_part_1) 
+            self.fileref.write("\x00"*value)
+            self.fileref.write(dat_part_2)
+            self.fileref.close()
+            self.__init__(self.filename, self.mode)            
+           
+         
             return(len(self._map))
         elif self.mode == "r+":
             pass

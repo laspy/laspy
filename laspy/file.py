@@ -207,7 +207,7 @@ class File(object):
         """Sets the liblas.header.Header for the file.  If the file is in \
         append mode, the header will be overwritten in the file."""
         # append mode
-        if mode == "w+": 
+        if self._mode == "w+": 
             self.writer.set_header(header)
             return True
         raise base.LaspyException("The header can only be set "

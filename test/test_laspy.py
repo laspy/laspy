@@ -391,7 +391,12 @@ class LasHeaderWriterTestCase(unittest.TestCase):
             self.FileObject.header.software_id = "123"
         with self.assertRaises(LaspyException):
             self.FileObject.header.software_id = "1" * 100
-
+    def test_padding(self):
+        x1 = self.FileObject.X
+        self.FileObject.header.set_padding(10)
+        self.FileObject.header.set_padding(1000)
+        x2 = self.FileObject.X
+        self.assertTrue(all(x1 == x2))
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
