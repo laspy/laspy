@@ -397,6 +397,15 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.set_padding(1000)
         x2 = self.FileObject.X
         self.assertTrue(all(x1 == x2))
+    def test_date(self):
+        d1 = self.FileObject.header.date
+        self.assertTrue(d1 == None)
+        from datetime import datetime
+        d2 = datetime(2007,12,10)
+        self.FileObject.header.date = d2
+        d3 = self.FileObject.header.get_date()
+        self.assertEqual(d2, d3)
+
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)

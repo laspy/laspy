@@ -366,7 +366,7 @@ class Header(object):
             self.writer.set_header_property("created_day", delta.days)
         else: 
             self.writer.set_header_property("created_day", delta.days + 1)
-        self.writer.set_header_property("created_year", delta.year)
+        self.writer.set_header_property("created_year", value.year)
         return
 
     doc = """The header's date from a :class:`datetime.datetime` instance.
