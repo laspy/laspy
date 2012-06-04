@@ -436,6 +436,12 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.update_histogram()
         h2 = self.FileObject.header.point_return_count
         self.assertTrue(h1 == h2)
+    def test_offset(self):
+        o1 = self.FileObject.header.offset
+        o1[0] += 1
+        self.FileObject.header.offset = o1
+        o2 = self.FileObject.header.get_offset()
+        self.assertTrue(o1 == o2)
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
