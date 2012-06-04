@@ -44,6 +44,8 @@ class FileManager():
 
             self._map = mmap.mmap(fileno = self.fileref.fileno(), length = 0)
             self.header.reader = self
+            self.header.writer = self
+            self.header.version = header.version[1:]
             self.header.dump_data_to_file()
             
 

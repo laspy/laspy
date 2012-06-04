@@ -76,13 +76,14 @@ class Header(object):
 
         ## Figure out our header format
         if fmt == False:
-            self.format = util.Format("h1.2")
+            self.format = util.Format("h1.2", overwritable=True)
         else:
             self.format = fmt
         ## Figure out our file mode
         if file_mode == False:
             self.file_mode = "w"
         else:
+            print("Not False: " + str(self.file_mode))
             self.file_mode = file_mode
         ## Add attributes from kwargs - these need to be dumped to a data File
         ## once it's built.
@@ -92,14 +93,14 @@ class Header(object):
             self.attribute_list.append(kw[0])
             self.__dict__[kw[0]] = kw[1] 
 
-    def dump_data_to_file(self):
+    def dump_data_to_file(self): 
         if self.reader == False or not self.file_mode in ("w", "rw", "w+"):
             raise LaspyHeaderException("Dump data requires a valid writer object.")
         for item in self.attribute_list:
             self.writer.set_header_property(item, self.__dict__[item])
     
     def assertWriteMode(self):
-        if self.file_mode == "w":
+        if self.file_mode == "r":
             raise LaspyHeaderException("Header instance is not in write mode.")
 
     def read_words(self, offs, fmt,num, length, pack):

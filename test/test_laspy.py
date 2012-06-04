@@ -457,6 +457,7 @@ class LasWriteModeTestCase(unittest.TestCase):
         header_object = header.Header()
         File2 = File.File("./.temp.las", mode = "w", 
                             header = header_object)
+        print(File2.header.version)
         self.assertTrue(File2.header.version == "1.2") 
 
 
