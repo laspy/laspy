@@ -423,13 +423,6 @@ class Header(object):
     doc = """The number of bytes of offset between the end of the header and
     the start of the point data in the file. Set this to a large value if you
     plan to include many :obj:`liblas.vlr.VLR`'s to the file.
-
-    .. note::
-        libLAS will manage this value for you as you add or remove VLRs or
-        :class:`liblas.srs.SRS` instances to the header. Make sure to adjust
-        your header information before opening a new file to write, as that is
-        when the header's VLRs are written to the file, and they cannot be
-        adjusted after that.
     """
     data_offset = property(get_dataoffset, set_dataoffset, None, doc)
 
@@ -451,10 +444,7 @@ class Header(object):
 
     def get_recordscount(self):
         return self.reader.get_recordscount()
-    doc = """Returns the number of user-defined header records in the header.
-    libLAS will manage this value you for you as you add new
-    :class:`liblas.srs.SRS` or :class:`liblas.vlr.VLR` instances to the
-    header.
+    doc = """Returns the number of user-defined header records in the header. 
     """
     records_count = property(get_recordscount, None, None, doc)
     num_vlrs = records_count
@@ -567,10 +557,7 @@ class Header(object):
         """Returns the expected number of point records in the file.
 
         .. note::
-            This value can be grossly out of sync with the actual number of
-            points in the file, because some some softwares are not careful to
-            keep it up-to-date. If libLAS detects a case where it is not
-            properly written, an exception will be thrown.
+            This value can be grossly out of sync with the actual number of records
         """
         return self.Reader.get_pointrecordscount()
 
@@ -579,7 +566,7 @@ class Header(object):
 
         .. note::
             Don't use this unless you have a damn good reason to. As you write
-            points to a file, libLAS is going to keep this up-to-date for you
+            points to a file, laspy is going to keep this up-to-date for you
             and write it back into the header of the file once the file is
             closed after writing data.
         """
@@ -618,7 +605,7 @@ class Header(object):
     doc = """The histogram of point records by return number for returns 0...8
 
         .. note::
-            libLAS does not manage these values automatically for you. You
+            laspy does not manage these values automatically for you. You
             must cumulate and generate the histogram manually if you wish to
             keep these data up-to-date with what actually exists in the file.
 
@@ -639,12 +626,6 @@ class Header(object):
 
     def get_scale(self):
         """Gets the scale factors in [x, y, z] for the point data.
-
-        .. note::
-            libLAS uses this header value when reading/writing raw point data
-            to the file. If you change it in the middle of writing data,
-            expect the unexpected.
-
         >>> h.scale
         [0.01, 0.01, 0.01]
         """
@@ -658,11 +639,8 @@ class Header(object):
         [0.5, 0.5, 0.001]
         """
         return
-    doc = """The scale factors in [x, y, z] for the point data.  libLAS uses \
-        the scale factors plus the :obj:`liblas.header.Header.offset` values
-        to store the point coordinates as integers in the file.
-
-        From the specification_:
+    doc = """The scale factors in [x, y, z] for the point data. 
+            From the specification_:
             The scale factor fields contain a double floating point value that
             is used to scale the corresponding X, Y, and Z long values within
             the point records. The corresponding X, Y, and Z scale factor must
@@ -677,11 +655,6 @@ class Header(object):
             * z = (z_int * z_scale) + z_offset
 
         .. note::
-            libLAS uses this header value when reading/writing raw point data
-            to the file. If you change it in the middle of writing data,
-            expect the unexpected.
-
-
         >>> hdr.scale
         [0.01, 0.01, 0.01]
         >>> hdr.scale = [0.5, 0.5, 0.001]
@@ -715,11 +688,6 @@ class Header(object):
             * y = (y_int * y_scale) + y_offset
             * z = (z_int * z_scale) + z_offset
 
-        .. note::
-            libLAS uses this header value when reading/writing raw point data
-            to the file. If you change it in the middle of writing data,
-            expect the unexpected.
-
         >>> hdr.offset
         [0.0, 0.0, 0.0]
         >>> hdr.offset = [32, 32, 256]
@@ -740,12 +708,7 @@ class Header(object):
         """
         return
 
-    doc = """The minimum values of [x, y, z] for the data in the file.
-
-        .. note::
-            libLAS does not manage these values automatically for you. You
-            must cumulate and generate the histogram manually if you wish to
-            keep these data up-to-date with what actually exists in the file.
+    doc = """The minimum values of [x, y, z] for the data in the file. 
 
         >>> hdr.min
         [0.0, 0.0, 0.0]
@@ -764,12 +727,6 @@ class Header(object):
         return
 
     doc = """The maximum values of [x, y, z] for the data in the file.
-
-        .. note::
-            libLAS does not manage these values automatically for you. You
-            must cumulate and generate the histogram manually if you wish to
-            keep these data up-to-date with what actually exists in the file.
-
         >>> hdr.max
         [0.0, 0.0, 0.0]
         >>> hdr.max = [33452344.2333, 523442.344, -90.993]
@@ -795,13 +752,10 @@ class Header(object):
     def set_vlrs(self, value):
         return
 
-    doc = """Get/set the :class:`liblas.vlr.VLR`'s for the header as a list
-
-    .. note::
-        Existing VLRs are left untouched, and if you are wishing to overwrite
-        existing data, you must first delete them from the header using
-        :obj:`liblas.header.header.delete_vlr`
-    """
+    doc = """Get/set the VLR`'s for the header as a list
+        VLR's are completely overwritten, so to append a VLR, first retreive
+        the existing list with get_vlrs and append to it.
+        """
     vlrs = property(get_vlrs, set_vlrs, None, doc)
 
     def get_srs(self):
