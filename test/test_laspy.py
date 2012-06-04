@@ -5,20 +5,17 @@ from uuid import UUID
 import unittest
 import os
 
+import shutil
 def flip_bit(x):
     return(1*(x==0))
 
 
 class LasReaderTestCase(unittest.TestCase):
     simple = "./test/data/simple.las"
+    tempfile = "junk.las"
     def setUp(self): 
-        inFile = open(self.simple, "r")
-        inData = inFile.read()
-        outFile = open("./.temp.las", "w")
-        outFile.write(inData)
-        outFile.close()
-        inFile.close()
-        self.FileObject = File.File("./.temp.las")
+        shutil.copyfile(self.simple, self.tempfile)
+        self.FileObject = File.File(self.tempfile)
         LasFile = self.FileObject
         self.X = LasFile.X
         self.Y = LasFile.Y
@@ -173,7 +170,7 @@ class LasReaderTestCase(unittest.TestCase):
 
     def tearDown(self): 
         self.FileObject.close() 
-        os.remove("./.temp.las")      
+        os.remove(self.tempfile)      
         
 
 class LasWriterTestCase(unittest.TestCase):
