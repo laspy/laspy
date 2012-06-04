@@ -2,11 +2,11 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  libLAS - http://liblas.org - A BSD library for LAS format data.
+ * Project:  laspy
  * Purpose:  Python LASHeader implementation
 
  * Author:   Howard Butler, hobu.inc@gmail.com
- *
+ * Author:   Grant Brown, grant.brown73@gmail.com
  ******************************************************************************
  * Copyright (c) 2009, Howard Butler
  *
@@ -43,6 +43,8 @@
  """
 import datetime
 from uuid import UUID
+import numpy as np
+import util
 
 def leap_year(year):
     if (year % 400) == 0:
@@ -59,15 +61,43 @@ class LaspyHeaderException(Exception):
     pass
 
 class Header(object):
-    def __init__(self,reader,file_mode = "r", copy=False):
-        self.format = reader.header_format        
-        self.reader = reader
-        if file_mode != "r":
-            self.writer = self.reader
-        self.file_mode = file_mode
-        for dim in self.format.specs:
-            #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
-            self.__dict__[dim.name] = reader.get_header_property(dim.name)
+    def __init__(self,reader = False,file_mode = False, fmt = False , **kwargs):
+        #We have a reader object so there's data to be read. 
+        if (reader != False):
+            self.format = reader.header_format        
+            self.reader = reader
+            if file_mode != "r":
+                self.writer = self.reader
+            self.file_mode = file_mode 
+            for dim in self.format.specs:
+                #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
+                self.__dict__[dim.name] = reader.get_header_property(dim.name)
+            return
+
+        ## Figure out our header format
+        if fmt == False:
+            self.format = util.Format("h1.2")
+        else:
+            self.format = fmt
+        ## Figure out our file mode
+        if file_mode == False:
+            self.file_mode = "w"
+        else:
+            self.file_mode = file_mode
+        ## Add attributes from kwargs - these need to be dumped to a data File
+        ## once it's built.
+
+        self.attribute_list = []
+        for kw in kwargs.items():
+            self.attribute_list.append(kw[0])
+            self.__dict__[kw[0]] = kw[1] 
+
+    def dump_data_to_file(self):
+        if self.reader == False or not self.file_mode in ("w", "rw", "w+"):
+            raise LaspyHeaderException("Dump data requires a valid writer object.")
+        for item in self.attribute_list:
+            self.writer.set_header_property(item, self.__dict__[item])
+    
     def assertWriteMode(self):
         if self.file_mode == "w":
             raise LaspyHeaderException("Header instance is not in write mode.")
@@ -117,6 +147,8 @@ class Header(object):
         return(self.reader.get_header_property("global_encoding"))
 
     def set_global_encoding(self, value):
+        self.assertWriteMode()
+        self.writer.set_header_property("global_encoding", value)
         return
     doc = """Global encoding for the file.
 
@@ -162,6 +194,7 @@ class Header(object):
     encoding = global_encoding
 
     def get_projectid(self):
+        
         p1 = self.reader.get_raw_header_property("proj_id_1")
         p2 = self.reader.get_raw_header_property("proj_id_2")
         p3 = self.reader.get_raw_header_property("proj_id_3")
@@ -195,20 +228,34 @@ class Header(object):
         return self.get_projectid() 
 
     def set_guid(self, value):
+        raw_bytes = UUID.get_bytes_le(value)
+        p1 = raw_bytes[0:4]
+        p2 = raw_bytes[4:6]
+        p3 = raw_bytes[6:8]
+        p4 = raw_bytes[8:16]
+        self.reader.set_raw_header_property("proj_id_1", p1)
+        self.reader.set_raw_header_property("proj_id_2", p2)
+        self.reader.set_raw_header_property("proj_id_3", p3)
+        self.reader.set_raw_header_property("proj_id_4", p4)
+
+
+
         """Sets the GUID for the file. It must be a :class:`liblas.guid.GUID`
         instance"""
         return
     doc = """The GUID/:obj:`liblas.header.Header.project_id` for the file."""
-    guid = property(get_guid, None, None, doc)
+    guid = property(get_guid, set_guid, None, doc)
 
     def get_majorversion(self):
         """Returns the major version for the file. Expect this value to always
         be 1"""
-        return self.VersionMajor
+        return self.reader.get_header_property("version_major") 
 
     def set_majorversion(self, value):
         """Sets the major version for the file. Only the value 1 is accepted
         at this time"""
+        self.assertWriteMode()
+        self.writer.set_header_property("version_major", value)
         return
     doc = """Major version number for the file.  For all practical purposes, \
     this is always '1'"""
@@ -219,11 +266,13 @@ class Header(object):
     def get_minorversion(self):
         """Returns the minor version of the file. Expect this value to always
         be 0, 1, or 2"""
-        return self.version_minor
+        return self.reader.get_header_property("version_minor") 
 
     def set_minorversion(self, value):
         """Sets the minor version of the file. The value should be 0 for 1.0
         LAS files, 1 for 1.1 LAS files ..."""
+        self.assertWriteMode()
+        self.writer.set_header_property("version_minor",value)
         return 
     doc = """Minor version for the file. [0, 1, 2] are currently supported."""
     minor_version = property(get_minorversion, set_minorversion, None, doc)
@@ -232,12 +281,13 @@ class Header(object):
 
     def set_version(self, value):
         major, minor = value.split('.')
-        self.major_version = int(major)
-        self.minor_version = int(minor)
+        self.assertWriteMode()
+        self.writer.set_header_property("version_major", major)
+        self.writer.set_header_property("version_minor", minor)
 
     def get_version(self):
-        major = self.major_version
-        minor = self.minor_version
+        major = self.reader.get_header_property("version_major") 
+        minor = self.reader.get_header_property("version_minor") 
         return '%d.%d' % (major, minor)
     doc = """The version as a dotted string for the file (ie, '1.0', '1.1',
     etc)"""
@@ -245,11 +295,13 @@ class Header(object):
 
     def get_systemid(self):
         """Returns the system identifier specified in the file"""
-        return self.sys_id
+        return self.reader.get_header_property("sys_id")
 
     def set_systemid(self, value):
         """Sets the system identifier. The value is truncated to 31
         characters"""
+        self.assertWriteMode()
+        self.writer.set_header_property("sys_id", value)
         return
     doc = """The system identifier. The value is truncated to 31 characters and
             defaults to 'libLAS'
@@ -283,12 +335,14 @@ class Header(object):
 
     def get_softwareid(self):
         """Returns the software identifier specified in the file"""
-        return self.gen_soft
+        return self.reader.get_header_property("gen_soft")
 
     def set_softwareid(self, value):
         """Sets the software identifier.
         """
-        return 
+        self.assertWriteMode()
+        return(self.writer.set_header_property("gen_soft", value))
+
     doc = """The software identifier. The value is truncated to 31 characters
     and defaults to 'libLAS 1.LASVERSION' (ie, libLAS 1.6 for the 1.6
     release)
@@ -323,8 +377,9 @@ class Header(object):
         Note that dates in LAS headers are not transitive because the header
         only stores the year and the day number.
         """
-        day = self.created_day
-        year = self.created_year
+        day = self.reader.get_header_property("created_day") 
+        year = self.reader.get_header_property("created_year")
+
         if year == 0 and day == 0:
             return None
         if not leap_year(year):
@@ -335,14 +390,13 @@ class Header(object):
     def set_date(self, value=datetime.datetime.now()):
         """Set the header's date from a datetime.datetime instance.
         """
+        self.assertWriteMode()
         delta = value - datetime.datetime(value.year, 1, 1)
         if not leap_year(value.year):
-            pass
-            #core.las.LASHeader_SetCreationDOY(self.handle, delta.days)
-        else:
-            pass
-            #core.las.LASHeader_SetCreationDOY(self.handle, delta.days + 1)
-        #core.las.LASHeader_SetCreationYear(self.handle, value.year)
+            self.writer.set_header_property("created_day", delta.days)
+        else: 
+            self.writer.set_header_property("created_day", delta.days + 1)
+        self.writer.set_header_property("created_year", value.year)
         return
 
     doc = """The header's date from a :class:`datetime.datetime` instance.
@@ -368,16 +422,23 @@ class Header(object):
 
         Should not be needed in Python land
         """
-        return self.header_size 
+        return self.reader.get_header_property("header_size")
     doc = """The number of bytes that the header contains. For libLAS, this is
     always 227, and it is not configurable."""
-    header_size = property(get_headersize, None, None, doc)
+   
+    def set_headersize(self, val):
+        self.assertWriteMode()
+        self.writer.set_header_property("header size", val)
+   
+
+    header_size = property(get_headersize, set_headersize, None, doc)
     header_length = header_size
+
 
     def get_dataoffset(self):
         """Returns the location in bytes of where the data block of the LAS
         file starts"""
-        return self.offset_to_point_data
+        return self.reader.get_header_property("offset_to_point_data")
 
     def set_dataoffset(self, value):
         """Sets the data offset
@@ -385,29 +446,26 @@ class Header(object):
         Any space between this value and the end of the VLRs will be written
         with 0's
         """
+        self.assertWriteMode()
+        ## writer.set_padding handles data offset update.
+        self.writer.set_padding(value-self.writer.vlr_stop) 
         return
     doc = """The number of bytes of offset between the end of the header and
     the start of the point data in the file. Set this to a large value if you
     plan to include many :obj:`liblas.vlr.VLR`'s to the file.
-
-    .. note::
-        libLAS will manage this value for you as you add or remove VLRs or
-        :class:`liblas.srs.SRS` instances to the header. Make sure to adjust
-        your header information before opening a new file to write, as that is
-        when the header's VLRs are written to the file, and they cannot be
-        adjusted after that.
     """
     data_offset = property(get_dataoffset, set_dataoffset, None, doc)
 
     def get_padding(self):
         """Returns number of bytes between the end of the VLRs and the 
            beginning of the point data."""
-        return self.Reader.get_padding() 
+        return self.reader.get_padding() 
 
     def set_padding(self, value):
         """Sets the header's padding.
-
         """
+        self.assertWriteMode()
+        self.writer.set_padding(value)
         return
     doc = """The number of bytes between the end of the VLRs and the 
     beginning of the point data.
@@ -415,11 +473,8 @@ class Header(object):
     padding = property(get_padding, set_padding, None, doc)
 
     def get_recordscount(self):
-        return Reader.get_recordscount()
-    doc = """Returns the number of user-defined header records in the header.
-    libLAS will manage this value you for you as you add new
-    :class:`liblas.srs.SRS` or :class:`liblas.vlr.VLR` instances to the
-    header.
+        return self.reader.get_pointrecordscount()
+    doc = """Returns the number of user-defined header records in the header. 
     """
     records_count = property(get_recordscount, None, None, doc)
     num_vlrs = records_count
@@ -432,6 +487,15 @@ class Header(object):
     def set_dataformatid(self, value):
         if value not in range(6):
             raise LaspyHeaderException("Format ID must be 3, 2, 1, or 0")
+        if not self.mode in ("w", "w+"):
+            raise LaspyHeaderException("Point Format ID can only be set for " + 
+                                        "files in write or append mode.")
+        if self.writer.get_recordscount() > 0:
+            raise LaspyHeaderException("Modification of the format of existing " + 
+                                        "points is not currently supported. Make " + 
+                                        "your modifications in numpy and create " + 
+                                        "a new file.")
+        self.writer.set_header_property("pt_dat_format_id", value)
         return 
     doc = """The point format as an integer. See the specification_ for more
     detail.
@@ -461,10 +525,10 @@ class Header(object):
 
     ## SCHEMA NOT IMPLEMENTED
     def get_schema(self):
-        return
+        self.reader.header_format
         
     def set_schema(self, value):
-        return 
+        return
     doc = """The :class:`liblas.schmea.Schema` for this file
 
     Use the schema to set whether or not color or time should be stored
@@ -532,19 +596,21 @@ class Header(object):
         """Returns the expected number of point records in the file.
 
         .. note::
-            This value can be grossly out of sync with the actual number of
-            points in the file, because some some softwares are not careful to
-            keep it up-to-date. If libLAS detects a case where it is not
-            properly written, an exception will be thrown.
+            This value can be grossly out of sync with the actual number of records
         """
-        return self.Reader.get_pointrecordscount()
+        return self.reader.get_pointrecordscount()
 
     def set_pointrecordscount(self, value):
+        if not self.mode in ("w", "w+"):
+            raise LaspyHeaderException("File must be open in write or append mode " + 
+                                        "to change the number of point records.")
+        self.writer.set_header_property("num_pt_recs", value)
+        
         """Sets the number of point records expected in the file.
 
         .. note::
             Don't use this unless you have a damn good reason to. As you write
-            points to a file, libLAS is going to keep this up-to-date for you
+            points to a file, laspy is going to keep this up-to-date for you
             and write it back into the header of the file once the file is
             closed after writing data.
         """
@@ -565,27 +631,27 @@ class Header(object):
         [0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L]
 
         """
-        return self.NumPtsByReturn   
+        return self.reader.get_header_property("num_pts_by_return")   
 
     def set_pointrecordsbyreturncount(self, value):
+
         """Sets the histogram of point records by return number from a list of
         returns 0..8
-
+        Preferred method is to use header.update_histogram.
         >>> l = [1341235L, 3412341222L, 0L, 0L, 4321L, 0L, 0L, 0L]
         >>> h.point_return_count = l
         >>> h.point_return_count
         [1341235L, 3412341222L, 0L, 0L, 4321L, 0L, 0L, 0L]
 
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("num_pts_by_return", value)
         return  
       
     
     doc = """The histogram of point records by return number for returns 0...8
 
-        .. note::
-            libLAS does not manage these values automatically for you. You
-            must cumulate and generate the histogram manually if you wish to
-            keep these data up-to-date with what actually exists in the file.
+        .. note:: 
 
         >>> hdr.point_return_count
         [0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L]
@@ -602,18 +668,38 @@ class Header(object):
                                   doc)
     return_count = point_return_count
 
+    def update_histogram(self):
+        rawdata = map(lambda x: (x==0)*1 + (x!=0)*x, 
+                     self.writer.get_return_num())
+        
+        raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
+        # Does the user count [1,2,3,4,5] as one point return of lenght 5, or as 5 from 1 to 5?
+        #print("Raw Hist: " + str(raw_hist))
+        #t = raw_hist[0][4]
+        #for ret in [3,2,1,0]:
+        #    raw_hist[0][ret] -= t
+        #    t += raw_hist[0][ret]
+        self.writer.set_header_property("num_pts_by_return", raw_hist[0])
+
+
+    def update_min_max(self):
+        x = self.writer.get_x()
+        y = self.writer.get_y()
+        z = self.writer.get_z()
+        self.writer.set_header_property("x_max", np.max(x))
+        self.writer.set_header_property("x_min", np.min(x))
+        self.writer.set_header_property("y_max", np.max(y))
+        self.writer.set_header_property("y_min", np.min(y))
+        self.writer.set_header_property("z_max", np.max(z))
+        self.writer.set_header_property("z_min", np.min(z))
+
     def get_scale(self):
         """Gets the scale factors in [x, y, z] for the point data.
-
-        .. note::
-            libLAS uses this header value when reading/writing raw point data
-            to the file. If you change it in the middle of writing data,
-            expect the unexpected.
-
         >>> h.scale
         [0.01, 0.01, 0.01]
         """
-        return [self.x_scale, self.y_scale, self.z_scale]
+        return([self.reader.get_header_property(x) for x in 
+                ["x_scale","y_scale", "z_scale"]])
 
     def set_scale(self, value):
         """Sets the scale factors in [x, y, z] for the point data.
@@ -622,12 +708,13 @@ class Header(object):
         >>> h.scale
         [0.5, 0.5, 0.001]
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_scale", value[0])
+        self.writer.set_header_property("y_scale", value[1])
+        self.writer.set_header_property("z_scale", value[2])
         return
-    doc = """The scale factors in [x, y, z] for the point data.  libLAS uses \
-        the scale factors plus the :obj:`liblas.header.Header.offset` values
-        to store the point coordinates as integers in the file.
-
-        From the specification_:
+    doc = """The scale factors in [x, y, z] for the point data. 
+            From the specification_:
             The scale factor fields contain a double floating point value that
             is used to scale the corresponding X, Y, and Z long values within
             the point records. The corresponding X, Y, and Z scale factor must
@@ -642,11 +729,6 @@ class Header(object):
             * z = (z_int * z_scale) + z_offset
 
         .. note::
-            libLAS uses this header value when reading/writing raw point data
-            to the file. If you change it in the middle of writing data,
-            expect the unexpected.
-
-
         >>> hdr.scale
         [0.01, 0.01, 0.01]
         >>> hdr.scale = [0.5, 0.5, 0.001]
@@ -658,11 +740,16 @@ class Header(object):
     def get_offset(self):
         """Gets the offset factors in [x, y, z] for the point data.
         """
-        return [self.x_offset, self.y_offset, self.z_offset]
+        return([self.reader.get_header_property(x) for x in 
+                ["x_offset", "y_offset", "z_offset"]])
 
     def set_offset(self, value):
         """Sets the offset factors in [x, y, z] for the point data.
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_offset", value[0])
+        self.writer.set_header_property("y_offset", value[1])
+        self.writer.set_header_property("z_offset", value[2])
         return
     doc = """The offset factors in [x, y, z] for the point data.
 
@@ -680,11 +767,6 @@ class Header(object):
             * y = (y_int * y_scale) + y_offset
             * z = (z_int * z_scale) + z_offset
 
-        .. note::
-            libLAS uses this header value when reading/writing raw point data
-            to the file. If you change it in the middle of writing data,
-            expect the unexpected.
-
         >>> hdr.offset
         [0.0, 0.0, 0.0]
         >>> hdr.offset = [32, 32, 256]
@@ -696,21 +778,23 @@ class Header(object):
 
     def get_min(self):
         """Gets the minimum values of [x, y, z] for the data.
+            For an accuarate result, run header.update_min_max()
+            prior to use. 
         """
-        return [self.x_min, self.y_min, self.z_min]
+        return([self.reader.get_header_property(x) for x in 
+                ["x_min", "y_min", "z_min"]])
 
     def set_min(self, value):
         """Sets the minimum values of [x, y, z] for the data.
-
+        Preferred method is to use header.update_min_max.
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_min", value[0])
+        self.writer.set_header_property("y_min", value[1])
+        self.writer.set_header_property("z_min", value[2]) 
         return
 
-    doc = """The minimum values of [x, y, z] for the data in the file.
-
-        .. note::
-            libLAS does not manage these values automatically for you. You
-            must cumulate and generate the histogram manually if you wish to
-            keep these data up-to-date with what actually exists in the file.
+    doc = """The minimum values of [x, y, z] for the data in the file. 
 
         >>> hdr.min
         [0.0, 0.0, 0.0]
@@ -722,19 +806,18 @@ class Header(object):
     min = property(get_min, set_min, None, doc)
 
     def get_max(self):
-        return([self.x_max, self.y_max, self.z_max])
+        return([self.reader.get_header_property(x) for x in ["x_max", "y_max", "z_max"]])
     def set_max(self, value):
         """Sets the maximum values of [x, y, z] for the data.
+        Preferred method is header.update_min_max()
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_max", value[0])
+        self.writer.set_header_property("y_max", value[1])
+        self.writer.set_header_property("z_max", value[2])
         return
 
     doc = """The maximum values of [x, y, z] for the data in the file.
-
-        .. note::
-            libLAS does not manage these values automatically for you. You
-            must cumulate and generate the histogram manually if you wish to
-            keep these data up-to-date with what actually exists in the file.
-
         >>> hdr.max
         [0.0, 0.0, 0.0]
         >>> hdr.max = [33452344.2333, 523442.344, -90.993]
@@ -747,26 +830,17 @@ class Header(object):
     ### VLR MANIPULATION NOT IMPLEMENTED
     def add_vlr(self, value):
         return
-
-    def get_vlr(self, value):
-        return
    
-    def delete_vlr(self, value):
-        return  
-
     def get_vlrs(self):
-        return
+        return(self.reader.get_vlrs())
 
     def set_vlrs(self, value):
         return
 
-    doc = """Get/set the :class:`liblas.vlr.VLR`'s for the header as a list
-
-    .. note::
-        Existing VLRs are left untouched, and if you are wishing to overwrite
-        existing data, you must first delete them from the header using
-        :obj:`liblas.header.header.delete_vlr`
-    """
+    doc = """Get/set the VLR`'s for the header as a list
+        VLR's are completely overwritten, so to append a VLR, first retreive
+        the existing list with get_vlrs and append to it.
+        """
     vlrs = property(get_vlrs, set_vlrs, None, doc)
 
     def get_srs(self):
@@ -777,7 +851,3 @@ class Header(object):
 
     srs = property(get_srs, set_srs)
 
-    def get_xml(self):
-        return 
-        
-    xml = property(get_xml, None, None, None)

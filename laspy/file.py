@@ -2,10 +2,10 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  libLAS - http://liblas.org - A BSD library for LAS format data.
+ * Project:  laspy
  * Purpose:  Python LASFile implementation
  * Author:   Howard Butler, hobu.inc@gmail.com
- *
+ * Author:   Grant Brown, grant.brown73@gmail.com
  ******************************************************************************
  * Copyright (c) 2009, Howard Butler
  *
@@ -43,17 +43,17 @@
 
 
 import base
-import header as lasheader
+import util
 
 import os
-import types
 
-import sys
+
 
 
 class File(object):
     def __init__(self, filename,
                        header=None,
+                       vlrs=False,
                        mode='r',
                        in_srs=None,
                        out_srs=None):
@@ -61,18 +61,18 @@ class File(object):
 
         :arg filename: The filename to open
         :keyword header: A header open the file with
-        :type header: an :obj:`liblas.header.header.Header` instance
+        :type header: an :obj:`laspy.header.Header` instance
         :keyword mode: "r" for read, "rw" for modify/update, "w" for write, and "w+" for append
         :type mode: string
         :keyword in_srs: Input SRS to override the existing file's SRS with
-        :type in_srs: an :obj:`liblas.srs.SRS` instance
+        :type in_srs: an :obj:`laspy.SRS` instance
         :keyword out_srs: Output SRS to reproject points on-the-fly to as \
         they are read/written.
-        :type out_srs: an :obj:`liblas.srs.SRS` instance
+        :type out_srs: an :obj:`laspy.SRS` instance
 
         .. note::
             To open a file in write mode, you must provide a
-            liblas.header.Header instance which will be immediately written to
+            laspy.header.Header instance which will be immediately written to
             the file. If you provide a header instance in read mode, the
             values of that header will be used in place of those in the actual
             file.
@@ -81,7 +81,7 @@ class File(object):
             If a file is open for write, it cannot be opened for read and vice
             versa.
 
-        >>> from liblas import file
+        >>> from laspy import file
         >>> f = file.File('file.las', mode='r')
         >>> for p in f:
         ...     print 'X,Y,Z: ', p.x, p.y, p.z
@@ -95,7 +95,7 @@ class File(object):
 
         self.filename = os.path.abspath(filename)
         self._header = header
-     
+        self._vlrs = vlrs
         self._mode = mode.lower()
         self.in_srs = in_srs
         self.out_srs = out_srs
@@ -131,11 +131,12 @@ class File(object):
             else:
                 base.ModifyWithHeader(self.filename, self._header)
     
-
         if self._mode == 'w':
             if self._header == None:
-                raise base.LaspyException("Creation of a file in write mode requires a header object.")  
-            base.CreateWithHeader(self.filename, self._header)
+                raise util.LaspyException("Creation of a file in write mode requires a header object.")  
+            self.writer = base.Writer(self.filename, "w", 
+                                      self._header, self._vlrs)
+            self.reader = self.writer
         if self._mode == 'w+':
             self.extender = base.Extender(self.filename)
             if self._header == None:
@@ -157,7 +158,7 @@ class File(object):
     
     def assertWriteMode(self):
         if self._mode == "r":
-            raise base.LaspyException("File is not opened in a write mode.")         
+            raise util.LaspyException("File is not opened in a write mode.")         
 
     # TO BE IMPLEMENTED
     def set_srs(self, value):
@@ -173,9 +174,9 @@ class File(object):
     def get_output_srs(self):
         return self.out_srs
 
-    doc = """The output :obj:`liblas.srs.SRS` for the file.  Data will be
+    doc = """The output :obj:`laspy.SRS` for the file.  Data will be
     reprojected to this SRS according to either the :obj:`input_srs` if it
-    was set or default to the :obj:`liblas.header.Header.SRS` if it was
+    was set or default to the :obj:`laspy.header.Header.SRS` if it was
     not set.  The header's SRS must be valid and exist for reprojection
     to occur. GDAL support must also be enabled for the library for
     reprojection to happen."""
@@ -190,13 +191,13 @@ class File(object):
 
     def get_input_srs(self):
         return self.in_srs
-    doc = """The input :obj:`liblas.srs.SRS` for the file.  This overrides the
-    :obj:`liblas.header.Header.SRS`.  It is useful in cases where the header's
+    doc = """The input :obj:`laspy.SRS` for the file.  This overrides the
+    :obj:`laspy.header.Header.SRS`.  It is useful in cases where the header's
     SRS is not valid or does not exist."""
     input_srs = property(get_input_srs, set_input_srs, None, doc)
 
     def get_header(self):
-        """Returns the liblas.header.Header for the file""" 
+        """Returns the laspy.header.Header for the file""" 
         if self._mode == "r":
             return self.reader.get_header(self._mode)
         else:
@@ -204,21 +205,21 @@ class File(object):
         return None
 
     def set_header(self, header):
-        """Sets the liblas.header.Header for the file.  If the file is in \
+        """Sets the laspy.header.Header for the file.  If the file is in \
         append mode, the header will be overwritten in the file."""
         # append mode
-        if mode == "w+": 
+        if self._mode == "w+": 
             self.writer.set_header(header)
             return True
-        raise base.LaspyException("The header can only be set "
+        raise util.LaspyException("The header can only be set "
                                 "after file creation for files in append mode")
-    doc = """The file's :obj:`liblas.header.Header`
+    doc = """The file's :obj:`laspy.header.Header`
 
     .. note::
         If the file is in append mode, the header will be overwritten in the
         file. Setting the header for the file when it is in read mode has no
         effect. If you wish to override existing header information with your
-        own at read time, you must instantiate a new :obj:`liblas.file.File`
+        own at read time, you must instantiate a new :obj:`laspy.file.File`
         instance.
 
     """
@@ -230,7 +231,7 @@ class File(object):
             
             return(self.reader.get_point(index)) 
         else:
-            raise base.LaspyException("Index greater than point records count")
+            raise util.LaspyException("Index greater than point records count")
         
     def get_x(self, scale = False):
         return(self.reader.get_x(scale))
@@ -508,7 +509,7 @@ class File(object):
           >>> for i in f:
           ...   points.append(i)
           ...   print i # doctest: +ELLIPSIS
-          <liblas.point.Point object at ...>
+          <laspy.base.Point object at ...>
         """
         if self._mode == "r":
             self.at_end = False
@@ -530,9 +531,9 @@ class File(object):
         """Index and slicing support
 
           >>> out = f[0:3]
-          [<liblas.point.Point object at ...>,
-          <liblas.point.Point object at ...>,
-          <liblas.point.Point object at ...>]
+          [<laspy.point.Point object at ...>,
+          <laspy.point.Point object at ...>,
+          <laspy.point.Point object at ...>]
         """
         try:
             index.stop
@@ -559,7 +560,7 @@ class File(object):
         write mode) or from the last point that exists (in append mode).
 
         :param pt: The point to write.
-        :type pt: :obj:`liblas.point.Point` instance to write
+        :type pt: :obj:`laspy.point.Point` instance to write
 
         .. note::
             At this time, it is not possible to duck-type point objects and
@@ -567,9 +568,9 @@ class File(object):
             something). You have to take care of this adaptation yourself.
 
         """
-        if not isinstance(pt, base.Point):
-            raise base.LaspyException('cannot write %s, it must '
-                                    'be of type liblas.point.Point' % pt)
+        if not isinstance(pt, util.Point):
+            raise util.LaspyException('cannot write %s, it must '
+                                    'be of type laspy.point.Point' % pt)
         if self._mode != "r":
             #core.las.LASWriter_WritePoint(self.handle, pt.handle)
             pass
@@ -582,7 +583,7 @@ class File(object):
             point to summarize the entire file, and it will again reset the 
             read position to the 0th point upon completion."""
         if self._mode != 0:
-            raise base.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
+            raise util.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
         return
         
     summary = property(get_xmlsummary, None, None, None)
