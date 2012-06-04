@@ -639,7 +639,13 @@ class Header(object):
     return_count = point_return_count
 
     def update_histogram(self):
-        pass
+        raw_hist = np.histogram(self.writer.get_return_num(), bins = [1,2,3,4,5,6])
+        t = raw_hist[4]
+        for ret in [3,2,1,0]:
+            raw_hist[ret] -= t
+            t += raw_hist[ret]
+        self.writer.set_header_property("num_pts_by_return", raw_hist)
+
 
     def update_min_max(self):
         x = self.writer.get_x()

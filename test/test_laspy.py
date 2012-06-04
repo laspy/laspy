@@ -431,7 +431,11 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.update_min_max()
         file_max = self.FileObject.header.max
         self.assertTrue(file_max == [x[0], y[0], z[0]])
-
+    def test_histogram(self):
+        h1 = self.FileObject.header.point_return_count
+        self.FileObject.header.update_histogram()
+        h2 = self.FileObject.header.point_return_count
+        self.assertTrue(h1 == h2)
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
