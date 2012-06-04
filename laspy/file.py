@@ -53,7 +53,7 @@ import os
 class File(object):
     def __init__(self, filename,
                        header=None,
-                       vlrs=None,
+                       vlrs=False,
                        mode='r',
                        in_srs=None,
                        out_srs=None):
@@ -95,7 +95,7 @@ class File(object):
 
         self.filename = os.path.abspath(filename)
         self._header = header
-     
+        self._vlrs = vlrs
         self._mode = mode.lower()
         self.in_srs = in_srs
         self.out_srs = out_srs
@@ -131,11 +131,11 @@ class File(object):
             else:
                 base.ModifyWithHeader(self.filename, self._header)
     
-
         if self._mode == 'w':
             if self._header == None:
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
-            self.writer = base.CreateWithHeader(self.filename, self._header, self.vlrs)
+            self.writer = base.Writer(self.filename, "w", 
+                                      self._header, self.vlrs)
             self.reader = self.writer
         if self._mode == 'w+':
             self.extender = base.Extender(self.filename)
