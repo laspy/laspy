@@ -663,7 +663,8 @@ class Header(object):
         >>> h.scale
         [0.01, 0.01, 0.01]
         """
-        return [self.x_scale, self.y_scale, self.z_scale]
+        return([self.reader.get_header_property(x) for x in 
+                ["x_scale","y_scale", "z_scale"]])
 
     def set_scale(self, value):
         """Sets the scale factors in [x, y, z] for the point data.
@@ -672,6 +673,10 @@ class Header(object):
         >>> h.scale
         [0.5, 0.5, 0.001]
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_scale", value[0])
+        self.writer.set_header_property("y_scale", value[1])
+        self.writer.set_header_property("z_scale", value[2])
         return
     doc = """The scale factors in [x, y, z] for the point data. 
             From the specification_:
@@ -700,11 +705,16 @@ class Header(object):
     def get_offset(self):
         """Gets the offset factors in [x, y, z] for the point data.
         """
-        return [self.x_offset, self.y_offset, self.z_offset]
+        return([self.reader.get_header_property(x) for x in 
+                ["x_offset", "y_offset", "z_offset"]])
 
     def set_offset(self, value):
         """Sets the offset factors in [x, y, z] for the point data.
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_offset", value[0])
+        self.writer.set_header_property("y_offset", value[1])
+        self.writer.set_header_property("z_offset", value[2])
         return
     doc = """The offset factors in [x, y, z] for the point data.
 
@@ -733,13 +743,20 @@ class Header(object):
 
     def get_min(self):
         """Gets the minimum values of [x, y, z] for the data.
+            For an accuarate result, run header.update_min_max()
+            prior to use. 
         """
-        return [self.x_min, self.y_min, self.z_min]
+        return([self.reader.get_header_property(x) for x in 
+                ["x_min", "y_min", "z_min"]])
 
     def set_min(self, value):
         """Sets the minimum values of [x, y, z] for the data.
 
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_min", value[0])
+        self.writer.set_header_property("y_min", value[1])
+        self.writer.set_header_property("z_min", value[2]) 
         return
 
     doc = """The minimum values of [x, y, z] for the data in the file. 
@@ -758,6 +775,10 @@ class Header(object):
     def set_max(self, value):
         """Sets the maximum values of [x, y, z] for the data.
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("x_max", value[0])
+        self.writer.set_header_property("y_max", value[1])
+        self.writer.set_header_property("z_max", value[2])
         return
 
     doc = """The maximum values of [x, y, z] for the data in the file.
