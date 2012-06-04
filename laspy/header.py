@@ -2,11 +2,11 @@
 /******************************************************************************
  * $Id$
  *
- * Project:  libLAS - http://liblas.org - A BSD library for LAS format data.
+ * Project:  laspy
  * Purpose:  Python LASHeader implementation
 
  * Author:   Howard Butler, hobu.inc@gmail.com
- *
+ * Author:   Grant Brown, grant.brown73@gmail.com
  ******************************************************************************
  * Copyright (c) 2009, Howard Butler
  *
@@ -457,6 +457,15 @@ class Header(object):
     def set_dataformatid(self, value):
         if value not in range(6):
             raise LaspyHeaderException("Format ID must be 3, 2, 1, or 0")
+        if not self.mode in ("w", "w+"):
+            raise LaspyHeaderException("Point Format ID can only be set for " + 
+                                        "files in write or append mode.")
+        if self.writer.get_recordscount() > 0:
+            raise LaspyHeaderException("Modification of the format of existing " + 
+                                        "points is not currently supported. Make " + 
+                                        "your modifications in numpy and create " + 
+                                        "a new file.")
+        self.writer.set_header_property("pt_dat_format_id", value)
         return 
     doc = """The point format as an integer. See the specification_ for more
     detail.
@@ -486,10 +495,10 @@ class Header(object):
 
     ## SCHEMA NOT IMPLEMENTED
     def get_schema(self):
-        return
+        self.reader.header_format
         
     def set_schema(self, value):
-        return 
+        return
     doc = """The :class:`liblas.schmea.Schema` for this file
 
     Use the schema to set whether or not color or time should be stored
@@ -562,6 +571,11 @@ class Header(object):
         return self.Reader.get_pointrecordscount()
 
     def set_pointrecordscount(self, value):
+        if not self.mode in ("w", "w+"):
+            raise LaspyHeaderException("File must be open in write or append mode " + 
+                                        "to change the number of point records.")
+        self.writer.set_header_property("num_pt_recs", value)
+        
         """Sets the number of point records expected in the file.
 
         .. note::
@@ -587,7 +601,7 @@ class Header(object):
         [0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L]
 
         """
-        return self.NumPtsByReturn   
+        return self.reader.get_header_property("num_pts_by_return")   
 
     def set_pointrecordsbyreturncount(self, value):
         """Sets the histogram of point records by return number from a list of
@@ -599,15 +613,14 @@ class Header(object):
         [1341235L, 3412341222L, 0L, 0L, 4321L, 0L, 0L, 0L]
 
         """
+        self.assertWriteMode()
+        self.writer.set_header_property("num_pts_by_return", value)
         return  
       
     
     doc = """The histogram of point records by return number for returns 0...8
 
-        .. note::
-            laspy does not manage these values automatically for you. You
-            must cumulate and generate the histogram manually if you wish to
-            keep these data up-to-date with what actually exists in the file.
+        .. note:: 
 
         >>> hdr.point_return_count
         [0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L]
@@ -623,6 +636,13 @@ class Header(object):
                                   None,
                                   doc)
     return_count = point_return_count
+
+    def update_histogram(self):
+        pass
+
+    def update_min_max(self):
+        pass
+
 
     def get_scale(self):
         """Gets the scale factors in [x, y, z] for the point data.
