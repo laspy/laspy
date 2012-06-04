@@ -44,8 +44,8 @@ class FileManager():
 
             self._map = mmap.mmap(fileno = self.fileref.fileno(), length = 0)
             self.header.reader = self
-            self.header.writer = self
-            self.header.version = header.version[1:]
+            self.header.writer = self 
+            self.header.version = str(self.header_format.fmt[1:])
             self.header.dump_data_to_file()
             
 
@@ -510,7 +510,7 @@ class Writer(FileManager):
      
         if dim.num == 1:
             lb = rec_offs + dim.offs
-            ub = lb + dim.length
+            ub = lb + dim.length 
             self._map[lb:ub] = struct.pack(dim.fmt, val)
             return
 

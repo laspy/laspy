@@ -283,8 +283,8 @@ class Header(object):
     def set_version(self, value):
         major, minor = value.split('.')
         self.assertWriteMode()
-        self.writer.set_header_property("version_major", major)
-        self.writer.set_header_property("version_minor", minor)
+        self.writer.set_header_property("version_major", int(major))
+        self.writer.set_header_property("version_minor", int(minor))
 
     def get_version(self):
         major = self.reader.get_header_property("version_major") 
