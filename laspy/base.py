@@ -47,10 +47,22 @@ class FileManager():
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
-            self.header.dump_data_to_file() 
+            self.header.dump_data_to_file()
             # The following line implies a default point format of 0
             self.point_format = Format(self.header.data_format_id)
+            self.vlr_stop = len(self._map)
+            self.header.data_offset = max(len(self._map), self.header.data_offset)
+            # This should be refactored
+            if vlrs == False:
+                vlrs = []
+            self.set_header_property("num_variable_len_recs",len(vlrs))
             
+            self.set_vlrs(vlrs)
+            self.get_header(self.mode)
+            self.populate_vlrs()
+            self.point_refs = False
+            self._current = 0
+
 
         elif self.mode == "w+":
             raise LaspyException("Append mode is not yet supported.")
@@ -416,6 +428,8 @@ class Writer(FileManager):
         self.fileref.close()
     
     def set_vlrs(self, value):
+        if value == False:
+            return
         if not all([x.isVLR for x in value]):
             raise LaspyException("set_vlrs requers an iterable object " + 
                                  "composed of laspy.base.var_len_rec objects.")
@@ -425,12 +439,12 @@ class Writer(FileManager):
             current_padding = self.get_padding()
             old_offset = self.header.data_offset
             self.seek(0, rel = False)
-            dat_part_1 = self._map.read(self.header_size)
+            dat_part_1 = self._map.read(self.header.header_size)
             self.seek(old_offset, rel = False)
             dat_part_2 = self._map.read(len(self._map) - old_offset)
             self._map.close()
             self.fileref.close()
-            self.fileref.open(self.filename, "w+b")
+            self.fileref = open(self.filename, "w+b")
             self.fileref.write(dat_part_1)
             for vlr in value:
                 self.fileref.write(vlr.to_byte_string())
@@ -438,7 +452,8 @@ class Writer(FileManager):
             self.fileref.write("\x00"*current_padding)
             self.fileref.write(dat_part_2)
             self.fileref.close()
-            self.__init__(self.filename, self.mode)
+            self.fileref = open(self.filename, "r+b")
+            self._map = mmap.mmap(self.fileref.fileno(), 0)
         else:
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
 
