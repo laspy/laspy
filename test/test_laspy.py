@@ -1,6 +1,6 @@
 from laspy.base import *
 import laspy.file as File
-import laspy.header as lasheader
+import laspy.header as header
 from uuid import UUID
 import unittest
 import os
@@ -449,11 +449,23 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         s2 = self.FileObject.header.get_scale()
         self.assertTrue(s1 == s2)
 
+class LasWriteModeTestCase(unittest.TestCase):
+    simple = './test/data/simple.las'
+    def setUp(self):
+        self.File1 = File.File(self.simple, "r")
+    def test_using_barebones_header(self):
+        header_object = header.Header()
+        File2 = File.File("./.temp.las", mode = "w", 
+                            header = header_object)
+        self.assertTrue(File2.header.version == "1.2") 
+
+
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
     writer = unittest.TestLoader().loadTestsFromTestCase(LasWriterTestCase)
     header_writer = unittest.TestLoader().loadTestsFromTestCase(LasHeaderWriterTestCase)
-    return unittest.TestSuite([reader, writer, header_writer])
+    write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
+    return unittest.TestSuite([reader, writer, header_writer, write_mode])
 
 # if __name__=="__main__":
 #     runner = unittest.TextTestRunner()

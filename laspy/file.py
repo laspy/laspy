@@ -135,7 +135,7 @@ class File(object):
             if self._header == None:
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
             self.writer = base.Writer(self.filename, "w", 
-                                      self._header, self.vlrs)
+                                      self._header, self._vlrs)
             self.reader = self.writer
         if self._mode == 'w+':
             self.extender = base.Extender(self.filename)

@@ -34,8 +34,18 @@ class FileManager():
                 filesize += sum([len(x) for x in vlrs])
             if "point_records_count" in self.header.__dict__.keys():
                 filesize += self.header.__dict__["point_records_count"]
-            self._map = mmap.mmap(fileno = self.fileref.fileno(), length = filesize)
+                self.has_point_records = True
+            else:
+                self.has_point_records = False
+            self.fileref.write("\x00"*filesize)
+            self.fileref.close()
+            self.fileref= open(self.filename,"r+b")
+
+            self._map = mmap.mmap(fileno = self.fileref.fileno(), length = 0)
+            self.header.reader = self
+            self.header.dump_data_to_file()
             
+
         elif self.mode == "w+":
             raise LaspyException("Append mode is not yet supported.")
         

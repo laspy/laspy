@@ -88,7 +88,7 @@ class Header(object):
         ## once it's built.
 
         self.attribute_list = []
-        for kw in kwargs.item():
+        for kw in kwargs.items():
             self.attribute_list.append(kw[0])
             self.__dict__[kw[0]] = kw[1] 
 
