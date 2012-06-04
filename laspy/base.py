@@ -189,14 +189,40 @@ class Point():
 
         
 class var_len_rec():
-    def __init__(self, reader):
-        self.reserved = reader.read_words("reserved")
-        self.user_id = "".join(reader.read_words("user_id"))
-        self.record_id = reader.read_words("record_id")
-        self.rec_len_after_header = reader.read_words("rec_len_after_header")
-        self.description = "".join(reader.read_words("description"))
-        self.VLR_body = reader.read(self.rec_len_after_header)
-        self.isVLR = True
+    def __init__(self, reader=False, attr_dict = False):
+        ### VLR CONTENT ###
+        if not attr_dict:
+            self.reserved = reader.read_words("reserved")
+            self.user_id = "".join(reader.read_words("user_id"))
+            self.record_id = reader.read_words("record_id")
+            self.rec_len_after_header = reader.read_words("rec_len_after_header")
+            self.description = "".join(reader.read_words("description"))
+            self.VLR_body = reader.read(self.rec_len_after_header)
+            ### LOGICAL CONTENT ###
+            self.isVLR = True
+            self.fmt = reader.vlr_formats
+        elif not reader:
+            self.reserved = attr_dict["reserved"]
+            self.user_id = attr_dict["user_id"]
+            self.record_id = attr_dict["record_id"]
+            self.rec_len_after_header = attr_dict["rec_len_after_header"]
+            self.description = attr_dict["description"]
+            self.VLR_body = attr_dict["VLR_body"]
+            self.fmt = attr_dict["fmt"]
+            self.isVLR = True
+    
+    def pack(self, name, val):
+        spec = self.fmt.lookup[name]
+        return(struct.pack(spec.fmt, val))
+    
+    def to_byte_string(self):
+        out = (self.pack("reserved", self.reserved) + 
+               self.pack("user_id", self.user_id) + 
+               self.pack("record_id", self.record_id) + 
+               self.pack("rec_len_after_header", self.rec_len_after_header) + 
+               self.pack("description", self.description) +
+               self.VLR_body)
+        return(out)
 
 class FileSchema():
     def __init__(self, header):
@@ -584,18 +610,27 @@ class Writer(FileManager):
         if not all([x.isVLR for x in value]):
             raise LaspyException("set_vlrs requers an iterable object " + 
                                  "composed of laspy.base.var_len_rec objects.")
-        if self.mode == "w":
-            pass
         elif self.mode == "w+":
             pass
-        elif self.mode == "rw":
-            pass
+        elif self.mode in ("w", "rw"):
+            current_padding = self.get_padding()
+            old_offset = self.header.data_offset
+            self.seek(0, rel = False)
+            dat_part_1 = self._map.read(self.header_size)
+            self.seek(old_offset, rel = False)
+            dat_part_2 = self._map.read(len(self._map) - old_offset)
+            self._map.close()
+            self.fileref.close()
+            self.fileref.open(self.filename, "w+b")
+            self.fileref.write(dat_part_1)
+            for vlr in value:
+                self.fileref.write(vlr.to_byte_string())
+            self.fileref.write("\x00"*current_padding)
+            self.fileref.write(dat_part_2)
+            self.fileref.close()
+            self.__init__(self.filename, self.mode)
         else:
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
-        current_padding = self.get_padding()
-        
-
-
 
     def set_padding(self, value):
         """Set the padding between end of VLRs and beginning of point data"""
