@@ -73,7 +73,8 @@ class Header(object):
                 #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
                 self.__dict__[dim.name] = reader.get_header_property(dim.name)
         elif fmt == False:
-            pass
+            self.format = util.Format("h1.2")
+            
         else:
             self.attribute_list = []
             for kw in kwargs.item():

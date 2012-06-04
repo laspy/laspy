@@ -87,6 +87,7 @@ class Format():
         
         ## Header Fields
         if fmt[0] == "h":
+            self.header_size = 0
             self.add("file_sig","c_char", 4, pack = True, overwritable=False)
             self.add("file_src", ctypes.c_ushort, 1)
             self.add("global_encoding",ctypes.c_ushort, 1)
@@ -145,6 +146,11 @@ class Format():
         else:
             last = self.specs[-1]
             offs = last.offs + last.num*fmtLen[last.fmt]
+        try:
+            self.header_size += num*fmtLen[LEfmt[fmt]]
+        except(AttributeError):
+            ## This isn't a header format.
+            pass
         self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable))
         
     def __str__(self):
