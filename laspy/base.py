@@ -38,6 +38,7 @@ class FileManager():
                 self.has_point_records = True
             else:
                 self.has_point_records = False
+            # Is there a faster way to do this?
             self.fileref.write("\x00"*filesize)
             self.fileref.close()
             self.fileref= open(self.filename,"r+b")
@@ -46,7 +47,9 @@ class FileManager():
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
-            self.header.dump_data_to_file()
+            self.header.dump_data_to_file() 
+            # The following line implies a default point format of 0
+            self.point_format = Format(self.header.data_format_id)
             
 
         elif self.mode == "w+":
@@ -431,6 +434,7 @@ class Writer(FileManager):
             self.fileref.write(dat_part_1)
             for vlr in value:
                 self.fileref.write(vlr.to_byte_string())
+            ## Is there a faster way to do this?
             self.fileref.write("\x00"*current_padding)
             self.fileref.write(dat_part_2)
             self.fileref.close()
@@ -470,6 +474,9 @@ class Writer(FileManager):
         else:
             raise(LaspyException("Must be in write mode to change padding."))
         return(len(self._map))
+    
+    def pad_file_for_point_recs(num_recs):
+        pass
 
     def set_dimension(self, name,new_dim):
         """Set a point dimension of appropriate name to new_dim"""

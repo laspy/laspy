@@ -483,7 +483,7 @@ class Header(object):
     def get_dataformatid(self):
         """The point format value as an integer
         """
-        return self.pt_dat_formatId 
+        return self.reader.get_header_property("pt_dat_format_id") 
 
     def set_dataformatid(self, value):
         if value not in range(6):
