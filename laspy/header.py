@@ -59,15 +59,31 @@ class LaspyHeaderException(Exception):
     pass
 
 class Header(object):
-    def __init__(self,reader,file_mode = "r", copy=False):
-        self.format = reader.header_format        
-        self.reader = reader
-        if file_mode != "r":
-            self.writer = self.reader
-        self.file_mode = file_mode
-        for dim in self.format.specs:
-            #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
-            self.__dict__[dim.name] = reader.get_header_property(dim.name)
+    def __init__(self,reader = False,file_mode = False, fmt = False,  **kwargs):
+        #We have a reader object so there's data to be read. 
+        if (reader != False):
+            self.format = reader.header_format        
+            self.reader = reader
+            if file_mode != "r":
+                self.writer = self.reader
+            self.file_mode = file_mode 
+            for dim in self.format.specs:
+                #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
+                self.__dict__[dim.name] = reader.get_header_property(dim.name)
+        elif fmt == False:
+            raise LaspyHeaderException("A new header instance requires a format object.")
+        else:
+            self.attribute_list = []
+            for kw in kwargs.item():
+                self.attribute_list.append(kw[0])
+                self.__dict__[kw[0]] = kw[1]
+
+    def dump_data_to_file(self):
+        if self.reader == False or not self.file_mode in ("w", "rw", "w+"):
+            raise LaspyHeaderException("Dump data requires a valid writer object.")
+        for item in self.attribute_list:
+            self.writer.set_header_property(item, self.__dict__[item])
+    
     def assertWriteMode(self):
         if self.file_mode == "w":
             raise LaspyHeaderException("Header instance is not in write mode.")
