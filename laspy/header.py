@@ -443,7 +443,7 @@ class Header(object):
     padding = property(get_padding, set_padding, None, doc)
 
     def get_recordscount(self):
-        return self.reader.get_recordscount()
+        return self.reader.get_pointrecordscount()
     doc = """Returns the number of user-defined header records in the header. 
     """
     records_count = property(get_recordscount, None, None, doc)
@@ -639,12 +639,17 @@ class Header(object):
     return_count = point_return_count
 
     def update_histogram(self):
-        raw_hist = np.histogram(self.writer.get_return_num(), bins = [1,2,3,4,5,6])
-        t = raw_hist[4]
-        for ret in [3,2,1,0]:
-            raw_hist[ret] -= t
-            t += raw_hist[ret]
-        self.writer.set_header_property("num_pts_by_return", raw_hist)
+        rawdata = map(lambda x: (x==0)*1 + (x!=0)*x, 
+                     self.writer.get_return_num())
+        
+        raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
+        # Does the user count [1,2,3,4,5] as one point return of lenght 5, or as 5 from 1 to 5?
+        #print("Raw Hist: " + str(raw_hist))
+        #t = raw_hist[0][4]
+        #for ret in [3,2,1,0]:
+        #    raw_hist[0][ret] -= t
+        #    t += raw_hist[0][ret]
+        self.writer.set_header_property("num_pts_by_return", raw_hist[0])
 
 
     def update_min_max(self):
@@ -794,13 +799,7 @@ class Header(object):
     ### VLR MANIPULATION NOT IMPLEMENTED
     def add_vlr(self, value):
         return
-
-    def get_vlr(self, value):
-        return
    
-    def delete_vlr(self, value):
-        return  
-
     def get_vlrs(self):
         return
 
@@ -821,7 +820,3 @@ class Header(object):
 
     srs = property(get_srs, set_srs)
 
-    def get_xml(self):
-        return 
-        
-    xml = property(get_xml, None, None, None)

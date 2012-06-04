@@ -90,7 +90,7 @@ class Format():
             self.add("user_id", "c_char", 16)
             self.add("record_id", ctypes.c_ushort, 1)
             self.add("rec_len_after_header", ctypes.c_ushort, 1)
-            self.add("descriptions", "c_char", 32, pack = True)
+            self.add("description", "c_char", 32, pack = True)
         
         ## Header Fields
         if fmt[0] == "h":
@@ -195,7 +195,7 @@ class VarLenRec():
         self.record_id = reader.read_words("record_id")
         self.rec_len_after_header = reader.read_words("rec_len_after_header")
         self.description = "".join(reader.read_words("description"))
-
+        self.VLR_body = reader.read(self.rec_len_after_header)
 
 class FileSchema():
     def __init__(self, header):
@@ -213,6 +213,7 @@ class FileManager():
         self.fileref = open(filename, "r+b")
         self._map = mmap.mmap(fileno = self.fileref.fileno(),length= 0)
         self.header_format = Format("h" + self.grab_file_version())
+        self.vlr_formats = Format("VLR")
         self.get_header(mode)
         self.populate_vlrs()
         self.point_refs = False
@@ -256,9 +257,9 @@ class FileManager():
         
     def read_words(self, name):
         try:
-            dim = Formats[name]
+            dim = self.vlr_formats.lookup[name]
         except KeyError:
-            raise LaspyException("Dimension " + name + "not found.")
+            raise LaspyException("Dimension " + name + " not found.")
         return(self._read_words(dim.fmt, dim.num, dim.length))
 
 
@@ -297,8 +298,9 @@ class FileManager():
         self.seek(self.header.header_size, rel = False)
         for i in xrange(self.header.num_variable_len_recs): 
             self.vlrs.append(VarLenRec(self))
-            self.seek(self.vlrs[-1].rec_len_after_header)
+            #self.seek(self.vlrs[-1].rec_len_after_header)
             if self._map.tell() > self.header.data_offset:
+                self.seek(self.header.data_offset, rel = False)
                 raise LaspyException("Error, Calculated Header Data "
                     "Overlaps The Point Records!")
         self.vlr_stop = self._map.tell()
