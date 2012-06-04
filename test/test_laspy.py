@@ -442,6 +442,8 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.offset = o1
         o2 = self.FileObject.header.get_offset()
         self.assertTrue(o1 == o2)
+    def test_scale(self):
+        pass
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)

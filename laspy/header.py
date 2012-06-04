@@ -801,7 +801,7 @@ class Header(object):
         return
    
     def get_vlrs(self):
-        return
+        return(self.reader.get_vlrs())
 
     def set_vlrs(self, value):
         return

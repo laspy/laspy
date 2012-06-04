@@ -188,7 +188,7 @@ class Point():
 
 
         
-class VarLenRec():
+class var_len_rec():
     def __init__(self, reader):
         self.reserved = reader.read_words("reserved")
         self.user_id = "".join(reader.read_words("user_id"))
@@ -196,6 +196,7 @@ class VarLenRec():
         self.rec_len_after_header = reader.read_words("rec_len_after_header")
         self.description = "".join(reader.read_words("description"))
         self.VLR_body = reader.read(self.rec_len_after_header)
+        self.isVLR = True
 
 class FileSchema():
     def __init__(self, header):
@@ -297,7 +298,7 @@ class FileManager():
         self.vlrs = []
         self.seek(self.header.header_size, rel = False)
         for i in xrange(self.header.num_variable_len_recs): 
-            self.vlrs.append(VarLenRec(self))
+            self.vlrs.append(var_len_rec(self))
             #self.seek(self.vlrs[-1].rec_len_after_header)
             if self._map.tell() > self.header.data_offset:
                 self.seek(self.header.data_offset, rel = False)
@@ -306,8 +307,8 @@ class FileManager():
         self.vlr_stop = self._map.tell()
         return
 
-    def GetVLRs(self):
-        # This return needs to be modified
+    def get_vlrs(self):
+        self.populate_vlrs()
         return(self.vlrs)
     
     def get_padding(self):
@@ -578,6 +579,23 @@ class Writer(FileManager):
         self._map.flush()
         self._map.close()
         self.fileref.close()
+    
+    def set_vlrs(self, value):
+        if not all([x.isVLR for x in value]):
+            raise LaspyException("set_vlrs requers an iterable object " + 
+                                 "composed of laspy.base.var_len_rec objects.")
+        if self.mode == "w":
+            pass
+        elif self.mode == "w+":
+            pass
+        elif self.mode == "rw":
+            pass
+        else:
+            raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
+        current_padding = self.get_padding()
+        
+
+
 
     def set_padding(self, value):
         """Set the padding between end of VLRs and beginning of point data"""
