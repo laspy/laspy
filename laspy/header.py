@@ -607,7 +607,7 @@ class Header(object):
 
         """Sets the histogram of point records by return number from a list of
         returns 0..8
-
+        Preferred method is to use header.update_histogram.
         >>> l = [1341235L, 3412341222L, 0L, 0L, 4321L, 0L, 0L, 0L]
         >>> h.point_return_count = l
         >>> h.point_return_count
@@ -756,7 +756,7 @@ class Header(object):
 
     def set_min(self, value):
         """Sets the minimum values of [x, y, z] for the data.
-
+        Preferred method is to use header.update_min_max.
         """
         self.assertWriteMode()
         self.writer.set_header_property("x_min", value[0])
@@ -779,6 +779,7 @@ class Header(object):
         return([self.reader.get_header_property(x) for x in ["x_max", "y_max", "z_max"]])
     def set_max(self, value):
         """Sets the maximum values of [x, y, z] for the data.
+        Preferred method is header.update_min_max()
         """
         self.assertWriteMode()
         self.writer.set_header_property("x_max", value[0])
