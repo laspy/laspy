@@ -582,7 +582,9 @@ class Writer(FileManager):
             pass
         elif self.mode == "rw":
             old_offset = self.header.data_offset
-            self.header.data_offset = self.vlr_stop + value 
+            self.set_header_property("offset_to_point_data",
+                                            self.vlr_stop +  value)
+            #self.header.data_offset = self.vlr_stop + value 
             self._map.flush() 
             self.seek(0, rel=False)
             dat_part_1 = self._map.read(self.vlr_stop)

@@ -20,7 +20,6 @@ class LasReaderTestCase(unittest.TestCase):
         inFile.close()
         self.FileObject = File.File("./.temp.las")
         LasFile = self.FileObject
-
         self.X = LasFile.X
         self.Y = LasFile.Y
         self.Z = LasFile.Z
@@ -395,6 +394,12 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         x1 = self.FileObject.X
         self.FileObject.header.set_padding(10)
         self.FileObject.header.set_padding(1000)
+        x2 = self.FileObject.X
+        self.assertTrue(all(x1 == x2))
+    def test_data_offset(self):
+        x1 = self.FileObject.X 
+        self.FileObject.header.data_offset = 400
+        self.assertEqual(self.FileObject.header.get_dataoffset(), 400)
         x2 = self.FileObject.X
         self.assertTrue(all(x1 == x2))
     def test_date(self):

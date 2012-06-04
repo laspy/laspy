@@ -417,7 +417,8 @@ class Header(object):
         with 0's
         """
         self.assertWriteMode()
-        self.writer.set_header_property("offset_to_point_data", value)
+        ## writer.set_padding handles data offset update.
+        self.writer.set_padding(value-self.writer.vlr_stop) 
         return
     doc = """The number of bytes of offset between the end of the header and
     the start of the point data in the file. Set this to a large value if you
