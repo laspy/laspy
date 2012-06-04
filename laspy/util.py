@@ -157,10 +157,6 @@ class Format():
         for spec in self.specs:
             spec.__str__()
 
-
-
-
-
 class Point():
     def __init__(self, reader, startIdx):
         for dim in reader.point_format.specs:

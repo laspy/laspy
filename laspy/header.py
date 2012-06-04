@@ -72,14 +72,25 @@ class Header(object):
             for dim in self.format.specs:
                 #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
                 self.__dict__[dim.name] = reader.get_header_property(dim.name)
-        elif fmt == False:
+            return
+
+        ## Figure out our header format
+        if fmt == False:
             self.format = util.Format("h1.2")
-            
         else:
-            self.attribute_list = []
-            for kw in kwargs.item():
-                self.attribute_list.append(kw[0])
-                self.__dict__[kw[0]] = kw[1]
+            self.format = fmt
+        ## Figure out our file mode
+        if file_mode == False:
+            self.file_mode = "w"
+        else:
+            self.file_mode = file_mode
+        ## Add attributes from kwargs - these need to be dumped to a data File
+        ## once it's built.
+
+        self.attribute_list = []
+        for kw in kwargs.item():
+            self.attribute_list.append(kw[0])
+            self.__dict__[kw[0]] = kw[1] 
 
     def dump_data_to_file(self):
         if self.reader == False or not self.file_mode in ("w", "rw", "w+"):

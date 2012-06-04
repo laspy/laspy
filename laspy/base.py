@@ -3,13 +3,11 @@
 import mmap
 from header import Header, leap_year
 import numpy as np
-import sys
 import struct
-import ctypes
 from util import *
 
 class FileManager():
-    def __init__(self,filename, mode, header = False): 
+    def __init__(self,filename, mode, header = False, vlrs = False): 
         """Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding."""
@@ -28,11 +26,16 @@ class FileManager():
                 self._current = 0
                 self.point_format = Format(self.header.pt_dat_format_id) 
         elif self.mode == "w":
+            if self.header == False:
+                raise LaspyException("Write mode requires a valid header object.")
             self.fileref = open(filename, "w+b")
-            try:
-                headersize = header.__dict__["header_size"]
-            except(KeyError):
-                headersize = None 
+            filesize = self.header.format.header_size
+            if vlrs != False:
+                filesize += sum([len(x) for x in vlrs])
+            if "point_records_count" in self.header.__dict__.keys():
+                filesize += self.header.__dict__["point_records_count"]
+            self._map = mmap.mmap(fileno = self.fileref.fileno(), length = filesize)
+            
         elif self.mode == "w+":
             raise LaspyException("Append mode is not yet supported.")
         
