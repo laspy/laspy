@@ -44,6 +44,8 @@
 import datetime
 from uuid import UUID
 import numpy as np
+import util
+
 def leap_year(year):
     if (year % 400) == 0:
         return True
@@ -59,7 +61,7 @@ class LaspyHeaderException(Exception):
     pass
 
 class Header(object):
-    def __init__(self,reader = False,file_mode = False, fmt = False,  **kwargs):
+    def __init__(self,reader = False,file_mode = False, fmt = False , **kwargs):
         #We have a reader object so there's data to be read. 
         if (reader != False):
             self.format = reader.header_format        
@@ -71,7 +73,7 @@ class Header(object):
                 #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
                 self.__dict__[dim.name] = reader.get_header_property(dim.name)
         elif fmt == False:
-            raise LaspyHeaderException("A new header instance requires a format object.")
+            pass
         else:
             self.attribute_list = []
             for kw in kwargs.item():

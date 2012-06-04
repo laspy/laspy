@@ -43,17 +43,17 @@
 
 
 import base
-import header as lasheader
+import util
 
 import os
-import types
 
-import sys
+
 
 
 class File(object):
     def __init__(self, filename,
                        header=None,
+                       vlrs=None,
                        mode='r',
                        in_srs=None,
                        out_srs=None):
@@ -134,8 +134,9 @@ class File(object):
 
         if self._mode == 'w':
             if self._header == None:
-                raise base.LaspyException("Creation of a file in write mode requires a header object.")  
-            base.CreateWithHeader(self.filename, self._header)
+                raise util.LaspyException("Creation of a file in write mode requires a header object.")  
+            self.writer = base.CreateWithHeader(self.filename, self._header, self.vlrs)
+            self.reader = self.writer
         if self._mode == 'w+':
             self.extender = base.Extender(self.filename)
             if self._header == None:
@@ -157,7 +158,7 @@ class File(object):
     
     def assertWriteMode(self):
         if self._mode == "r":
-            raise base.LaspyException("File is not opened in a write mode.")         
+            raise util.LaspyException("File is not opened in a write mode.")         
 
     # TO BE IMPLEMENTED
     def set_srs(self, value):
@@ -210,7 +211,7 @@ class File(object):
         if self._mode == "w+": 
             self.writer.set_header(header)
             return True
-        raise base.LaspyException("The header can only be set "
+        raise util.LaspyException("The header can only be set "
                                 "after file creation for files in append mode")
     doc = """The file's :obj:`laspy.header.Header`
 
@@ -230,7 +231,7 @@ class File(object):
             
             return(self.reader.get_point(index)) 
         else:
-            raise base.LaspyException("Index greater than point records count")
+            raise util.LaspyException("Index greater than point records count")
         
     def get_x(self, scale = False):
         return(self.reader.get_x(scale))
@@ -567,8 +568,8 @@ class File(object):
             something). You have to take care of this adaptation yourself.
 
         """
-        if not isinstance(pt, base.Point):
-            raise base.LaspyException('cannot write %s, it must '
+        if not isinstance(pt, util.Point):
+            raise util.LaspyException('cannot write %s, it must '
                                     'be of type laspy.point.Point' % pt)
         if self._mode != "r":
             #core.las.LASWriter_WritePoint(self.handle, pt.handle)
@@ -582,7 +583,7 @@ class File(object):
             point to summarize the entire file, and it will again reset the 
             read position to the 0th point upon completion."""
         if self._mode != 0:
-            raise base.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
+            raise util.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
         return
         
     summary = property(get_xmlsummary, None, None, None)
