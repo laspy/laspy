@@ -29,7 +29,8 @@ class FileManager():
             if self.header == False:
                 raise LaspyException("Write mode requires a valid header object.")
             self.fileref = open(filename, "w+b")
-            filesize = self.header.format.header_size
+            self.header_format = self.header.format
+            filesize = self.header_format.header_size
             if vlrs != False:
                 filesize += sum([len(x) for x in vlrs])
             if "point_records_count" in self.header.__dict__.keys():
