@@ -397,7 +397,7 @@ class FileManager():
         if spec.num == 1:
             return(struct.unpack(spec.fmt, data)[0])
         unpacked = map(lambda x: struct.unpack(spec.fmt, 
-            data[x*spec.length:(x+1)*spec.length]), xrange(spec.num))
+            data[x*spec.length:(x+1)*spec.length])[0], xrange(spec.num))
         if spec.pack:
             return("".join([str(x[0]) for x in unpacked]))
         return(unpacked) 
@@ -643,6 +643,7 @@ class Writer(FileManager):
     
     def _set_datum(self, rec_offs, dim, val):
         """Set a non dimension field as with _set_raw_datum, but supply a formatted value"""
+     
         if dim.num == 1:
             lb = rec_offs + dim.offs
             ub = lb + dim.length

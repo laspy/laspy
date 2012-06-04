@@ -429,7 +429,7 @@ class Header(object):
     def get_padding(self):
         """Returns number of bytes between the end of the VLRs and the 
            beginning of the point data."""
-        return self.Reader.get_padding() 
+        return self.reader.get_padding() 
 
     def set_padding(self, value):
         """Sets the header's padding.
@@ -568,7 +568,7 @@ class Header(object):
         .. note::
             This value can be grossly out of sync with the actual number of records
         """
-        return self.Reader.get_pointrecordscount()
+        return self.reader.get_pointrecordscount()
 
     def set_pointrecordscount(self, value):
         if not self.mode in ("w", "w+"):
@@ -604,6 +604,7 @@ class Header(object):
         return self.reader.get_header_property("num_pts_by_return")   
 
     def set_pointrecordsbyreturncount(self, value):
+
         """Sets the histogram of point records by return number from a list of
         returns 0..8
 

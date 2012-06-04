@@ -410,6 +410,14 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.date = d2
         d3 = self.FileObject.header.get_date()
         self.assertEqual(d2, d3)
+    def test_pointrecordscount(self):
+        with self.assertRaises(Exception):
+            self.FileObject.header.point_records_count = 100
+    def test_point_recs_by_return(self):
+        r1 = [x + 1 for x in self.FileObject.header.point_return_count]
+        self.FileObject.header.point_return_count = r1
+        r2 = self.FileObject.header.get_pointrecordsbyreturncount()
+        self.assertTrue(r1 == r2)
 
 
 def test_laspy():
