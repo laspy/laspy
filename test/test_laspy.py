@@ -418,6 +418,19 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.point_return_count = r1
         r2 = self.FileObject.header.get_pointrecordsbyreturncount()
         self.assertTrue(r1 == r2)
+    def test_min_max_update(self):
+        x = self.FileObject.X
+        x[0] = np.max(x) + 1
+        y = self.FileObject.Y
+        y[0] = np.max(y) + 1
+        z = self.FileObject.Z
+        z[0] = np.max(z) + 1
+        self.FileObject.X = x
+        self.FileObject.Y = y
+        self.FileObject.Z = z
+        self.FileObject.header.update_min_max()
+        file_max = self.FileObject.header.max
+        self.assertTrue(file_max == [x[0], y[0], z[0]])
 
 
 def test_laspy():

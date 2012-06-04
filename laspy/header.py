@@ -43,7 +43,7 @@
  """
 import datetime
 from uuid import UUID
-
+import numpy as np
 def leap_year(year):
     if (year % 400) == 0:
         return True
@@ -642,8 +642,15 @@ class Header(object):
         pass
 
     def update_min_max(self):
-        pass
-
+        x = self.writer.get_x()
+        y = self.writer.get_y()
+        z = self.writer.get_z()
+        self.writer.set_header_property("x_max", np.max(x))
+        self.writer.set_header_property("x_min", np.min(x))
+        self.writer.set_header_property("y_max", np.max(y))
+        self.writer.set_header_property("y_min", np.min(y))
+        self.writer.set_header_property("z_max", np.max(z))
+        self.writer.set_header_property("z_min", np.min(z))
 
     def get_scale(self):
         """Gets the scale factors in [x, y, z] for the point data.
@@ -741,7 +748,7 @@ class Header(object):
     min = property(get_min, set_min, None, doc)
 
     def get_max(self):
-        return([self.x_max, self.y_max, self.z_max])
+        return([self.reader.get_header_property(x) for x in ["x_max", "y_max", "z_max"]])
     def set_max(self, value):
         """Sets the maximum values of [x, y, z] for the data.
         """
