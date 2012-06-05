@@ -23,6 +23,7 @@ class FileManager():
                 self.get_header(mode)
                 self.populate_vlrs()
                 self.point_refs = False
+                self.has_point_records = True
                 self._current = 0
                 self.point_format = Format(self.header.pt_dat_format_id) 
         elif self.mode == "w":
@@ -30,15 +31,22 @@ class FileManager():
                 raise LaspyException("Write mode requires a valid header object.")
             self.fileref = open(filename, "w+b")
             self.header_format = self.header.format
-            filesize = self.header_format.header_size
+            filesize = self.header_format.rec_len
             if vlrs != False:
-                filesize += sum([len(x) for x in vlrs])
+                filesize += sum([len(x) for x in vlrs]) 
+            if "pt_dat_format_id" in self.header.__dict__.keys():
+                self.point_format = Format(self._header.__dict__["pt_dat_format_id"])
+            else:
+                self.point_format = Format("0") 
+            #filesize += self.header.__dict__["point_records_count"]
             if "point_records_count" in self.header.__dict__.keys():
-                filesize += self.header.__dict__["point_records_count"]
                 self.has_point_records = True
+                filesize += self.header.__dict__["point_records_count"]*self.point_format.rec_len
             else:
                 self.has_point_records = False
+            
             # Is there a faster way to do this?
+            # Create Empty File
             self.fileref.write("\x00"*filesize)
             self.fileref.close()
             self.fileref= open(self.filename,"r+b")
@@ -47,17 +55,14 @@ class FileManager():
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
-            self.header.dump_data_to_file()
-            # The following line implies a default point format of 0
-            self.point_format = Format(self.header.data_format_id)
+            self.header.dump_data_to_file()  
             self.vlr_stop = len(self._map)
             self.header.data_offset = max(len(self._map), self.header.data_offset)
             # This should be refactored
             if vlrs == False:
                 vlrs = []
             self.set_header_property("num_variable_len_recs",len(vlrs))
-            self.header.refresh_attrs()
-            print(self.header.num_variable_len_recs) 
+            self.header.refresh_attrs() 
             self.set_vlrs(vlrs)
             self.get_header(self.mode)
             self.populate_vlrs()
@@ -492,9 +497,13 @@ class Writer(FileManager):
         return(len(self._map))
     
     def pad_file_for_point_recs(num_recs):
-        pass
+        self.seek(len(self._map), rel = False)
+        self.fileref.write("\x00" * num_recs * self.point_format.rec_len)
+        self._map = mmap.mmap(self.fileref.fileno(), 0)
 
     def set_dimension(self, name,new_dim):
+        if not self.has_point_records:
+            self.pad_file_for_point_recs(len(new_dim))
         """Set a point dimension of appropriate name to new_dim"""
         ptrecs = self.get_pointrecordscount()
         if len(new_dim) != ptrecs:
