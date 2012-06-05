@@ -6,6 +6,44 @@ import numpy as np
 import struct
 from util import *
 
+
+
+class DataProvider():
+    def __init__(self, filename):
+        self.filename = filename
+        self.fileref = False
+        self._mmap = False
+
+    def open(self, mode):
+        try:
+            self.fileref = open(self.filename, mode)
+        except(Exception):
+            raise LaspyException("Error opening file")
+    def close(self):
+        if self.fileref != False:
+            try:
+                self.fileref.close()
+            except(Exception):
+                raise LaspyException("Error closing file.")
+        if self._mmap != False
+            try:
+                self._mmap.close()
+            except(Exception):
+                raise LaspyException("Error closing mmap")
+
+    def map(self):
+        if self.fileref == False:
+            raise LaspyException("File not opened.")
+        try:
+            self._mmap = mmap.mmap(self.filref.fileno(), 0)
+        except(Exception):
+            raise LaspyException("Error mapping file.")
+        
+    def remap(self):
+        self.close()
+        self.open()
+        self.map()
+
 class FileManager():
     def __init__(self,filename, mode, header = False, vlrs = False): 
         """Build the FileManager object. This is done when opening the file
@@ -427,6 +465,7 @@ class Reader(FileManager):
         self.fileref.close()
     
     def __del__(self):
+        print("Deleting Reader")
         self.close()
 
 
@@ -442,6 +481,7 @@ class Writer(FileManager):
         self.fileref.close()
    
     def __del__(self):
+        print("deleting writer")
         self.close()
 
     def set_vlrs(self, value):

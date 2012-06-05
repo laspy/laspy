@@ -101,6 +101,7 @@ class Header(object):
     
     def setup_writer_attrs(self):
         self.attribute_list = []
+        self.writer = self.reader
         self.allow_all_overwritables()
     
     def allow_all_overwritables(self):
