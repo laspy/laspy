@@ -60,6 +60,8 @@ class FileManager():
         self.header = header  
         self.mode = mode
         self.data_provider = DataProvider(filename)
+        self.header_changes = set()
+        self.header_properties = {}
         if self.mode in ("r", "rw"):
                 self.data_provider.open("r+b")
                 self.data_provider.map() 
@@ -289,12 +291,17 @@ class FileManager():
         if type(self.point_refs) == bool:
             self.build_point_refs()
         if not raw:
+            #def f(x):
+            #    self.data_provider._mmap.seek(self.point_refs[x] + offs)
+            #    return(struct.unpack(fmt, 
+            #           self.data_provider._mmap.read(length))[0])
             vfunc = np.vectorize(lambda x: struct.unpack(fmt, 
-                self.data_provider._mmap[x+offs:x+offs+length])[0])            
+                self.data_provider._mmap[x+offs:x+offs+length])[0])
             return(vfunc(self.point_refs))
+            #return(np.array(map(f, xrange(len(self.point_refs)))))
         vfunc = np.vectorize(lambda x: 
             self.data_provider._mmap[x+offs:x+offs+length])
-        return(vfunc(self.PointRefs))
+        return(vfunc(self.point_refs))
     
 
     def _get_raw_datum(self, rec_offs, spec):
@@ -320,8 +327,19 @@ class FileManager():
     
     def get_header_property(self, name):
         """Wrapper for grabbing unpacked header data with _get_datum"""
-        spec = self.header_format.lookup[name]
-        return(self._get_datum(0, spec))
+        if name in self.header_changes:
+            spec = self.header_format.lookup[name]
+            new_val = self._get_datum(0, spec)
+            self.header_properties[name] = new_val
+            self.header_changes.remove(name)
+            return(new_val)
+        elif name in self.header_properties:
+            return(self.header_properties[name])
+        else:
+            spec = self.header_format.lookup[name]
+            val = self._get_datum(0, spec)
+            self.header_properties[name] = val
+            return(val)
 
     ### To Implement: Scale            
     def get_x(self, scale=False):
@@ -584,12 +602,14 @@ class Writer(FileManager):
             self.build_point_refs()
         idx = np.array(xrange(len(self.point_refs)))
         def f(x):
-            self.data_provider._mmap[self.point_refs[x]+offs:self.point_refs[x]
-                +offs+length] = struct.pack(fmt,new_dim[x])
+            #self.data_provider._mmap[self.point_refs[x]+offs:self.point_refs[x]
+            #    +offs+length] = struct.pack(fmt,new_dim[x])
+            self.seek(self.point_refs[x]+offs , rel = False)
+            self.data_provider._mmap.write(struct.pack(fmt, new_dim[x]))
         #vfunc = np.vectorize(f)
         map(f, idx)
         # Is this desireable
-        #self.data_provider._mmap.flush()
+        #self.data_provider._mmap.flush()    def write_bytes(self, idx, bytes):
         return True
     
     def _set_raw_points(self, new_raw_points):
@@ -659,6 +679,7 @@ class Writer(FileManager):
             raise(LaspyException("Field " + dim.name + " is not overwritable."))
         
         self._set_datum(0, dim, value)
+        self.header_changes.add(name)
         return
 
     def set_header(self, header):
