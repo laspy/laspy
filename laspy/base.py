@@ -23,6 +23,7 @@ class FileManager():
                 self.get_header(mode)
                 self.populate_vlrs()
                 self.point_refs = False
+                self.has_point_records = True
                 self._current = 0
                 self.point_format = Format(self.header.pt_dat_format_id) 
         elif self.mode == "w":
@@ -30,22 +31,48 @@ class FileManager():
                 raise LaspyException("Write mode requires a valid header object.")
             self.fileref = open(filename, "w+b")
             self.header_format = self.header.format
-            filesize = self.header_format.header_size
+            filesize = self.header_format.rec_len
             if vlrs != False:
-                filesize += sum([len(x) for x in vlrs])
+                filesize += sum([len(x) for x in vlrs]) 
+            if "pt_dat_format_id" in self.header.__dict__.keys():
+                self.point_format = Format(self._header.__dict__["pt_dat_format_id"])
+            else:
+                self.point_format = Format("0") 
+            #filesize += self.header.__dict__["point_records_count"]
             if "point_records_count" in self.header.__dict__.keys():
-                filesize += self.header.__dict__["point_records_count"]
                 self.has_point_records = True
+                filesize += self.header.__dict__["point_records_count"]*self.point_format.rec_len
             else:
                 self.has_point_records = False
+            
+            # Is there a faster way to do this?
+            # Create Empty File
             self.fileref.write("\x00"*filesize)
             self.fileref.close()
             self.fileref= open(self.filename,"r+b")
 
             self._map = mmap.mmap(fileno = self.fileref.fileno(), length = 0)
             self.header.reader = self
-            self.header.dump_data_to_file()
-            
+            self.header.writer = self 
+            self.header.version = str(self.header_format.fmt[1:])
+            self.header.dump_data_to_file()  
+             
+            self.set_header_property("offset_to_point_data", max(self._map.size(), 
+                                          self.header.data_offset)) 
+            # This should be refactored
+            if vlrs == False:
+                vlrs = []
+            self.set_header_property("num_variable_len_recs",len(vlrs))
+            self.set_header_property("pt_dat_format_id", int(self.point_format.fmt))
+            self.set_header_property("pt_dat_rec_len", int(self.point_format.rec_len))
+            self.set_header_property("header_size", self.header_format.rec_len)
+            self.header.refresh_attrs() 
+            self.set_vlrs(vlrs)
+            self.get_header(self.mode)
+            self.populate_vlrs()
+            self.seek(self.header.header_size, rel = False)
+            self.point_refs = False
+            self._current = 0
 
         elif self.mode == "w+":
             raise LaspyException("Append mode is not yet supported.")
@@ -411,28 +438,32 @@ class Writer(FileManager):
         self.fileref.close()
     
     def set_vlrs(self, value):
+        if value == False or len(value) == 0:
+            return
         if not all([x.isVLR for x in value]):
             raise LaspyException("set_vlrs requers an iterable object " + 
                                  "composed of laspy.base.var_len_rec objects.")
         elif self.mode == "w+":
-            pass
-        elif self.mode in ("w", "rw"):
+            raise NotImplementedError
+        elif self.mode in ("w", "rw"): 
             current_padding = self.get_padding()
             old_offset = self.header.data_offset
             self.seek(0, rel = False)
-            dat_part_1 = self._map.read(self.header_size)
+            dat_part_1 = self._map.read(self.header.header_size)
             self.seek(old_offset, rel = False)
             dat_part_2 = self._map.read(len(self._map) - old_offset)
             self._map.close()
             self.fileref.close()
-            self.fileref.open(self.filename, "w+b")
+            self.fileref = open(self.filename, "w+b")
             self.fileref.write(dat_part_1)
             for vlr in value:
                 self.fileref.write(vlr.to_byte_string())
+            ## Is there a faster way to do this?
             self.fileref.write("\x00"*current_padding)
             self.fileref.write(dat_part_2)
             self.fileref.close()
-            self.__init__(self.filename, self.mode)
+            self.fileref = open(self.filename, "r+b")
+            self._map = mmap.mmap(self.fileref.fileno(), 0)
         else:
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
 
@@ -441,7 +472,7 @@ class Writer(FileManager):
         if value < 0: 
             raise LaspyException("New Padding Value Overwrites VLRs")
         if self.mode == "w":
-            pass
+            raise NotImplementedError
         elif self.mode == "rw":
             old_offset = self.header.data_offset
             self.set_header_property("offset_to_point_data",
@@ -468,8 +499,27 @@ class Writer(FileManager):
         else:
             raise(LaspyException("Must be in write mode to change padding."))
         return(len(self._map))
+    
+    def pad_file_for_point_recs(self,num_recs):
+        bytes_to_pad = num_recs * self.point_format.rec_len
+        old_size = len(self._map)
+        self._map.flush()
+        self.fileref.seek(old_size, 0)
+        self.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
+        self.fileref.flush()
+        try:
+            self._map.resize(old_size + bytes_to_pad)
+        except(SystemError):
+            #Older Python doesn't support resize
+            self._map.close()
+            self._map = mmap.mmap(self.fileref.fileno(), 0)
+            self._map.flush()
+        return
 
     def set_dimension(self, name,new_dim):
+        if not self.has_point_records:
+            self.has_point_records = True
+            self.pad_file_for_point_recs(len(new_dim))
         """Set a point dimension of appropriate name to new_dim"""
         ptrecs = self.get_pointrecordscount()
         if len(new_dim) != ptrecs:
@@ -508,7 +558,7 @@ class Writer(FileManager):
      
         if dim.num == 1:
             lb = rec_offs + dim.offs
-            ub = lb + dim.length
+            ub = lb + dim.length 
             self._map[lb:ub] = struct.pack(dim.fmt, val)
             return
 

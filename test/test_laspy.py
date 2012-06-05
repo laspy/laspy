@@ -451,8 +451,21 @@ class LasWriteModeTestCase(unittest.TestCase):
         File2 = File.File(self.tempfile, mode = "w", 
                             header = header_object)
         self.assertTrue(File2.header.version == "1.2") 
+
+        X = self.File1.X
+        Y = self.File1.Y
+        Z = self.File1.Z
+        File2.X = X
+        File2.Y = Y
+        File2.Z = Z
+        self.assertTrue(all(X == File2.get_x()))
+        self.assertTrue(all(Y == File2.get_y()))
+        self.assertTrue(all(Z == File2.get_z()))
+
     def tearDown(self):
         os.remove(self.tempfile)
+
+
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
@@ -461,8 +474,3 @@ def test_laspy():
     write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
     return unittest.TestSuite([reader, writer, header_writer, write_mode])
 
-# if __name__=="__main__":
-#     runner = unittest.TextTestRunner()
-#     runner.run(test_laspy())
-    
-    # unittest.main()

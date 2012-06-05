@@ -34,10 +34,11 @@ class Spec():
 ### Those specified here follow the bytesize convention given in the
 ### LAS specification. 
 class Format():
-    def __init__(self, fmt):
+    def __init__(self, fmt, overwritable = False):
         fmt = str(fmt)
         self.fmt = fmt
         self.specs = []
+        self.rec_len = 0
         if not (fmt in ("0", "1", "2", "3", "4", "5", "VLR", "h1.0", "h1.1", "h1.2", "h1.3")):
             raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
@@ -86,25 +87,24 @@ class Format():
             self.add("description", "c_char", 32, pack = True)
         
         ## Header Fields
-        if fmt[0] == "h":
-            self.header_size = 0
-            self.add("file_sig","c_char", 4, pack = True, overwritable=False)
+        if fmt[0] == "h": 
+            self.add("file_sig","c_char", 4, pack = True, overwritable=overwritable)
             self.add("file_src", ctypes.c_ushort, 1)
             self.add("global_encoding",ctypes.c_ushort, 1)
             self.add("proj_id_1",ctypes.c_long, 1)
             self.add("proj_id_2", ctypes.c_ushort, 1)
             self.add("proj_id_3", ctypes.c_ushort, 1)
             self.add("proj_id_4", ctypes.c_ubyte, 8)
-            self.add("version_major", ctypes.c_ubyte, 1, overwritable=False)
-            self.add("version_minor", ctypes.c_ubyte, 1, overwritable=False)
+            self.add("version_major", ctypes.c_ubyte, 1, overwritable=overwritable)
+            self.add("version_minor", ctypes.c_ubyte, 1, overwritable=overwritable)
             self.add("sys_id", "c_char", 32, pack=True)
             self.add("gen_soft",  "c_char", 32, pack = True)
             self.add("created_day", ctypes.c_ushort, 1)
             self.add("created_year", ctypes.c_ushort,1)
-            self.add("header_size", ctypes.c_ushort, 1, overwritable=False)
-            self.add("offset_to_point_data", ctypes.c_long, 1, overwritable=True)
+            self.add("header_size", ctypes.c_ushort, 1, overwritable=overwritable)
+            self.add("offset_to_point_data", ctypes.c_long, 1)
             self.add("num_variable_len_recs",  ctypes.c_long, 1)
-            self.add("pt_dat_format_id",  ctypes.c_ubyte, 1, overwritable=False)
+            self.add("pt_dat_format_id",  ctypes.c_ubyte, 1, overwritable=overwritable)
             self.add("pt_dat_rec_len",  ctypes.c_ushort, 1)
             self.add("num_pt_recs", ctypes.c_long, 1)         
             if fmt == "h1.3":
@@ -146,11 +146,7 @@ class Format():
         else:
             last = self.specs[-1]
             offs = last.offs + last.num*fmtLen[last.fmt]
-        try:
-            self.header_size += num*fmtLen[LEfmt[fmt]]
-        except(AttributeError):
-            ## This isn't a header format.
-            pass
+        self.rec_len += num*fmtLen[LEfmt[fmt]]
         self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable))
         
     def __str__(self):
