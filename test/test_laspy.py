@@ -438,6 +438,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         s2 = self.FileObject.header.get_scale()
         self.assertTrue(s1 == s2)
     def tearDown(self):
+        self.FileObject.close()
         os.remove(self.tempfile)
 
 class LasWriteModeTestCase(unittest.TestCase):
@@ -480,6 +481,7 @@ class LasWriteModeTestCase(unittest.TestCase):
         self.assertTrue(all(Z == File2.get_z()))
 
     def tearDown(self):
+        self.FileObject.close()
         os.remove(self.tempfile)
 
 def test_laspy():
