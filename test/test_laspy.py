@@ -464,8 +464,19 @@ class LasWriteModeTestCase(unittest.TestCase):
         self.assertTrue(all(X == File2.get_x()))
         self.assertTrue(all(Y == File2.get_y()))
         self.assertTrue(all(Z == File2.get_z()))
-
-
+    def test_using_existing_header(self):
+        header_object = self.File1.header
+        File2 = File.File("./.temp.las", mode = "w",
+                            header = header_object)
+        X = self.File1.X
+        Y = self.File1.Y
+        Z = self.File1.Z
+        File2.Z = Z
+        File2.Y = Y
+        File2.X = X
+        self.assertTrue(all(X == File2.get_x()))
+        self.assertTrue(all(Y == File2.get_y()))
+        self.assertTrue(all(Z == File2.get_z()))
 
 
 def test_laspy():

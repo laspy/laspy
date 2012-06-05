@@ -35,7 +35,7 @@ class FileManager():
             if vlrs != False:
                 filesize += sum([len(x) for x in vlrs]) 
             if "pt_dat_format_id" in self.header.__dict__.keys():
-                self.point_format = Format(self._header.__dict__["pt_dat_format_id"])
+                self.point_format = Format(self.header.__dict__["pt_dat_format_id"])
             else:
                 self.point_format = Format("0") 
             #filesize += self.header.__dict__["point_records_count"]

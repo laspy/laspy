@@ -83,7 +83,6 @@ class Header(object):
         if file_mode == False:
             self.file_mode = "w"
         else:
-            print("Not False: " + str(self.file_mode))
             self.file_mode = file_mode
         ## Add attributes from kwargs - these need to be dumped to a data File
         ## once it's built.
@@ -98,6 +97,14 @@ class Header(object):
     def refresh_attrs(self):
         for spec in self.format.specs:
             self.__dict__[spec.name] = self.reader.get_header_property(spec.name)
+    
+    def setup_writer_attrs(self):
+        self.attribute_list = []
+        self.allow_all_overwritables()
+    
+    def allow_all_overwritables(self):
+        for spec in self.format.specs:
+            spec.overwritable = True
 
     def push_attrs(self):
         for spec in self.format.specs:

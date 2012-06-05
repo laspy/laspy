@@ -44,7 +44,7 @@
 
 import base
 import util
-
+import copy
 import os
 
 
@@ -134,6 +134,12 @@ class File(object):
         if self._mode == 'w':
             if self._header == None:
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
+            if self._header.reader != False:
+                # Do a shallow copy of header, so we don't screw it up for the 
+                # read mode file.
+                self._header = copy.copy(self._header)
+                self._header.file_mode = "w"
+                self._header.setup_writer_attrs()
             self.writer = base.Writer(self.filename, "w", 
                                       self._header, self._vlrs)
             self.reader = self.writer
