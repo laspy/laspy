@@ -93,6 +93,16 @@ class Header(object):
             self.attribute_list.append(kw[0])
             self.__dict__[kw[0]] = kw[1] 
 
+    # Where do the following functions live in the lifecycle of the header,
+    # how are they different than the properties defined below?
+    def refresh_attrs(self):
+        for spec in self.format.specs:
+            self.__dict__[spec.name] = self.reader.get_header_property(spec.name)
+
+    def push_attrs(self):
+        for spec in self.format.specs:
+            self.reader.set_header_property(spec.name, self.__dict__[spec.name])
+
     def dump_data_to_file(self): 
         if self.reader == False or not self.file_mode in ("w", "rw", "w+"):
             raise LaspyHeaderException("Dump data requires a valid writer object.")

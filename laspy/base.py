@@ -56,7 +56,8 @@ class FileManager():
             if vlrs == False:
                 vlrs = []
             self.set_header_property("num_variable_len_recs",len(vlrs))
-            
+            self.header.refresh_attrs()
+            print(self.header.num_variable_len_recs) 
             self.set_vlrs(vlrs)
             self.get_header(self.mode)
             self.populate_vlrs()
