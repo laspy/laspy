@@ -177,8 +177,7 @@ class LasWriterTestCase(unittest.TestCase):
     simple = './test/data/simple.las'
     tempfile = 'writer.las'
     def setUp(self):
-        shutil.copyfile(self.simple, self.tempfile)        
-        outFile = open(self.tempfile, "w")
+        shutil.copyfile(self.simple, self.tempfile)  
         self.FileObject = File.File(self.tempfile, mode = "rw")
     
     def test_x(self):
@@ -445,7 +444,7 @@ class LasWriteModeTestCase(unittest.TestCase):
     simple = './test/data/simple.las'
     tempfile = 'write-mode.las'
     def setUp(self):
-        self.File1 = File.File(self.simple, "r")
+        self.File1 = File.File(self.write-mode.las, "r")
     def test_using_barebones_header(self):
         header_object = header.Header()
 
@@ -463,19 +462,19 @@ class LasWriteModeTestCase(unittest.TestCase):
         self.assertTrue(all(Y == File2.get_y()))
         self.assertTrue(all(Z == File2.get_z()))
 
-    def test_using_existing_header(self):
-        header_object = self.File1.header
-        File2 = File.File(self.tempfile, mode = "w",
-                            header = header_object)
-        X = self.File1.X
-        Y = self.File1.Y
-        Z = self.File1.Z
-        File2.Z = Z
-        File2.Y = Y
-        File2.X = X
-        self.assertTrue(all(X == File2.get_x()))
-        self.assertTrue(all(Y == File2.get_y()))
-        self.assertTrue(all(Z == File2.get_z()))
+    #def test_using_existing_header(self):
+    #    header_object = self.File1.header
+    #    File2 = File.File(self.tempfile, mode = "w",
+    #                        header = header_object)
+    #    X = self.File1.X
+    #    Y = self.File1.Y
+    #    Z = self.File1.Z
+    #    File2.Z = Z
+    #    File2.Y = Y
+    #    File2.X = X
+    #    self.assertTrue(all(X == File2.get_x()))
+    #    self.assertTrue(all(Y == File2.get_y()))
+    #    self.assertTrue(all(Z == File2.get_z()))
 
     def tearDown(self):
         os.remove(self.tempfile)
