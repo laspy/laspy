@@ -19,30 +19,37 @@ class DataProvider():
             self.fileref = open(self.filename, mode)
         except(Exception):
             raise LaspyException("Error opening file")
+    
     def close(self):
         if self.fileref != False:
             try:
                 self.fileref.close()
             except(Exception):
                 raise LaspyException("Error closing file.")
-        if self._mmap != False
+        if self._mmap != False:
             try:
                 self._mmap.close()
             except(Exception):
                 raise LaspyException("Error closing mmap")
-
+    
     def map(self):
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
-            self._mmap = mmap.mmap(self.filref.fileno(), 0)
+            self._mmap = mmap.mmap(self.fileref.fileno(), 0)
         except(Exception):
             raise LaspyException("Error mapping file.")
-        
+
     def remap(self):
+        self._mmap.flush()
         self.close()
-        self.open()
+        self.open("r+b")
         self.map()
+    
+    def filesize(self):
+        if self._mmap == False:
+            raise LaspyException("File not mapped")
+        return(self._mmap.size())
 
 class FileManager():
     def __init__(self,filename, mode, header = False, vlrs = False): 
@@ -50,12 +57,12 @@ class FileManager():
         as well as upon completion of file modification actions like changing the 
         header padding."""
         self.vlrs = False
-        self.header = header 
-        self.filename = filename
+        self.header = header  
         self.mode = mode
+        self.data_provider = DataProvider(filename)
         if self.mode in ("r", "rw"):
-                self.fileref = open(filename, "r+b")
-                self._map = mmap.mmap(fileno = self.fileref.fileno(),length= 0)
+                self.data_provider.open("r+b")
+                self.data_provider.map() 
                 self.header_format = Format("h" + self.grab_file_version())
                 self.vlr_formats = Format("VLR")
                 self.get_header(mode)
@@ -67,7 +74,7 @@ class FileManager():
         elif self.mode == "w":
             if self.header == False:
                 raise LaspyException("Write mode requires a valid header object.")
-            self.fileref = open(filename, "w+b")
+            self.data_provider.open("w+b") 
             self.header_format = self.header.format
             filesize = self.header_format.rec_len
             if vlrs != False:
@@ -85,18 +92,15 @@ class FileManager():
             
             # Is there a faster way to do this?
             # Create Empty File
-            self.fileref.write("\x00"*filesize)
-            self.fileref.close()
-            self.fileref= open(self.filename,"r+b")
-
-            self._map = mmap.mmap(fileno = self.fileref.fileno(), length = 0)
+            self.data_provider.fileref.write("\x00"*filesize)
+            self.data_provider.fileref.close()
+            self.data_provider.open("r+b")
+            self.data_provider.map() 
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
-            self.header.dump_data_to_file()  
-             
-            self.set_header_property("offset_to_point_data", max(self._map.size(), 
-                                          self.header.data_offset)) 
+            self.header.dump_data_to_file()   
+            self.set_header_property("offset_to_point_data", max(self.data_provider.filesize(), self.header.data_offset)) 
             # This should be refactored
             if vlrs == False:
                 vlrs = []
@@ -133,23 +137,22 @@ class FileManager():
 
     def read(self, bytes):
         """Wrapper for mmap.mmap read function"""
-        return(self._map.read(bytes))
+        return(self.data_provider._mmap.read(bytes))
     
     def reset(self):
         """Refresh the mmap and fileref"""
-        self._map.close()
-        self.fileref.close()
-        self.fileref = open(self.filename, "rb")
-        self._map = mmap.mmap(self.fileref.fileno(), 0)
+        self.data_provier.remap() 
+        
+        
         return
      
     def seek(self, bytes, rel = True):
         """Wrapper for mmap.mmap seek functions, make option rel explicit"""
         self._current = None
         if rel:
-            self._map.seek(bytes,1)
+            self.data_provider._mmap.seek(bytes,1)
             return
-        self._map.seek(bytes, 0)
+        self.data_provider._mmap.seek(bytes, 0)
         
     def read_words(self, name):
         try:
@@ -195,11 +198,11 @@ class FileManager():
         for i in xrange(self.header.num_variable_len_recs): 
             self.vlrs.append(var_len_rec(self))
             #self.seek(self.vlrs[-1].rec_len_after_header)
-            if self._map.tell() > self.header.data_offset:
+            if self.data_provider._mmap.tell() > self.header.data_offset:
                 self.seek(self.header.data_offset, rel = False)
                 raise LaspyException("Error, Calculated Header Data "
                     "Overlaps The Point Records!")
-        self.vlr_stop = self._map.tell()
+        self.vlr_stop = self.data_provider._mmap.tell()
         return
 
     def get_vlrs(self):
@@ -214,7 +217,7 @@ class FileManager():
     def get_pointrecordscount(self):
         """calculate the number of point records"""
         if self.header.get_version != "1.3":
-            return((self._map.size()-
+            return((self.data_provider._mmap.size()-
                 self.header.data_offset)/self.header.data_record_length)
         return((self.header.StWavefmDatPktRec-
                 self.header.data_offset)/self.header.data_record_length)       
@@ -233,7 +236,7 @@ class FileManager():
         """Return the raw bytestring associated with point of number index"""
         start = (self.header.data_offset + 
             index * self.header.data_record_length)
-        return(self._map[start : start +
+        return(self.data_provider._mmap[start : start +
              self.header.data_record_length])
 
 #self, reader, startIdx ,version
@@ -277,16 +280,16 @@ class FileManager():
             self.build_point_refs()
         if not raw:
             vfunc = np.vectorize(lambda x: struct.unpack(fmt, 
-                self._map[x+offs:x+offs+length])[0])            
+                self.data_provider._mmap[x+offs:x+offs+length])[0])            
             return(vfunc(self.point_refs))
         vfunc = np.vectorize(lambda x: 
-            self._map[x+offs:x+offs+length])
+            self.data_provider._mmap[x+offs:x+offs+length])
         return(vfunc(self.PointRefs))
     
 
     def _get_raw_datum(self, rec_offs, spec):
         """return raw bytes associated with non dimension field (VLR/Header)"""
-        return(self._map[(rec_offs + spec.offs):(rec_offs + spec.offs 
+        return(self.data_provider._mmap[(rec_offs + spec.offs):(rec_offs + spec.offs 
                         + spec.num*spec.length)])
 
     def _get_datum(self, rec_offs, spec):
@@ -461,11 +464,9 @@ class FileManager():
 
 class Reader(FileManager):
     def close(self):
-        self._map.close()
-        self.fileref.close()
+        self.data_provider.close() 
     
     def __del__(self):
-        print("Deleting Reader")
         self.close()
 
 
@@ -476,12 +477,10 @@ class Writer(FileManager):
         if not ignore_header_changes:
             self.header.update_histogram()
             self.header.update_min_max() 
-        self._map.flush()
-        self._map.close()
-        self.fileref.close()
+        self.data_provider._mmap.flush()
+        self.data_provider.close()
    
-    def __del__(self):
-        print("deleting writer")
+    def __del__(self): 
         self.close()
 
     def set_vlrs(self, value):
@@ -496,21 +495,19 @@ class Writer(FileManager):
             current_padding = self.get_padding()
             old_offset = self.header.data_offset
             self.seek(0, rel = False)
-            dat_part_1 = self._map.read(self.header.header_size)
+            dat_part_1 = self.data_provider._mmap.read(self.header.header_size)
             self.seek(old_offset, rel = False)
-            dat_part_2 = self._map.read(len(self._map) - old_offset)
-            self._map.close()
-            self.fileref.close()
-            self.fileref = open(self.filename, "w+b")
-            self.fileref.write(dat_part_1)
+            dat_part_2 = self.data_provider._mmap.read(len(self.data_provider._mmap) - old_offset)
+            self.data_provider.close() 
+            self.data_provider.open("w+b") 
+            self.data_provider.fileref.write(dat_part_1)
             for vlr in value:
-                self.fileref.write(vlr.to_byte_string())
+                self.data_provider.fileref.write(vlr.to_byte_string())
             ## Is there a faster way to do this?
-            self.fileref.write("\x00"*current_padding)
-            self.fileref.write(dat_part_2)
-            self.fileref.close()
-            self.fileref = open(self.filename, "r+b")
-            self._map = mmap.mmap(self.fileref.fileno(), 0)
+            self.data_provider.fileref.write("\x00"*current_padding)
+            self.data_provider.fileref.write(dat_part_2)
+            self.data_provider.remap() 
+ 
         else:
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
 
@@ -525,42 +522,34 @@ class Writer(FileManager):
             self.set_header_property("offset_to_point_data",
                                             self.vlr_stop +  value)
             #self.header.data_offset = self.vlr_stop + value 
-            self._map.flush() 
+            self.data_provider._mmap.flush() 
             self.seek(0, rel=False)
-            dat_part_1 = self._map.read(self.vlr_stop)
+            dat_part_1 = self.data_provider._mmap.read(self.vlr_stop)
             self.seek(old_offset, rel = False)
-            dat_part_2 = self._map.read(len(self._map) - old_offset)
-            self._map.close()
-            self.fileref.close()
-            self.fileref = open(self.filename, "w+b")
-            self.fileref.write(dat_part_1) 
-            self.fileref.write("\x00"*value)
-            self.fileref.write(dat_part_2)
-            self.fileref.close()
-            self.__init__(self.filename, self.mode)            
-           
-         
-            return(len(self._map))
+            dat_part_2 = self.data_provider._mmap.read(len(self.data_provider._mmap) - old_offset) 
+            self.data_provider.close() 
+            self.data_provider.open("w+b") 
+            self.data_provider.fileref.write(dat_part_1) 
+            self.data_provider.fileref.write("\x00"*value)
+            self.data_provider.fileref.write(dat_part_2)
+            self.data_provider.close()
+            self.__init__(self.data_provider.filename, self.mode) 
+            return(len(self.data_provider._mmap))
         elif self.mode == "r+":
             pass
         else:
             raise(LaspyException("Must be in write mode to change padding."))
-        return(len(self._map))
+        return(len(self.data_provider._mmap))
     
     def pad_file_for_point_recs(self,num_recs):
         bytes_to_pad = num_recs * self.point_format.rec_len
-        old_size = len(self._map)
-        self._map.flush()
-        self.fileref.seek(old_size, 0)
-        self.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
-        self.fileref.flush()
-        try:
-            self._map.resize(old_size + bytes_to_pad)
-        except(SystemError):
-            #Older Python doesn't support resize
-            self._map.close()
-            self._map = mmap.mmap(self.fileref.fileno(), 0)
-            self._map.flush()
+        old_size = self.data_provider.filesize()
+        self.data_provider._mmap.flush()
+        self.data_provider.fileref.seek(old_size, 0)
+        self.data_provider.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
+        self.data_provider.fileref.flush()
+        self.data_provider.remap()
+        self.data_provider._mmap.flush()
         return
 
     def set_dimension(self, name,new_dim):
@@ -585,18 +574,18 @@ class Writer(FileManager):
             self.build_point_refs()
         idx = np.array(xrange(len(self.point_refs)))
         def f(x):
-            self._map[self.point_refs[x]+offs:self.point_refs[x]
+            self.data_provider._mmap[self.point_refs[x]+offs:self.point_refs[x]
                 +offs+length] = struct.pack(fmt,new_dim[x])
         vfunc = np.vectorize(f)
         vfunc(idx)
         # Is this desireable
-        #self._map.flush()
+        #self.data_provider._mmap.flush()
         return True
 
     def _set_raw_datum(self, rec_offs, spec, val):
         """Set a non dimension field with appropriate record type offset (0 for header)
         , appropriate spec object, and a new value. Uses raw bytes."""
-        self._map[rec_offs+spec.offs:rec_offs+spec.offs +
+        self.data_provider._mmap[rec_offs+spec.offs:rec_offs+spec.offs +
                   spec.num*spec.length] = val
         return
     
@@ -606,7 +595,7 @@ class Writer(FileManager):
         if dim.num == 1:
             lb = rec_offs + dim.offs
             ub = lb + dim.length 
-            self._map[lb:ub] = struct.pack(dim.fmt, val)
+            self.data_provider._mmap[lb:ub] = struct.pack(dim.fmt, val)
             return
 
         try:
@@ -621,7 +610,7 @@ class Writer(FileManager):
 
 
         def f(x):
-            self._map[(x*dim.length + rec_offs + 
+            self.data_provider._mmap[(x*dim.length + rec_offs + 
                     dim.offs):((x+1)*dim.length + rec_offs 
                     + dim.offs)]=struct.pack(dim.fmt, val[x])
         map(f, xrange(dim.num))
