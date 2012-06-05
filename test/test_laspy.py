@@ -454,7 +454,18 @@ class LasWriteModeTestCase(unittest.TestCase):
         header_object = header.Header()
         File2 = File.File("./.temp.las", mode = "w", 
                             header = header_object) 
-        self.assertTrue(File2.header.version == "1.2") 
+        self.assertTrue(File2.header.version == "1.2")
+        X = self.File1.X
+        Y = self.File1.Y
+        Z = self.File1.Z
+        File2.X = X
+        File2.Y = Y
+        File2.Z = Z
+        self.assertTrue(all(X == File2.get_x()))
+        self.assertTrue(all(Y == File2.get_y()))
+        self.assertTrue(all(Z == File2.get_z()))
+
+
 
 
 def test_laspy():

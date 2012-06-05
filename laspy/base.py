@@ -56,19 +56,23 @@ class FileManager():
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
             self.header.dump_data_to_file()  
-            self.vlr_stop = len(self._map)
-            self.header.data_offset = max(len(self._map), self.header.data_offset)
+             
+            self.set_header_property("offset_to_point_data", max(self._map.size(), 
+                                          self.header.data_offset)) 
             # This should be refactored
             if vlrs == False:
                 vlrs = []
             self.set_header_property("num_variable_len_recs",len(vlrs))
+            self.set_header_property("pt_dat_format_id", int(self.point_format.fmt))
+            self.set_header_property("pt_dat_rec_len", int(self.point_format.rec_len))
+            self.set_header_property("header_size", self.header_format.rec_len)
             self.header.refresh_attrs() 
             self.set_vlrs(vlrs)
             self.get_header(self.mode)
             self.populate_vlrs()
+            self.seek(self.header.header_size, rel = False)
             self.point_refs = False
             self._current = 0
-
 
         elif self.mode == "w+":
             raise LaspyException("Append mode is not yet supported.")
@@ -434,14 +438,14 @@ class Writer(FileManager):
         self.fileref.close()
     
     def set_vlrs(self, value):
-        if value == False:
+        if value == False or len(value) == 0:
             return
         if not all([x.isVLR for x in value]):
             raise LaspyException("set_vlrs requers an iterable object " + 
                                  "composed of laspy.base.var_len_rec objects.")
         elif self.mode == "w+":
-            pass
-        elif self.mode in ("w", "rw"):
+            raise NotImplementedError
+        elif self.mode in ("w", "rw"): 
             current_padding = self.get_padding()
             old_offset = self.header.data_offset
             self.seek(0, rel = False)
@@ -468,7 +472,7 @@ class Writer(FileManager):
         if value < 0: 
             raise LaspyException("New Padding Value Overwrites VLRs")
         if self.mode == "w":
-            pass
+            raise NotImplementedError
         elif self.mode == "rw":
             old_offset = self.header.data_offset
             self.set_header_property("offset_to_point_data",
@@ -496,13 +500,20 @@ class Writer(FileManager):
             raise(LaspyException("Must be in write mode to change padding."))
         return(len(self._map))
     
-    def pad_file_for_point_recs(num_recs):
-        self.seek(len(self._map), rel = False)
-        self.fileref.write("\x00" * num_recs * self.point_format.rec_len)
-        self._map = mmap.mmap(self.fileref.fileno(), 0)
+    def pad_file_for_point_recs(self,num_recs):
+        bytes_to_pad = num_recs * self.point_format.rec_len
+        old_size = len(self._map)
+        self._map.flush()
+        self.fileref.seek(old_size, 0)
+        self.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
+        self.fileref.flush()
+        self._map.resize(old_size + bytes_to_pad)
+        self._map.flush()
+        return
 
     def set_dimension(self, name,new_dim):
         if not self.has_point_records:
+            self.has_point_records = True
             self.pad_file_for_point_recs(len(new_dim))
         """Set a point dimension of appropriate name to new_dim"""
         ptrecs = self.get_pointrecordscount()
