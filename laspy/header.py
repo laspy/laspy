@@ -73,7 +73,8 @@ class Header(object):
                 #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
                 self.__dict__[dim.name] = reader.get_header_property(dim.name)
             return
-
+        else:
+            self.reader = False
         ## Figure out our header format
         if fmt == False:
             self.format = util.Format("h1.2", overwritable=True)
