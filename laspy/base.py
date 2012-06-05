@@ -507,8 +507,13 @@ class Writer(FileManager):
         self.fileref.seek(old_size, 0)
         self.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
         self.fileref.flush()
-        self._map.resize(old_size + bytes_to_pad)
-        self._map.flush()
+        try:
+            self._map.resize(old_size + bytes_to_pad)
+        except(SystemError):
+            #Older Python doesn't support resize
+            self._map.close()
+            self._map = mmap.mmap(self.fileref.fileno(), 0)
+            self._map.flush()
         return
 
     def set_dimension(self, name,new_dim):
