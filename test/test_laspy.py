@@ -175,14 +175,11 @@ class LasReaderTestCase(unittest.TestCase):
 
 class LasWriterTestCase(unittest.TestCase):
     simple = './test/data/simple.las'
+    tempfile = 'writer.las'
     def setUp(self):
-        inFile = open(self.simple, "r")
-        inData = inFile.read()
-        outFile = open("./.temp.las", "w")
-        outFile.write(inData)
-        outFile.close()
-        inFile.close()
-        self.FileObject = File.File("./.temp.las", mode = "rw")
+        shutil.copyfile(self.simple, self.tempfile)        
+        outFile = open(self.tempfile, "w")
+        self.FileObject = File.File(self.tempfile, mode = "rw")
     
     def test_x(self):
         """Writing and testing X dimenson"""
@@ -336,18 +333,14 @@ class LasWriterTestCase(unittest.TestCase):
     #    self.assertTrue(all(z1 == z2))    
     def tearDown(self):
         self.FileObject.close()
-        os.remove("./.temp.las")
+        os.remove(self.tempfile)
 
 class LasHeaderWriterTestCase(unittest.TestCase):
-    simple = './test/data/simple.las'
+    simple = os.path.abspath('./test/data/simple.las')
+    tempfile = os.path.abspath('headerwriter.las')
     def setUp(self):
-        inFile = open(self.simple, "r")
-        inData = inFile.read()
-        outFile = open("./.temp.las", "w")
-        outFile.write(inData)
-        outFile.close()
-        inFile.close()
-        self.FileObject = File.File("./.temp.las", mode = "rw")
+        shutil.copyfile(self.simple, self.tempfile)
+        self.FileObject = File.File(self.tempfile, mode = "rw")
     def test_file_src(self):
         f1 = self.FileObject.header.filesource_id + 1
         self.FileObject.header.filesource_id = f1
@@ -445,39 +438,33 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.scale = s1
         s2 = self.FileObject.header.get_scale()
         self.assertTrue(s1 == s2)
+    def tearDown(self):
+        os.remove(self.tempfile)
 
 class LasWriteModeTestCase(unittest.TestCase):
     simple = './test/data/simple.las'
+    tempfile = 'write-mode.las'
     def setUp(self):
         self.File1 = File.File(self.simple, "r")
     def test_using_barebones_header(self):
         header_object = header.Header()
-        File2 = File.File("./.temp.las", mode = "w", 
-                            header = header_object) 
-        self.assertTrue(File2.header.version == "1.2")
-        X = self.File1.X
-        Y = self.File1.Y
-        Z = self.File1.Z
-        File2.X = X
-        File2.Y = Y
-        File2.Z = Z
-        self.assertTrue(all(X == File2.get_x()))
-        self.assertTrue(all(Y == File2.get_y()))
-        self.assertTrue(all(Z == File2.get_z()))
-    def test_using_existing_header(self):
-        header_object = self.File1.header
-        File2 = File.File("./.temp.las", mode = "w",
+
+        File2 = File.File(self.tempfile, mode = "w", 
                             header = header_object)
+        self.assertTrue(File2.header.version == "1.2") 
+
         X = self.File1.X
         Y = self.File1.Y
         Z = self.File1.Z
-        File2.Z = Z
-        File2.Y = Y
         File2.X = X
+        File2.Y = Y
+        File2.Z = Z
         self.assertTrue(all(X == File2.get_x()))
         self.assertTrue(all(Y == File2.get_y()))
         self.assertTrue(all(Z == File2.get_z()))
 
+    def tearDown(self):
+        os.remove(self.tempfile)
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
@@ -486,8 +473,3 @@ def test_laspy():
     write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
     return unittest.TestSuite([reader, writer, header_writer, write_mode])
 
-# if __name__=="__main__":
-#     runner = unittest.TextTestRunner()
-#     runner.run(test_laspy())
-    
-    # unittest.main()
