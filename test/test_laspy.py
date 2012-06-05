@@ -448,6 +448,7 @@ class LasWriteModeTestCase(unittest.TestCase):
         self.File1 = File.File(self.simple, "r")
     def test_using_barebones_header(self):
         header_object = header.Header()
+
         File2 = File.File(self.tempfile, mode = "w", 
                             header = header_object)
         self.assertTrue(File2.header.version == "1.2") 
