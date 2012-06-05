@@ -443,12 +443,15 @@ class LasHeaderWriterTestCase(unittest.TestCase):
 class LasWriteModeTestCase(unittest.TestCase):
     simple = './test/data/simple.las'
     tempfile = 'write-mode.las'
+    output_tempfile = 'write-mode-output.las'
     def setUp(self):
-        self.File1 = File.File(self.write-mode.las, "r")
+        shutil.copyfile(self.simple, self.tempfile)  
+        self.File1 = File.File(self.tempfile, "r")
+
     def test_using_barebones_header(self):
         header_object = header.Header()
 
-        File2 = File.File(self.tempfile, mode = "w", 
+        File2 = File.File(self.output_tempfile, mode = "w", 
                             header = header_object)
         self.assertTrue(File2.header.version == "1.2") 
 
