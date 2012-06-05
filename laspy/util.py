@@ -155,9 +155,11 @@ class Format():
 
 class Point():
     def __init__(self, reader, startIdx):
+        self.reader = reader
         for dim in reader.point_format.specs:
             #reader.seek(dim.offs + startIdx, rel = False)
-            self.__dict__[dim.name] = reader._read_words(dim.fmt, dim.num, dim.length)
+            self.__dict__[dim.name] = reader._read_words(dim.fmt,
+                    dim.num, dim.length)
 
         bstr = reader.binary_str(self.flag_byte)
         self.return_num = reader.packed_str(bstr[0:3])
@@ -170,7 +172,11 @@ class Point():
         self.synthetic = reader.packed_str(bstr[5])
         self.key_point = reader.packed_str(bstr[6])
         self.withheld = reader.packed_str(bstr[7])       
-
+    def pack(self):
+        outstr = ""
+        for dim in self.reader.point_format.specs:
+            outstr += self.reader._pack_words(dim.fmt, dim.num, 
+                    dim.length, self.__dict__[dim.name])
  
 
 

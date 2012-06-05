@@ -161,7 +161,6 @@ class FileManager():
             raise LaspyException("Dimension " + name + " not found.")
         return(self._read_words(dim.fmt, dim.num, dim.length))
 
-
     def _read_words(self, fmt, num, bytes):
         """Read a consecutive sequence of packed binary data, return a single
         element or list"""
@@ -173,6 +172,15 @@ class FileManager():
             return(outData)
         return(outData[0])
     
+    def _pack_words(self, fmt, num, bytes, val):
+        if num == 1:
+            return(struct.pack(fmt, val))
+        outData = ""
+        for i in xrange(num):
+            outData += struct.pack(fmt, val[i])
+        return(outData)
+
+
     def grab_file_version(self):
         """Manually grab file version from header"""
         self.seek(24, rel = False)
@@ -267,6 +275,8 @@ class FileManager():
 
     def get_dimension(self, name):
         """Return point dimension of with above name, returns numpy array"""
+        if not self.has_point_records:
+            return None
         try:
             spec = self.point_format.lookup[name]
             return(self._get_dimension(spec.offs, spec.fmt, 
@@ -576,11 +586,27 @@ class Writer(FileManager):
         def f(x):
             self.data_provider._mmap[self.point_refs[x]+offs:self.point_refs[x]
                 +offs+length] = struct.pack(fmt,new_dim[x])
-        vfunc = np.vectorize(f)
-        vfunc(idx)
+        #vfunc = np.vectorize(f)
+        map(f, idx)
         # Is this desireable
         #self.data_provider._mmap.flush()
         return True
+    
+    def _set_raw_points(self, new_raw_points):
+        if not self.has_point_records:
+            self.has_point_records = True
+            self.pad_file_for_point_recs(len(new_raw_points))
+        """Set a point dimension of appropriate name to new_dim"""
+        ptrecs = self.get_pointrecordscount()
+        if len(new_dim) != ptrecs:
+            raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs)) 
+        if type(self.point_refs) == bool:
+            self.build_point_refs()
+        idx = np.array(xrange(len(self.point_refs)))
+        def f(x):
+            self.data_provider._mmap[self.point_refs[x]:self.point_refs[x] 
+                    + self.header.pt_dat_rec_len] = new_raw_points[x]
+        map(f, idx)
 
     def _set_raw_datum(self, rec_offs, spec, val):
         """Set a non dimension field with appropriate record type offset (0 for header)
@@ -607,8 +633,6 @@ class Writer(FileManager):
             raise(LaspyException("Fields must be replaced with data of the same length. " + 
                                 str(dim.name) +" should be length " + 
                                 str(dim.num) +", received " + str(dimlen) ))
-
-
         def f(x):
             self.data_provider._mmap[(x*dim.length + rec_offs + 
                     dim.offs):((x+1)*dim.length + rec_offs 
