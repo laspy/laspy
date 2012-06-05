@@ -425,6 +425,10 @@ class Reader(FileManager):
     def close(self):
         self._map.close()
         self.fileref.close()
+    
+    def __del__(self):
+        self.close()
+
 
 class Writer(FileManager):
 
@@ -436,7 +440,10 @@ class Writer(FileManager):
         self._map.flush()
         self._map.close()
         self.fileref.close()
-    
+   
+    def __del__(self):
+        self.close()
+
     def set_vlrs(self, value):
         if value == False or len(value) == 0:
             return
