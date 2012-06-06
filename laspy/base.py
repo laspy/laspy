@@ -60,8 +60,12 @@ class FileManager():
         self.header = header  
         self.mode = mode
         self.data_provider = DataProvider(filename)
+        
         self.header_changes = set()
         self.header_properties = {}
+        
+        self.calc_point_recs = False
+
         if self.mode in ("r", "rw"):
                 self.data_provider.open("r+b")
                 self.data_provider.map() 
@@ -226,11 +230,20 @@ class FileManager():
 
     def get_pointrecordscount(self):
         """calculate the number of point records"""
+        if self.calc_point_recs != False:
+            return(self.calc_point_recs)
+        
         if self.header.get_version != "1.3":
-            return((self.data_provider._mmap.size()-
+            new_val =  ((self.data_provider._mmap.size()-
                 self.header.data_offset)/self.header.data_record_length)
-        return((self.header.StWavefmDatPktRec-
+            self.calc_point_recs = new_val
+            return(new_val)
+        else:
+            new_val = ((self.header.StWavefmDatPktRec-
                 self.header.data_offset)/self.header.data_record_length)       
+            self.calc_point_recs = new_val
+            return(new_val)
+
     def set_input_srs(self):
         pass
     
@@ -271,8 +284,8 @@ class FileManager():
     def build_point_refs(self):
         """Build array of point offsets """
         pts = self.get_pointrecordscount()
-        self.point_refs = np.array([self.get_raw_point_index(i) 
-                                     for i in xrange(pts)])
+        self.point_refs = (np.array(xrange(pts))*self.header.data_record_length 
+                            + self.header.data_offset) 
         return
 
     def get_dimension(self, name):
