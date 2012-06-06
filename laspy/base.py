@@ -300,22 +300,14 @@ class FileManager():
     def _get_dimension(self,offs, fmt, length, raw = False):
         """Return point dimension of specified offset format and length"""
         if type(self.point_refs) == bool:
-            self.build_point_refs()
-        if not raw:
-            def f(x):
-                self.data_provider._mmap.seek(self.point_refs[x] + offs)
-                return(struct.unpack(fmt, 
-                       self.data_provider._mmap.read(length))[0])
-            return((f(x) for x in xrange(self.calc_point_recs))) 
-
-            #vfunc = np.vectorize(lambda x: struct.unpack(fmt, 
-            #    self.data_provider._mmap[x+offs:x+offs+length])[0])
-            #return(vfunc(self.point_refs))
-            #return(np.array(map(f, xrange(len(self.point_refs)))))
-        vfunc = np.vectorize(lambda x: 
-            self.data_provider._mmap[x+offs:x+offs+length])
-        return(vfunc(self.point_refs))
-    
+            self.build_point_refs() 
+        if not raw: 
+            def f_get(x):
+                st = self.point_refs[x] + offs
+                return(struct.unpack(fmt, self.data_provider._mmap[st:st+length])[0]) 
+            return((f_get(x) for x in xrange(self.calc_point_recs))) 
+        return((self.data_provider._mmap[self.point_refs[x] + offs : self.point_refs[x] + offs + length] 
+                for x in xrange(self.calc_point_recs))) 
 
     def _get_raw_datum(self, rec_offs, spec):
         """return raw bytes associated with non dimension field (VLR/Header)"""
@@ -606,12 +598,12 @@ class Writer(FileManager):
             self.build_point_refs()
         idx = xrange(self.calc_point_recs)
         starts = (self.point_refs[i] + offs for i in idx) 
-        def f(x):
+        def f_set(x):
             i = starts.next()
             #self.seek(i, rel = False)
             #self.data_provider._mmap.write(struct.pack(fmt, new_dim[x]))
             self.data_provider._mmap[i:i + length] = struct.pack(fmt,new_dim[x])
-        map(f, idx) 
+        map(f_set, idx) 
         
         # Is this desireable
         #self.data_provider._mmap.flush()    def write_bytes(self, idx, bytes):

@@ -375,16 +375,16 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         with self.assertRaises(LaspyException):
             self.FileObject.header.software_id = "1" * 100
     def test_padding(self):
-        x1 = self.FileObject.X
+        x1 = list(self.FileObject.X)
         self.FileObject.header.set_padding(10)
         self.FileObject.header.set_padding(1000)
-        x2 = self.FileObject.X
+        x2 = list(self.FileObject.X)
         self.assertTrue((list(x1) == list(x2)))
     def test_data_offset(self):
-        x1 = self.FileObject.X 
+        x1 = list(self.FileObject.X )
         self.FileObject.header.data_offset = 400
         self.assertEqual(self.FileObject.header.get_dataoffset(), 400)
-        x2 = self.FileObject.X
+        x2 = list(self.FileObject.X)
         self.assertTrue((list(x1) == list(x2)))
     def test_date(self):
         d1 = self.FileObject.header.date
