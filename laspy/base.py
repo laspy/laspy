@@ -181,9 +181,7 @@ class FileManager():
     def _pack_words(self, fmt, num, bytes, val):
         if num == 1:
             return(struct.pack(fmt, val))
-        outData = ""
-        for i in xrange(num):
-            outData += struct.pack(fmt, val[i])
+        outData = "".join([struct.pack(fmt, val[i]) for i in xrange(num)])
         return(outData)
 
 
@@ -613,14 +611,13 @@ class Writer(FileManager):
         """Set a point dimension of appropriate offset format and length to new_dim"""
         if type(self.point_refs) == bool:
             self.build_point_refs()
-        idx = np.array(xrange(len(self.point_refs)))
+        idx = xrange(self.calc_point_recs)
+        starts = (self.point_refs[i] + offs for i in idx) 
         def f(x):
-            #self.data_provider._mmap[self.point_refs[x]+offs:self.point_refs[x]
-            #    +offs+length] = struct.pack(fmt,new_dim[x])
-            self.seek(self.point_refs[x]+offs , rel = False)
-            self.data_provider._mmap.write(struct.pack(fmt, new_dim[x]))
-        #vfunc = np.vectorize(f)
-        map(f, idx)
+            i = starts.next()
+            self.data_provider._mmap[i:i + length] = struct.pack(fmt,new_dim[x])
+            #self.seek(self.point_refs[x]+offs , rel = False)
+        map(f, idx) 
         # Is this desireable
         #self.data_provider._mmap.flush()    def write_bytes(self, idx, bytes):
         return True
@@ -739,10 +736,12 @@ class Writer(FileManager):
        
         for i in xrange(len(arrs[0])):
             tmp = ""
+            tmp = []
             j = 0
             for arr in arrs:
-                tmp += arr[i][idx[j][0]:idx[j][1]]
+                tmp.append(arr[i][idx[j][0]:idx[j][1]])
                 j += 1
+            tmp = "".join(tmp)
             if pack:
                 tmp = self.packed_str(tmp)
             outArr[i] = tmp 
