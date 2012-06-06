@@ -302,13 +302,15 @@ class FileManager():
         if type(self.point_refs) == bool:
             self.build_point_refs()
         if not raw:
-            #def f(x):
-            #    self.data_provider._mmap.seek(self.point_refs[x] + offs)
-            #    return(struct.unpack(fmt, 
-            #           self.data_provider._mmap.read(length))[0])
-            vfunc = np.vectorize(lambda x: struct.unpack(fmt, 
-                self.data_provider._mmap[x+offs:x+offs+length])[0])
-            return(vfunc(self.point_refs))
+            def f(x):
+                self.data_provider._mmap.seek(self.point_refs[x] + offs)
+                return(struct.unpack(fmt, 
+                       self.data_provider._mmap.read(length))[0])
+            return((f(x) for x in xrange(self.calc_point_recs))) 
+
+            #vfunc = np.vectorize(lambda x: struct.unpack(fmt, 
+            #    self.data_provider._mmap[x+offs:x+offs+length])[0])
+            #return(vfunc(self.point_refs))
             #return(np.array(map(f, xrange(len(self.point_refs)))))
         vfunc = np.vectorize(lambda x: 
             self.data_provider._mmap[x+offs:x+offs+length])
@@ -370,51 +372,39 @@ class FileManager():
     
     def get_return_num(self):
         rawDim = self.get_flag_byte()
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[0:3]))
-        return(vfunc(rawDim))
+        return((self.packed_str(self.binary_str(x)[0:3]) for x in rawDim)) 
 
     def get_num_returns(self):
         rawDim = self.get_flag_byte()
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[3:6]))
-        return(vfunc(rawDim))
+        return((self.packed_str(self.binary_str(x)[3:6]) for x in rawDim))  
 
     def get_scan_dir_flag(self):
         rawDim = self.get_flag_byte()
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[6]))
-        return(vfunc(rawDim))
+        return((self.packed_str(self.binary_str(x)[6]) for x in rawDim))   
 
     def get_edge_flight_line(self):
         rawDim = self.get_flag_byte()
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[7]))
-        return(vfunc(rawDim))
-
+        return((self.packed_str(self.binary_str(x)[7]) for x in rawDim))
+    
     def get_raw_classification(self):
         return(self.get_dimension("raw_classification"))
     
     def get_classification(self): 
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[0:5]))
-        return(vfunc(self.get_raw_classification()))
+        return(self.packed_str(self.binary_str(x)[0:5]) 
+                for x in self.get_raw_classification()) 
 
     def get_synthetic(self):
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[5]))
-        return(vfunc(self.get_raw_classification()))
+        return(self.packed_str(self.binary_str(x)[5]) 
+                for x in self.get_raw_classification()) 
 
     def get_key_point(self):
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[6]))
-        return(vfunc(self.get_raw_classification()))
+        return(self.packed_str(self.binary_str(x)[6]) 
+                for x in self.get_raw_classification()) 
 
     def get_withheld(self):
-        vfunc = np.vectorize(lambda x: 
-            self.packed_str(self.binary_str(x)[7]))
-        return(vfunc(self.get_raw_classification()))
-
+        return(self.packed_str(self.binary_str(x)[7]) 
+                for x in self.get_raw_classification()) 
+    
     def get_scan_angle_rank(self):
         return(self.get_dimension("scan_angle_rank"))
     
@@ -580,7 +570,7 @@ class Writer(FileManager):
             raise(LaspyException("Must be in write mode to change padding."))
         return(len(self.data_provider._mmap))
     
-    def pad_file_for_point_recs(self,num_recs):
+    def pad_file_for_point_recs(self,num_recs): 
         bytes_to_pad = num_recs * self.point_format.rec_len
         old_size = self.data_provider.filesize()
         self.data_provider._mmap.flush()
@@ -592,6 +582,9 @@ class Writer(FileManager):
         return
 
     def set_dimension(self, name,new_dim):
+        if not "__len__" in dir(new_dim):
+            new_dim = list(new_dim)
+        
         if not self.has_point_records:
             self.has_point_records = True
             self.pad_file_for_point_recs(len(new_dim))
@@ -615,9 +608,11 @@ class Writer(FileManager):
         starts = (self.point_refs[i] + offs for i in idx) 
         def f(x):
             i = starts.next()
+            #self.seek(i, rel = False)
+            #self.data_provider._mmap.write(struct.pack(fmt, new_dim[x]))
             self.data_provider._mmap[i:i + length] = struct.pack(fmt,new_dim[x])
-            #self.seek(self.point_refs[x]+offs , rel = False)
         map(f, idx) 
+        
         # Is this desireable
         #self.data_provider._mmap.flush()    def write_bytes(self, idx, bytes):
         return True

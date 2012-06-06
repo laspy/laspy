@@ -703,15 +703,15 @@ class Header(object):
 
 
     def update_min_max(self):
-        x = self.writer.get_x()
-        y = self.writer.get_y()
-        z = self.writer.get_z()
-        self.writer.set_header_property("x_max", np.max(x))
-        self.writer.set_header_property("x_min", np.min(x))
-        self.writer.set_header_property("y_max", np.max(y))
-        self.writer.set_header_property("y_min", np.min(y))
-        self.writer.set_header_property("z_max", np.max(z))
-        self.writer.set_header_property("z_min", np.min(z))
+        x = list(self.writer.get_x())
+        y = list(self.writer.get_y())
+        z = list(self.writer.get_z()) 
+        self.writer.set_header_property("x_max", max(x))
+        self.writer.set_header_property("x_min", min(x))
+        self.writer.set_header_property("y_max", max(y))
+        self.writer.set_header_property("y_min", min(y))
+        self.writer.set_header_property("z_max", max(z))
+        self.writer.set_header_property("z_min", min(z))
 
     def get_scale(self):
         """Gets the scale factors in [x, y, z] for the point data.
