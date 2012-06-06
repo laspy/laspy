@@ -404,11 +404,11 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.assertTrue(r1 == r2)
     def test_min_max_update(self):
         x = list(self.FileObject.X)
-        x[0] = np.max(x) + 1
+        x[0] = max(x) + 1
         y = list(self.FileObject.Y)
-        y[0] = np.max(y) + 1
+        y[0] = max(y) + 1
         z = list(self.FileObject.Z)
-        z[0] = np.max(z) + 1
+        z[0] = max(z) + 1
         self.FileObject.X = x
         self.FileObject.Y = y
         self.FileObject.Z = z

@@ -2,7 +2,6 @@
 # Provides base functions for manipulating files. 
 import mmap
 from header import Header, leap_year
-import numpy as np
 import struct
 from util import *
 
@@ -282,8 +281,8 @@ class FileManager():
     def build_point_refs(self):
         """Build array of point offsets """
         pts = self.get_pointrecordscount()
-        self.point_refs = (np.array(xrange(pts))*self.header.data_record_length 
-                            + self.header.data_offset) 
+        self.point_refs = [x*self.header.data_record_length + self.header.data_offset
+                for x in xrange(pts)]
         return
 
     def get_dimension(self, name):
@@ -619,7 +618,7 @@ class Writer(FileManager):
             raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs)) 
         if type(self.point_refs) == bool:
             self.build_point_refs()
-        idx = np.array(xrange(len(self.point_refs)))
+        idx = (xrange(len(self.point_refs)))
         def f(x):
             self.data_provider._mmap[self.point_refs[x]:self.point_refs[x] 
                     + self.header.pt_dat_rec_len] = new_raw_points[x]
@@ -713,13 +712,13 @@ class Writer(FileManager):
     # Utility Functions, refactor
     
     def binary_str_arr(self, arr, length = 8):
-        return(np.array([self.binary_str(x, length) for x in arr]))
+        return([self.binary_str(x, length) for x in arr])
 
     def bitpack(self,arrs,idx, pack = True):
         if pack:
-            outArr = np.array([1]*len(arrs[0]))
+            outArr = ([1]*len(arrs[0]))
         else:
-            outArr = np.array(["0"*8]*len(arrs[0]))
+            outArr = (["0"*8]*len(arrs[0]))
        
         for i in xrange(len(arrs[0])):
             tmp = ""

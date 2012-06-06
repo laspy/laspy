@@ -43,9 +43,9 @@
  """
 import datetime
 from uuid import UUID
-import numpy as np
 import util
-
+#import numpypy
+#import numpy as np
 def leap_year(year):
     if (year % 400) == 0:
         return True
@@ -692,14 +692,20 @@ class Header(object):
         rawdata = map(lambda x: (x==0)*1 + (x!=0)*x, 
                      self.writer.get_return_num())
         
-        raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
+
+        histDict = {1:0, 2:0, 3:0, 4:0, 5:0}
+        for i in rawdata:
+            histDict[i] += 1
+        
+        raw_hist = histDict.values()
+        # raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
         # Does the user count [1,2,3,4,5] as one point return of lenght 5, or as 5 from 1 to 5?
         #print("Raw Hist: " + str(raw_hist))
         #t = raw_hist[0][4]
         #for ret in [3,2,1,0]:
         #    raw_hist[0][ret] -= t
         #    t += raw_hist[0][ret]
-        self.writer.set_header_property("num_pts_by_return", raw_hist[0])
+        self.writer.set_header_property("num_pts_by_return", raw_hist)
 
 
     def update_min_max(self):
