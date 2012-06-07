@@ -32,7 +32,7 @@ class DataProvider():
             except(Exception):
                 raise LaspyException("Error closing mmap")
     
-    def map(self, greedy = False): 
+    def map(self, greedy = True): 
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
@@ -40,10 +40,12 @@ class DataProvider():
         except(Exception):
             raise LaspyException("Error mapping file.")
         if greedy:
-            self._mmap.seek(0,0)
-            self._mmap.read(self._mmap.size()) 
+            #self._mmap.seek(0,0)
+            #self._mmap.read(self._mmap.size()) 
+            self._mmap[0:len(self._mmap):4]
 
-    def remap(self,flush = True, greedy = False):
+
+    def remap(self,flush = True, greedy = True):
         if flush and type(self._mmap) != bool:
             self._mmap.flush()
         self.close()
@@ -303,12 +305,13 @@ class FileManager():
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
-    def _get_dimension(self,offs, fmt, length, raw = False):
+    def _get_dimension(self,offs, fmt, length):
         """Return point dimension of specified offset format and length""" 
         _mmap = self.data_provider._mmap  
-        return((unpack(fmt, _mmap[start + offs : start+offs+length])[0] for start in self.point_refs))
+        prefs = self.point_refs
+        return((unpack(fmt, _mmap[start + offs : start+offs+length])[0] for start in prefs))
 
-    def _get_raw_dimension(self,offs, fmt, length, raw = False):
+    def _get_raw_dimension(self,offs, fmt, length):
         """Return point dimension of specified offset format and length""" 
         _mmap = self.data_provider._mmap  
         return((_mmap[start + offs : start+offs+length] for start in self.point_refs))
