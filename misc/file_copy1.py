@@ -9,9 +9,8 @@ outFile = File.File(sys.argv[2],mode= "w", header = inFile.header)
 spec = inFile.reader.point_format.lookup.keys()
 
 def f(x):
-    print(x)
-    tmp = inFile.reader.get_dimension(x)
-    outFile.writer.set_dimension(x, tmp)
+    print("outFile." + str(x)+" = "+"inFile." + str(x))
+    outFile.writer.set_dimension(x, inFile.reader.get_dimension(x))
 
 map(f, spec)
 

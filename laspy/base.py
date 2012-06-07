@@ -4,7 +4,7 @@ import mmap
 from header import Header, leap_year
 import struct
 from util import *
-
+from types import GeneratorType
 
 
 class DataProvider():
@@ -38,11 +38,10 @@ class DataProvider():
             self._mmap = mmap.mmap(self.fileref.fileno(), 0)
         except(Exception):
             raise LaspyException("Error mapping file.")
-        if greedy:
-            print("Remapping...")
+        if greedy: 
             some_local_var = self._mmap[0:len(self._mmap)]
 
-    def remap(self, greedy = True):
+    def remap(self, greedy = False):
         self._mmap.flush()
         self.close()
         self.open("r+b")
@@ -294,6 +293,8 @@ class FileManager():
         """Return point dimension of with above name, returns numpy array"""
         if not self.has_point_records:
             return None
+        if type(self.point_refs) == bool:
+            self.build_point_refs()
         try:
             spec = self.point_format.lookup[name]
             return(self._get_dimension(spec.offs, spec.fmt, 
@@ -302,16 +303,19 @@ class FileManager():
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
     def _get_dimension(self,offs, fmt, length, raw = False):
-        """Return point dimension of specified offset format and length"""
-        if type(self.point_refs) == bool:
-            self.build_point_refs() 
+        """Return point dimension of specified offset format and length""" 
+        _mmap = self.data_provider._mmap 
         if not raw: 
-            def f_get(x):
-                st = self.point_refs[x] + offs
-                return(struct.unpack(fmt, self.data_provider._mmap[st:st+length])[0]) 
-            return((f_get(x) for x in xrange(self.calc_point_recs))) 
-        return((self.data_provider._mmap[self.point_refs[x] + offs : self.point_refs[x] + offs + length] 
-                for x in xrange(self.calc_point_recs))) 
+            for start in self.point_refs:
+                yield(struct.unpack(fmt, _mmap[start+offs:start+offs+length])[0])
+            
+            #def f_get(x):
+            #    st = self.point_refs[x] + offs
+            #    return(struct.unpack(fmt, self.data_provider._mmap[st:st+length])[0]) 
+            #return((f_get(x) for x in xrange(self.calc_point_recs))) 
+        else:
+            for start in self.point_refs:
+                yield(_mmap[start+offs:start+offs+length]) 
 
     def _get_raw_datum(self, rec_offs, spec):
         """return raw bytes associated with non dimension field (VLR/Header)"""
@@ -580,9 +584,10 @@ class Writer(FileManager):
         return
 
     def set_dimension(self, name,new_dim):
-        if not "__len__" in dir(new_dim):
+        #if not "__len__" in dir(new_dim):
+        if isinstance(new_dim, GeneratorType):
             new_dim = list(new_dim)
-        
+
         if not self.has_point_records:
             self.has_point_records = True
             self.pad_file_for_point_recs(len(new_dim))
@@ -602,14 +607,21 @@ class Writer(FileManager):
         """Set a point dimension of appropriate offset format and length to new_dim"""
         if type(self.point_refs) == bool:
             self.build_point_refs()
-        idx = xrange(self.calc_point_recs)
-        starts = (self.point_refs[i] + offs for i in idx) 
-        def f_set(x):
-            i = starts.next()
-            #self.seek(i, rel = False)
-            #self.data_provider._mmap.write(struct.pack(fmt, new_dim[x]))
-            self.data_provider._mmap[i:i + length] = struct.pack(fmt,new_dim[x])
-        map(f_set, idx) 
+        _mmap = self.data_provider._mmap
+        s_pack = struct.pack
+        i = 0
+        for start in self.point_refs:
+            _mmap[start+offs:start+offs+length] = s_pack(fmt, new_dim[i])
+            i += 1
+
+        #idx = xrange(self.calc_point_recs)
+        #starts = (self.point_refs[i] + offs for i in idx) 
+        #def f_set(x):
+        #    i = starts.next()
+        #    #self.seek(i, rel = False)
+        #    #self.data_provider._mmap.write(struct.pack(fmt, new_dim[x]))
+        #    self.data_provider._mmap[i:i + length] = struct.pack(fmt,new_dim[x])
+        #map(f_set, idx) 
         
         # Is this desireable
         #self.data_provider._mmap.flush()    def write_bytes(self, idx, bytes):
