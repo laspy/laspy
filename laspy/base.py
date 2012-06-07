@@ -31,19 +31,22 @@ class DataProvider():
             except(Exception):
                 raise LaspyException("Error closing mmap")
     
-    def map(self):
+    def map(self, greedy = False): 
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
             self._mmap = mmap.mmap(self.fileref.fileno(), 0)
         except(Exception):
             raise LaspyException("Error mapping file.")
+        if greedy:
+            print("Remapping...")
+            some_local_var = self._mmap[0:len(self._mmap)]
 
-    def remap(self):
+    def remap(self, greedy = True):
         self._mmap.flush()
         self.close()
         self.open("r+b")
-        self.map()
+        self.map(greedy)
     
     def filesize(self):
         if self._mmap == False:
@@ -100,7 +103,7 @@ class FileManager():
             self.data_provider.fileref.write("\x00"*filesize)
             self.data_provider.fileref.close()
             self.data_provider.open("r+b")
-            self.data_provider.map() 
+            self.data_provider.map(greedy = False) 
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
@@ -280,8 +283,10 @@ class FileManager():
 
     def build_point_refs(self):
         """Build array of point offsets """
-        pts = self.get_pointrecordscount()
-        self.point_refs = [x*self.header.data_record_length + self.header.data_offset
+        pts = int(self.get_pointrecordscount())
+        length = int(self.header.data_record_length)
+        offs = int(self.header.data_offset)
+        self.point_refs = [x*length + offs
                 for x in xrange(pts)]
         return
 
@@ -526,8 +531,10 @@ class Writer(FileManager):
             ## Is there a faster way to do this?
             self.data_provider.fileref.write("\x00"*current_padding)
             self.data_provider.fileref.write(dat_part_2)
-            self.data_provider.remap() 
- 
+            if self.has_point_records:
+                self.data_provider.remap() 
+            else:
+                self.data_provider.remap(greedy = False)
         else:
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
 

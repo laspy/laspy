@@ -8,10 +8,12 @@ outFile = File.File(sys.argv[2],mode= "w", header = inFile.header)
 
 spec = inFile.reader.point_format.lookup.keys()
 
-for x in spec:
+def f(x):
     print(x)
-    outFile.writer.set_dimension(x, inFile.reader.get_dimension(x))
+    tmp = inFile.reader.get_dimension(x)
+    outFile.writer.set_dimension(x, tmp)
 
+map(f, spec)
 
 inFile.close()
-outFile.close()
+outFile.close(ignore_header_changes = True)

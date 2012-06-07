@@ -153,13 +153,13 @@ class File(object):
     #    # Allow GC to clean up?
     #    self.close()
 
-    def close(self):
+    def close(self, ignore_header_changes = False):
         """Closes the LAS file
         """
         if self._mode == "r":
             self.reader.close()
         else:
-            self.writer.close()    
+            self.writer.close(ignore_header_changes)    
     
     def assertWriteMode(self):
         if self._mode == "r":
