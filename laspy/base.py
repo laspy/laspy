@@ -1,10 +1,11 @@
 #
 # Provides base functions for manipulating files. 
-import mmap
+from mmap import mmap
 from header import Header, leap_year
-import struct
+from struct import pack, unpack
 from util import *
 from types import GeneratorType
+
 
 
 class DataProvider():
@@ -35,14 +36,16 @@ class DataProvider():
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
-            self._mmap = mmap.mmap(self.fileref.fileno(), 0)
+            self._mmap = mmap(self.fileref.fileno(), 0)
         except(Exception):
             raise LaspyException("Error mapping file.")
-        if greedy: 
-            some_local_var = self._mmap[0:len(self._mmap)]
+        if greedy:
+            self._mmap.seek(0,0)
+            self._mmap.read(self._mmap.size()) 
 
-    def remap(self, greedy = False):
-        self._mmap.flush()
+    def remap(self,flush = True, greedy = False):
+        if flush and type(self._mmap) != bool:
+            self._mmap.flush()
         self.close()
         self.open("r+b")
         self.map(greedy)
@@ -100,9 +103,7 @@ class FileManager():
             # Is there a faster way to do this?
             # Create Empty File
             self.data_provider.fileref.write("\x00"*filesize)
-            self.data_provider.fileref.close()
-            self.data_provider.open("r+b")
-            self.data_provider.map(greedy = False) 
+            self.data_provider.remap() 
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
@@ -174,15 +175,15 @@ class FileManager():
         outData = []
         for i in xrange(num):
             dat = self.read(bytes)
-            outData.append(struct.unpack(fmt, dat)[0])
+            outData.append(unpack(fmt, dat)[0])
         if len(outData) > 1:
             return(outData)
         return(outData[0])
     
     def _pack_words(self, fmt, num, bytes, val):
         if num == 1:
-            return(struct.pack(fmt, val))
-        outData = "".join([struct.pack(fmt, val[i]) for i in xrange(num)])
+            return(pack(fmt, val))
+        outData = "".join([pack(fmt, val[i]) for i in xrange(num)])
         return(outData)
 
 
@@ -304,19 +305,14 @@ class FileManager():
                             "not found.")
     def _get_dimension(self,offs, fmt, length, raw = False):
         """Return point dimension of specified offset format and length""" 
-        _mmap = self.data_provider._mmap 
-        if not raw: 
-            for start in self.point_refs:
-                yield(struct.unpack(fmt, _mmap[start+offs:start+offs+length])[0])
-            
-            #def f_get(x):
-            #    st = self.point_refs[x] + offs
-            #    return(struct.unpack(fmt, self.data_provider._mmap[st:st+length])[0]) 
-            #return((f_get(x) for x in xrange(self.calc_point_recs))) 
-        else:
-            for start in self.point_refs:
-                yield(_mmap[start+offs:start+offs+length]) 
+        _mmap = self.data_provider._mmap  
+        return((unpack(fmt, _mmap[start + offs : start+offs+length])[0] for start in self.point_refs))
 
+    def _get_raw_dimension(self,offs, fmt, length, raw = False):
+        """Return point dimension of specified offset format and length""" 
+        _mmap = self.data_provider._mmap  
+        return((_mmap[start + offs : start+offs+length] for start in self.point_refs))
+ 
     def _get_raw_datum(self, rec_offs, spec):
         """return raw bytes associated with non dimension field (VLR/Header)"""
         return(self.data_provider._mmap[(rec_offs + spec.offs):(rec_offs + spec.offs 
@@ -326,8 +322,8 @@ class FileManager():
         """Return unpacked data assocaited with non dimension field (VLR/Header)"""
         data = self._get_raw_datum(rec_offs, spec)
         if spec.num == 1:
-            return(struct.unpack(spec.fmt, data)[0])
-        unpacked = map(lambda x: struct.unpack(spec.fmt, 
+            return(unpack(spec.fmt, data)[0])
+        unpacked = map(lambda x: unpack(spec.fmt, 
             data[x*spec.length:(x+1)*spec.length])[0], xrange(spec.num))
         if spec.pack:
             return("".join([str(x[0]) for x in unpacked]))
@@ -579,8 +575,7 @@ class Writer(FileManager):
         self.data_provider.fileref.seek(old_size, 0)
         self.data_provider.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
         self.data_provider.fileref.flush()
-        self.data_provider.remap()
-        self.data_provider._mmap.flush()
+        self.data_provider.remap(flush = False) 
         return
 
     def set_dimension(self, name,new_dim):
@@ -608,7 +603,7 @@ class Writer(FileManager):
         if type(self.point_refs) == bool:
             self.build_point_refs()
         _mmap = self.data_provider._mmap
-        s_pack = struct.pack
+        s_pack = pack
         i = 0
         for start in self.point_refs:
             _mmap[start+offs:start+offs+length] = s_pack(fmt, new_dim[i])
@@ -619,8 +614,8 @@ class Writer(FileManager):
         #def f_set(x):
         #    i = starts.next()
         #    #self.seek(i, rel = False)
-        #    #self.data_provider._mmap.write(struct.pack(fmt, new_dim[x]))
-        #    self.data_provider._mmap[i:i + length] = struct.pack(fmt,new_dim[x])
+        #    #self.data_provider._mmap.write(pack(fmt, new_dim[x]))
+        #    self.data_provider._mmap[i:i + length] = pack(fmt,new_dim[x])
         #map(f_set, idx) 
         
         # Is this desireable
@@ -656,7 +651,7 @@ class Writer(FileManager):
         if dim.num == 1:
             lb = rec_offs + dim.offs
             ub = lb + dim.length 
-            self.data_provider._mmap[lb:ub] = struct.pack(dim.fmt, val)
+            self.data_provider._mmap[lb:ub] = pack(dim.fmt, val)
             return
 
         try:
@@ -671,7 +666,7 @@ class Writer(FileManager):
         def f(x):
             self.data_provider._mmap[(x*dim.length + rec_offs + 
                     dim.offs):((x+1)*dim.length + rec_offs 
-                    + dim.offs)]=struct.pack(dim.fmt, val[x])
+                    + dim.offs)]=pack(dim.fmt, val[x])
         map(f, xrange(dim.num))
         return
 
