@@ -309,7 +309,9 @@ class FileManager():
         """Return point dimension of specified offset format and length""" 
         _mmap = self.data_provider._mmap  
         prefs = self.point_refs
-        return(x for x in (unpack("<%i%s" %(len(prefs),fmt[1]) , b"".join([_mmap[start+offs:start+offs+length] for start in prefs])))) 
+        #return((unpack("<%i%s" %(len(prefs),fmt[1]) , b"".join((_mmap[start+offs:start+offs+length] for start in prefs))))) 
+        bytestr = b"".join((_mmap[start+offs:start+offs+length] for start in prefs))
+        return(unpack("<%i%s" %(len(prefs),fmt[1]) , bytestr))
         #return((unpack(fmt, _mmap[start + offs : start+offs+length])[0] for start in prefs))
 
     def _get_raw_dimension(self,offs, fmt, length):
