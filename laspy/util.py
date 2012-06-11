@@ -28,7 +28,6 @@ class Spec():
         "Format: " + str(self.Format) + "\n" +
         "Number: " + str(self.num) + "\n"+
         "Offset: " + str(self.offs) + "\n")
-        
 
 ### Note: ctypes formats may behave differently across platforms. 
 ### Those specified here follow the bytesize convention given in the
