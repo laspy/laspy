@@ -158,8 +158,6 @@ class FileManager():
     def reset(self):
         """Refresh the mmap and fileref"""
         self.data_provier.remap() 
-        
-        
         return
      
     def seek(self, bytes, rel = True):
@@ -268,12 +266,12 @@ class FileManager():
             return None
         if type(self.point_refs) == bool:
             self.build_point_refs()
-        single_fmt = self.point_format.pt_fmt_long[1:]
-        fmtlen = len(single_fmt)
-        big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count])
-        pts =  unpack(big_fmt_string, self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()])
-        return((Point(self, unpacked_list = pts[fmtlen*i:fmtlen*(i+1)]) for i in xrange(self.header.point_records_count)))
-        #return([Point(self,x) for x in self._get_raw_dimension(0, self.header.data_record_length)])
+        #single_fmt = self.point_format.pt_fmt_long[1:]
+        #fmtlen = len(single_fmt)
+        #big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count])
+        #pts =  unpack(big_fmt_string, self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()])
+        #return((Point(self, unpacked_list = pts[fmtlen*i:fmtlen*(i+1)]) for i in xrange(self.header.point_records_count)))
+        return([Point(self,x) for x in self._get_raw_dimension(0, self.header.data_record_length)])
     
 
     def get_raw_point(self, index):
@@ -657,15 +655,15 @@ class Writer(FileManager):
         if not self.has_point_records:
             self.has_point_records = True
             self.pad_file_for_point_recs(len(points))
-
-        single_fmt = self.point_format.pt_fmt_long[1:]
-        big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count]) 
-        out = []
-        (point.unpacked for point in points)
-        for i in points: 
-            out.extend(i.unpacked)
-        bytestr = pack(big_fmt_string, *out)
-        self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = bytestr
+        self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = b"".join([x.pack() for x in points])
+        #single_fmt = self.point_format.pt_fmt_long[1:]
+        #big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count]) 
+        #out = []
+        #(point.unpacked for point in points)
+        #for i in points: 
+        #    out.extend(i.unpacked)
+        #bytestr = pack(big_fmt_string, *out)
+        #self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = bytestr
 
     def _set_raw_points(self, new_raw_points):
         if not self.has_point_records:

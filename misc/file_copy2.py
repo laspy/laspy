@@ -13,8 +13,8 @@ def f():
     print("Writing Points")
     outFile.writer.set_points(points)
 
-cProfile.run("f()")
-#f()
+#cProfile.run("f()")
+f()
 #out = []
 #pts = 0
 #for p in inFile:

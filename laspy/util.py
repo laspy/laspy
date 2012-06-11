@@ -1,5 +1,5 @@
 import ctypes
-from struct import pack, unpack
+from struct import pack, unpack, Struct
 
 class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
@@ -149,7 +149,7 @@ class Format():
         self.rec_len += num*fmtLen[LEfmt[fmt]]
         self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable))
         self.pt_fmt_long += LEfmt[fmt][1]
-
+        self.packer = Struct(self.pt_fmt_long)
     def __str__(self):
         for spec in self.specs:
             spec.__str__()
@@ -158,7 +158,7 @@ class Point():
     def __init__(self, reader, bytestr = False, unpacked_list = False, nice = False):
         self.reader = reader 
         if bytestr != False:
-            self.unpacked = unpack(reader.point_format.pt_fmt_long, bytestr) 
+            self.unpacked = reader.point_format.packer.unpack(bytestr) 
         elif unpacked_list != False:
             self.unpacked = unpacked_list
         else:
@@ -184,8 +184,7 @@ class Point():
     def pack(self):
         #print([x.name for x in self.reader.point_format.specs])
         #print([self.__dict__[x.name] for x in self.reader.point_format.specs])
-
-        return(pack(self.reader.point_format.pt_fmt_long, *self.unpacked))
+        return(self.reader.point_format.packer.pack(*self.unpacked))
         
 class var_len_rec():
     def __init__(self, reader=False, attr_dict = False):
