@@ -2,7 +2,7 @@
 # Provides base functions for manipulating files. 
 from mmap import mmap
 from header import Header, leap_year
-from struct import pack, unpack
+from struct import pack, unpack, Struct
 from util import *
 from types import GeneratorType
 
@@ -69,7 +69,7 @@ class FileManager():
         
         self.header_changes = set()
         self.header_properties = {}
-        
+        self.c_packers = {} 
         self.calc_point_recs = False
 
         if self.mode in ("r", "rw"):
@@ -83,6 +83,7 @@ class FileManager():
                 self.has_point_records = True
                 self._current = 0
                 self.point_format = Format(self.header.pt_dat_format_id) 
+                self.populate_c_packers()
         elif self.mode == "w":
             if self.header == False:
                 raise LaspyException("Write mode requires a valid header object.")
@@ -95,6 +96,7 @@ class FileManager():
                 self.point_format = Format(self.header.__dict__["pt_dat_format_id"])
             else:
                 self.point_format = Format("0") 
+            self.populate_c_packers()
             #filesize += self.header.__dict__["point_records_count"]
             if "point_records_count" in self.header.__dict__.keys():
                 self.has_point_records = True
@@ -132,7 +134,11 @@ class FileManager():
         
         
         return
-   
+    def populate_c_packers(self):
+        for spec in self.point_format.specs:
+            self.c_packers[spec.name] = Struct(spec.fmt)
+            self.c_packers[spec.fmt] = self.c_packers[spec.name]
+    
     def packed_str(self, string):
         """Take a little endian binary string, and convert it to a python int."""
         return(sum([int(string[idx])*(2**idx) for idx in xrange(len(string))]))
@@ -309,13 +315,13 @@ class FileManager():
             return None
         if type(self.point_refs) == bool:
             self.build_point_refs()
-        try:
+        try: 
             spec = self.point_format.lookup[name]
             return(self._get_dimension(spec.offs, spec.fmt, 
                                      spec.length))
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
-                            "not found.")
+                            " not found.")
     def _get_dimension(self,offs, fmt, length):
         """Return point dimension of specified offset format and length""" 
         _mmap = self.data_provider._mmap  
@@ -324,7 +330,8 @@ class FileManager():
         #reclen = self.header.data_record_length
         #numrec = self.header.point_records_count
         #prefs = (i*reclen + do + offs for i in xrange(numrec))
-        return((unpack(fmt, _mmap[x:x+length])[0] for x in prefs))
+        packer = self.c_packers[fmt]
+        return((packer.unpack(_mmap[x:x+length])[0] for x in prefs))
         #return((unpack("<%i%s" %(len(prefs),fmt[1]) , b"".join((_mmap[start+offs:start+offs+length] for start in prefs))))) 
         #bytestr = b"".join((_mmap[start+offs:start+offs+length] for start in prefs))
         #return(unpack("<%i%s" %(len(prefs),fmt[1]) , bytestr)) 
@@ -625,10 +632,10 @@ class Writer(FileManager):
         if type(self.point_refs) == bool:
             self.build_point_refs()
         _mmap = self.data_provider._mmap
-        s_pack = pack
+        packer = self.c_packers[fmt]
         i = 0
         for start in self.point_refs:
-            _mmap[start+offs:start+offs+length] = s_pack(fmt, new_dim[i])
+            _mmap[start+offs:start+offs+length] = packer.pack(new_dim[i])
             i += 1
 
         #idx = xrange(self.calc_point_recs)
@@ -654,6 +661,7 @@ class Writer(FileManager):
         single_fmt = self.point_format.pt_fmt_long[1:]
         big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count]) 
         out = []
+        (point.unpacked for point in points)
         for i in points: 
             out.extend(i.unpacked)
         bytestr = pack(big_fmt_string, *out)
