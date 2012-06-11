@@ -156,37 +156,37 @@ class Format():
             spec.__str__()
 
 class Point():
-    def __init__(self, reader, bytestr):
-        self.reader = reader
-        unpacked = unpack(reader.point_format.pt_fmt_long, bytestr)
+    def __init__(self, reader, bytestr = False, unpacked_list = False, nice = False):
+        self.reader = reader 
+        if bytestr != False:
+            self.unpacked = unpack(reader.point_format.pt_fmt_long, bytestr) 
+        elif unpacked_list != False:
+            self.unpacked = unpacked_list
+        else:
+            raise LaspyException("No byte string or attribute list supplied for point.")
         i = 0
-        for dim in reader.point_format.specs:
-            #reader.seek(dim.offs + startIdx, rel = False)
-            self.__dict__[dim.name] = unpacked[i]
+        if nice:
+            for dim in reader.point_format.specs: 
+                self.__dict__[dim.name] = self.unpacked[i]
+                i += 1
 
-        bstr = reader.binary_str(self.flag_byte)
-        self.return_num = reader.packed_str(bstr[0:3])
-        self.num_returns = reader.packed_str(bstr[3:6])
-        self.scan_dir_flag = reader.packed_str(bstr[6])
-        self.edge_flight_line = reader.packed_str(bstr[7])
+            #bstr = reader.binary_str(self.flag_byte)
+            #self.return_num = reader.packed_str(bstr[0:3])
+            #self.num_returns = reader.packed_str(bstr[3:6])
+            #self.scan_dir_flag = reader.packed_str(bstr[6])
+            #self.edge_flight_line = reader.packed_str(bstr[7])
 
-        bstr = reader.binary_str(self.raw_classification)
-        self.classification = reader.packed_str(bstr[0:5])
-        self.synthetic = reader.packed_str(bstr[5])
-        self.key_point = reader.packed_str(bstr[6])
-        self.withheld = reader.packed_str(bstr[7])       
+            #bstr = reader.binary_str(self.raw_classification)
+            #self.classification = reader.packed_str(bstr[0:5])
+            #self.synthetic = reader.packed_str(bstr[5])
+            #self.key_point = reader.packed_str(bstr[6])
+            #self.withheld = reader.packed_str(bstr[7])       
+    
     def pack(self):
-        outstr = ""
-        for dim in self.reader.point_format.specs:
-            outstr += self.reader._pack_words(dim.fmt, dim.num, 
-                    dim.length, self.__dict__[dim.name])
- 
+        #print([x.name for x in self.reader.point_format.specs])
+        #print([self.__dict__[x.name] for x in self.reader.point_format.specs])
 
-
-        
-        
-
-
+        return(pack(self.reader.point_format.pt_fmt_long, *self.unpacked))
         
 class var_len_rec():
     def __init__(self, reader=False, attr_dict = False):

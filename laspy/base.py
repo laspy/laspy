@@ -256,6 +256,19 @@ class FileManager():
         """Return the byte index of point number index"""
         return(self.header.data_offset + 
             index*self.header.data_record_length)
+    
+    def get_points(self):
+        if not self.has_point_records:
+            return None
+        if type(self.point_refs) == bool:
+            self.build_point_refs()
+        single_fmt = self.point_format.pt_fmt_long[1:]
+        fmtlen = len(single_fmt)
+        big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count])
+        pts =  unpack(big_fmt_string, self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()])
+        return((Point(self, unpacked_list = pts[fmtlen*i:fmtlen*(i+1)]) for i in xrange(self.header.point_records_count)))
+        #return([Point(self,x) for x in self._get_raw_dimension(0, self.header.data_record_length)])
+    
 
     def get_raw_point(self, index):
         """Return the raw bytestring associated with point of number index"""
@@ -270,7 +283,7 @@ class FileManager():
         if index >= self.get_pointrecordscount():
             return 
         self._current = index
-        return(Point(self, get_raw_point(index)))
+        return(Point(self, self.get_raw_point(index)))
     
     def get_next_point(self):
         """Return next point object via get_point / #legacy_api"""
@@ -316,10 +329,11 @@ class FileManager():
         #bytestr = b"".join((_mmap[start+offs:start+offs+length] for start in prefs))
         #return(unpack("<%i%s" %(len(prefs),fmt[1]) , bytestr)) 
 
-    def _get_raw_dimension(self,offs, fmt, length):
+    def _get_raw_dimension(self,offs, length):
         """Return point dimension of specified offset format and length""" 
-        _mmap = self.data_provider._mmap  
-        return((_mmap[start + offs : start+offs+length] for start in self.point_refs))
+        _mmap = self.data_provider._mmap 
+        prefs = (offs + x for x in self.point_refs)
+        return((_mmap[start + offs : start+offs+length] for start in prefs))
  
     def _get_raw_datum(self, rec_offs, spec):
         """return raw bytes associated with non dimension field (VLR/Header)"""
@@ -630,14 +644,29 @@ class Writer(FileManager):
         #self.data_provider._mmap.flush()    def write_bytes(self, idx, bytes):
         return True
     
+    def set_points(self, points):
+        if isinstance(points, GeneratorType):
+            points = list(points)
+        if not self.has_point_records:
+            self.has_point_records = True
+            self.pad_file_for_point_recs(len(points))
+
+        single_fmt = self.point_format.pt_fmt_long[1:]
+        big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count]) 
+        out = []
+        for i in points: 
+            out.extend(i.unpacked)
+        bytestr = pack(big_fmt_string, *out)
+        self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = bytestr
+
     def _set_raw_points(self, new_raw_points):
         if not self.has_point_records:
             self.has_point_records = True
             self.pad_file_for_point_recs(len(new_raw_points))
         """Set a point dimension of appropriate name to new_dim"""
         ptrecs = self.get_pointrecordscount()
-        if len(new_dim) != ptrecs:
-            raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs)) 
+        if len(new_raw_points) != ptrecs:
+            raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_raw_points)) + " the number of points (%s)" % str(ptrecs)) 
         if type(self.point_refs) == bool:
             self.build_point_refs()
         idx = (xrange(len(self.point_refs)))
