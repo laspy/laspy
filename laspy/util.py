@@ -183,8 +183,6 @@ class Point():
             #self.withheld = reader.packed_str(bstr[7])       
     
     def pack(self):
-        #print([x.name for x in self.reader.point_format.specs])
-        #print([self.__dict__[x.name] for x in self.reader.point_format.specs])
         return(self.packer.pack(*self.unpacked))
         
 class var_len_rec():
