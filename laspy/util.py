@@ -157,8 +157,9 @@ class Format():
 class Point():
     def __init__(self, reader, bytestr = False, unpacked_list = False, nice = False):
         self.reader = reader 
+        self.packer = self.reader.point_format.packer
         if bytestr != False:
-            self.unpacked = reader.point_format.packer.unpack(bytestr) 
+            self.unpacked = self.packer.unpack(bytestr) 
         elif unpacked_list != False:
             self.unpacked = unpacked_list
         else:
@@ -184,7 +185,7 @@ class Point():
     def pack(self):
         #print([x.name for x in self.reader.point_format.specs])
         #print([self.__dict__[x.name] for x in self.reader.point_format.specs])
-        return(self.reader.point_format.packer.pack(*self.unpacked))
+        return(self.packer.pack(*self.unpacked))
         
 class var_len_rec():
     def __init__(self, reader=False, attr_dict = False):

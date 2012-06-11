@@ -10,7 +10,20 @@ spec = inFile1.reader.point_format.lookup.keys()
 
 def f(x):
     return(list(inFile1.reader.get_dimension(x)) == list(inFile2.reader.get_dimension(x)))
+def g(x):
+    return(inFile1.reader.get_header_property(x) == inFile2.reader.get_header_property(x))
 
+
+print("Testing Header")
+for item in inFile1.reader.header_format.specs:
+    if g(item.name):
+        print("Header Field " + item.name + " is identical.")
+    else:
+        print("Header Field " + item.name + " differs.")
+        print("   File 1: " + str(inFile1.reader.get_header_property(item.name)))
+        print("   File 2: " + str(inFile2.reader.get_header_property(item.name)))
+
+print("Testing Dimensions")
 passed = 0
 failed = 0
 for dim in spec:
