@@ -268,11 +268,9 @@ class FileManager():
     def get_point(self, index):
         """Return point object for point of number index / #legacy_api""" 
         if index >= self.get_pointrecordscount():
-            return
-        seekDex = self.get_raw_point_index(index)
-        self.seek(seekDex, rel = False)
+            return 
         self._current = index
-        return(Point(self, seekDex))
+        return(Point(self, get_raw_point(index)))
     
     def get_next_point(self):
         """Return next point object via get_point / #legacy_api"""

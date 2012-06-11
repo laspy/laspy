@@ -1,5 +1,5 @@
 import ctypes
-import struct
+from struct import pack, unpack
 
 class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
@@ -39,6 +39,7 @@ class Format():
         self.fmt = fmt
         self.specs = []
         self.rec_len = 0
+        self.pt_fmt_long = "<"
         if not (fmt in ("0", "1", "2", "3", "4", "5", "VLR", "h1.0", "h1.1", "h1.2", "h1.3")):
             raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
@@ -148,18 +149,20 @@ class Format():
             offs = last.offs + last.num*fmtLen[last.fmt]
         self.rec_len += num*fmtLen[LEfmt[fmt]]
         self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable))
-        
+        self.pt_fmt_long += LEfmt[fmt][1]
+
     def __str__(self):
         for spec in self.specs:
             spec.__str__()
 
 class Point():
-    def __init__(self, reader, startIdx):
+    def __init__(self, reader, bytestr):
         self.reader = reader
+        unpacked = unpack(reader.point_format.pt_fmt_long, bytestr)
+        i = 0
         for dim in reader.point_format.specs:
             #reader.seek(dim.offs + startIdx, rel = False)
-            self.__dict__[dim.name] = reader._read_words(dim.fmt,
-                    dim.num, dim.length)
+            self.__dict__[dim.name] = unpacked[i]
 
         bstr = reader.binary_str(self.flag_byte)
         self.return_num = reader.packed_str(bstr[0:3])
@@ -210,7 +213,7 @@ class var_len_rec():
     
     def pack(self, name, val):
         spec = self.fmt.lookup[name]
-        return(struct.pack(spec.fmt, val))
+        return(pack(spec.fmt, val))
     
     def to_byte_string(self):
         out = (self.pack("reserved", self.reserved) + 
