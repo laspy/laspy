@@ -112,7 +112,7 @@ class Header(object):
         for spec in self.format.specs:
             self.reader.set_header_property(spec.name, self.__dict__[spec.name])
 
-    def dump_data_to_file(self): 
+    def dump_data_to_file(self):  
         if self.reader == False or not self.file_mode in ("w", "rw", "w+"):
             raise LaspyHeaderException("Dump data requires a valid writer object.")
         for item in self.attribute_list:

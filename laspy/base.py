@@ -103,7 +103,6 @@ class FileManager():
                 filesize += self.header.__dict__["point_records_count"]*self.point_format.rec_len
             else:
                 self.has_point_records = False
-            
             # Is there a faster way to do this?
             # Create Empty File
             self.data_provider.fileref.write("\x00"*filesize)
@@ -111,6 +110,8 @@ class FileManager():
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
+            for item in self.header_format.specs:
+                self.header.attribute_list.append(item.name)
             self.header.dump_data_to_file()   
             self.set_header_property("offset_to_point_data", max(self.data_provider.filesize(), self.header.data_offset)) 
             # This should be refactored
