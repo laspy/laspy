@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import sys
 sys.path.append("../")
-
+from laspy import util
 from laspy import file as File
 inFile1 = File.File(sys.argv[1],mode= "r")
 inFile2 = File.File(sys.argv[2],mode= "r")
@@ -22,6 +22,21 @@ for item in inFile1.reader.header_format.specs:
         print("Header Field " + item.name + " differs.")
         print("   File 1: " + str(inFile1.reader.get_header_property(item.name)))
         print("   File 2: " + str(inFile2.reader.get_header_property(item.name)))
+
+def checkVLR(specname, vlr1, vlr2):
+    return(vlr1.__dict__[specname] == vlr2.__dict__[specname])
+    
+
+print("Testing VLRs")
+for i in xrange(len(inFile1.reader.vlrs)):
+    vlr1 = inFile1.reader.vlrs[i]
+    vlr2 = inFile2.reader.vlrs[i]
+    for spec in util.Format("VLR"):
+        if checkVLR(spec.name, vlr1, vlr2):
+            print("vlr # " + str(i) + ", field: " + spec.name + "is identical.")
+        else:
+            print("vlr # " + str(i) + ", field: " + spec.name + "differs,")
+
 
 print("Testing Dimensions")
 passed = 0
