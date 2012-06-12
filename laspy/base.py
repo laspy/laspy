@@ -5,6 +5,7 @@ from header import Header, leap_year
 from struct import pack, unpack, Struct
 from util import *
 from types import GeneratorType
+import numpy as np
 
 
 
@@ -15,14 +16,17 @@ class DataProvider():
         self._mmap = False
         self._imap = False
         self.manager = manager
-        self.pointfmt = np.dtype([("point", zip([x.name for x in manager.point_format.specs],
-                                [x.np_format for x in manager.point_format.specs]))])
     def open(self, mode):
         try:
             self.fileref = open(self.filename, mode)
         except(Exception):
             raise LaspyException("Error opening file")
-    
+    def point_map(self):
+        self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
+                                [x.np_fmt for x in self.manager.point_format.specs]))])
+
+        self._pmap = np.frombuffer(self._imap, self.pointfmt, 
+                        offset = self.manager.header.data_offset)
     def close(self):
         if self.fileref != False:
             try:
@@ -41,47 +45,47 @@ class DataProvider():
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
-            self._imap = mmap(self.fileref.fileno(), 0)
-            self._mmap = np.frombuffer(self._imap, self.pointfmt, 
-                        offset = self.manager.header.data_offset)
+            self._mmap = mmap(self.fileref.fileno(), 0)
         except(Exception):
             raise LaspyException("Error mapping file.")
 
-    def remap(self,flush = True, greedy = True):
+    def remap(self,flush = True):
         if flush and type(self._mmap) != bool:
             #packer = Struct(self.manager.point_format.pt_fmt_long)
-            self._imap.seek(self.manager.data_offset, 0)
-            self._imap.write(self._mmap.tostring()) 
+            self._mmap.seek(self.manager.data_offset, 0)
+            self._mmap.write(self._pmap.tostring()) 
             #for item in self._mmap:
             #    self._imap.write(packer.pack(*item[0]))
             #self._imap.flush() 
         self.close()
         self.open("r+b")
-        self.map(greedy)
+        self.map()
    
     def __getitem__(self, index):
         '''Return the raw bytes corresponding to the point @ index.'''
         try:
             index.stop
         except AttributeError:
-            return(self._imap[index][0])
+            return(self._pmap[index][0])
         if index.step:
             step = index.step
         else:
             step = 1
-        return([x[0] for x in self._imap[index.start:index.stop,step]])
+        return([x[0] for x in self._pmap[index.start:index.stop,step]])
 
-
-    def __setitem__(self, index, value):
-        pass
-
+    def __setitem__(self, key, value):
+        try:
+            key.stop
+        except AttributeError:
+            self._pmap[key] = (value,)
+            return
+        self._pmap[key.start:key.stop] = [(x,) for x in value]
 
     def filesize(self):
         if self._mmap == False:
             raise LaspyException("File not mapped")
-        return(self._imap.size())
+        return(self._mmap.size())
 
-self._mmap = load(self.fileref, "r+")
 class FileManager():
     def __init__(self,filename, mode, header = False, vlrs = False): 
         """Build the FileManager object. This is done when opening the file
@@ -90,7 +94,7 @@ class FileManager():
         self.vlrs = False
         self.header = header  
         self.mode = mode
-        self.data_provider = DataProvider(filename)
+        self.data_provider = DataProvider(filename, self)
         
         self.header_changes = set()
         self.header_properties = {}
@@ -109,6 +113,7 @@ class FileManager():
                 self._current = 0
                 self.point_format = Format(self.header.pt_dat_format_id) 
                 self.populate_c_packers()
+                self.data_provider.point_map()
         elif self.mode == "w":
             if self.header == False:
                 raise LaspyException("Write mode requires a valid header object.")
@@ -587,7 +592,7 @@ class Writer(FileManager):
             if self.has_point_records:
                 self.data_provider.remap() 
             else:
-                self.data_provider.remap(greedy = False)
+                self.data_provider.remap()
         else:
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
 
