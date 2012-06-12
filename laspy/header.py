@@ -116,8 +116,11 @@ class Header(object):
         if self.reader == False or not self.file_mode in ("w", "rw", "w+"):
             raise LaspyHeaderException("Dump data requires a valid writer object.")
         for item in self.attribute_list:
-            self.writer.set_header_property(item, self.__dict__[item])
-    
+            try:
+                self.writer.set_header_property(item, self.__dict__[item])
+            except:
+                pass
+
     def assertWriteMode(self):
         if self.file_mode == "r":
             raise LaspyHeaderException("Header instance is not in write mode.")

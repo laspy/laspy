@@ -283,12 +283,12 @@ class FileManager():
              self.header.data_record_length])
 
 #self, reader, startIdx ,version
-    def get_point(self, index):
+    def get_point(self, index, nice=False):
         """Return point object for point of number index / #legacy_api""" 
         if index >= self.get_pointrecordscount():
             return 
         self._current = index
-        return(Point(self, self.get_raw_point(index)))
+        return(Point(self, self.get_raw_point(index), nice= nice))
     
     def get_next_point(self):
         """Return next point object via get_point / #legacy_api"""

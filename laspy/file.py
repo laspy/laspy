@@ -230,11 +230,11 @@ class File(object):
     """
     header = property(get_header, set_header, None, doc)
 
-    def read(self, index):
+    def read(self, index, nice = True):
         """Reads the point at the given index"""
         if self.reader.get_pointrecordscount() >= index:
             
-            return(self.reader.get_point(index)) 
+            return(self.reader.get_point(index, nice)) 
         else:
             raise util.LaspyException("Index greater than point records count")
         

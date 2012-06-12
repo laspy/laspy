@@ -166,22 +166,26 @@ class Point():
             raise LaspyException("No byte string or attribute list supplied for point.")
         i = 0
         if nice:
-            for dim in reader.point_format.specs: 
+            self.make_nice()
+    def make_nice(self):
+        i = 0
+        for dim in self.reader.point_format.specs: 
                 self.__dict__[dim.name] = self.unpacked[i]
                 i += 1
 
-            #bstr = reader.binary_str(self.flag_byte)
-            #self.return_num = reader.packed_str(bstr[0:3])
-            #self.num_returns = reader.packed_str(bstr[3:6])
-            #self.scan_dir_flag = reader.packed_str(bstr[6])
-            #self.edge_flight_line = reader.packed_str(bstr[7])
+        bstr = self.reader.binary_str(self.flag_byte)
+        self.return_num = self.reader.packed_str(bstr[0:3])
+        self.num_returns = self.reader.packed_str(bstr[3:6])
+        self.scan_dir_flag = self.reader.packed_str(bstr[6])
+        self.edge_flight_line = self.reader.packed_str(bstr[7])
 
-            #bstr = reader.binary_str(self.raw_classification)
-            #self.classification = reader.packed_str(bstr[0:5])
-            #self.synthetic = reader.packed_str(bstr[5])
-            #self.key_point = reader.packed_str(bstr[6])
-            #self.withheld = reader.packed_str(bstr[7])       
-    
+        bstr = self.reader.binary_str(self.raw_classification)
+        self.classification = self.reader.packed_str(bstr[0:5])
+        self.synthetic = self.reader.packed_str(bstr[5])
+        self.key_point = self.reader.packed_str(bstr[6])
+        self.withheld = self.reader.packed_str(bstr[7])       
+
+
     def pack(self):
         return(self.packer.pack(*self.unpacked))
         
