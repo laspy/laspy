@@ -22,6 +22,7 @@ class Spec():
             self.pack = pack
             self.np_fmt = npFmt[self.fmt]
             self.overwritable = overwritable
+            self.idx = idx
         else:
             raise(LaspyException("Big endian files are not currently supported."))
     def __str__(self):

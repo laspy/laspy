@@ -14,7 +14,7 @@ class DataProvider():
         self.filename = filename
         self.fileref = False
         self._mmap = False
-        self._imap = False
+        self._pmap = False
         self.manager = manager
     def open(self, mode):
         try:
@@ -62,7 +62,7 @@ class DataProvider():
         self.close()
         self.open("r+b")
         self.map()
-        if point_map:
+        if point_map: 
             self.point_map()
    
     def __getitem__(self, index):
@@ -123,24 +123,29 @@ class FileManager():
                 raise LaspyException("Write mode requires a valid header object.")
             self.data_provider.open("w+b") 
             self.header_format = self.header.format
-            filesize = self.header_format.rec_len
-            if vlrs != False:
-                filesize += sum([len(x) for x in vlrs]) 
+            try:
+                filesize = max(self.header_format.rec_len, self.header.__dict__["offset_to_point_data"])
+            except:
+                filesize = self.header_format.rec_len
+            #filesize = self.header_format.rec_len
+            #if vlrs != False:
+            #    filesize += sum([len(x) for x in vlrs]) 
             if "pt_dat_format_id" in self.header.__dict__.keys():
                 self.point_format = Format(self.header.__dict__["pt_dat_format_id"])
             else:
                 self.point_format = Format("0") 
             self.populate_c_packers()
             #filesize += self.header.__dict__["point_records_count"]
-            if "point_records_count" in self.header.__dict__.keys():
-                self.has_point_records = True
-                filesize += self.header.__dict__["point_records_count"]*self.point_format.rec_len
-            else:
-                self.has_point_records = False
+            #if "point_records_count" in self.header.__dict__.keys():
+            #    self.has_point_records = True
+            #    filesize += self.header.__dict__["point_records_count"]*self.point_format.rec_len
+            #else:
+            #    self.has_point_records = False
+            self.has_point_records=False
             # Is there a faster way to do this?
             # Create Empty File
             self.data_provider.fileref.write("\x00"*filesize)
-            self.data_provider.remap() 
+            self.data_provider.remap()
             self.header.reader = self
             self.header.writer = self 
             self.header.version = str(self.header_format.fmt[1:])
@@ -275,11 +280,13 @@ class FileManager():
             return(self.calc_point_recs)
         
         if self.header.get_version != "1.3":
-            return(len(self.data_provider._pmap))
-            #new_val =  ((self.data_provider._mmap.size()-
-            #    self.header.data_offset)/self.header.data_record_length)
-            #self.calc_point_recs = new_val
-            return(new_val)
+            try:
+                return(len(self.data_provider._pmap))
+            except:
+                new_val =  ((self.data_provider._mmap.size()-
+                    self.header.data_offset)/self.header.data_record_length)
+                self.calc_point_recs = new_val
+                return(new_val)
         else:
             raise LaspyException("Version 1.3 is currently broken due to waveform data.")
             new_val = ((self.header.StWavefmDatPktRec-
@@ -355,31 +362,32 @@ class FileManager():
             self.build_point_refs()
         try: 
             spec = self.point_format.lookup[name]
-            return(self._get_dimension(spec.offs, spec.fmt, 
-                                     spec.length))
+            #return(self._get_dimension(spec))
+            return(self._get_dimension(spec))
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
                             " not found.")
-    def _get_dimension(self,offs, fmt, length):
+    
+    def _get_dimension(self, spec):
+        return(self.data_provider._pmap["point"][spec.name])
+
+    def _get_dimension_by_specs(self,offs, fmt, length):
         """Return point dimension of specified offset format and length""" 
         _mmap = self.data_provider._mmap  
-        prefs = (offs + x for x in self.point_refs)
-        #do = self.header.data_offset
-        #reclen = self.header.data_record_length
-        #numrec = self.header.point_records_count
-        #prefs = (i*reclen + do + offs for i in xrange(numrec))
+        prefs = (offs + x for x in self.point_refs) 
         packer = self.c_packers[fmt]
         return((packer.unpack(_mmap[x:x+length])[0] for x in prefs))
-        #return((unpack("<%i%s" %(len(prefs),fmt[1]) , b"".join((_mmap[start+offs:start+offs+length] for start in prefs))))) 
-        #bytestr = b"".join((_mmap[start+offs:start+offs+length] for start in prefs))
-        #return(unpack("<%i%s" %(len(prefs),fmt[1]) , bytestr)) 
 
-    def _get_raw_dimension(self,offs, length):
+
+
+
+    def _get_raw_dimension(self,spec):
         """Return point dimension of specified offset format and length""" 
-        _mmap = self.data_provider._mmap 
-        prefs = (offs + x for x in self.point_refs)
-        return((_mmap[start + offs : start+offs+length] for start in prefs))
- 
+        #_mmap = self.data_provider._mmap 
+        #prefs = (offs + x for x in self.point_refs)
+        #return((_mmap[start + offs : start+offs+length] for start in prefs))
+        return(self.data_provider._pmap["point"][spec.name].tostring())
+
     def _get_raw_datum(self, rec_offs, spec):
         """return raw bytes associated with non dimension field (VLR/Header)"""
         return(self.data_provider._mmap[(rec_offs + spec.offs):(rec_offs + spec.offs 
@@ -610,7 +618,13 @@ class Writer(FileManager):
         if value < 0: 
             raise LaspyException("New Padding Value Overwrites VLRs")
         if self.mode == "w":
-            raise NotImplementedError
+            if not self.has_point_records:
+                self.data_provider.fileref.seek(self.vlr_stop, 0)
+                self.data_provider.fileref.write("\x00"*value)
+                self.data_provider.remap()
+                return
+            else:
+                raise NotImplementedError
         elif self.mode == "rw":
             old_offset = self.header.data_offset
             self.set_header_property("offset_to_point_data",
@@ -640,7 +654,7 @@ class Writer(FileManager):
         old_size = self.data_provider.filesize()
         self.data_provider._mmap.flush()
         self.data_provider.fileref.seek(old_size, 0)
-        self.data_provider.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
+        self.data_provider.fileref.write("\x00" * (bytes_to_pad))
         self.data_provider.fileref.flush()
         self.data_provider.remap(flush = False, point_map = True) 
         return
@@ -652,6 +666,7 @@ class Writer(FileManager):
 
         if not self.has_point_records:
             self.has_point_records = True
+            self.set_header_property("num_pt_recs", len(new_dim))
             self.pad_file_for_point_recs(len(new_dim))
         """Set a point dimension of appropriate name to new_dim"""
         ptrecs = self.get_pointrecordscount()
@@ -659,13 +674,16 @@ class Writer(FileManager):
             raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs))
         try:
             spec = self.point_format.lookup[name]
-            return(self._set_dimension(new_dim,spec.offs, spec.fmt, 
-                                     spec.length))
+            return(self._set_dimension(spec, new_dim))
         except KeyError:
             raise LaspyException("Dimension: " + str(name) + 
                             "not found.")
  
-    def _set_dimension(self,new_dim,offs, fmt, length):
+    def _set_dimension(self, spec, value):
+        self.data_provider._pmap["point"][spec.name] = value
+        return
+
+    def _set_dimension_by_spec(self,new_dim,offs, fmt, length):
         """Set a point dimension of appropriate offset format and length to new_dim"""
         if type(self.point_refs) == bool:
             self.build_point_refs()
@@ -697,9 +715,10 @@ class Writer(FileManager):
             self.pad_file_for_point_recs(len(points))
         if isinstance(points[0], Point):
             self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = b"".join([x.pack() for x in points])
+            self.data_provider.point_map()
         else:
              self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = points.tostring()
-
+             self.data_provider.point_map()
         #single_fmt = self.point_format.pt_fmt_long[1:]
         #big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count]) 
         #out = []
@@ -724,6 +743,7 @@ class Writer(FileManager):
             self.data_provider._mmap[self.point_refs[x]:self.point_refs[x] 
                     + self.header.pt_dat_rec_len] = new_raw_points[x]
         map(f, idx)
+        self.data_provider.point_map()
 
     def _set_raw_datum(self, rec_offs, spec, val):
         """Set a non dimension field with appropriate record type offset (0 for header)
