@@ -9,11 +9,14 @@ from types import GeneratorType
 
 
 class DataProvider():
-    def __init__(self, filename):
+    def __init__(self, filename, manager):
         self.filename = filename
         self.fileref = False
         self._mmap = False
-
+        self._imap = False
+        self.manager = manager
+        self.pointfmt = np.dtype([("point", zip([x.name for x in manager.point_format.specs],
+                                [x.np_format for x in manager.point_format.specs]))])
     def open(self, mode):
         try:
             self.fileref = open(self.filename, mode)
@@ -29,34 +32,56 @@ class DataProvider():
         if self._mmap != False:
             try:
                 self._mmap.close()
+                self._mmap = False
+                self._imap = False
             except(Exception):
                 raise LaspyException("Error closing mmap")
     
-    def map(self, greedy = True): 
+    def map(self): 
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
-            self._mmap = mmap(self.fileref.fileno(), 0)
+            self._imap = mmap(self.fileref.fileno(), 0)
+            self._mmap = np.frombuffer(self._imap, self.pointfmt, 
+                        offset = self.manager.header.data_offset)
         except(Exception):
             raise LaspyException("Error mapping file.")
-        if greedy:
-            #self._mmap.seek(0,0)
-            #self._mmap.read(self._mmap.size()) 
-            self._mmap[0:len(self._mmap):4]
-
 
     def remap(self,flush = True, greedy = True):
         if flush and type(self._mmap) != bool:
-            self._mmap.flush()
+            #packer = Struct(self.manager.point_format.pt_fmt_long)
+            self._imap.seek(self.manager.data_offset, 0)
+            self._imap.write(self._mmap.tostring()) 
+            #for item in self._mmap:
+            #    self._imap.write(packer.pack(*item[0]))
+            #self._imap.flush() 
         self.close()
         self.open("r+b")
         self.map(greedy)
-    
+   
+    def __getitem__(self, index):
+        '''Return the raw bytes corresponding to the point @ index.'''
+        try:
+            index.stop
+        except AttributeError:
+            return(self._imap[index][0])
+        if index.step:
+            step = index.step
+        else:
+            step = 1
+        return([x[0] for x in self._imap[index.start:index.stop,step]])
+
+
+    def __setitem__(self, index, value):
+        pass
+
+
     def filesize(self):
         if self._mmap == False:
             raise LaspyException("File not mapped")
-        return(self._mmap.size())
+        return(self._imap.size())
 
+self._mmap = load(self.fileref, "r+")
 class FileManager():
     def __init__(self,filename, mode, header = False, vlrs = False): 
         """Build the FileManager object. This is done when opening the file
