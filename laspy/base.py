@@ -25,7 +25,7 @@ class DataProvider():
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))])
 
-        self._pmap = np.frombuffer(self._imap, self.pointfmt, 
+        self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
     def close(self):
         if self.fileref != False:
