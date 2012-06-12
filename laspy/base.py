@@ -95,7 +95,7 @@ class FileManager():
         """Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding."""
-        self.vlrs = False
+        self.vlr_formats = Format("VLR")
         self.header = header  
         self.mode = mode
         self.data_provider = DataProvider(filename, self)
@@ -122,14 +122,20 @@ class FileManager():
             if self.header == False:
                 raise LaspyException("Write mode requires a valid header object.")
             self.data_provider.open("w+b") 
-            self.header_format = self.header.format
-            try:
-                filesize = max(self.header_format.rec_len, self.header.__dict__["offset_to_point_data"])
-            except:
-                filesize = self.header_format.rec_len
-            #filesize = self.header_format.rec_len
-            #if vlrs != False:
-            #    filesize += sum([len(x) for x in vlrs]) 
+            self.header_format = self.header.format 
+            self.vlrs = self.header.__dict__["vlrs"] 
+            if vlrs != False:
+                self.vlrs.extend(vlrs)
+            #try:
+            #    filesize = max(self.header_format.rec_len, self.header.__dict__["offset_to_point_data"])
+            #except:
+            #    filesize = self.header_format.rec_len
+            filesize = self.header_format.rec_len
+            if self.vlrs != []:
+                filesize += sum([len(x) for x in self.vlrs]) 
+            self.vlr_stop = filesize
+            print(self.vlr_stop)
+
             if "pt_dat_format_id" in self.header.__dict__.keys():
                 self.point_format = Format(self.header.__dict__["pt_dat_format_id"])
             else:
@@ -141,9 +147,16 @@ class FileManager():
             #    filesize += self.header.__dict__["point_records_count"]*self.point_format.rec_len
             #else:
             #    self.has_point_records = False
+            
             self.has_point_records=False
             # Is there a faster way to do this?
             # Create Empty File
+            
+            try:
+                filesize = max(filesize, self.header.__dict__["offset_to_point_data"])
+            except:
+                pass 
+            print(filesize)
             self.data_provider.fileref.write("\x00"*filesize)
             self.data_provider.remap()
             self.header.reader = self
@@ -152,16 +165,14 @@ class FileManager():
             for item in self.header_format.specs:
                 self.header.attribute_list.append(item.name)
             self.header.dump_data_to_file()   
-            self.set_header_property("offset_to_point_data", max(self.data_provider.filesize(), self.header.data_offset)) 
+            self.set_header_property("offset_to_point_data", self.header.data_offset) 
             # This should be refactored
-            if vlrs == False:
-                vlrs = []
-            self.set_header_property("num_variable_len_recs",len(vlrs))
+            self.set_header_property("num_variable_len_recs",len(self.vlrs))
             self.set_header_property("pt_dat_format_id", int(self.point_format.fmt))
             self.set_header_property("pt_dat_rec_len", int(self.point_format.rec_len))
             self.set_header_property("header_size", self.header_format.rec_len)
             self.header.refresh_attrs() 
-            self.set_vlrs(vlrs)
+            self.set_vlrs(self.vlrs)
             self.get_header(self.mode)
             self.populate_vlrs()
             self.seek(self.header.header_size, rel = False)
@@ -263,6 +274,7 @@ class FileManager():
                 raise LaspyException("Error, Calculated Header Data "
                     "Overlaps The Point Records!")
         self.vlr_stop = self.data_provider._mmap.tell()
+        self.header.__dict__["vlrs"] = self.vlrs
         return
 
     def get_vlrs(self):

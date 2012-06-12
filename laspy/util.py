@@ -215,6 +215,9 @@ class var_len_rec():
             self.fmt = attr_dict["fmt"]
             self.isVLR = True
     
+    def __len__(self):
+        return self.rec_len_after_header + 54
+
     def pack(self, name, val):
         spec = self.fmt.lookup[name]
         return(pack(spec.fmt, val))

@@ -71,8 +71,9 @@ class Header(object):
             self.file_mode = file_mode 
             for dim in self.format.specs:
                 #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
-                self.__dict__[dim.name] = reader.get_header_property(dim.name)
+                self.__dict__[dim.name] = reader.get_header_property(dim.name) 
             return
+        
         else:
             self.reader = False
         ## Figure out our header format
@@ -80,6 +81,7 @@ class Header(object):
             self.format = util.Format("h1.2", overwritable=True)
         else:
             self.format = fmt
+        #Make sure we keep vlrs here. 
         ## Figure out our file mode
         if file_mode == False:
             self.file_mode = "w"
@@ -92,7 +94,10 @@ class Header(object):
         for kw in kwargs.items():
             self.attribute_list.append(kw[0])
             self.__dict__[kw[0]] = kw[1] 
-
+        try:
+            self.__dict__["vlrs"]
+        except:
+            self.__dict__["vlrs"] = []
     # Where do the following functions live in the lifecycle of the header,
     # how are they different than the properties defined below?
     def refresh_attrs(self):

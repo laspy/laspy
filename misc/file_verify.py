@@ -6,7 +6,7 @@ from laspy import file as File
 inFile1 = File.File(sys.argv[1],mode= "r")
 inFile2 = File.File(sys.argv[2],mode= "r")
 
-spec = inFile1.reader.point_format.lookup.keys()
+
 
 def f(x):
     return(list(inFile1.reader.get_dimension(x)) == list(inFile2.reader.get_dimension(x)))
@@ -31,13 +31,13 @@ print("Testing VLRs")
 for i in xrange(len(inFile1.reader.vlrs)):
     vlr1 = inFile1.reader.vlrs[i]
     vlr2 = inFile2.reader.vlrs[i]
-    for spec in util.Format("VLR"):
+    for spec in util.Format("VLR").specs:
         if checkVLR(spec.name, vlr1, vlr2):
-            print("vlr # " + str(i) + ", field: " + spec.name + "is identical.")
+            print("vlr # " + str(i) + ", field: " + spec.name + " is identical.")
         else:
-            print("vlr # " + str(i) + ", field: " + spec.name + "differs,")
+            print("vlr # " + str(i) + ", field: " + spec.name + " differs,")
 
-
+spec = inFile1.reader.point_format.lookup.keys()
 print("Testing Dimensions")
 passed = 0
 failed = 0
