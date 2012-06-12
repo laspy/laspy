@@ -49,17 +49,21 @@ class DataProvider():
         except(Exception):
             raise LaspyException("Error mapping file.")
 
-    def remap(self,flush = True):
+    def remap(self,flush = True, point_map = False):
         if flush and type(self._mmap) != bool:
             #packer = Struct(self.manager.point_format.pt_fmt_long)
-            self._mmap.seek(self.manager.data_offset, 0)
-            self._mmap.write(self._pmap.tostring()) 
+            if type(self._pmap) != bool:
+                self._mmap.seek(self.manager.data_offset, 0)
+                self._mmap.write(self._pmap.tostring()) 
+            self._mmap.flush()
             #for item in self._mmap:
             #    self._imap.write(packer.pack(*item[0]))
             #self._imap.flush() 
         self.close()
         self.open("r+b")
         self.map()
+        if point_map:
+            self.point_map()
    
     def __getitem__(self, index):
         '''Return the raw bytes corresponding to the point @ index.'''
@@ -271,11 +275,13 @@ class FileManager():
             return(self.calc_point_recs)
         
         if self.header.get_version != "1.3":
-            new_val =  ((self.data_provider._mmap.size()-
-                self.header.data_offset)/self.header.data_record_length)
-            self.calc_point_recs = new_val
+            return(len(self.data_provider._pmap))
+            #new_val =  ((self.data_provider._mmap.size()-
+            #    self.header.data_offset)/self.header.data_record_length)
+            #self.calc_point_recs = new_val
             return(new_val)
         else:
+            raise LaspyException("Version 1.3 is currently broken due to waveform data.")
             new_val = ((self.header.StWavefmDatPktRec-
                 self.header.data_offset)/self.header.data_record_length)       
             self.calc_point_recs = new_val
@@ -302,15 +308,17 @@ class FileManager():
         #big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count])
         #pts =  unpack(big_fmt_string, self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()])
         #return((Point(self, unpacked_list = pts[fmtlen*i:fmtlen*(i+1)]) for i in xrange(self.header.point_records_count)))
-        return([Point(self,x) for x in self._get_raw_dimension(0, self.header.data_record_length)])
-    
-
+        #return([Point(self,x) for x in self._get_raw_dimension(0, self.header.data_record_length)])
+        #return((x[0] for x in self.data_provider._pmap))
+        return(self.data_provider._pmap)
     def get_raw_point(self, index):
         """Return the raw bytestring associated with point of number index"""
-        start = (self.header.data_offset + 
-            index * self.header.data_record_length)
-        return(self.data_provider._mmap[start : start +
-             self.header.data_record_length])
+        #start = (self.header.data_offset + 
+        #    index * self.header.data_record_length)
+        #return(self.data_provider._mmap[start : start +
+        #     self.header.data_record_length])
+        return(self.data_provider._pmap[index][0].tostring())
+
 
 #self, reader, startIdx ,version
     def get_point(self, index, nice=False):
@@ -319,6 +327,7 @@ class FileManager():
             return 
         self._current = index
         return(Point(self, self.get_raw_point(index), nice= nice))
+
     
     def get_next_point(self):
         """Return next point object via get_point / #legacy_api"""
@@ -633,7 +642,7 @@ class Writer(FileManager):
         self.data_provider.fileref.seek(old_size, 0)
         self.data_provider.fileref.write("\x00" * (bytes_to_pad + self.get_padding() ))
         self.data_provider.fileref.flush()
-        self.data_provider.remap(flush = False) 
+        self.data_provider.remap(flush = False, point_map = True) 
         return
 
     def set_dimension(self, name,new_dim):
@@ -686,7 +695,11 @@ class Writer(FileManager):
         if not self.has_point_records:
             self.has_point_records = True
             self.pad_file_for_point_recs(len(points))
-        self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = b"".join([x.pack() for x in points])
+        if isinstance(points[0], Point):
+            self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = b"".join([x.pack() for x in points])
+        else:
+             self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = points.tostring()
+
         #single_fmt = self.point_format.pt_fmt_long[1:]
         #big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count]) 
         #out = []

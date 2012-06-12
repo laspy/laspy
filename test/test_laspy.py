@@ -161,7 +161,7 @@ class LasReaderTestCase(unittest.TestCase):
         for pt1 in LasFile:
             pt2 = LasFile[k]
             pt1.make_nice()
-            pt2.make_nice()
+            pt2.make_nice() 
             self.assertEqual(pt1.X, pt2.X)
             self.assertEqual(pt1.Y, pt2.Y)
             self.assertEqual(pt1.Z, pt2.Z)

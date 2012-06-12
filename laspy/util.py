@@ -11,7 +11,7 @@ LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
 npFmt = {"<L":"i4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
 
 class Spec():
-    def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True, overwritable = True):
+    def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True, overwritable = True, idx = False):
         if ltl_endian:
             self.name = name
             self.offs = offs
@@ -149,7 +149,7 @@ class Format():
             last = self.specs[-1]
             offs = last.offs + last.num*fmtLen[last.fmt]
         self.rec_len += num*fmtLen[LEfmt[fmt]]
-        self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable))
+        self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable, idx = len(self.specs)))
         self.pt_fmt_long += LEfmt[fmt][1]
         self.packer = Struct(self.pt_fmt_long)
     def __str__(self):
