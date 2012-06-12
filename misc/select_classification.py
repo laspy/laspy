@@ -13,9 +13,14 @@ npts = sum(out_cls)
 print(str(npts) + " out of " + str(len(out_cls)) + " have classification in " + str(cls))
 outFile.writer.pad_file_for_point_recs(npts)
 outFile.writer.seek(outFile.header.data_offset, rel = False)
-for i in xrange(npts):
-    if out_cls[i]:
-        outFile.writer.data_provider._mmap.write(inFile.reader.get_raw_point(i))
+prefs = [inFile.reader.point_refs[i] for i in xrange(npts) if out_cls[i]]
+reclen = inFile.header.data_record_length
 
-#inFile.close()
-#outFile.close(ignore_header_changes = True)
+for i in xrange(npts):
+    inFile.reader.seek(prefs[i], rel = False)
+    outFile.writer.data_provider._mmap.write(inFile.reader.data_provider._mmap.read(reclen))    
+
+#outFile.writer.data_provider._mmap.write(inFile.reader.get_raw_point(i))
+
+inFile.close()
+outFile.close(ignore_header_changes = True)
