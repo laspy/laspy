@@ -24,7 +24,7 @@ class DataProvider():
     def point_map(self):
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))])
-
+ 
         self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
     def close(self):
@@ -153,10 +153,9 @@ class FileManager():
             # Create Empty File
             
             try:
-                filesize = max(filesize, self.header.__dict__["offset_to_point_data"])
+                filesize = max(filesize, self.header.__dict__["offset_to_point_data"]) 
             except:
-                pass 
-            print(filesize)
+                pass  
             self.data_provider.fileref.write("\x00"*filesize)
             self.data_provider.remap()
             self.header.reader = self
@@ -180,10 +179,7 @@ class FileManager():
             self._current = 0
 
         elif self.mode == "w+":
-            raise LaspyException("Append mode is not yet supported.")
-        
-        
-        
+            raise LaspyException("Append mode is not yet supported.") 
         return
     def populate_c_packers(self):
         for spec in self.point_format.specs:
@@ -663,7 +659,8 @@ class Writer(FileManager):
     
     def pad_file_for_point_recs(self,num_recs): 
         bytes_to_pad = num_recs * self.point_format.rec_len
-        old_size = self.data_provider.filesize()
+        #old_size = self.data_provider.filesize()
+        old_size = self.header.data_offset 
         self.data_provider._mmap.flush()
         self.data_provider.fileref.seek(old_size, 0)
         self.data_provider.fileref.write("\x00" * (bytes_to_pad))
