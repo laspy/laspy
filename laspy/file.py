@@ -42,8 +42,8 @@ class File(object):
 
         >>> h = f.header
         >>> f2 = file.File('file2.las', mode = "w", header=h)
-        >>> points = f.get_points()
-        >>> f2.set_points(points)
+        >>> points = f.points
+        >>> f2.points = points
         >>> f2.close()
         '''
 
@@ -190,6 +190,10 @@ class File(object):
         self.assertWriteMode()
         self.writer.set_points(new_points)
         return
+    doc = '''The point data from the file. Get or set the points as either a valid numpy array, or 
+    a list/array of laspy.base.Point instances. In write mode, the number of point records is set the 
+    first time a dimension or point array is supplied to the file.'''
+    points = property(get_points, set_points, None, doc)
 
     def read(self, index, nice = True):
         '''Reads the point at the given index'''
