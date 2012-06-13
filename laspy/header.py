@@ -108,8 +108,8 @@ class Header(object):
         '''Returns the file signature for the file. It should always be
         LASF'''
         return self.file_sig
-
-    file_signature = property(get_filesignature, None, None)
+    doc = '''The file signature for the file. Should always be LASF'''
+    file_signature = property(get_filesignature, None, None, doc)
 
     def get_filesourceid(self):
         '''Get the file source id for the file.'''
@@ -119,8 +119,8 @@ class Header(object):
         '''Set the file source id'''
         self.assertWriteMode()
         self.writer.set_header_property("file_src", value)
-
-    filesource_id = property(get_filesourceid, set_filesourceid, None)
+    doc = '''The file source ID for the file.'''
+    filesource_id = property(get_filesourceid, set_filesourceid, None, doc)
     file_source_id = filesource_id
 
     def get_global_encoding(self):
@@ -133,41 +133,13 @@ class Header(object):
         return
     doc = '''Global encoding for the file.
 
-    From the specification_:
+    From the specification:
 
         This is a bit field used to indicate certain global properties about
         the file. In LAS 1.2 (the version in which this field was introduced),
         only the low bit is defined (this is the bit, that if set, would have
-        the unsigned integer yield a value of 1). This bit field is defined
-        as:
-
-        .. csv-table:: Global Encoding - Bit Field Encoding
-            :header: "Bits", "Field Name", "Description"
-            :widths: 10, 20, 60
-
-            0, "GPS Time Type", "The meaning of GPS Time in the Point Records
-            0 (not set) -> GPS time in the point record fields is GPS Week
-            Time (the same as previous versions of LAS) 1 (set) -> GPS Time is
-            standard GPS Time (satellite GPS Time) minus 1 x 10^9 (Adjusted
-            Standard GPS Time). The offset moves the time back to near zero to
-            improve floating point resolution."
-            1, "Waveform Data Packets Internal", "If this bit is set, the
-            waveform data packets are located within this file (note that this
-            bit is mutually exclusive with bit 2)"
-            2, "Waveform Data Packets External", "If this bit is set, the
-            waveform data packets are located external to this file in an
-            auxiliary file with the same base name as this file and the
-            extension \".wdp\". (note that this bit is mutually exclusive with
-            bit 1)"
-            3, "Return numbers have been synthetically generated", "If set,
-            the point return numbers in the Point Data Records have been
-            synthetically generated. This could be the case, for example, when
-            a composite file is created by combining a First Return File and a
-            Last Return File. In this case, first return data will be labeled
-            \"1 of 2\" and second return data will be labeled \"2 of 2\""
-            4:15, "Reserved", "Must be set to zero"
-
     '''
+
     global_encoding = property(get_global_encoding,
                                set_global_encoding,
                                None,
@@ -187,7 +159,7 @@ class Header(object):
         it is the same as :obj:`liblas.header.Header.guid`. Use that to
         manipulate the ProjectID for the file.
 
-        From the specification_:
+        From the specification:
             The four fields that comprise a complete Globally Unique Identifier
             (GUID) are now reserved for use as a Project Identifier (Project
             ID). The field remains optional. The time of assignment of the
@@ -290,7 +262,7 @@ class Header(object):
         '''
         self.assertWriteMode()
         return(self.writer.set_header_property("gen_soft", value))
-    '''The software ID for the file''' 
+    doc = '''The software ID for the file''' 
     software_id = property(get_softwareid, set_softwareid, None, doc)
 
     def get_date(self):
@@ -548,7 +520,7 @@ class Header(object):
         self.writer.set_header_property("z_scale", value[2])
         return
     doc = '''The scale factors in [x, y, z] for the point data. 
-            From the specification_:
+            From the specification:
             The scale factor fields contain a double floating point value that
             is used to scale the corresponding X, Y, and Z long values within
             the point records. The corresponding X, Y, and Z scale factor must
@@ -580,7 +552,7 @@ class Header(object):
         return
     doc = '''The offset factors in [x, y, z] for the point data.
 
-        From the specification_:
+        From the specification:
             The offset fields should be used to set the overall offset for the
             point records. In general these numbers will be zero, but for
             certain cases the resolution of the point data may not be large
