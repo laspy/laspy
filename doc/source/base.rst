@@ -1,5 +1,8 @@
 Laspy: Base Module
 ==================
 
-.. automodule:: laspy.base
-    :members:
+**Base Module Basics**
+======================
+
+Interesting and well written content goes here.
+
