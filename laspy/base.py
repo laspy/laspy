@@ -11,23 +11,30 @@ import numpy as np
 
 class DataProvider():
     def __init__(self, filename, manager):
+        '''Construct the data provider. _mmap refers to the memory map, and _pmap 
+        refers to the numpy point map.'''
         self.filename = filename
         self.fileref = False
         self._mmap = False
         self._pmap = False
         self.manager = manager
+    
     def open(self, mode):
+        '''Open the file, catch simple problems.'''
         try:
             self.fileref = open(self.filename, mode)
         except(Exception):
             raise LaspyException("Error opening file")
+
     def point_map(self):
+        '''Create the numpy point map based on the point format.'''
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))])
  
         self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
     def close(self):
+        '''Close the data provider flush changes if _mmap and _pmap exist.'''
         if self.fileref != False:
             try:
                 self.fileref.close()
@@ -41,7 +48,8 @@ class DataProvider():
             except(Exception):
                 raise LaspyException("Error closing mmap")
     
-    def map(self): 
+    def map(self):
+        '''Memory map the file'''
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
@@ -50,6 +58,7 @@ class DataProvider():
             raise LaspyException("Error mapping file.")
 
     def remap(self,flush = True, point_map = False):
+        '''Re-map the file. Flush changes, close, open, and map. Optionally point map.'''
         if flush and type(self._mmap) != bool:
             #packer = Struct(self.manager.point_format.pt_fmt_long)
             if type(self._pmap) != bool:
@@ -78,6 +87,7 @@ class DataProvider():
         return([x[0] for x in self._pmap[index.start:index.stop,step]])
 
     def __setitem__(self, key, value):
+        '''Assign raw bytes for point @ key'''
         try:
             key.stop
         except AttributeError:
@@ -86,15 +96,16 @@ class DataProvider():
         self._pmap[key.start:key.stop] = [(x,) for x in value]
 
     def filesize(self):
+        '''Return the size of the current map'''
         if self._mmap == False:
             raise LaspyException("File not mapped")
         return(self._mmap.size())
 
 class FileManager():
     def __init__(self,filename, mode, header = False, vlrs = False): 
-        """Build the FileManager object. This is done when opening the file
+        '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
-        header padding."""
+        header padding.'''
         self.vlr_formats = Format("VLR")
         self.header = header  
         self.mode = mode
@@ -126,10 +137,6 @@ class FileManager():
             self.vlrs = self.header.__dict__["vlrs"] 
             if vlrs != False:
                 self.vlrs.extend(vlrs)
-            #try:
-            #    filesize = max(self.header_format.rec_len, self.header.__dict__["offset_to_point_data"])
-            #except:
-            #    filesize = self.header_format.rec_len
             filesize = self.header_format.rec_len
             if self.vlrs != []:
                 filesize += sum([len(x) for x in self.vlrs]) 
@@ -140,17 +147,7 @@ class FileManager():
             else:
                 self.point_format = Format("0") 
             self.populate_c_packers()
-            #filesize += self.header.__dict__["point_records_count"]
-            #if "point_records_count" in self.header.__dict__.keys():
-            #    self.has_point_records = True
-            #    filesize += self.header.__dict__["point_records_count"]*self.point_format.rec_len
-            #else:
-            #    self.has_point_records = False
-            
             self.has_point_records=False
-            # Is there a faster way to do this?
-            # Create Empty File
-            
             try:
                 filesize = max(filesize, self.header.__dict__["offset_to_point_data"]) 
             except:
@@ -181,16 +178,19 @@ class FileManager():
             raise LaspyException("Append mode is not yet supported.") 
         return
     def populate_c_packers(self):
+        '''This is depricated if the numpy point map is used, because nparr.tostring() is MUCH faster.
+        This creates compiled Struct objects for various formats.
+        '''
         for spec in self.point_format.specs:
             self.c_packers[spec.name] = Struct(spec.fmt)
             self.c_packers[spec.fmt] = self.c_packers[spec.name]
     
     def packed_str(self, string):
-        """Take a little endian binary string, and convert it to a python int."""
+        '''Take a little endian binary string, and convert it to a python int.'''
         return(sum([int(string[idx])*(2**idx) for idx in xrange(len(string))]))
 
     def binary_str(self,N, zerolen = 8):
-        """Take a python integer and create a binary string padded to len zerolen."""
+        '''Take a python integer and create a binary string padded to len zerolen.'''
         raw_bin = bin(N)[2:][::-1]
         padding = zerolen-len(raw_bin)
         if padding < 0:
@@ -198,16 +198,16 @@ class FileManager():
         return(raw_bin + '0'*(zerolen-len(raw_bin)))
 
     def read(self, bytes):
-        """Wrapper for mmap.mmap read function"""
+        '''Wrapper for mmap.mmap read function'''
         return(self.data_provider._mmap.read(bytes))
     
     def reset(self):
-        """Refresh the mmap and fileref"""
+        '''Refresh the mmap and fileref'''
         self.data_provier.remap() 
         return
      
     def seek(self, bytes, rel = True):
-        """Wrapper for mmap.mmap seek functions, make option rel explicit"""
+        '''Wrapper for mmap.mmap seek functions, make option rel explicit'''
         self._current = None
         if rel:
             self.data_provider._mmap.seek(bytes,1)
@@ -215,6 +215,8 @@ class FileManager():
         self.data_provider._mmap.seek(bytes, 0)
         
     def read_words(self, name):
+        '''Read a consecutive sequence of packed binary data, return a single 
+        element or list.'''
         try:
             dim = self.vlr_formats.lookup[name]
         except KeyError:
@@ -222,8 +224,8 @@ class FileManager():
         return(self._read_words(dim.fmt, dim.num, dim.length))
 
     def _read_words(self, fmt, num, bytes):
-        """Read a consecutive sequence of packed binary data, return a single
-        element or list"""
+        '''Read a consecutive sequence of packed binary data, return a single
+        element or list'''
         outData = []
         for i in xrange(num):
             dat = self.read(bytes)
@@ -240,7 +242,7 @@ class FileManager():
 
 
     def grab_file_version(self):
-        """Manually grab file version from header"""
+        '''Manually grab file version from header'''
         self.seek(24, rel = False)
         v1 = self._read_words("<B", 1, 1)
         v2 = self._read_words("<B", 1, 1)
@@ -248,7 +250,7 @@ class FileManager():
         return(str(v1) +"." +  str(v2))
 
     def get_header(self, mode):
-        """Return the header object. Depricated?"""
+        '''Return the header object. Depricated?'''
         ## Why is this != neccesary?
         if self.header != False:
             if self.header.file_mode != mode:
@@ -258,7 +260,7 @@ class FileManager():
             self.header = Header(self, mode)
 
     def populate_vlrs(self): 
-        """Catalogue the variable length records"""
+        '''Catalogue the variable length records'''
         self.vlrs = []
         self.seek(self.header.header_size, rel = False)
         for i in xrange(self.header.num_variable_len_recs):
@@ -277,12 +279,12 @@ class FileManager():
         return(self.vlrs)
     
     def get_padding(self):
-        """Return the padding between the end of the VLRs and the beginning of
-        the point records"""
+        '''Return the padding between the end of the VLRs and the beginning of
+        the point records'''
         return(self.header.data_offset - self.vlr_stop)
 
     def get_pointrecordscount(self):
-        """calculate the number of point records"""
+        '''calculate the number of point records'''
         if self.calc_point_recs != False:
             return(self.calc_point_recs)
         
@@ -308,7 +310,7 @@ class FileManager():
         pass
 
     def get_raw_point_index(self,index):
-        """Return the byte index of point number index"""
+        '''Return the byte index of point number index'''
         return(self.header.data_offset + 
             index*self.header.data_record_length)
     
@@ -326,7 +328,7 @@ class FileManager():
         #return((x[0] for x in self.data_provider._pmap))
         return(self.data_provider._pmap)
     def get_raw_point(self, index):
-        """Return the raw bytestring associated with point of number index"""
+        '''Return the raw bytestring associated with point of number index'''
         #start = (self.header.data_offset + 
         #    index * self.header.data_record_length)
         #return(self.data_provider._mmap[start : start +
@@ -336,7 +338,7 @@ class FileManager():
 
 #self, reader, startIdx ,version
     def get_point(self, index, nice=False):
-        """Return point object for point of number index / #legacy_api""" 
+        '''Return point object for point of number index / #legacy_api''' 
         if index >= self.get_pointrecordscount():
             return 
         self._current = index
@@ -344,7 +346,7 @@ class FileManager():
 
     
     def get_next_point(self):
-        """Return next point object via get_point / #legacy_api"""
+        '''Return next point object via get_point / #legacy_api'''
         if self._current == None:
             raise LaspyException("No Current Point Specified," + 
                             " use Reader.GetPoint(0) first")
@@ -353,7 +355,7 @@ class FileManager():
         return self.get_point(self._current + 1)
 
     def build_point_refs(self):
-        """Build array of point offsets """
+        '''Build array of point offsets '''
         pts = int(self.get_pointrecordscount())
         length = int(self.header.data_record_length)
         offs = int(self.header.data_offset)
@@ -362,7 +364,7 @@ class FileManager():
         return
 
     def get_dimension(self, name):
-        """Return point dimension of with above name, returns numpy array"""
+        '''Return point dimension of with above name, returns numpy array'''
         if not self.has_point_records:
             return None
         if type(self.point_refs) == bool:
@@ -379,7 +381,7 @@ class FileManager():
         return(self.data_provider._pmap["point"][spec.name])
 
     def _get_dimension_by_specs(self,offs, fmt, length):
-        """Return point dimension of specified offset format and length""" 
+        '''Return point dimension of specified offset format and length''' 
         _mmap = self.data_provider._mmap  
         prefs = (offs + x for x in self.point_refs) 
         packer = self.c_packers[fmt]
@@ -389,19 +391,19 @@ class FileManager():
 
 
     def _get_raw_dimension(self,spec):
-        """Return point dimension of specified offset format and length""" 
+        '''Return point dimension of specified offset format and length''' 
         #_mmap = self.data_provider._mmap 
         #prefs = (offs + x for x in self.point_refs)
         #return((_mmap[start + offs : start+offs+length] for start in prefs))
         return(self.data_provider._pmap["point"][spec.name].tostring())
 
     def _get_raw_datum(self, rec_offs, spec):
-        """return raw bytes associated with non dimension field (VLR/Header)"""
+        '''return raw bytes associated with non dimension field (VLR/Header)'''
         return(self.data_provider._mmap[(rec_offs + spec.offs):(rec_offs + spec.offs 
                         + spec.num*spec.length)])
 
     def _get_datum(self, rec_offs, spec):
-        """Return unpacked data assocaited with non dimension field (VLR/Header)"""
+        '''Return unpacked data assocaited with non dimension field (VLR/Header)'''
         data = self._get_raw_datum(rec_offs, spec)
         if spec.num == 1:
             return(unpack(spec.fmt, data)[0])
@@ -412,12 +414,12 @@ class FileManager():
         return(unpacked) 
 
     def get_raw_header_property(self, name):
-        """Wrapper for grabbing raw header bytes with _get_raw_datum"""
+        '''Wrapper for grabbing raw header bytes with _get_raw_datum'''
         spec = self.header_format.lookup[name]
         return(self._get_raw_datum(0, spec))
     
     def get_header_property(self, name):
-        """Wrapper for grabbing unpacked header data with _get_datum"""
+        '''Wrapper for grabbing unpacked header data with _get_datum'''
         if name in self.header_changes:
             spec = self.header_format.lookup[name]
             new_val = self._get_datum(0, spec)
@@ -580,7 +582,7 @@ class Reader(FileManager):
 class Writer(FileManager):
 
     def close(self, ignore_header_changes = False):
-        """Flush changes to mmap and close mmap and fileref"""
+        '''Flush changes to mmap and close mmap and fileref'''
         if not ignore_header_changes:
             self.header.update_histogram()
             self.header.update_min_max() 
@@ -626,7 +628,7 @@ class Writer(FileManager):
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
 
     def set_padding(self, value):
-        """Set the padding between end of VLRs and beginning of point data"""
+        '''Set the padding between end of VLRs and beginning of point data'''
         if value < 0: 
             raise LaspyException("New Padding Value Overwrites VLRs")
         if self.mode == "w":
@@ -683,7 +685,7 @@ class Writer(FileManager):
             self.has_point_records = True
             self.set_header_property("num_pt_recs", len(new_dim))
             self.pad_file_for_point_recs(len(new_dim))
-        """Set a point dimension of appropriate name to new_dim"""
+        '''Set a point dimension of appropriate name to new_dim'''
         ptrecs = self.get_pointrecordscount()
         if len(new_dim) != ptrecs:
             raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs))
@@ -699,7 +701,7 @@ class Writer(FileManager):
         return
 
     def _set_dimension_by_spec(self,new_dim,offs, fmt, length):
-        """Set a point dimension of appropriate offset format and length to new_dim"""
+        '''Set a point dimension of appropriate offset format and length to new_dim'''
         if type(self.point_refs) == bool:
             self.build_point_refs()
         _mmap = self.data_provider._mmap
@@ -747,7 +749,7 @@ class Writer(FileManager):
         if not self.has_point_records:
             self.has_point_records = True
             self.pad_file_for_point_recs(len(new_raw_points))
-        """Set a point dimension of appropriate name to new_dim"""
+        '''Set a point dimension of appropriate name to new_dim'''
         ptrecs = self.get_pointrecordscount()
         if len(new_raw_points) != ptrecs:
             raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_raw_points)) + " the number of points (%s)" % str(ptrecs)) 
@@ -761,15 +763,14 @@ class Writer(FileManager):
         self.data_provider.point_map()
 
     def _set_raw_datum(self, rec_offs, spec, val):
-        """Set a non dimension field with appropriate record type offset (0 for header)
-        , appropriate spec object, and a new value. Uses raw bytes."""
+        '''Set a non dimension field with appropriate record type offset (0 for header)
+        , appropriate spec object, and a new value. Uses raw bytes.'''
         self.data_provider._mmap[rec_offs+spec.offs:rec_offs+spec.offs +
                   spec.num*spec.length] = val
         return
     
     def _set_datum(self, rec_offs, dim, val):
-        """Set a non dimension field as with _set_raw_datum, but supply a formatted value"""
-     
+        '''Set a non dimension field as with _set_raw_datum, but supply a formatted value''' 
         if dim.num == 1:
             lb = rec_offs + dim.offs
             ub = lb + dim.length 
@@ -793,7 +794,7 @@ class Writer(FileManager):
         return
 
     def set_raw_header_property(self, name, value):
-        """Wrapper for _set_raw_datum, accpeting name of header property and raw byte value. """
+        '''Wrapper for _set_raw_datum, accpeting name of header property and raw byte value. '''
         try:
             spec = self.header_format.lookup[name]
         except(KeyError):
@@ -802,7 +803,7 @@ class Writer(FileManager):
         self._set_raw_datum(0, spec, value)
 
     def set_header_property(self, name, value):
-        """Wrapper for _set_datum, accepting name of header property and formatted value"""
+        '''Wrapper for _set_datum, accepting name of header property and formatted value'''
         try:
             dim = self.header_format.lookup[name]
         except(KeyError):
@@ -815,42 +816,54 @@ class Writer(FileManager):
         return
 
     def set_header(self, header):
-        pass     
+        raise NotImplementedError
     
     def set_input_srs(self, srs):
-        pass
+        raise NotImplementedError
     
     def set_output_srs(self, srs):
-        pass
+        raise NotImplementedError
 
     ##  To Implement: Scale
     def set_x(self,X, scale = False):
+        '''Wrapper for set_dimension("X", new_dimension)'''
         self.set_dimension("X", X)
         return
 
     def set_y(self,Y, scale = False):
+        '''Wrapper for set_dimension("Y", new_dimension)'''
         self.set_dimension("Y", Y)
         return
 
     def set_z(self, Z, scale = False):
+        '''Wrapper for set_dimension("Z", new_dimension)'''
         self.set_dimension("Z", Z)
         return
 
     def set_intensity(self, intensity):
+        '''Wrapper for set_dimension("intensity", new_dimension)'''
         self.set_dimension("intensity", intensity)
         return
     
     def set_flag_byte(self, byte):
+        '''Wrapper for set_dimension("flag_byte", new_dimension)'''
         self.set_dimension("flag_byte", byte)
         return
     
-    ##########
     # Utility Functions, refactor
     
     def binary_str_arr(self, arr, length = 8):
+        '''Convert an array of numeric data to an array of binary strings'''
         return([self.binary_str(x, length) for x in arr])
 
     def bitpack(self,arrs,idx, pack = True):
+        '''Pack an array of binary strings into a byte based on idx
+        for example bitpack((str1, str2), (0,3), (3,8)) packs the length-8
+        binary strings str1 and str2 into a byte, using the first three bits
+        of str1, and the last five bits of str2. 
+        
+        There is probably a more efficient way of doing this.
+        '''
         if pack:
             outArr = ([1]*len(arrs[0]))
         else:
@@ -873,6 +886,7 @@ class Writer(FileManager):
     ########
 
     def set_return_num(self, num):
+        '''Set the binary field return_num in the flag_byte'''
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(num, 3)
         outByte = self.bitpack((newBits,flag_byte), ((0,3), (3,8)))
@@ -880,6 +894,7 @@ class Writer(FileManager):
         return
 
     def set_num_returns(self, num):
+        '''Set the binary field num_returns in the flag_byte'''
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(num, 3)
         outByte = self.bitpack((flag_byte,newBits,flag_byte), 
@@ -888,6 +903,7 @@ class Writer(FileManager):
         return
 
     def set_scan_dir_flag(self, flag): 
+        '''Set the binary field scan_dir_flag in the flag_byte'''
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(flag, 1)
         outByte = self.bitpack((flag_byte,newBits,flag_byte), 
@@ -896,6 +912,7 @@ class Writer(FileManager):
         return
 
     def set_edge_flight_line(self, line):
+        '''Set the binary field edge_flight_line in the flag_byte'''
         flag_byte = self.binary_str_arr(self.get_flag_byte())
         newBits = self.binary_str_arr(line, 1)
         outByte = self.bitpack((flag_byte,newBits), 
@@ -904,9 +921,12 @@ class Writer(FileManager):
         return
 
     def set_raw_classification(self, classification):
+        '''Set the entire classification byte at once. This is faster than setting the binary fields individually, 
+        but care must be taken that the values mean what you think they do. '''
         self.set_dimension("raw_classification", classification)
            
     def set_classification(self, classification):
+        '''Set the binary classification field inside the raw classification byte'''
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(classification, 5)
         out_byte = self.bitpack((new_bits, class_byte), ((0,5),(5,8)))
@@ -914,6 +934,7 @@ class Writer(FileManager):
         return
 
     def set_synthetic(self, synthetic):
+        '''Set the binary field synthetic inside the raw classification byte'''
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(synthetic, 1)
         out_byte = self.bitpack((class_byte, new_bits, class_byte),
@@ -922,6 +943,7 @@ class Writer(FileManager):
         return
 
     def set_key_point(self, pt):
+        '''Set the binary key_point field inside the raw classification byte'''
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(pt, 1)
         out_byte = self.bitpack((class_byte, new_bits, class_byte), 
@@ -930,6 +952,7 @@ class Writer(FileManager):
         return
  
     def set_withheld(self, withheld):
+        '''Set the binary field withheld inside the raw classification byte'''
         class_byte = self.binary_str_arr(self.get_raw_classification())
         new_bits = self.binary_str_arr(withheld, 1)
         out_byte = self.bitpack((class_byte, new_bits),
@@ -937,18 +960,22 @@ class Writer(FileManager):
         self.set_dimension("raw_classification", out_byte)
 
     def set_scan_angle_rank(self, rank):
+        '''Wrapper for set_dimension("scan_angle_rank")'''
         self.set_dimension("scan_angle_rank", rank)
         return
 
     def set_user_data(self, data):
+        '''Wrapper for set_dimension("user_data")'''
         self.set_dimension("user_data", data)
         return
     
     def set_pt_src_id(self, data):
+        '''Wrapper for set_dimension("pt_src_id")'''
         self.set_dimension("pt_src_id", data)
         return
     
     def set_gps_time(self, data):
+        '''Wrapper for set_dimension("gps_time")'''
         vsn = self.header.pt_dat_format_id
         if vsn in (1,2,3,4,5):    
             self.set_dimension("gps_time", data)
@@ -956,6 +983,7 @@ class Writer(FileManager):
         raise LaspyException("GPS Time is not available for point format: " + str(vsn))
     
     def set_red(self, red):
+        '''Wrapper for set_dimension("red")'''
         vsn = self.header.pt_dat_format_id
         if vsn in (2,3,5):
             self.set_dimension("red", red)
@@ -963,6 +991,7 @@ class Writer(FileManager):
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
     def set_green(self, green):
+        '''Wrapper for set_dimension("green")'''
         vsn = self.header.pt_dat_format_id
         if vsn in (2,3,5):
             self.set_dimension("green", green)
@@ -972,6 +1001,7 @@ class Writer(FileManager):
 
     
     def set_blue(self, blue):
+        '''Wrapper for set_dimension("blue")'''
         vsn = self.header.pt_dat_format_id
         if vsn in (2,3,5):
             self.set_dimension("blue", blue)
@@ -979,6 +1009,8 @@ class Writer(FileManager):
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
     def set_wave_packet_descp_idx(self, idx):
+        '''Wrapper for set_dimension("wave_packet_descp_idx") This is not currently functional, 
+        since addition of waveform data broke the numpy point map.'''
         vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("wave_packet_descp_index", idx)
@@ -986,6 +1018,8 @@ class Writer(FileManager):
         raise LaspyException("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
 
     def set_byte_offset_to_wavefm_data(self, idx):
+        '''Wrapper for set_dimension("byte_offset_to_wavefm_data"), not currently functional,
+        because addition of waveform data broke the numpy point map.'''
         vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("byte_offset_to_wavefm_data", idx)
@@ -995,6 +1029,8 @@ class Writer(FileManager):
 
     
     def set_wavefm_pkt_size(self, size):
+        '''Wrapper for set_dimension("wavefm_pkt_size"), not currently functional, because
+        addition of waveform data broke the numpy point map.'''
         vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("wavefm_pkt_size", size)
@@ -1002,6 +1038,9 @@ class Writer(FileManager):
         raise LaspyException("Waveform Packet Size Not Available for Point Format: " + str(vsn))
     
     def set_return_pt_wavefm_loc(self, loc):
+        '''Wrapper for set_dimension("return_pt_wavefm_loc"), not currently functional,
+        because addition of waveform data broke the numpy point map.'''
+        
         vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("return_pt_wavefm_loc", loc)
@@ -1009,13 +1048,15 @@ class Writer(FileManager):
         raise LaspyException("Return Point Waveform Loc Not Available for Point Format: " + str(vsn))
     
     def set_x_t(self, x):
+        '''Wrapper for set_dimension("X_t")'''
         vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
-            self.set_dimension("X_t_5", x)
+            self.set_dimension("X_t", x)
             return
         raise LaspyException("X_t Not Available for Point Format: " + str(vsn))
 
     def set_y_t(self, y):
+        '''Wrapper for set_dimension("Y_t")'''
         vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
             self.set_dimension("Y_t", y)
@@ -1023,20 +1064,9 @@ class Writer(FileManager):
         raise LaspyException("Y_t Not Available for Point Format: " + str(vsn))
     
     def set_z_t(self, z):
+        '''Wrapper for set_dimension("Z_t")'''
         vsn = self.header.pt_dat_format_id
         if vsn in (4, 5):
-            self.set_dimension("Z_t_5", z)
+            self.set_dimension("Z_t", z)
             return
         raise LaspyException("Z_t Not Available for Point Format: " + str(vsn))
-
-class Extender(FileManager):
-    pass
-    
-def CreateWithHeader(filename, header, vlrs = None):
-    writer = Writer()
-
-def ModifyWithHeader(filename, header):
-    pass
-
-def ReadWithHeader(filename, header):
-    pass

@@ -444,7 +444,7 @@ class LasWriteModeTestCase(unittest.TestCase):
     output_tempfile = 'write-mode-output.las'
     def setUp(self):
         shutil.copyfile(self.simple, self.tempfile)  
-        self.File1 = File.File(self.tempfile, "r")
+        self.File1 = File.File(self.tempfile, mode = "r")
 
     def test_using_barebones_header(self):
         header_object = header.Header()

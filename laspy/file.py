@@ -1,4 +1,4 @@
-"""
+'''
 /******************************************************************************
  * $Id$
  *
@@ -39,7 +39,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  ****************************************************************************/
- """
+ '''
 
 
 import base
@@ -57,7 +57,7 @@ class File(object):
                        mode='r',
                        in_srs=None,
                        out_srs=None):
-        """Instantiate a file object to represent an LAS file.
+        '''Instantiate a file object to represent an LAS file.
 
         :arg filename: The filename to open
         :keyword header: A header open the file with
@@ -91,7 +91,7 @@ class File(object):
         >>> for p in f:
         ...     f2.write(p)
         >>> f2.close()
-        """
+        '''
 
         self.filename = os.path.abspath(filename)
         self._header = header
@@ -103,19 +103,18 @@ class File(object):
         self.open()
 
     def open(self):
-        """Open the file for processing, called by __init__
-        """
+        '''Open the file for processing, called by __init__
+        '''
         
         if self._mode == 'r':
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
-            self.reader = base.Reader(self.filename, self._mode)            
-
+            ## Make sure we have a header
             if self._header == None:
-                self._header = self.reader.get_header(self._mode)
-            else:
-                base.ReadWithHeader(self.filename, self._header)
-
+                self.reader = base.Reader(self.filename,mode= self._mode)            
+                self._header = self.reader.get_header(self._mode) 
+            else: 
+                self.reader = base.Reader(self.filename, mode = self._mode, header=self._header)
 
             if self.in_srs:
                 self.reader.SetInputSRS(self.in_srs)
@@ -123,14 +122,15 @@ class File(object):
                 self.reader.SetOutputSRS(self.out_srs)
 
         if self._mode == 'rw':
-            self.writer = base.Writer(self.filename, self._mode)
-            self.reader = self.writer
             if self._header == None:
+                self.writer = base.Writer(self.filename,mode = self._mode)
+                self.reader = self.writer
                 self._header = self.reader.get_header(self._mode)
             else:
-                base.ModifyWithHeader(self.filename, self._header)
+                self.writer = base.Writer(self.filename,mode = self._mode, header = self._header)
+                self.reader = self.writer 
     
-        if self._mode == 'w':
+        if self._mode == 'w': 
             if self._header == None:
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
             if self._header.reader != False:
@@ -139,23 +139,15 @@ class File(object):
                 self._header = copy.copy(self._header)
                 self._header.file_mode = "w"
                 self._header.setup_writer_attrs()
-            self.writer = base.Writer(self.filename, "w", 
-                                      self._header, self._vlrs)
+            self.writer = base.Writer(self.filename, mode = "w",
+                                      header = self._header,vlrs = self._vlrs)
             self.reader = self.writer
         if self._mode == 'w+':
-            self.extender = base.Extender(self.filename)
-            if self._header == None:
-                self._header = self.reader.get_header(self._mode)
-            else:
-                base.ExtendWithHeader(self.filename, self._header)
-
-    #def __del__(self):
-    #    # Allow GC to clean up?
-    #    self.close()
+            raise NotImplementedError
 
     def close(self, ignore_header_changes = False):
-        """Closes the LAS file
-        """
+        '''Closes the LAS file
+        '''
         if self._mode == "r":
             self.reader.close()
         else:
@@ -179,12 +171,12 @@ class File(object):
     def get_output_srs(self):
         return self.out_srs
 
-    doc = """The output :obj:`laspy.SRS` for the file.  Data will be
+    doc = '''The output :obj:`laspy.SRS` for the file.  Data will be
     reprojected to this SRS according to either the :obj:`input_srs` if it
     was set or default to the :obj:`laspy.header.Header.SRS` if it was
     not set.  The header's SRS must be valid and exist for reprojection
     to occur. GDAL support must also be enabled for the library for
-    reprojection to happen."""
+    reprojection to happen.'''
     
     output_srs = property(get_output_srs, set_output_srs, None, doc)
 
@@ -196,13 +188,13 @@ class File(object):
 
     def get_input_srs(self):
         return self.in_srs
-    doc = """The input :obj:`laspy.SRS` for the file.  This overrides the
+    doc = '''The input :obj:`laspy.SRS` for the file.  This overrides the
     :obj:`laspy.header.Header.SRS`.  It is useful in cases where the header's
-    SRS is not valid or does not exist."""
+    SRS is not valid or does not exist.'''
     input_srs = property(get_input_srs, set_input_srs, None, doc)
 
     def get_header(self):
-        """Returns the laspy.header.Header for the file""" 
+        '''Returns the laspy.header.Header for the file''' 
         if self._mode == "r":
             return self.reader.get_header(self._mode)
         else:
@@ -210,15 +202,15 @@ class File(object):
         return None
 
     def set_header(self, header):
-        """Sets the laspy.header.Header for the file.  If the file is in \
-        append mode, the header will be overwritten in the file."""
+        '''Sets the laspy.header.Header for the file.  If the file is in \
+        append mode, the header will be overwritten in the file.'''
         # append mode
         if self._mode == "w+": 
             self.writer.set_header(header)
             return True
         raise util.LaspyException("The header can only be set "
                                 "after file creation for files in append mode")
-    doc = """The file's :obj:`laspy.header.Header`
+    doc = '''The file's :obj:`laspy.header.Header`
 
     .. note::
         If the file is in append mode, the header will be overwritten in the
@@ -227,11 +219,11 @@ class File(object):
         own at read time, you must instantiate a new :obj:`laspy.file.File`
         instance.
 
-    """
+    '''
     header = property(get_header, set_header, None, doc)
 
     def read(self, index, nice = True):
-        """Reads the point at the given index"""
+        '''Reads the point at the given index'''
         if self.reader.get_pointrecordscount() >= index:
             
             return(self.reader.get_point(index, nice)) 
@@ -508,14 +500,14 @@ class File(object):
 
 
     def __iter__(self):
-        """Iterator support (read mode only)
+        '''Iterator support (read mode only)
 
           >>> points = []
           >>> for i in f:
           ...   points.append(i)
           ...   print i # doctest: +ELLIPSIS
           <laspy.base.Point object at ...>
-        """
+        '''
         if self._mode == "r":
             self.at_end = False
             p = self.reader.get_point(0)
@@ -533,13 +525,13 @@ class File(object):
     ### END OF GB REVISIONS ###
 
     def __getitem__(self, index):
-        """Index and slicing support
+        '''Index and slicing support
 
           >>> out = f[0:3]
           [<laspy.point.Point object at ...>,
           <laspy.point.Point object at ...>,
           <laspy.point.Point object at ...>]
-        """
+        '''
         try:
             index.stop
         except AttributeError:
@@ -556,11 +548,11 @@ class File(object):
         return output
 
     def __len__(self):
-        """Returns the number of points in the file according to the header"""
+        '''Returns the number of points in the file according to the header'''
         return self.header.point_records_count
 
     def write(self, pt):
-        """Writes the point to the file if it is append or write mode. LAS
+        '''Writes the point to the file if it is append or write mode. LAS
         files are written sequentially starting from the first point (in pure
         write mode) or from the last point that exists (in append mode).
 
@@ -572,7 +564,7 @@ class File(object):
             have them be written into the LAS file (from say numpy or
             something). You have to take care of this adaptation yourself.
 
-        """
+        '''
         if not isinstance(pt, util.Point):
             raise util.LaspyException('cannot write %s, it must '
                                     'be of type laspy.point.Point' % pt)
@@ -581,12 +573,12 @@ class File(object):
             pass
 
     def get_xmlsummary(self):
-        """Returns an XML string summarizing all of the points in the reader
+        '''Returns an XML string summarizing all of the points in the reader
         
         .. note::
             This method will reset the reader's read position to the 0th 
             point to summarize the entire file, and it will again reset the 
-            read position to the 0th point upon completion."""
+            read position to the 0th point upon completion.'''
         if self._mode != 0:
             raise util.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
         return
