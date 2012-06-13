@@ -1,6 +1,9 @@
 import ctypes
 from struct import pack, unpack, Struct
-from lxml import etree
+try:
+    from lxml import etree
+except(Exception):
+    from xml import etree
 
 class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
