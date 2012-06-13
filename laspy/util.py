@@ -12,6 +12,7 @@ npFmt = {"<L":"i4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":
 
 class Spec():
     def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True, overwritable = True, idx = False):
+        '''Build the spec instance. Spec holds information about how to read and write a particular field.'''
         if ltl_endian:
             self.name = name
             self.offs = offs
@@ -37,6 +38,7 @@ class Spec():
 ### LAS specification. 
 class Format():
     def __init__(self, fmt, overwritable = False):
+        '''Build the format instance. The format consists of a set of specs, and creates a larger reasable block.'''
         fmt = str(fmt)
         self.fmt = fmt
         self.specs = []
@@ -159,6 +161,8 @@ class Format():
 
 class Point():
     def __init__(self, reader, bytestr = False, unpacked_list = False, nice = False):
+        '''Build a point instance, either by being given a reader which can provide data or by a list of unpacked attributes. 
+        The numpy point map does not require one to use this class, instead the data is provided as an array.'''
         self.reader = reader 
         self.packer = self.reader.point_format.packer
         if bytestr != False:
@@ -171,6 +175,9 @@ class Point():
         if nice:
             self.make_nice()
     def make_nice(self):
+        '''Turn a point instance with the bare essentials (an unpacked list of data)
+        into a fully populated point. Add all the named attributes it possesses, including binary fields.
+        '''
         i = 0
         for dim in self.reader.point_format.specs: 
                 self.__dict__[dim.name] = self.unpacked[i]
@@ -190,10 +197,12 @@ class Point():
 
 
     def pack(self):
+        '''Return a binary string representing the point data. Slower than nparr.tostring()'''
         return(self.packer.pack(*self.unpacked))
         
 class var_len_rec():
     def __init__(self, reader=False, attr_dict = False):
+        '''Build a vlr from an attribute dictionary or a reader capable of reading in the data.'''
         ### VLR CONTENT ###
         if not attr_dict:
             self.reserved = reader.read_words("reserved")
@@ -216,15 +225,18 @@ class var_len_rec():
             self.isVLR = True
     
     def __len__(self):
+        '''Return the size of the vlr object in bytes'''
         return self.rec_len_after_header + 54
 
     def pack(self, name, val): 
+        '''Pack a VLR field into bytes.'''
         spec = self.fmt.lookup[name]
         if spec.num == 1:
             return(pack(spec.fmt, val))
         return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
     
     def to_byte_string(self):
+        '''Pack the entire VLR into a byte string.'''
         out = (self.pack("reserved", self.reserved) + 
                self.pack("user_id", self.user_id) + 
                self.pack("record_id", self.record_id) + 
