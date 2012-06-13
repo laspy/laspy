@@ -15,14 +15,14 @@ class File(object):
 
         :arg filename: The filename to open
         :keyword header: A header open the file with. Not required in modes "r" and "rw"
-        :type header: an :obj:`laspy.header.Header` instance
+        :type header: a :obj:`laspy.header.Header` instance
         :keyword mode: "r" for read, "rw" for modify/update, "w" for write, and "w+" for append (not implemented)
         :type mode: string
         :keyword in_srs: Input SRS to override the existing file's SRS with (not implemented)
-        :type in_srs: an :obj:`laspy.SRS` instance (not implemented)
+        :type in_srs: a :obj:`laspy.SRS` instance
         :keyword out_srs: Output SRS to reproject points on-the-fly to as \
         they are read/written. (not implemented)
-        :type out_srs: an :obj:`laspy.SRS` instance (not implemented)
+        :type out_srs: a :obj:`laspy.SRS` instance (not implemented)
 
         .. note::
             To open a file in write mode, you must provide a

@@ -5,7 +5,7 @@ Dimensions:
     In addition to grabbing file points, as documented below, it is possible 
     to obtain and set individuals dimensions as well. The dimensions available
     to a particular file depend on the point format, a summary of which is 
-    available via the get_xml_point_format_summary method. Dimensions might
+    available via the File.point_format.xml() method. Dimensions might
     be used as follows: ::
 
         # Flip the X and Y Dimensions
