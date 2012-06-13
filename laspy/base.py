@@ -1,5 +1,3 @@
-#
-# Provides base functions for manipulating files. 
 from mmap import mmap
 from header import Header, leap_year
 from struct import pack, unpack, Struct
@@ -102,6 +100,7 @@ class DataProvider():
         return(self._mmap.size())
 
 class FileManager():
+    '''Superclass of Reader and Writer, provides most of the data manipulation functionality in laspy.''' 
     def __init__(self,filename, mode, header = False, vlrs = False): 
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
