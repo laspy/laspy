@@ -133,8 +133,7 @@ class FileManager():
             filesize = self.header_format.rec_len
             if self.vlrs != []:
                 filesize += sum([len(x) for x in self.vlrs]) 
-            self.vlr_stop = filesize
-            print(self.vlr_stop)
+            self.vlr_stop = filesize 
 
             if "pt_dat_format_id" in self.header.__dict__.keys():
                 self.point_format = Format(self.header.__dict__["pt_dat_format_id"])
@@ -258,11 +257,11 @@ class FileManager():
         else:
             self.header = Header(self, mode)
 
-    def populate_vlrs(self):
+    def populate_vlrs(self): 
         """Catalogue the variable length records"""
         self.vlrs = []
         self.seek(self.header.header_size, rel = False)
-        for i in xrange(self.header.num_variable_len_recs): 
+        for i in xrange(self.header.num_variable_len_recs):
             self.vlrs.append(var_len_rec(self))
             #self.seek(self.vlrs[-1].rec_len_after_header)
             if self.data_provider._mmap.tell() > self.header.data_offset:
@@ -591,7 +590,7 @@ class Writer(FileManager):
     def __del__(self): 
         self.close()
 
-    def set_vlrs(self, value):
+    def set_vlrs(self, value): 
         if value == False or len(value) == 0:
             return
         if not all([x.isVLR for x in value]):
@@ -599,7 +598,7 @@ class Writer(FileManager):
                                  "composed of laspy.base.var_len_rec objects.")
         elif self.mode == "w+":
             raise NotImplementedError
-        elif self.mode in ("w", "rw"): 
+        elif self.mode == "rw": 
             current_padding = self.get_padding()
             old_offset = self.header.data_offset
             self.seek(0, rel = False)
@@ -618,6 +617,11 @@ class Writer(FileManager):
                 self.data_provider.remap() 
             else:
                 self.data_provider.remap()
+        elif self.mode == "w":
+            self.seek(self.header.header_size, rel = False)
+            for vlr in value: 
+                self.data_provider._mmap.write(vlr.to_byte_string())
+            return
         else:
             raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
 
@@ -666,6 +670,8 @@ class Writer(FileManager):
         self.data_provider.fileref.write("\x00" * (bytes_to_pad))
         self.data_provider.fileref.flush()
         self.data_provider.remap(flush = False, point_map = True) 
+        # Write Phase complete, enter rw mode?
+        
         return
 
     def set_dimension(self, name,new_dim):

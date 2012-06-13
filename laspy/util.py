@@ -218,9 +218,11 @@ class var_len_rec():
     def __len__(self):
         return self.rec_len_after_header + 54
 
-    def pack(self, name, val):
+    def pack(self, name, val): 
         spec = self.fmt.lookup[name]
-        return(pack(spec.fmt, val))
+        if spec.num == 1:
+            return(pack(spec.fmt, val))
+        return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
     
     def to_byte_string(self):
         out = (self.pack("reserved", self.reserved) + 
@@ -229,6 +231,13 @@ class var_len_rec():
                self.pack("rec_len_after_header", self.rec_len_after_header) + 
                self.pack("description", self.description) +
                self.VLR_body)
+        diff = (self.rec_len_after_header - len(self.VLR_body))
+        if diff > 0:
+            out += "\x00"*diff
+        elif diff < 0:
+            raise LaspyException("Invalid Data in VLR: too long for specified rec_len." + 
+                                " rec_len_after_header = " + str(self.rec_len_after_header) + 
+                                " actual length = " + str(len(self.VLR_body)))
         return(out)
 
 
