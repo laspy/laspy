@@ -1,7 +1,7 @@
 Laspy: File Module
 ==================
 
-Dimensions:
+**Dimensions:**
     In addition to grabbing file points, as documented below, it is possible 
     to obtain and set individuals dimensions as well. The dimensions available
     to a particular file depend on the point format, a summary of which is 

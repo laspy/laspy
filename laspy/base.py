@@ -8,6 +8,7 @@ import numpy as np
 
 
 class DataProvider():
+    '''Provides access to the file object, the memory map, and the numpy point map.'''
     def __init__(self, filename, manager):
         '''Construct the data provider. _mmap refers to the memory map, and _pmap 
         refers to the numpy point map.'''
@@ -32,7 +33,7 @@ class DataProvider():
         self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
     def close(self):
-        '''Close the data provider flush changes if _mmap and _pmap exist.'''
+        '''Close the data provider and flush changes if _mmap and _pmap exist.'''
         if self.fileref != False:
             try:
                 self.fileref.close()
@@ -249,7 +250,7 @@ class FileManager():
         return(str(v1) +"." +  str(v2))
 
     def get_header(self, mode):
-        '''Return the header object. Depricated?'''
+        '''Return the header object, or create one if absent.'''
         ## Why is this != neccesary?
         if self.header != False:
             if self.header.file_mode != mode:
@@ -274,6 +275,7 @@ class FileManager():
         return
 
     def get_vlrs(self):
+        '''Populate and return list of laspy.util.var_len_rec objects.'''
         self.populate_vlrs()
         return(self.vlrs)
     
@@ -314,6 +316,7 @@ class FileManager():
             index*self.header.data_record_length)
     
     def get_points(self):
+        '''Return a numpy array of all point data in a file.'''
         if not self.has_point_records:
             return None
         if type(self.point_refs) == bool:
@@ -363,7 +366,8 @@ class FileManager():
         return
 
     def get_dimension(self, name):
-        '''Return point dimension of with above name, returns numpy array'''
+        '''Grab a point dimension by name, returning a numpy array. Refers to 
+        reader.point_format for the required Spec instance.'''
         if not self.has_point_records:
             return None
         if type(self.point_refs) == bool:
@@ -572,6 +576,7 @@ class FileManager():
 
 class Reader(FileManager):
     def close(self):
+        '''Close the file.'''
         self.data_provider.close() 
     
     def __del__(self):
@@ -663,6 +668,9 @@ class Writer(FileManager):
         return(len(self.data_provider._mmap))
     
     def pad_file_for_point_recs(self,num_recs): 
+        '''Pad the file with null bytes out to a calculated length based on 
+        the data given. This is usually a side effect of set_dimension being 
+        called for the first time on a file in write mode. '''
         bytes_to_pad = num_recs * self.point_format.rec_len
         #old_size = self.data_provider.filesize()
         old_size = self.header.data_offset 
@@ -676,6 +684,7 @@ class Writer(FileManager):
         return
 
     def set_dimension(self, name,new_dim):
+        '''Set a dimension (X,Y,Z etc) to the given value.'''
         #if not "__len__" in dir(new_dim):
         if isinstance(new_dim, GeneratorType):
             new_dim = list(new_dim)
@@ -683,8 +692,7 @@ class Writer(FileManager):
         if not self.has_point_records:
             self.has_point_records = True
             self.set_header_property("num_pt_recs", len(new_dim))
-            self.pad_file_for_point_recs(len(new_dim))
-        '''Set a point dimension of appropriate name to new_dim'''
+            self.pad_file_for_point_recs(len(new_dim)) 
         ptrecs = self.get_pointrecordscount()
         if len(new_dim) != ptrecs:
             raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs))
@@ -724,6 +732,8 @@ class Writer(FileManager):
         return True
     
     def set_points(self, points):
+        '''Set the point data for the file, using either a list of laspy.util.Point
+        instances, or a numpy array of point data (as recieved from get_points).'''
         if isinstance(points, GeneratorType):
             points = list(points)
         if not self.has_point_records:
