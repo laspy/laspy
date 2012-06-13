@@ -3,10 +3,8 @@ import util
 import copy
 import os
 
-
-
-
 class File(object):
+    ''' Base file object in laspy. '''
     def __init__(self, filename,
                        header=None,
                        vlrs=False,
@@ -16,15 +14,15 @@ class File(object):
         '''Instantiate a file object to represent an LAS file.
 
         :arg filename: The filename to open
-        :keyword header: A header open the file with
+        :keyword header: A header open the file with. Not required in modes "r" and "rw"
         :type header: an :obj:`laspy.header.Header` instance
-        :keyword mode: "r" for read, "rw" for modify/update, "w" for write, and "w+" for append
+        :keyword mode: "r" for read, "rw" for modify/update, "w" for write, and "w+" for append (not implemented)
         :type mode: string
-        :keyword in_srs: Input SRS to override the existing file's SRS with
-        :type in_srs: an :obj:`laspy.SRS` instance
+        :keyword in_srs: Input SRS to override the existing file's SRS with (not implemented)
+        :type in_srs: an :obj:`laspy.SRS` instance (not implemented)
         :keyword out_srs: Output SRS to reproject points on-the-fly to as \
-        they are read/written.
-        :type out_srs: an :obj:`laspy.SRS` instance
+        they are read/written. (not implemented)
+        :type out_srs: an :obj:`laspy.SRS` instance (not implemented)
 
         .. note::
             To open a file in write mode, you must provide a
@@ -43,9 +41,9 @@ class File(object):
         ...     print 'X,Y,Z: ', p.x, p.y, p.z
 
         >>> h = f.header
-        >>> f2 = file.File('file2.las', header=h)
-        >>> for p in f:
-        ...     f2.write(p)
+        >>> f2 = file.File('file2.las', mode = "w", header=h)
+        >>> points = f.get_points()
+        >>> f2.set_points(points)
         >>> f2.close()
         '''
 
@@ -108,7 +106,8 @@ class File(object):
             self.reader.close()
         else:
             self.writer.close(ignore_header_changes)    
-    
+   
+
     def assertWriteMode(self):
         if self._mode == "r":
             raise util.LaspyException("File is not opened in a write mode.")         
@@ -169,6 +168,9 @@ class File(object):
     doc = '''The file's :obj:`laspy.header.Header`
 
     .. note::
+        The header class supports .xml and .etree methods.
+
+    .. note::
         If the file is in append mode, the header will be overwritten in the
         file. Setting the header for the file when it is in read mode has no
         effect. If you wish to override existing header information with your
@@ -177,6 +179,17 @@ class File(object):
 
     '''
     header = property(get_header, set_header, None, doc)
+
+    def get_points(self):
+        '''Return a numpy array of all point data in the file'''
+        return self.reader.get_points()
+
+    def set_points(self, new_points):
+        '''Set the points in the file from a valid numpy array, as generated from get_points, 
+        or a list/array of laspy.base.Point instances.'''
+        self.assertWriteMode()
+        self.writer.set_points(new_points)
+        return
 
     def read(self, index, nice = True):
         '''Reads the point at the given index'''
@@ -484,9 +497,9 @@ class File(object):
         '''Index and slicing support
 
           >>> out = f[0:3]
-          [<laspy.point.Point object at ...>,
-          <laspy.point.Point object at ...>,
-          <laspy.point.Point object at ...>]
+          [<laspy.base.Point object at ...>,
+          <laspy.base.Point object at ...>,
+          <laspy.base.Point object at ...>]
         '''
         try:
             index.stop
@@ -528,15 +541,24 @@ class File(object):
             #core.las.LASWriter_WritePoint(self.handle, pt.handle)
             pass
 
-    def get_xmlsummary(self):
-        '''Returns an XML string summarizing all of the points in the reader
-        
-        .. note::
-            This method will reset the reader's read position to the 0th 
-            point to summarize the entire file, and it will again reset the 
-            read position to the 0th point upon completion.'''
-        if self._mode != 0:
-            raise util.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
-        return
-        
-    summary = property(get_xmlsummary, None, None, None)
+    def get_point_format(self):
+        return self.reader.point_format
+
+    doc = '''The point format of the file, stored as a laspy.util.Format instance. Supports .xml and .etree methods.'''
+    point_format = property(get_point_format, None, None, doc)
+
+    
+
+
+#    def get_xmlsummary(self):
+#        '''Returns an XML string summarizing all of the points in the reader
+#        
+#        .. note::
+#            This method will reset the reader's read position to the 0th 
+#            point to summarize the entire file, and it will again reset the 
+#            read position to the 0th point upon completion.'''
+#        if self._mode != 0:
+#            raise util.LaspyException("file must be in read mode, not append or write mode to provide xml summary")
+#        return
+#        
+#    summary = property(get_xmlsummary, None, None, None)

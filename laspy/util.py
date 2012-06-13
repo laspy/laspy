@@ -1,5 +1,6 @@
 import ctypes
 from struct import pack, unpack, Struct
+from lxml import etree
 
 class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
@@ -7,7 +8,7 @@ class LaspyException(Exception):
 
 fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
 LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
-        ,ctypes.c_float:"<f", "c_char":"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
+        ,ctypes.c_float:"<f", ctypes.c_char:"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
 npFmt = {"<L":"i4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
 
 class Spec():
@@ -26,12 +27,18 @@ class Spec():
             self.idx = idx
         else:
             raise(LaspyException("Big endian files are not currently supported."))
-    def __str__(self):
-        return("Field Spec Attributes \n" +
-        "Name: " + self.name + "\n"+
-        "Format: " + str(self.Format) + "\n" +
-        "Number: " + str(self.num) + "\n"+
-        "Offset: " + str(self.offs) + "\n")
+    def etree(self):
+        spec = etree.Element("spec")
+        name = etree.SubElement(spec, "name")
+        name.text = self.name
+        fmt = etree.SubElement(spec, "ctypes_format") 
+        fmt.text = str(self.Format).split("'")[1] 
+        num = etree.SubElement(spec, "number")
+        num.text = str(self.num)
+        return(spec)
+    
+    def xml(self):
+        return(etree.tostring(self.etree()))
 
 ### Note: ctypes formats may behave differently across platforms. 
 ### Those specified here follow the bytesize convention given in the
@@ -41,6 +48,7 @@ class Format():
         '''Build the format instance. The format consists of a set of specs, and creates a larger reasable block.'''
         fmt = str(fmt)
         self.fmt = fmt
+        self._etree = etree.Element("Format")
         self.specs = []
         self.rec_len = 0
         self.pt_fmt_long = "<"
@@ -48,6 +56,7 @@ class Format():
             raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
         if fmt in ("0", "1", "2", "3", "4", "5"):
+            self.format_type = "point format = " + fmt
             self.add("X", ctypes.c_long, 1)
             self.add("Y", ctypes.c_long, 1)
             self.add("Z", ctypes.c_long, 1)
@@ -85,15 +94,17 @@ class Format():
             self.add("z_t", ctypes.c_float, 1)
         ## VLR Fields
         if fmt == "VLR":
+            self.format_type = "VLR"
             self.add("reserved", ctypes.c_ushort, 1)
-            self.add("user_id", "c_char", 16)
+            self.add("user_id", ctypes.c_char, 16)
             self.add("record_id", ctypes.c_ushort, 1)
             self.add("rec_len_after_header", ctypes.c_ushort, 1)
-            self.add("description", "c_char", 32, pack = True)
+            self.add("description", ctypes.c_char, 32, pack = True)
         
         ## Header Fields
         if fmt[0] == "h": 
-            self.add("file_sig","c_char", 4, pack = True, overwritable=overwritable)
+            self.format_type = "header version = " + fmt[1:]
+            self.add("file_sig",ctypes.c_char, 4, pack = True, overwritable=overwritable)
             self.add("file_src", ctypes.c_ushort, 1)
             self.add("global_encoding",ctypes.c_ushort, 1)
             self.add("proj_id_1",ctypes.c_long, 1)
@@ -102,8 +113,8 @@ class Format():
             self.add("proj_id_4", ctypes.c_ubyte, 8)
             self.add("version_major", ctypes.c_ubyte, 1, overwritable=overwritable)
             self.add("version_minor", ctypes.c_ubyte, 1, overwritable=overwritable)
-            self.add("sys_id", "c_char", 32, pack=True)
-            self.add("gen_soft",  "c_char", 32, pack = True)
+            self.add("sys_id", ctypes.c_char, 32, pack=True)
+            self.add("gen_soft",  ctypes.c_char, 32, pack = True)
             self.add("created_day", ctypes.c_ushort, 1)
             self.add("created_year", ctypes.c_ushort,1)
             self.add("header_size", ctypes.c_ushort, 1, overwritable=overwritable)
@@ -144,6 +155,7 @@ class Format():
         self.lookup = {}
         for spec in self.specs:
             self.lookup[spec.name] = spec
+        self.packer = Struct(self.pt_fmt_long)
         
     def add(self, name, fmt, num, pack = False, overwritable = True):
         if len(self.specs) == 0:
@@ -154,10 +166,11 @@ class Format():
         self.rec_len += num*fmtLen[LEfmt[fmt]]
         self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable, idx = len(self.specs)))
         self.pt_fmt_long += LEfmt[fmt][1]
-        self.packer = Struct(self.pt_fmt_long)
-    def __str__(self):
-        for spec in self.specs:
-            spec.__str__()
+        self._etree.append(self.specs[-1].etree()) 
+    def xml(self):
+        return(etree.tostring(self._etree)) 
+    def etree(self):
+        return(self._etree)
 
 class Point():
     def __init__(self, reader, bytestr = False, unpacked_list = False, nice = False):

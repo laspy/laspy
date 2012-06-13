@@ -430,7 +430,7 @@ class Header(object):
         '''Get the laspy.base.format object for the header instance.'''
         self.reader.header_format
 
-    doc = '''The header format for the file. '''
+    doc = '''The header format for the file. Supports .xml and .etree methods.'''
     def set_schema(self, value):
         raise NotImplementedError("Converseion between formats is not supported.")
     schema = property(get_schema, set_schema, None, doc)
@@ -649,7 +649,14 @@ class Header(object):
     doc = '''The maximum values of [x, y, z] for the data in the file.
     '''
     max = property(get_max, set_max, None, doc)
-
+    
+    def xml(self):
+        '''Return an xml repreentation of header data. (not implemented)'''
+        raise NotImplementedError
+    
+    def etree(self):
+        '''Return an etree representation of header data. (not implemented)'''
+        raise NotImplementedError
 
     ### VLR MANIPULATION NOT IMPLEMENTED
     def add_vlr(self, value):

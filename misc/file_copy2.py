@@ -9,9 +9,9 @@ outFile = File.File(sys.argv[2],mode= "w", header = inFile.header)
 
 def f(): 
     print("Reading Points")
-    points = inFile.reader.get_points()
+    points = inFile.get_points()
     print("Writing Points")
-    outFile.writer.set_points(points)
+    outFile.set_points(points)
 
 #cProfile.run("f()")
 f()
