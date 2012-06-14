@@ -1,6 +1,15 @@
 Getting Started
 ===============
 
+**LAS Specifications**
+Currently, laspy supports LAS formats 1.0 to 1.2, although support for 1.3 formatted files
+is a definite next step. The various LAS specifications are available below:
+
+http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf 
+http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf 
+http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf 
+http://www.asprs.org/a/society/committees/standards/asprs_las_spec_v13.pdf
+
 **Dependencies**
 
 Apart from the python standard library, we require Numpy, available at http://numpy.scipy.org.
@@ -44,9 +53,38 @@ to change the path to simple.las.
 The following short script does just this:
 
     .. code-block:: python 
-    
+
+        import numpy as np
         from laspy.file import File
         inFile = File("./test/data/simple.las", mode = "r")
 
+Now you're ready to read data from the file. This can be header information, 
+point data, or the contents of various VLR records:
+
+    .. code-block:: python
+       
+        # Grab all of the points from the file.
+        point_records = inFile.points
+
+        # Grab just the X dimension from the file, and scale it.
         
+        def scaled_x_dimension(las_file):
+            x_dimension = las_file.X
+            scale = las_file.header.scale[0]
+            offset = las_file.header.offset[0]
+            return(x_dimension*scale + offset)
+
+        scaled_x = scaled_x_dimension(inFile)
+
+    .. note::
+        Auto scaling of dimensions is on the laspy to do list, but the example 
+        is still illustrative.
+
+As you will have noticed, the :obj:`laspy.file.File` object *inFile* has a reference
+to the :obj:`laspy.header.Header` object, which handles the getting and setting
+of information stored in the laspy header record of *simple.las*. Notice also that 
+the *scale* and *offset* values returned are actually lists of [*x scale, y scale, z scale*]
+and [*x offset, y offset, z offset*] respectively.
+        
+
         
