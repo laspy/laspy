@@ -15,3 +15,6 @@ setting valid header attributes. This is accessed from a :obj:`laspy.file.File` 
                 padding, records_count, data_format_id, data_record_length,
                 schema, point_return_count,scale,offset,min, max,vlrs,
                 update_histogram, update_min_max
+
+.. autoclass:: laspy.header.VLR
+    :members: __init__, __len__, __to_byte_string__

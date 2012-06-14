@@ -1,5 +1,5 @@
 import ctypes
-from struct import pack, unpack, Struct
+from struct import  Struct
 try:
     from lxml import etree
 except(Exception):
@@ -15,9 +15,10 @@ LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
 npFmt = {"<L":"i4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
 
 class Spec():
+    '''Holds information about how to read and write a particular field. 
+        These are usually created by :obj:`laspy.util.Format` objects.'''
     def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True, overwritable = True, idx = False):
-        '''Build the spec instance. Spec holds information about how to read 
-        and write a particular field. These are usually created by :obj:`laspy.util.Format` objects.'''
+        '''Build the spec instance.'''
         if ltl_endian:
             self.name = name
             self.offs = offs
@@ -48,11 +49,11 @@ class Spec():
 ### Those specified here follow the bytesize convention given in the
 ### LAS specification. 
 class Format():
-    '''The format consists of a set of 
+    '''A Format instance consists of a set of 
     :obj:`laspy.util.Spec` objects, as well as some calculated attributes 
-    and summary methods. For example, Format builds the :obj:`laspy.util.Format.pt_fmt_long` 
+    and summary methods. For example, Format builds the *pt_fmt_long* 
     attribute, which provides a :obj:`struct` compatable format string to 
-    read and pack/unpack an entire formatted object (:obj:`laspy.util.Point` in particular) at once. It additionally
+    pack and unpack an entire formatted object (:obj:`laspy.util.Point` in particular) in its entireity. Format additionally
     supports the :obj:`laspy.util.Format.xml` and :obj:`laspy.util.Format.etree`
     methods for interrogating the members of a format. This can be useful in finding out
     what dimensions are available from a given point format, among other things.''' 
@@ -180,8 +181,10 @@ class Format():
         self.pt_fmt_long += LEfmt[fmt][1]
         self._etree.append(self.specs[-1].etree()) 
     def xml(self):
+        '''Return an XML Formatted string, describing all of the :obj:`laspy.util.Spec` objects belonging to the Format.'''
         return(etree.tostring(self._etree)) 
     def etree(self):
+        '''Return an XML etree object, describing all of the :obj:`laspy.util.Spec` objects belonging to the Format.'''
         return(self._etree)
 
 class Point():
