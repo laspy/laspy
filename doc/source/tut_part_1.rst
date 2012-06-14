@@ -85,6 +85,30 @@ to the :obj:`laspy.header.Header` object, which handles the getting and setting
 of information stored in the laspy header record of *simple.las*. Notice also that 
 the *scale* and *offset* values returned are actually lists of [*x scale, y scale, z scale*]
 and [*x offset, y offset, z offset*] respectively.
-        
 
-        
+
+LAS files differ in what data is available, and you may want to check out what the contents 
+of your file are. Laspy includes several methods to document the file specification, 
+based on the :obj:`laspy.util.Format` objects which are used to parse the file.
+
+    .. code-block:: python
+
+        # Find out what the point format looks like.
+        pointformat = inFile.point_format
+        for spec in inFile.point_format.specs:
+            print(spec.name)
+
+        #Like XML or etree objects instead?
+        a_mess_of_xml = pointformat.xml()
+        an_etree_object = pointformat.etree()
+
+        #It looks like we have color data in this file, so we can grab:
+        blue = inFile.blue
+
+        #Lets take a look at the header also. 
+        headerformat = inFile.header.format
+        for spec in headerformat.specs:
+            print(spec.name)
+
+
+

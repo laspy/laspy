@@ -454,12 +454,14 @@ class Header(object):
 
     def get_schema(self):
         '''Get the :obj:`laspy.base.Format` object for the header instance.'''
-        self.reader.header_format
+        return(self.reader.header_format)
 
     doc = '''The header format for the file. Supports .xml and .etree methods.'''
     def set_schema(self, value):
         raise NotImplementedError("Converseion between formats is not supported.")
+    
     schema = property(get_schema, set_schema, None, doc)
+    format = schema
 #
     def get_compressed(self):
         raise NotImplementedError
