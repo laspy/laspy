@@ -1,5 +1,5 @@
 from mmap import mmap
-from header import Header, leap_year
+from header import Header, leap_year, VLR
 from struct import pack, unpack, Struct
 from util import *
 from types import GeneratorType
@@ -264,7 +264,7 @@ class FileManager():
         self.vlrs = []
         self.seek(self.header.header_size, rel = False)
         for i in xrange(self.header.num_variable_len_recs):
-            self.vlrs.append(var_len_rec(self))
+            self.vlrs.append(VLR(self))
             #self.seek(self.vlrs[-1].rec_len_after_header)
             if self.data_provider._mmap.tell() > self.header.data_offset:
                 self.seek(self.header.data_offset, rel = False)
@@ -275,7 +275,7 @@ class FileManager():
         return
 
     def get_vlrs(self):
-        '''Populate and return list of laspy.util.var_len_rec objects.'''
+        '''Populate and return list of :obj:`laspy.header.VLR` objects`.'''
         self.populate_vlrs()
         return(self.vlrs)
     
@@ -601,7 +601,7 @@ class Writer(FileManager):
             return
         if not all([x.isVLR for x in value]):
             raise LaspyException("set_vlrs requers an iterable object " + 
-                                 "composed of laspy.base.var_len_rec objects.")
+                        "composed of :obj:`laspy.header.VLR` objects.")
         elif self.mode == "w+":
             raise NotImplementedError
         elif self.mode == "rw": 

@@ -16,7 +16,8 @@ npFmt = {"<L":"i4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":
 
 class Spec():
     def __init__(self,name,offs, fmt, num, pack = False,ltl_endian = True, overwritable = True, idx = False):
-        '''Build the spec instance. Spec holds information about how to read and write a particular field.'''
+        '''Build the spec instance. Spec holds information about how to read 
+        and write a particular field. These are usually created by :obj:`laspy.util.Format` objects.'''
         if ltl_endian:
             self.name = name
             self.offs = offs
@@ -47,8 +48,16 @@ class Spec():
 ### Those specified here follow the bytesize convention given in the
 ### LAS specification. 
 class Format():
+    '''The format consists of a set of 
+    :obj:`laspy.util.Spec` objects, as well as some calculated attributes 
+    and summary methods. For example, Format builds the :obj:`laspy.util.Format.pt_fmt_long` 
+    attribute, which provides a :obj:`struct` compatable format string to 
+    read and pack/unpack an entire formatted object (:obj:`laspy.util.Point` in particular) at once. It additionally
+    supports the :obj:`laspy.util.Format.xml` and :obj:`laspy.util.Format.etree`
+    methods for interrogating the members of a format. This can be useful in finding out
+    what dimensions are available from a given point format, among other things.''' 
     def __init__(self, fmt, overwritable = False):
-        '''Build the format instance. The format consists of a set of specs, and creates a larger reasable block.'''
+        '''Build the :obj:`laspy.util.Format` instance. '''
         fmt = str(fmt)
         self.fmt = fmt
         self._etree = etree.Element("Format")
@@ -176,9 +185,12 @@ class Format():
         return(self._etree)
 
 class Point():
+    '''A data structure for reading and storing point data. The lastest version 
+    of laspy's api does not use the Point class' reading capabilities, and it is important
+    to not that reading and writing points does not require a list of point instances. 
+    See :obj:`laspy.file.points` for more details'''
     def __init__(self, reader, bytestr = False, unpacked_list = False, nice = False):
-        '''Build a point instance, either by being given a reader which can provide data or by a list of unpacked attributes. 
-        The numpy point map does not require one to use this class, instead the data is provided as an array.'''
+        '''Build a point instance, either by being given a reader which can provide data or by a list of unpacked attributes.'''
         self.reader = reader 
         self.packer = self.reader.point_format.packer
         if bytestr != False:
@@ -187,7 +199,6 @@ class Point():
             self.unpacked = unpacked_list
         else:
             raise LaspyException("No byte string or attribute list supplied for point.")
-        i = 0
         if nice:
             self.make_nice()
     def make_nice(self):
@@ -213,59 +224,10 @@ class Point():
 
 
     def pack(self):
-        '''Return a binary string representing the point data. Slower than nparr.tostring()'''
+        '''Return a binary string representing the point data. Slower than 
+        :obj:`numpy.array.tostring`, which is used by :obj:`laspy.base.DataProvider`.'''
         return(self.packer.pack(*self.unpacked))
         
-class var_len_rec():
-    def __init__(self, reader=False, attr_dict = False):
-        '''Build a vlr from an attribute dictionary or a reader capable of reading in the data.'''
-        ### VLR CONTENT ###
-        if not attr_dict:
-            self.reserved = reader.read_words("reserved")
-            self.user_id = "".join(reader.read_words("user_id"))
-            self.record_id = reader.read_words("record_id")
-            self.rec_len_after_header = reader.read_words("rec_len_after_header")
-            self.description = "".join(reader.read_words("description"))
-            self.VLR_body = reader.read(self.rec_len_after_header)
-            ### LOGICAL CONTENT ###
-            self.isVLR = True
-            self.fmt = reader.vlr_formats
-        elif not reader:
-            self.reserved = attr_dict["reserved"]
-            self.user_id = attr_dict["user_id"]
-            self.record_id = attr_dict["record_id"]
-            self.rec_len_after_header = attr_dict["rec_len_after_header"]
-            self.description = attr_dict["description"]
-            self.VLR_body = attr_dict["VLR_body"]
-            self.fmt = attr_dict["fmt"]
-            self.isVLR = True
     
-    def __len__(self):
-        '''Return the size of the vlr object in bytes'''
-        return self.rec_len_after_header + 54
-
-    def pack(self, name, val): 
-        '''Pack a VLR field into bytes.'''
-        spec = self.fmt.lookup[name]
-        if spec.num == 1:
-            return(pack(spec.fmt, val))
-        return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
-    
-    def to_byte_string(self):
-        '''Pack the entire VLR into a byte string.'''
-        out = (self.pack("reserved", self.reserved) + 
-               self.pack("user_id", self.user_id) + 
-               self.pack("record_id", self.record_id) + 
-               self.pack("rec_len_after_header", self.rec_len_after_header) + 
-               self.pack("description", self.description) +
-               self.VLR_body)
-        diff = (self.rec_len_after_header - len(self.VLR_body))
-        if diff > 0:
-            out += "\x00"*diff
-        elif diff < 0:
-            raise LaspyException("Invalid Data in VLR: too long for specified rec_len." + 
-                                " rec_len_after_header = " + str(self.rec_len_after_header) + 
-                                " actual length = " + str(len(self.VLR_body)))
-        return(out)
 
 

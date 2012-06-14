@@ -1,6 +1,7 @@
 import datetime
 from uuid import UUID
 import util
+from struct import pack
 #import numpypy
 #import numpy as np
 def leap_year(year):
@@ -16,6 +17,59 @@ def leap_year(year):
 ## to update the file using reader/mmap. 
 class LaspyHeaderException(Exception):
     pass
+
+
+class VLR():
+    def __init__(self, reader=False, attr_dict = False):
+        '''Build a vlr from an attribute dictionary or a reader capable of reading in the data.'''
+        ### VLR CONTENT ###
+        if not attr_dict:
+            self.reserved = reader.read_words("reserved")
+            self.user_id = "".join(reader.read_words("user_id"))
+            self.record_id = reader.read_words("record_id")
+            self.rec_len_after_header = reader.read_words("rec_len_after_header")
+            self.description = "".join(reader.read_words("description"))
+            self.VLR_body = reader.read(self.rec_len_after_header)
+            ### LOGICAL CONTENT ###
+            self.isVLR = True
+            self.fmt = reader.vlr_formats
+        elif not reader:
+            self.reserved = attr_dict["reserved"]
+            self.user_id = attr_dict["user_id"]
+            self.record_id = attr_dict["record_id"]
+            self.rec_len_after_header = attr_dict["rec_len_after_header"]
+            self.description = attr_dict["description"]
+            self.VLR_body = attr_dict["VLR_body"]
+            self.fmt = attr_dict["fmt"]
+            self.isVLR = True
+    def __len__(self):
+        '''Return the size of the vlr object in bytes'''
+        return self.rec_len_after_header + 54
+
+    def pack(self, name, val): 
+        '''Pack a VLR field into bytes.'''
+        spec = self.fmt.lookup[name]
+        if spec.num == 1:
+            return(pack(spec.fmt, val))
+        return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
+    
+    def to_byte_string(self):
+        '''Pack the entire VLR into a byte string.'''
+        out = (self.pack("reserved", self.reserved) + 
+               self.pack("user_id", self.user_id) + 
+               self.pack("record_id", self.record_id) + 
+               self.pack("rec_len_after_header", self.rec_len_after_header) + 
+               self.pack("description", self.description) +
+               self.VLR_body)
+        diff = (self.rec_len_after_header - len(self.VLR_body))
+        if diff > 0:
+            out += "\x00"*diff
+        elif diff < 0:
+            raise LaspyException("Invalid Data in VLR: too long for specified rec_len." + 
+                                " rec_len_after_header = " + str(self.rec_len_after_header) + 
+                                " actual length = " + str(len(self.VLR_body)))
+        return(out)
+
 
 class Header(object):
     def __init__(self,reader = False,file_mode = False, fmt = False , **kwargs):

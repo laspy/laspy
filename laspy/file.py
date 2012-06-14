@@ -222,7 +222,6 @@ class File(object):
     def read(self, index, nice = True):
         '''Reads the point at the given index'''
         if self._reader.get_pointrecordscount() >= index:
-            
             return(self._reader.get_point(index, nice)) 
         else:
             raise util.LaspyException("Index greater than point records count")
@@ -554,7 +553,7 @@ class File(object):
         write mode) or from the last point that exists (in append mode).
 
         :param pt: The point to write.
-        :type pt: :obj:`laspy.point.Point` instance to write
+        :type pt: :obj:`laspy.util.Point` instance to write
 
         .. note::
             At this time, it is not possible to duck-type point objects and
