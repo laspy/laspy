@@ -1,9 +1,13 @@
 import ctypes
 from struct import  Struct
-try:
-    from lxml import etree
-except(Exception):
-    from xml import etree
+
+try: import elementtree.ElementTree as etree
+except ImportError:
+    try: import cElementTree as etree
+    except ImportError:
+        try: import lxml.etree as etree
+        except ImportError:
+            import xml.etree.ElementTree as etree
 
 class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
