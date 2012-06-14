@@ -18,4 +18,5 @@ File
 
 
 .. autoclass:: laspy.file.File
-    :members: __init__, open, close, __len__, __getitem__, __iter__, points, point_format, header, reader, writer
+    :members: __init__, __iter__, __getitem__, __len__,close, header, open, points, 
+             point_format, reader, writer

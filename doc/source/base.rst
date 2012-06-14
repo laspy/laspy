@@ -13,12 +13,12 @@ as file reading capability.
     :members: __init__
 
 .. autoclass:: laspy.base.Reader
-    :members: get_dimension, get_header, populate_vlrs, get_vlrs, get_padding, get_pointrecordscount, get_points, get_point, get_raw_point, get_header_property, close
+    :members: close, get_dimension, get_header, get_header_property, get_padding,get_point, get_points, get_pointrecordscount, get_raw_point,
+              get_vlrs, populate_vlrs
 
 .. autoclass:: laspy.base.Writer
-    :members: set_dimension, set_vlrs, set_padding, pad_file_for_point_recs, set_points, set_header_property, set_datum.close
+    :members: close, pad_file_for_point_recs, set_datum, set_dimension, set_header_property,set_padding,  set_points, set_vlrs
 
 .. autoclass:: laspy.base.DataProvider
-    :members: open, close, map, point_map, remap, __getitem__, __setitem__ 
-
+    :members: __getitem__, __setitem__, close,map, open, point_map, remap, 
 

@@ -227,8 +227,7 @@ class Header(object):
     project_id = property(get_projectid, None, None, doc)
 
     def get_guid(self):
-        '''Returns the GUID for the file as a :class:`liblas.guid.GUID`
-        instance'''
+        '''Returns the GUID for the file as a :obj:`uuid.UUID` object.'''
         return self.get_projectid() 
 
     def set_guid(self, value):
@@ -245,7 +244,8 @@ class Header(object):
         '''Sets the GUID for the file. It must be a :class:`uuid.UUID`
         instance'''
         return
-    doc = '''The GUID/:obj:`laspy.header.Header.project_id` for the file.'''
+    doc = '''The GUID/:obj:`laspy.header.Header.project_id` for the file. 
+    Accepts a :obj:`uuid.UUID` object.'''
     guid = property(get_guid, set_guid, None, doc)
 
     def get_majorversion(self):
