@@ -460,9 +460,8 @@ class Header(object):
     def set_schema(self, value):
         raise NotImplementedError("Converseion between formats is not supported.")
     
-    schema = property(get_schema, set_schema, None, doc)
-    format = schema
-#
+    schema = property(get_schema, set_schema, None, doc) 
+    header_format = schema
     def get_compressed(self):
         raise NotImplementedError
         #return bool(core.las.LASHeader_Compressed(self.handle)) 

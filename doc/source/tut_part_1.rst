@@ -106,7 +106,7 @@ based on the :obj:`laspy.util.Format` objects which are used to parse the file.
         blue = inFile.blue
 
         #Lets take a look at the header also. 
-        headerformat = inFile.header.format
+        headerformat = inFile.header.header_format
         for spec in headerformat.specs:
             print(spec.name)
 
