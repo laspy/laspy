@@ -1,6 +1,12 @@
 Laspy: Header Module
 ====================
 
+**Header Module**
+
+The laspy header module holds the :obj:`laspy.header.Header` class, which both stores
+header data during a laspy session, and provides a frontend for getting and
+setting valid header attributes. This is accessed from a :obj:`laspy.file.File` object as
+:obj:`laspy.file.File`.header.<header attribute>.
 
 .. autoclass:: laspy.header.Header
     :members: __init__, file_signature, file_source_id,

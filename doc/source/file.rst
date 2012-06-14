@@ -18,4 +18,4 @@ Laspy: File Module
 
 
 .. autoclass:: laspy.file.File
-    :members: __init__, open, close, __len__, __getitem__, __iter__, points, point_format, header
+    :members: __init__, open, close, __len__, __getitem__, __iter__, points, point_format, header, reader, writer

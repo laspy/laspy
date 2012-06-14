@@ -156,7 +156,7 @@ class Header(object):
  
     doc = '''ProjectID for the file.  \
         laspy does not currently support setting this value from Python, as
-        it is the same as :obj:`liblas.header.Header.guid`. Use that to
+        it is the same as :obj:`laspy.header.Header.guid`. Use that to
         manipulate the ProjectID for the file.
 
         From the specification:
@@ -191,7 +191,7 @@ class Header(object):
         '''Sets the GUID for the file. It must be a :class:`uuid.UUID`
         instance'''
         return
-    doc = '''The GUID/:obj:`liblas.header.Header.project_id` for the file.'''
+    doc = '''The GUID/:obj:`laspy.header.Header.project_id` for the file.'''
     guid = property(get_guid, set_guid, None, doc)
 
     def get_majorversion(self):
@@ -266,7 +266,7 @@ class Header(object):
     software_id = property(get_softwareid, set_softwareid, None, doc)
 
     def get_date(self):
-        '''Return the header's date as a datetime.datetime. If no date is set
+        '''Return the header's date as a :obj:`datetime.datetime`. If no date is set
         in the header, None is returned.
 
         Note that dates in LAS headers are not transitive because the header
@@ -283,7 +283,7 @@ class Header(object):
             return datetime.datetime(year, 1, 1) + datetime.timedelta(day - 1)
 
     def set_date(self, value=datetime.datetime.now()):
-        '''Set the header's date from a datetime.datetime instance.
+        '''Set the header's date from a :obj:`datetime.datetime` instance.
         '''
         self.assertWriteMode()
         delta = value - datetime.datetime(value.year, 1, 1)
@@ -399,7 +399,7 @@ class Header(object):
                                   doc)
 
     def get_schema(self):
-        '''Get the laspy.base.format object for the header instance.'''
+        '''Get the :obj:`laspy.base.Format` object for the header instance.'''
         self.reader.header_format
 
     doc = '''The header format for the file. Supports .xml and .etree methods.'''
