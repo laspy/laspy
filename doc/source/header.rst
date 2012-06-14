@@ -1,4 +1,4 @@
-Laspy: Header Module
+Header
 ====================
 
 **Header Module**

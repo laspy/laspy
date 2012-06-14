@@ -1,4 +1,4 @@
-Laspy: Util Module
+Util
 ==================
 
 **The laspy util module holds useful data structures and functions needed in

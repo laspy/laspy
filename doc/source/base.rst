@@ -1,4 +1,4 @@
-Laspy: Base Module
+Base
 ==================
 
 **Base Module Basics:**

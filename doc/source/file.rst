@@ -1,4 +1,4 @@
-Laspy: File Module
+File
 ==================
 
 **Dimensions:**
