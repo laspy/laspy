@@ -188,18 +188,30 @@ class LasWriterTestCase(unittest.TestCase):
         self.FileObject.X = x
         x2 = self.FileObject.get_x()         
         self.assertTrue((list(x) == list(x2)))        
+        scaled_x = self.FileObject.x
+        self.FileObject.x = scaled_x
+        self.assertTrue(all(scaled_x == self.FileObject.x))
+
     def test_y(self):
         """Writing and testing Y dimension"""
         y = [i + 1 for i in self.FileObject.Y] 
         self.FileObject.Y = y
         y2 = self.FileObject.get_y()        
         self.assertTrue((list(y) == list(y2)))
+        scaled_y = self.FileObject.y
+        self.FileObject.y = scaled_y
+        self.assertTrue(all(scaled_y == self.FileObject.y))
+
     def test_z(self):
         """Writing and testing Z dimension"""
         z = [i + 1 for i in self.FileObject.Z ]
         self.FileObject.Z = z
         z2 = self.FileObject.get_z()
         self.assertTrue((list(z) == list(z2)))
+        scaled_z = self.FileObject.z
+        self.FileObject.z = scaled_z
+        self.assertTrue(all(scaled_z == self.FileObject.z))
+
     def test_intensity(self):
         """Writing and testing intensity dimension"""
         i = [i + 1 for i in self.FileObject.intensity]
