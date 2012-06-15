@@ -1,17 +1,14 @@
 LAS-Read-Writer-in-Python
 =========================
 
-Goal: Create a python read/writer for LAS LIDAR files matching specification 1.0-1.3 using numpy which is compatable with PyPy.
+Laspy is a python library for reading, modifying and creating .LAS LIDAR files. 
 
-https://github.com/PDAL/PDAL
+Documentation is available at http://www.laspy.org/
+
 
 LAS Specifications:
-
-
 
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf
 http://www.asprs.org/a/society/committees/standards/asprs_las_spec_v13.pdf
-
-
