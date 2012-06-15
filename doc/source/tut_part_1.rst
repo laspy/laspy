@@ -140,3 +140,42 @@ only the points from a file which are within a certain distance of the first poi
         points_kept = inFile.points[keep_points]
 
         print("We're keeping %i points out of %i total"%(len(points_kept), len(inFile)))
+
+
+Once you've found your data subset of interest, you probably want to store it somewher. 
+How about in a new .LAS file?
+
+When creating a new .LAS file using the write mode of :obj:`laspy.file.File`, 
+we need to provide a :obj:`laspy.header.Header` instance. We could instantiate 
+a new instance without much input, but it will make potentially untrue assumptions 
+about the point and file format. Luckily, we have a header ready to go:
+
+    .. code-block:: python
+        
+        outFile = File("./test/data/close_points.las", mode = "w", header = inFile.header)
+        outFile.points = points_kept
+        outFile.close()
+
+That covers the basics of read and write mode. If, however, you'd like to modify
+a las file in place, you can open it in read-write mode, as follows:
+
+    .. code-block:: python
+        
+        inFile = File("./test/data/close_points.las", mode = "rw")
+        
+        # Let's say the offset is incorrect:
+        old_offset = inFile.header.offset
+        old_offset[0] += 100
+        inFile.header.offset = old_offset
+
+        # Lets also say our Y and Z axes are flipped. 
+        Z = inFile.Z
+        Y = inFile.Y
+        inFile.Y = Z
+        inFile.Z = Y
+
+        # Enough changes, let's go ahead and close the file:
+        inFile.close()
+
+
+
