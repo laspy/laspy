@@ -142,7 +142,7 @@ only the points from a file which are within a certain distance of the first poi
         print("We're keeping %i points out of %i total"%(len(points_kept), len(inFile)))
 
 
-Once you've found your data subset of interest, you probably want to store it somewher. 
+Once you've found your data subset of interest, you probably want to store it somewhere. 
 How about in a new .LAS file?
 
 When creating a new .LAS file using the write mode of :obj:`laspy.file.File`, 
