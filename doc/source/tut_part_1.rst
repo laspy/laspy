@@ -78,8 +78,11 @@ point data, or the contents of various VLR records:
         scaled_x = scaled_x_dimension(inFile)
 
     .. note::
-        Auto scaling of dimensions is on the laspy to do list, but the example 
-        is still illustrative.
+        Laspy can actially scale the x, y, and z dimensions for you. Upper case dimensions 
+        (las_file.X, las_file.Y, las_file.Z) give the raw integer dimensions, 
+        while lower case dimensions (las_file.x, las_file.y, las_file.z) give 
+        the scaled value. Both methods support assignment as well, although due to
+        rounding error assignment using the scaled dimensions is not reccomended.
 
 As you will have noticed, the :obj:`laspy.file.File` object *inFile* has a reference
 to the :obj:`laspy.header.Header` object, which handles the getting and setting
@@ -111,5 +114,29 @@ based on the :obj:`laspy.util.Format` objects which are used to parse the file.
         for spec in headerformat.specs:
             print(spec.name)
 
+Now lets do something a bit more complicated. Say we're interested in grabbing
+only the points from a file which are within a certain distance of the first point. 
 
+    .. code-block:: python
+    
+        # Grab the scaled x, y, and z dimensions and stick them together in an nx3 numpy array
 
+        coords = np.vstack((inFile.x, inFile.y, inFile.z)).transpose()
+
+        # Pull off the first point
+        first_point = coords[0,:]
+
+        # Calculate the euclidean distance from all points to the first point
+
+        distances = np.sum((coords - first_point)**2, axis = 1)
+
+        # Create an array of indicators for whether or not a point is less than
+        # 500000 units away from the first point
+
+        keep_points = distances < 500000
+
+        # Grab an array of all points which meet this threshold
+
+        points_kept = inFile.points[keep_points]
+
+        print("We're keeping %i points out of %i total"%(len(points_kept), len(inFile)))

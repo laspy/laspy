@@ -9,7 +9,7 @@ workhorses of the base class are Writer and Reader, and they are both subclasses
 of FileManager, which handles a lot of the file initialization logic, as well 
 as file reading capability.
 
-.. autoclass:: FileManager
+.. autoclass:: laspy.base.FileManager
     :members: __init__
 
 .. autoclass:: laspy.base.Reader
@@ -17,8 +17,7 @@ as file reading capability.
               get_vlrs, populate_vlrs
 
 .. autoclass:: laspy.base.Writer
-    :members: close, pad_file_for_point_recs, set_datum, set_dimension, set_header_property,set_padding,  set_points, set_vlrs
+    :members: close, pad_file_for_point_recs, _set_datum, set_dimension, set_header_property,set_padding,  set_points, set_vlrs
 
 .. autoclass:: laspy.base.DataProvider
-    :members: __getitem__, __setitem__, close,map, open, point_map, remap, 
-
+    :members: __getitem__, __setitem__, close,map, open, point_map, remap
