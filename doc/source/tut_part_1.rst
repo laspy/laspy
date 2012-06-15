@@ -2,6 +2,7 @@ Getting Started
 ===============
 
 **LAS Specifications**
+
 Currently, laspy supports LAS formats 1.0 to 1.2, although support for 1.3 formatted files
 is a definite next step. The various LAS specifications are available below:
 

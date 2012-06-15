@@ -226,34 +226,63 @@ class File(object):
         else:
             raise util.LaspyException("Index greater than point records count")
         
-    def get_x(self, scale = False):
-        return(self._reader.get_x(scale))
-    def set_x(self,x, scale=False):
+    def get_x(self):
+        return(self._reader.get_x())
+    def set_x(self,x):
         self.assertWriteMode()
-        self._writer.set_x(x, scale)
+        self._writer.set_x(x)
+        return
+    
+    def get_x_scaled(self):
+        return(self._reader.get_x(scale =True))
+    
+    def set_x_scaled(self,x):
+        self.assertWriteMode()
+        self._writer.set_x(x, scale = True)
         return
 
-    X = property(get_x, set_x, None, None)
-    x = X
+   
 
-    def get_y(self, scale = False):
-        return(self._reader.get_y(scale))
-    def set_y(self, y, scale = False):
+    X = property(get_x, set_x, None, None)
+    x = property(get_x_scaled, set_x_scaled, None, None)
+
+
+    def get_y(self):
+        return(self._reader.get_y())
+    def set_y(self, y):
         self.assertWriteMode()
-        self._writer.set_y(y, scale)
+        self._writer.set_y(y)
+        return
+    
+    def get_y_scaled(self):
+        return(self._reader.get_y(scale = True))
+    def set_y_scaled(self, y):
+        self.assertWriteMode()
+        self._writer.set_y(y, scale = True)
         return
 
     Y = property(get_y, set_y, None, None)
-    y = Y
+    y = property(get_y_scaled, set_y_scaled, None, None)
 
-    def get_z(self, scale = False):
-        return(self._reader.get_z(scale))
-    def set_z(self, z, scale = False):
+
+    def get_z(self):
+        return(self._reader.get_z())
+    def set_z(self, z):
         self.assertWriteMode()
-        self._writer.set_z(z, scale)    
+        self._writer.set_z(z)    
         return
+
+    def get_z_scaled(self):
+        return(self._reader.get_z(scale = True))
+    def set_z_scaled(self, z):
+        self.assertWriteMode()
+        self._writer.set_z(z, scale = True)    
+        return
+
+
     Z = property(get_z, set_z, None, None)
-    z = Z
+    z = property(get_z_scaled, set_z_scaled, None, None)
+
 
     def get_intensity(self):
         return(self._reader.get_intensity())

@@ -438,14 +438,21 @@ class FileManager():
             return(val)
 
     ### To Implement: Scale            
+    
     def get_x(self, scale=False):
-        return(self.get_dimension("X"))
-       
+        if not scale:
+            return(self.get_dimension("X"))
+        return(self.get_dimension("X")*self.header.scale[0] + self.header.offset[0])
+
     def get_y(self, scale=False):
-        return(self.get_dimension("Y"))
+        if not scale:
+            return(self.get_dimension("Y"))
+        return(self.get_dimension("Y")*self.header.scale[1] + self.header.offset[1])
 
     def get_z(self, scale=False):
-        return(self.get_dimension("Z"))
+        if not scale:
+            return(self.get_dimension("Z"))
+        return(self.get_dimension("Z")*self.header.scale[2] + self.header.offset[2])
     
     def get_intensity(self):
         return(self.get_dimension("intensity"))
@@ -836,17 +843,26 @@ class Writer(FileManager):
     ##  To Implement: Scale
     def set_x(self,X, scale = False):
         '''Wrapper for set_dimension("X", new_dimension)'''
-        self.set_dimension("X", X)
+        if not scale:
+            self.set_dimension("X", X)
+            return
+        self.set_dimension("X", np.round((X - self.header.offset[0])/self.header.scale[0]))
         return
 
     def set_y(self,Y, scale = False):
         '''Wrapper for set_dimension("Y", new_dimension)'''
-        self.set_dimension("Y", Y)
+        if not scale:
+            self.set_dimension("Y", Y)
+            return
+        self.set_dimension("Y", np.round((Y - self.header.offset[1])/self.header.scale[1]))
         return
 
     def set_z(self, Z, scale = False):
         '''Wrapper for set_dimension("Z", new_dimension)'''
-        self.set_dimension("Z", Z)
+        if not scale:
+            self.set_dimension("Z", Z)
+            return
+        self.set_dimension("Z", np.round((Z-self.header.offset[2])/self.header.scale[2]))
         return
 
     def set_intensity(self, intensity):
