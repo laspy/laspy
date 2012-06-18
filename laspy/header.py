@@ -20,6 +20,13 @@ class LaspyHeaderException(Exception):
 
 
 class VLR():
+    '''An object to create/read/store data from LAS Variable Length Records.
+    The best way to create a VLR Instance manually is to build a dictionary of 
+    attributes, and pass it to the VLR constructor. The required attributes are 
+    the reserved field (fill with zeros), user_id, recor_id, rec_len_after_header,
+    description, and finally VLR_body, which is a byte string containing the actual 
+    VLR data. For an example and clarification about these fields, see the tutorial 
+    documentation.'''
     def __init__(self, reader=False, attr_dict = False):
         '''Build a vlr from an attribute dictionary or a reader capable of reading in the data.'''
         ### VLR CONTENT ###
@@ -242,13 +249,6 @@ class Header(object):
         raise NotImplementedError("LAS Version 1.3 not yet supported.")
     synthetic_return_num = property(get_synthetic_return_num, set_synthetic_return_num, 
                                     None, None)
-
-
-
-
-
-
-
 
     def get_projectid(self):
         

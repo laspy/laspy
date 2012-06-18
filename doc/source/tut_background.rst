@@ -35,6 +35,7 @@ the X Y and Z scale and offset values together.
  File Signature                   file_signature                  char[4] (4)
  File Source Id                   file_source_id                  unsigned short[1] (2)
  (Reserved or Global Encoding)    global_encoding                 unsigned short[1] (2)
+ Gps Time Type                    gps_time_type                   Part of Global Encoding
  Project Id (4 combined fields)   guid                            ulong+ushort+ushort+char[8] (16)
  Verion Major                     version_major                   unsigned char[1] (1)
  Version Minor                    version_minor                   unsigned char[1] (1)
@@ -59,8 +60,6 @@ the X Y and Z scale and offset values together.
 
 In addition, the LAS 1.3 specification adds a "Start of Waveform Data Packet Record"
 field at the end of the header. 
-
-
 
 Broadly speaking, these three specifications are cumulative - each adds more potential 
 configurations to the last, while (mostly) avoiding backwards incompatability. 
