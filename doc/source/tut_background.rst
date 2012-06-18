@@ -22,6 +22,45 @@ http://www.asprs.org/a/society/committees/standards/asprs_las_spec_v13.pdf
 There is also a version 1.4 specification, but it is not much used in practice yet, and laspy does not
 currently support it.
 
+Much of the data required for laspy to know how to read the LAS file is present 
+in the header, which laspy interacts with according to the pattern below. There are 
+some minor departures from the raw specification for convenience, namely combining
+the Day+Year fields into a python :obj:`datetime.datetime` object, and placing
+the X Y and Z scale and offset values together. 
+
+
+===============================  ==============================  ==============================
+ Field Name                       Laspy Abbreviation              File Format[number] (length)
+===============================  ==============================  ==============================
+ File Signature                   file_signature                  char[4]
+ File Source Id                   file_source_id
+ (Reserved or Global Encoding)    global_encoding
+ Project Id (4 combined fields)   guid                  
+ Verion Major                     version_major
+ Version Minor                    version_minor
+ System Identifier                system_id
+ Generating Software              software_id
+ File Creation Day of Year        (handled internally)
+ File Creation Year               (handled internally)
+ Creation Day + Year              date                          
+ Header Size                      header_size
+ Offset to Point Data             data_offset
+ Number of Variable Length Recs   (handled internally)
+ Point Data Format Id             data_format_id
+ Data Record Length               data_record_length
+ Number of point records          records_count
+ Number of Points by Return Ct.   point_return_count
+ Scale Factor (X, Y, Z)           scale
+ Offset (X, Y, Z)                 offset 
+ Max (X, Y, Z)                    max 
+ Min (X, Y, Z)                    min 
+===============================  ==============================  ==============================
+
+In addition, the LAS 1.3 specification adds a "Start of Waveform Data Packet Record"
+field at the end of the header. 
+
+
+
 Broadly speaking, these three specifications are cumulative - each adds more potential 
 configurations to the last, while (mostly) avoiding backwards incompatability. 
 
