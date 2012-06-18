@@ -42,6 +42,9 @@ class VLR():
             self.VLR_body = attr_dict["VLR_body"]
             self.fmt = attr_dict["fmt"]
             self.isVLR = True
+        else:
+            raise LaspyException("VLR Instances must be instantiated from a properly prepared reader (not reccommended) " +  
+                    "or from a dictonary containing the necessary attributes (reccommended).")
     def __len__(self):
         '''Return the size of the vlr object in bytes'''
         return self.rec_len_after_header + 54

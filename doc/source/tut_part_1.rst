@@ -43,7 +43,7 @@ Once you successfully build and install the library, run the test suite to make 
         $ python setup.py test
 
 
-**Reading in Files**
+**Opening .LAS Files**
 
 The first step for getting started with laspy is to open a :obj:`laspy.file.File`
 object in read mode. As the file *"simple.las"* is included in the repository, 
@@ -58,6 +58,8 @@ The following short script does just this:
         import numpy as np
         from laspy.file import File
         inFile = File("./test/data/simple.las", mode = "r")
+
+**Reading Data**
 
 Now you're ready to read data from the file. This can be header information, 
 point data, or the contents of various VLR records:
@@ -83,6 +85,46 @@ point data, or the contents of various VLR records:
         while lower case dimensions (*las_file.x, las_file.y, las_file.z*) give 
         the scaled value. Both methods support assignment as well, although due to
         rounding error assignment using the scaled dimensions is not reccomended.
+
+**Variable Length Records**
+
+Each LAS file can contain a number of variable length records, or VLRs. These can
+be used to store specific georeferencing information, or user/software specific 
+data. The LAS specifications linked above define several specific VLRs, however 
+laspy does not parse VLRs at this level of detail. Instead, laspy documents the 
+VLR header, which should always be in a common format, and stores the raw bytes of the
+remaining record. 
+
+:obj:`laspy.header.VLR` Attributes:
+
+======================  ===============  ======================
+ Name                    Format in File   Length
+======================  ===============  ======================
+reserved                Unsigned Short    2
+user_id                 Character         16
+record_id               Unsigned Short    2
+rec_len_after_header    Unsigned Short    2
+description             Character         32
+VLR_body                Raw Bytes         rec_len_after_header
+======================  ===============  ======================
+
+Thus, to create a VLR, you must do something like the following:
+
+    .. code-block:: python
+        
+        from laspy.header import VLR
+
+        attributes = {"reserved":0, 
+                      "user_id":"www.laspy.org   ",
+                      "record_id":1,
+                      "rec_len_after_header":20,
+                      "description":"This is a test VLR.             ",
+                      "VLR_body":"\x00"*20
+                      }
+        new_vlr = VLR(attr_dict = attributes)
+
+
+
 
 As you will have noticed, the :obj:`laspy.file.File` object *inFile* has a reference
 to the :obj:`laspy.header.Header` object, which handles the getting and setting
@@ -113,6 +155,9 @@ based on the :obj:`laspy.util.Format` objects which are used to parse the file.
         headerformat = inFile.header.header_format
         for spec in headerformat.specs:
             print(spec.name)
+
+
+
 
 Now lets do something a bit more complicated. Say we're interested in grabbing
 only the points from a file which are within a certain distance of the first point. 
