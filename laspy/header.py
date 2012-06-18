@@ -203,6 +203,53 @@ class Header(object):
                                doc)
     encoding = global_encoding
 
+
+    doc = '''Indicates the meaning of GPS Time in the point records. 
+             If gps_time_type is zero, then GPS Time is GPS Week Time. Otherwise
+             it refers to sattelite GPS time.'''
+    def get_gps_time_type(self):
+        raw_encoding = self.get_global_encoding()
+        return(self.reader.binary_str(raw_encoding, 8)[0])
+    def set_gps_time_type(self, value):
+        self.assertWriteMode()
+        raw_encoding = self.reader.binary_str(self.get_global_encoding(),8)       
+        self.set_global_encoding(self.reader.packed_str(str(value) 
+                                + raw_encoding[1:]))
+        return
+
+    gps_time_type = property(get_gps_time_type, set_gps_time_type, None, doc)
+
+    def get_waveform_data_packets_internal(self):
+        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+    def set_waveform_data_packets_internal(self, value):
+        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+    waveform_data_packets_internal = property(get_waveform_data_packets_internal, 
+                                              set_waveform_data_packets_internal,
+                                              None, None)
+
+    def get_waveform_data_packets_external(self):
+        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+
+    def set_waveform_data_packets_external(self, value):
+        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+
+    waveform_data_packets_external = property(get_waveform_data_packets_external,
+                                              set_waveform_data_packets_external, 
+                                              None, None)
+    def get_synthetic_return_num(self):
+        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+    def set_synthetic_return_num(self, value):
+        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+    synthetic_return_num = property(get_synthetic_return_num, set_synthetic_return_num, 
+                                    None, None)
+
+
+
+
+
+
+
+
     def get_projectid(self):
         
         p1 = self.reader.get_raw_header_property("proj_id_1")
