@@ -86,46 +86,6 @@ point data, or the contents of various VLR records:
         the scaled value. Both methods support assignment as well, although due to
         rounding error assignment using the scaled dimensions is not reccomended.
 
-**Variable Length Records**
-
-Each LAS file can contain a number of variable length records, or VLRs. These can
-be used to store specific georeferencing information, or user/software specific 
-data. The LAS specifications linked above define several specific VLRs, however 
-laspy does not parse VLRs at this level of detail. Instead, laspy documents the 
-VLR header, which should always be in a common format, and stores the raw bytes of the
-remaining record. 
-
-:obj:`laspy.header.VLR` Attributes:
-
-======================  ===============  ======================
- Name                    Format in File   Length
-======================  ===============  ======================
-reserved                Unsigned Short    2
-user_id                 Character         16
-record_id               Unsigned Short    2
-rec_len_after_header    Unsigned Short    2
-description             Character         32
-VLR_body                Raw Bytes         rec_len_after_header
-======================  ===============  ======================
-
-Thus, to create a VLR, you must do something like the following:
-
-    .. code-block:: python
-        
-        from laspy.header import VLR
-
-        attributes = {"reserved":0, 
-                      "user_id":"www.laspy.org   ",
-                      "record_id":1,
-                      "rec_len_after_header":20,
-                      "description":"This is a test VLR.             ",
-                      "VLR_body":"\x00"*20
-                      }
-        new_vlr = VLR(attr_dict = attributes)
-
-
-
-
 As you will have noticed, the :obj:`laspy.file.File` object *inFile* has a reference
 to the :obj:`laspy.header.Header` object, which handles the getting and setting
 of information stored in the laspy header record of *simple.las*. Notice also that 
@@ -187,6 +147,8 @@ only the points from a file which are within a certain distance of the first poi
         print("We're keeping %i points out of %i total"%(len(points_kept), len(inFile)))
 
 
+**Writing Data**
+
 Once you've found your data subset of interest, you probably want to store it somewhere. 
 How about in a new .LAS file?
 
@@ -200,6 +162,7 @@ about the point and file format. Luckily, we have a header ready to go:
         outFile = File("./test/data/close_points.las", mode = "w", header = inFile.header)
         outFile.points = points_kept
         outFile.close()
+
 
 That covers the basics of read and write mode. If, however, you'd like to modify
 a las file in place, you can open it in read-write mode, as follows:
@@ -223,4 +186,53 @@ a las file in place, you can open it in read-write mode, as follows:
         inFile.close()
 
 
+**Variable Length Records**
+
+Each LAS file can contain a number of variable length records, or VLRs. These can
+be used to store specific georeferencing information, or user/software specific 
+data. The LAS specifications linked above define several specific VLRs, however 
+laspy does not parse VLRs at this level of detail. Instead, laspy documents the 
+VLR header, which should always be in a common format, and stores the raw bytes of the
+remaining record. 
+
+:obj:`laspy.header.VLR` Attributes:
+
+======================  ===============  ======================
+ Name                    Format in File   Length
+======================  ===============  ======================
+reserved                Unsigned Short    2
+user_id                 Character         16
+record_id               Unsigned Short    2
+rec_len_after_header    Unsigned Short    2
+description             Character         32
+VLR_body                Raw Bytes         rec_len_after_header
+======================  ===============  ======================
+
+Thus, to create a VLR, you must do something like the following (note the padding in the character fields!):
+
+    .. code-block:: python
+        
+        # Import the :obj:`laspy.header.VLR` class.
+        
+        from laspy.file import File
+        from laspy.header import VLR
+
+        inFile = File("./test/data/close_points.las", mode = "rw")
+        attributes = {"reserved":0, 
+                      "user_id":"www.laspy.org   ",
+                      "record_id":1,
+                      "rec_len_after_header":20,
+                      "description":"This is a test VLR.             ",
+                      "VLR_body":"\x00"*20
+                      }
+        # Instantiate a new VLR.
+        new_vlr = VLR(attr_dict = attributes)
+
+        # Append our new vlr to the current list. As the above dataset is derived 
+        # from simple.las which has no VLRS, this will be an empty list.
+        old_vlrs = inFile.header.VLRs
+        old_vlrs.append(new_vlr)
+        
+        inFile.header.vlrs = old_vlrs
+        inFile.close()
 
