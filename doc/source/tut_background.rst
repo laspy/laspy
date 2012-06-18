@@ -5,7 +5,7 @@ Background: What are LAS Files?
 
 LIDAR data is analogous to RADAR with LASERs, and is short for Light Detection
 and Ranging. This library provides a python API to read, write, and manipulate one popular 
-format for storing LIDAR data: the .LAS file, and provides the data as numpy arrays. 
+format for storing LIDAR data, the .LAS file.
 
 LAS files are binary files packed according to several specifications. 
 
@@ -32,28 +32,29 @@ the X Y and Z scale and offset values together.
 ===============================  ==============================  ==============================
  Field Name                       Laspy Abbreviation              File Format[number] (length)
 ===============================  ==============================  ==============================
- File Signature                   file_signature                  char[4]
- File Source Id                   file_source_id
- (Reserved or Global Encoding)    global_encoding
- Project Id (4 combined fields)   guid                  
- Verion Major                     version_major
- Version Minor                    version_minor
- System Identifier                system_id
- Generating Software              software_id
- File Creation Day of Year        (handled internally)
- File Creation Year               (handled internally)
- Creation Day + Year              date                          
- Header Size                      header_size
- Offset to Point Data             data_offset
- Number of Variable Length Recs   (handled internally)
- Point Data Format Id             data_format_id
- Data Record Length               data_record_length
- Number of point records          records_count
- Number of Points by Return Ct.   point_return_count
- Scale Factor (X, Y, Z)           scale
- Offset (X, Y, Z)                 offset 
- Max (X, Y, Z)                    max 
- Min (X, Y, Z)                    min 
+ File Signature                   file_signature                  char[4] (4)
+ File Source Id                   file_source_id                  unsigned short[1] (2)
+ (Reserved or Global Encoding)    global_encoding                 unsigned short[1] (2)
+ Project Id (4 combined fields)   guid                            ulong+ushort+ushort+char[8] (16)
+ Verion Major                     version_major                   unsigned char[1] (1)
+ Version Minor                    version_minor                   unsigned char[1] (1)
+ Version Major + Minor            version                         (see above)
+ System Identifier                system_id                       char[32] (32)
+ Generating Software              software_id                     char[32] (32)
+ File Creation Day of Year        (handled internally)            unsigned short[1] (2)
+ File Creation Year               (handled internally)            unsigned short[1] (2)
+ Creation Day + Year              date                            (see above)
+ Header Size                      header_size                     unsigned short[1] (2)
+ Offset to Point Data             data_offset                     unsigned long[1] 4
+ Number of Variable Length Recs   (handled internally)            unsigned long[1] 4
+ Point Data Format Id             data_format_id                  unsigned char[1] (1)
+ Data Record Length               data_record_length              unsigned short[1] (2)
+ Number of point records          records_count                   unsigned long[1] (4)
+ Number of Points by Return Ct.   point_return_count              unsigned long[5 or 7] (20 or 28)
+ Scale Factor (X, Y, Z)           scale                           double[3] (24)
+ Offset (X, Y, Z)                 offset                          double[3] (24)
+ Max (X, Y, Z)                    max                             double[3] (24)
+ Min (X, Y, Z)                    min                             double[3] (24)
 ===============================  ==============================  ==============================
 
 In addition, the LAS 1.3 specification adds a "Start of Waveform Data Packet Record"
