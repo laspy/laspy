@@ -1,16 +1,6 @@
 Getting Started
 ===============
 
-**LAS Specifications**
-
-Currently, laspy supports LAS formats 1.0 to 1.2, although support for 1.3 formatted files
-is a definite next step. The various LAS specifications are available below:
-
-http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf 
-http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf 
-http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf 
-http://www.asprs.org/a/society/committees/standards/asprs_las_spec_v13.pdf
-
 **Dependencies**
 
 Apart from the python standard library, we require Numpy, available at http://numpy.scipy.org.
