@@ -209,10 +209,10 @@ class Header(object):
              it refers to sattelite GPS time.'''
     def get_gps_time_type(self):
         raw_encoding = self.get_global_encoding()
-        return(self.reader.binary_str(raw_encoding, 8)[0])
+        return(self.reader.binary_str(raw_encoding, 16)[0])
     def set_gps_time_type(self, value):
         self.assertWriteMode()
-        raw_encoding = self.reader.binary_str(self.get_global_encoding(),8)       
+        raw_encoding = self.reader.binary_str(self.get_global_encoding(),16)       
         self.set_global_encoding(self.reader.packed_str(str(value) 
                                 + raw_encoding[1:]))
         return
