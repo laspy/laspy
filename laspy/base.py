@@ -626,17 +626,20 @@ class Writer(FileManager):
             ## Is there a faster way to do this?
             self.data_provider.fileref.write("\x00"*current_padding)
             self.data_provider.fileref.write(dat_part_2)
+            self.header.data_offset = current_padding + self.header.header_size + sum([len(x) for x in value])
             if self.has_point_records:
                 self.data_provider.remap() 
             else:
                 self.data_provider.remap()
-        elif self.mode == "w":
+        elif self.mode == "w" and not self.has_point_records:
             self.seek(self.header.header_size, rel = False)
             for vlr in value: 
                 self.data_provider._mmap.write(vlr.to_byte_string())
             return
         else:
-            raise(LaspyException("set_vlrs requires the file to be opened in a write mode. "))
+            raise(LaspyException("set_vlrs requires the file to be opened in a " + 
+                "write mode, and must be performed before point information is provided." + 
+                "Try closing the file and opening it in rw mode. "))
 
     def set_padding(self, value):
         '''Set the padding between end of VLRs and beginning of point data'''

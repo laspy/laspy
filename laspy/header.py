@@ -40,7 +40,7 @@ class VLR():
             self.rec_len_after_header = attr_dict["rec_len_after_header"]
             self.description = attr_dict["description"]
             self.VLR_body = attr_dict["VLR_body"]
-            self.fmt = attr_dict["fmt"]
+            self.fmt = util.Format("VLR")
             self.isVLR = True
         else:
             raise LaspyException("VLR Instances must be instantiated from a properly prepared reader (not reccommended) " +  
@@ -538,7 +538,12 @@ class Header(object):
         '''Update the histogram of returns by number'''
         rawdata = map(lambda x: (x==0)*1 + (x!=0)*x, 
                      self.writer.get_return_num())
-        histDict = {1:0, 2:0, 3:0, 4:0, 5:0}
+        if self.version == "1.3":
+            histDict = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0}
+        elif self.version in ["1.0", "1.1", "1.2"]:
+            histDict = {1:0, 2:0, 3:0, 4:0, 5:0}
+        else:
+            raise LaspyException("Invalid file version: " + self.version)
         for i in rawdata:
             histDict[i] += 1        
         raw_hist = histDict.values()
@@ -549,8 +554,13 @@ class Header(object):
         #for ret in [3,2,1,0]:
         #    raw_hist[0][ret] -= t
         #    t += raw_hist[0][ret]
-        self.writer.set_header_property("num_pts_by_return", raw_hist)
-
+        try:
+            self.writer.set_header_property("num_pts_by_return", raw_hist)
+        except(LaspyException):
+            raise LaspyException("There was an error updating the num_points_by_return header field. " + 
+        "This is often caused by mal-formed header information. LAS Specifications differ on the length of this field, "+ 
+        "and it is therefore important to set the header version correctly. In the meantime, try File.close(ignore_header_changes = True)" 
+        )
     def update_min_max(self):
         '''Update the min and max X,Y,Z values.'''
         x = list(self.writer.get_x())
@@ -696,7 +706,9 @@ class Header(object):
         return(self.reader.get_vlrs())
 
     def set_vlrs(self, value):
-        raise NotImplementedError
+       self.assertWriteMode()
+       self.reader.set_vlrs(value)
+       return
 
     doc = '''Get/set the VLR`'s for the header as a list
         VLR's are completely overwritten, so to append a VLR, first retreive
