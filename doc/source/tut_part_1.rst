@@ -198,7 +198,10 @@ description             Character         32
 VLR_body                Raw Bytes         rec_len_after_header
 ======================  ===============  ======================
 
-Thus, to create a VLR, you must do something like the following (note the padding in the character fields!):
+To create a VLR, you really only need to know user_id, record_id, and the data
+you want to store in VLR_body. The rest of the attributes are filled with null bytes
+or calculated according to your input, but if you'd like to specify the reserved or 
+description fields you can do so with additional arguments:
 
     .. code-block:: python
         
@@ -208,21 +211,17 @@ Thus, to create a VLR, you must do something like the following (note the paddin
         from laspy.header import VLR
 
         inFile = File("./test/data/close_points.las", mode = "rw")
-        attributes = {"reserved":0, 
-                      "user_id":"www.laspy.org   ",
-                      "record_id":1,
-                      "rec_len_after_header":20,
-                      "description":"This is a test VLR.             ",
-                      "VLR_body":"\x00"*20
-                      }
         # Instantiate a new VLR.
-        new_vlr = VLR(attr_dict = attributes)
-
+        new_vlr = VLR(user_id = "The User ID", record_id = 1, VLR_body = "\x00"\*1000)
+        # Do the same thing without keword args
+        new_vlr = VLR("The User ID", 1, "\x00" * 1000)
+        # Do the same thing, but add a description field. 
+        new_vlr = VLR("The User ID",1 "\x00" * 1000, description = "A decription goes here.")
+        
         # Append our new vlr to the current list. As the above dataset is derived 
         # from simple.las which has no VLRS, this will be an empty list.
         old_vlrs = inFile.header.VLRs
         old_vlrs.append(new_vlr)
-        
         inFile.header.vlrs = old_vlrs
         inFile.close()
 

@@ -21,13 +21,10 @@ class LaspyHeaderException(Exception):
 
 class VLR():
     '''An object to create/read/store data from LAS Variable Length Records.
-    The best way to create a VLR Instance manually is to build a dictionary of 
-    attributes, and pass it to the VLR constructor. The required attributes are 
-    the reserved field (fill with zeros), user_id, recor_id, rec_len_after_header,
-    description, and finally VLR_body, which is a byte string containing the actual 
-    VLR data. For an example and clarification about these fields, see the tutorial 
-    documentation.'''
+    Requires three arguments: (user_id, string[16]), (record_id, int2), (VLR_body, any data with len < ~65k)'''
     def __init__(self, user_id, record_id, VLR_body, **kwargs):
+        '''Build the VLR using the required arguments user_id, record_id, and VLR_body
+        the user can also specify the reserved and description fields here if desired.'''
         self.user_id = str(user_id) + " "*(16-len(str(user_id)))
         self.record_id = record_id
         self.VLR_body = VLR_body
@@ -46,12 +43,11 @@ class VLR():
                 self.reserved = 0
             if not key in ["description", "reserved"]:
                 raise LaspyException("Unknown Argument to VLR: " + str(key))
-
         self.isVLR = True
         self.fmt = util.Format("VLR")
 
     def build_from_reader(self, reader):
-        '''Build a vlr from an attribute dictionary or a reader capable of reading in the data.'''
+        '''Build a vlr from a reader capable of reading in the data.'''
         self.reserved = reader.read_words("reserved")
         self.user_id = "".join(reader.read_words("user_id"))
         self.record_id = reader.read_words("record_id")
