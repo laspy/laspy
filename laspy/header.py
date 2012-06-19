@@ -25,7 +25,7 @@ class VLR():
     def __init__(self, user_id, record_id, VLR_body, **kwargs):
         '''Build the VLR using the required arguments user_id, record_id, and VLR_body
         the user can also specify the reserved and description fields here if desired.'''
-        self.user_id = str(user_id) + " "*(16-len(str(user_id)))
+        self.user_id = str(user_id) + "\x00"*(16-len(str(user_id)))
         self.record_id = record_id
         self.VLR_body = VLR_body
         try:
@@ -34,7 +34,7 @@ class VLR():
             self.rec_len_after_header = 0
         for key in kwargs:
             if key == "description":
-                self.description = kwargs[key]
+                self.description = str(kwargs[key]) + "\x00"*(32-len(kwargs[key]))
             else:
                 self.description = "\x00"*32
             if key == "reserved":
@@ -43,6 +43,7 @@ class VLR():
                 self.reserved = 0
             if not key in ["description", "reserved"]:
                 raise LaspyException("Unknown Argument to VLR: " + str(key))
+        self.reserved = 0
         self.isVLR = True
         self.fmt = util.Format("VLR")
 

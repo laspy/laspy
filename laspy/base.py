@@ -27,26 +27,32 @@ class DataProvider():
 
     def point_map(self):
         '''Create the numpy point map based on the point format.'''
+        if type(self._mmap) == bool:
+            self.map()
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))])
  
         self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
-    def close(self):
-        '''Close the data provider and flush changes if _mmap and _pmap exist.'''
+    def close(self, flush = True):
+        '''Close the data provider and flush changes if _mmap and _pmap exist.''' 
+        if flush and self.manager.has_point_records: 
+            if type(self._mmap) != bool:
+                try:
+                    self._mmap.flush()
+                    self._mmap.close()
+                    self._mmap = False
+                    self._pmap = False
+                except(Exception):
+                    raise LaspyException("Error closing mmap")
+        self._mmap = False
+        self._pmap = False
         if self.fileref != False:
             try:
                 self.fileref.close()
             except(Exception):
                 raise LaspyException("Error closing file.")
-        if self._mmap != False:
-            try:
-                self._mmap.close()
-                self._mmap = False
-                self._imap = False
-            except(Exception):
-                raise LaspyException("Error closing mmap")
-    
+
     def map(self):
         '''Memory map the file'''
         if self.fileref == False:
@@ -54,20 +60,14 @@ class DataProvider():
         try:
             self._mmap = mmap(self.fileref.fileno(), 0)
         except(Exception):
+            self._mmap = mmap(self.fileref.fileno(), 0)
             raise LaspyException("Error mapping file.")
 
     def remap(self,flush = True, point_map = False):
         '''Re-map the file. Flush changes, close, open, and map. Optionally point map.'''
-        if flush and type(self._mmap) != bool:
-            #packer = Struct(self.manager.point_format.pt_fmt_long)
-            if type(self._pmap) != bool:
-                self._mmap.seek(self.manager.data_offset, 0)
-                self._mmap.write(self._pmap.tostring()) 
-            self._mmap.flush()
-            #for item in self._mmap:
-            #    self._imap.write(packer.pack(*item[0]))
-            #self._imap.flush() 
-        self.close()
+        if flush and type(self._mmap) != bool: 
+            self._mmap.flush() 
+        self.close(flush=False)
         self.open("r+b")
         self.map()
         if point_map: 
@@ -371,8 +371,10 @@ class FileManager():
         reader.point_format for the required Spec instance.'''
         if not self.has_point_records:
             return None
-        if type(self.point_refs) == bool:
-            self.build_point_refs()
+        #if type(self.point_refs) == bool:
+        #    self.build_point_refs()
+        if type(self.data_provider._pmap) == bool:
+            self.data_provider.point_map()
         try: 
             spec = self.point_format.lookup[name]
             #return(self._get_dimension(spec))
@@ -598,7 +600,6 @@ class Writer(FileManager):
         if not ignore_header_changes:
             self.header.update_histogram()
             self.header.update_min_max() 
-        self.data_provider._mmap.flush()
         self.data_provider.close()
    
     def __del__(self): 
@@ -613,25 +614,29 @@ class Writer(FileManager):
         elif self.mode == "w+":
             raise NotImplementedError
         elif self.mode == "rw": 
+            current_size = self.data_provider._mmap.size()
             current_padding = self.get_padding()
             old_offset = self.header.data_offset
-            self.seek(0, rel = False)
-            dat_part_1 = self.data_provider._mmap.read(self.header.header_size)
-            self.seek(old_offset, rel = False)
-            dat_part_2 = self.data_provider._mmap.read(len(self.data_provider._mmap) - old_offset)
-            self.data_provider.close() 
-            self.data_provider.open("w+b") 
+            new_offset = current_padding + self.header.header_size + sum([len(x) for x in value])
+            self.set_header_property("offset_to_point_data", new_offset)
+            self.set_header_property("num_variable_len_recs", len(value))
+            self.data_provider.fileref.seek(0, 0)
+            dat_part_1 = self.data_provider.fileref.read(self.header.header_size)
+            self.data_provider.fileref.seek(old_offset, 0)
+            dat_part_2 = self.data_provider.fileref.read(current_size - old_offset)
+            # Manually Close:
+            self.data_provider.close(flush=False)
+            self.data_provider.open("w+b")
             self.data_provider.fileref.write(dat_part_1)
             for vlr in value:
-                self.data_provider.fileref.write(vlr.to_byte_string())
-            ## Is there a faster way to do this?
+                byte_string = vlr.to_byte_string()
+                self.data_provider.fileref.write(byte_string)
             self.data_provider.fileref.write("\x00"*current_padding)
             self.data_provider.fileref.write(dat_part_2)
-            self.header.data_offset = current_padding + self.header.header_size + sum([len(x) for x in value])
-            if self.has_point_records:
-                self.data_provider.remap() 
-            else:
-                self.data_provider.remap()
+            self.data_provider.fileref.close()
+            self.data_provider.open("r+b")
+            self.data_provider.map()
+            self.data_provider.point_map()
         elif self.mode == "w" and not self.has_point_records:
             self.seek(self.header.header_size, rel = False)
             for vlr in value: 

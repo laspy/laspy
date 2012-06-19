@@ -212,15 +212,15 @@ description fields you can do so with additional arguments:
 
         inFile = File("./test/data/close_points.las", mode = "rw")
         # Instantiate a new VLR.
-        new_vlr = VLR(user_id = "The User ID", record_id = 1, VLR_body = "\x00"\*1000)
+        new_vlr = VLR(user_id = "The User ID", record_id = 1, VLR_body = "\x00" * 1000)
         # Do the same thing without keword args
         new_vlr = VLR("The User ID", 1, "\x00" * 1000)
         # Do the same thing, but add a description field. 
-        new_vlr = VLR("The User ID",1 "\x00" * 1000, description = "A decription goes here.")
+        new_vlr = VLR("The User ID",1, "\x00" * 1000, description = "A decription goes here.")
         
         # Append our new vlr to the current list. As the above dataset is derived 
         # from simple.las which has no VLRS, this will be an empty list.
-        old_vlrs = inFile.header.VLRs
+        old_vlrs = inFile.header.vlrs
         old_vlrs.append(new_vlr)
         inFile.header.vlrs = old_vlrs
         inFile.close()
