@@ -87,90 +87,44 @@ class VLR():
                                 " actual length = " + str(len(self.VLR_body)))
         return(out)
 
-
 class Header(object):
-    def __init__(self,reader = False,file_mode = False, fmt = False , **kwargs):
-        '''Build the header object'''
-        #We have a reader object so there's data to be read. 
-        if (reader != False):
-            self.format = reader.header_format        
-            self.reader = reader
-            if file_mode != "r":
-                self.writer = self.reader
-            self.file_mode = file_mode 
-            for dim in self.format.specs:
-                #self.__dict__[dim.name] = self.read_words(dim.offs, dim.fmt,dim.num, dim.length, dim.pack)
-                self.__dict__[dim.name] = reader.get_header_property(dim.name) 
-            return
-        
-        else:
-            self.reader = False
-        ## Figure out our header format
+    def __init__(self, fmt = False, **kwargs):
         if fmt == False:
-            self.format = util.Format("h1.2", overwritable=True)
-        else:
-            self.format = fmt
-        #Make sure we keep vlrs here. 
-        ## Figure out our file mode
-        if file_mode == False:
-            self.file_mode = "w"
-        else:
-            self.file_mode = file_mode
+            fmt = util.Format("h1.2")
+        self.format = fmt
+        for dim in self.format.specs:
+            if dim.name in kwargs.keys():
+                self.__dict__[dim.name] = kwargs[dim.name]
+            else:
+                self.__dict__[dim.name] = None 
 
+class HeaderManager(object):
+    def __init__(self, header, reader = False):
+        '''Build the header manager object'''
+        if reader == False or not isinstance(header, Header):
+            raise LaspyException("HeaderManager instance requires a valid reader and header.")
+        self.reader = reader
+        self.writer = reader
+        self._header = header 
+        self.file_mode = reader.mode
         if self.file_mode == "w":
             self.allow_all_overwritables()
-        ## Add attributes from kwargs - these need to be dumped to a data File
-        ## once it's built.
+        
 
-        self.attribute_list = []
-        for kw in kwargs.items():
-            self.attribute_list.append(kw[0])
-            self.__dict__[kw[0]] = kw[1] 
-        try:
-            self.__dict__["vlrs"]
-        except:
-            self.__dict__["vlrs"] = []
-    # Where do the following functions live in the lifecycle of the header,
-    # how are they different than the properties defined below?
-    def refresh_attrs(self):
-        '''Load up all the header properties into __dict__. The header.__dict__ is used
-        to pass data around without firing the usual properties. This is useful for building a new
-        file with an existing header.'''
-        for spec in self.format.specs:
-            self.__dict__[spec.name] = self.reader.get_header_property(spec.name)
-    
-    def setup_writer_attrs(self):
-        '''Allow all fields to be overwritten, wire up writer, clear attribute_list.'''
-        self.attribute_list = []
-        self.file_mode = "w"
-        self.writer = self.reader
-        self.allow_all_overwritables()
+    def get_copy(self):
+        new_header = Header(fmt = self._header.format)
+        for dim in self._header.format.specs:
+            new_header.__dict__[dim.name] = self.reader.get_header_property(dim.name)
+        return(new_header)
 
-    def ensure_required_fields(self):
-        offset = self.data_offset
-        if offset == 0:
-            self.writer.set_header_property("offset_to_point_data", self.header_format.rec_len)
+    def flush(self):
+        for dim in self._header.format.specs:
+            self.reader.set_header_property(dim.name, self._header.__dict__[dim.name])
 
-    
     def allow_all_overwritables(self):
         '''Allow all specs belonging to header instance to be overwritable.'''
-        for spec in self.format.specs:
+        for spec in self._header.format.specs:
             spec.overwritable = True
-
-    def push_attrs(self):
-        '''Push the current values of all the specs belonging to header instance to the file from __dict__.'''
-        for spec in self.format.specs:
-            self.reader.set_header_property(spec.name, self.__dict__[spec.name])
-
-    def dump_data_to_file(self):  
-        '''Push attributes in attribute_list to the file. This functionality should probably be combined with push_attrs.'''
-        if self.reader == False or not self.file_mode in ("w", "rw", "w+"):
-            raise LaspyHeaderException("Dump data requires a valid writer object.")
-        for item in self.attribute_list:
-            try:
-                self.writer.set_header_property(item, self.__dict__[item])
-            except:
-                pass
 
     def assertWriteMode(self):
         '''Assert that header has permission to write data to file.'''
@@ -188,7 +142,8 @@ class Header(object):
     def get_filesignature(self):
         '''Returns the file signature for the file. It should always be
         LASF'''
-        return self.file_sig
+        return self.reader.get_header_propery("file_sig")
+
     doc = '''The file signature for the file. Should always be LASF'''
     file_signature = property(get_filesignature, None, None, doc)
 
@@ -267,8 +222,7 @@ class Header(object):
     synthetic_return_num = property(get_synthetic_return_num, set_synthetic_return_num, 
                                     None, None)
 
-    def get_projectid(self):
-        
+    def get_projectid(self): 
         p1 = self.reader.get_raw_header_property("proj_id_1")
         p2 = self.reader.get_raw_header_property("proj_id_2")
         p3 = self.reader.get_raw_header_property("proj_id_3")

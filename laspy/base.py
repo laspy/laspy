@@ -1,5 +1,5 @@
 from mmap import mmap
-from header import Header, leap_year, VLR
+from header import HeaderManager, Header, leap_year, VLR
 import datetime
 from struct import pack, unpack, Struct
 from util import *
@@ -108,78 +108,89 @@ class FileManager():
         as well as upon completion of file modification actions like changing the 
         header padding.'''
         self.vlr_formats = Format("VLR")
-        self.header = header  
         self.mode = mode
-        self.data_provider = DataProvider(filename, self)
-        
-        self.header_changes = set()
-        self.header_properties = {}
-        self.c_packers = {} 
+        self.data_provider = DataProvider(filename, self) 
+        self.setup_memoizing()
+
         self.calc_point_recs = False
 
+        self.point_refs = False
+        self._current = 0 
+
         if self.mode in ("r", "rw"):
-                self.data_provider.open("r+b")
-                self.data_provider.map() 
-                self.header_format = Format("h" + self.grab_file_version())
-                self.vlr_formats = Format("VLR")
-                self.get_header(mode)
-                self.populate_vlrs()
-                self.point_refs = False
-                self.has_point_records = True
-                self._current = 0
-                self.point_format = Format(self.header.pt_dat_format_id) 
-                self.populate_c_packers()
-                self.data_provider.point_map()
+            self.setup_read_write(vlrs)
+            return
+
         elif self.mode == "w":
-            if self.header == False:
-                raise LaspyException("Write mode requires a valid header object.")
-            self.data_provider.open("w+b") 
-            self.header_format = self.header.format 
-            self.vlrs = self.header.__dict__["vlrs"] 
-            if vlrs != False:
-                self.vlrs.extend(vlrs)
-            filesize = self.header_format.rec_len
-            if self.vlrs != []:
-                filesize += sum([len(x) for x in self.vlrs])  
-            self.vlr_stop = filesize 
-
-            if "pt_dat_format_id" in self.header.__dict__.keys():
-                self.point_format = Format(self.header.__dict__["pt_dat_format_id"])
-            else:
-                self.point_format = Format("0") 
-            self.populate_c_packers()
-            self.has_point_records=False
-            try:
-                filesize = max(filesize, self.header.__dict__["offset_to_point_data"]) 
-            except:
-                pass  
-            self.data_provider.fileref.write("\x00"*filesize)
-            self.data_provider.remap()
-            self.header.reader = self
-            self.header.writer = self 
-            self.header.version = str(self.header_format.fmt[1:])
-            for item in self.header_format.specs:
-                self.header.attribute_list.append(item.name)
-            self.header.dump_data_to_file()   
-            self.set_header_property("offset_to_point_data", self.header.data_offset) 
-            # This should be refactored
-            self.set_header_property("num_variable_len_recs",len(self.vlrs))
-            self.set_header_property("pt_dat_format_id", int(self.point_format.fmt))
-            self.set_header_property("pt_dat_rec_len", int(self.point_format.rec_len))
-            self.set_header_property("header_size", self.header_format.rec_len)
-            self.header.refresh_attrs() 
-            self.header.ensure_required_fields() 
-            self.set_vlrs(self.vlrs) 
-            self.populate_vlrs()
-
-            self.header.date = datetime.datetime.now()
-            self.seek(self.header.header_size, rel = False)
-            self.point_refs = False
-            self._current = 0
-
-        elif self.mode == "w+":
-            raise LaspyException("Append mode is not yet supported.") 
+            self.setup_write(header, vlrs)
+            return
+        else:
+            raise LaspyException("Append Mode Not Supported")
+        
+    def setup_read_write(self, vlrs):
+        self.data_provider.open("r+b")
+        self.data_provider.map() 
+        self.header_format = Format("h" + self.grab_file_version())
+        self.vlr_formats = Format("VLR")
+        self.get_header()
+        self.populate_vlrs()
+        self.point_refs = False
+        self.has_point_records = True
+        self._current = 0
+        self.point_format = Format(self.header.data_format_id) 
+        self.data_provider.point_map()
+        if vlrs != False:
+            self.set_vlrs(vlrs)
         return
+
+    def setup_write(self,header, vlrs):
+        if header == False:
+            raise LaspyException("Write mode requires a valid header object.")
+        ## No file to store data yet.
+        self.has_point_records = False
+        self.data_provider.open("w+b") 
+        self.header_format = header.format 
+        self._header = header
+        self.header = HeaderManager(header = header, reader = self)
+
+        if self._header.pt_dat_format_id != None:
+            self.point_format = Format(str(self._header.pt_dat_format_id))
+        else:
+            self.point_format = Format("0")
+
+        self.initialize_file_padding(vlrs)
+
+        ## We have a file to store data now.
+        self.header.flush()
+        if not vlrs in [[], False]:
+            self.set_vlrs(vlrs)
+        if self._header.created_year == None:
+            self.header.date = datetime.datetime.now()
+        
+        if vlrs != False:
+            self.set_vlrs(vlrs)
+
+        self.data_provider.map()
+        self.populate_vlrs()
+        
+        return
+
+
+    def initialize_file_padding(self, vlrs):
+        filesize = self._header.format.rec_len
+        if vlrs != False:
+            filesize += sum([len(x) for x in vlrs])
+        self.vlr_stop = filesize
+        if self._header.offset_to_point_data != None:
+            filesize = max(self._header.offset_to_point_data, filesize)
+            self._header.offset_to_point_data = filesize
+        self.data_provider.fileref.write("\x00"*filesize)
+        return
+
+    def setup_memoizing(self):
+        self.header_changes = set()
+        self.header_properties = {}
+
     def populate_c_packers(self):
         '''This is depricated if the numpy point map is used, because nparr.tostring() is MUCH faster.
         This creates compiled Struct objects for various formats.
@@ -252,21 +263,20 @@ class FileManager():
         self.seek(0, rel = True)
         return(str(v1) +"." +  str(v2))
 
-    def get_header(self, mode):
+    def get_header(self):
         '''Return the header object, or create one if absent.'''
         ## Why is this != neccesary?
-        if self.header != False:
-            if self.header.file_mode != mode:
-                raise LaspyException("Header Mode Conflict")
+        try:
             return(self.header)
-        else:
-            self.header = Header(self, mode)
+        except:
+            self.header = HeaderManager(header = Header(), reader = self)
+            return(self.header)
 
     def populate_vlrs(self): 
         '''Catalogue the variable length records'''
         self.vlrs = []
         self.seek(self.header.header_size, rel = False)
-        for i in xrange(self.header.num_variable_len_recs): 
+        for i in xrange(self.get_header_property("num_variable_len_recs")): 
             new_vlr = VLR(None, None, None)
             new_vlr.build_from_reader(self)
             self.vlrs.append(new_vlr)

@@ -69,7 +69,7 @@ class File(object):
             ## Make sure we have a header
             if self._header == None:
                 self._reader = base.Reader(self.filename,mode= self._mode)            
-                self._header = self._reader.get_header(self._mode) 
+                self._header = self._reader.get_header() 
             else: 
                 self._reader = base.Reader(self.filename, mode = self._mode, header=self._header)
 
@@ -82,7 +82,7 @@ class File(object):
             if self._header == None:
                 self._writer = base.Writer(self.filename,mode = self._mode)
                 self._reader = self._writer
-                self._header = self._reader.get_header(self._mode)
+                self._header = self._reader.get_header()
     
         if self._mode == 'w': 
             if self._header == None:
@@ -90,9 +90,8 @@ class File(object):
             if self._header.reader != False:
                 # Do a shallow copy of header, so we don't screw it up for the 
                 # read mode file.
-                self._header = copy.copy(self._header)
-                self._header.file_mode = "w"
-                self._header.setup_writer_attrs()
+                self._header = self._header.get_copy()
+                self._header.file_mode = "w" 
             self._writer = base.Writer(self.filename, mode = "w",
                                       header = self._header,vlrs = self._vlrs)
             self._reader = self._writer
@@ -155,9 +154,9 @@ class File(object):
     def get_header(self):
         '''Returns the laspy.header.Header for the file''' 
         if self._mode == "r":
-            return self._reader.get_header(self._mode)
+            return self._reader.get_header()
         else:
-            return self._writer.get_header(self._mode)
+            return self._writer.get_header()
         return None
 
     def set_header(self, header):
