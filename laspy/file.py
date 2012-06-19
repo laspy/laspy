@@ -83,7 +83,6 @@ class File(object):
                 self._writer = base.Writer(self.filename,mode = self._mode)
                 self._reader = self._writer
                 self._header = self._reader.get_header(self._mode)
-                self._reader = self._writer 
     
         if self._mode == 'w': 
             if self._header == None:

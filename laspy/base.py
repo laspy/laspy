@@ -1,5 +1,6 @@
 from mmap import mmap
 from header import Header, leap_year, VLR
+import datetime
 from struct import pack, unpack, Struct
 from util import *
 from types import GeneratorType
@@ -139,7 +140,7 @@ class FileManager():
                 self.vlrs.extend(vlrs)
             filesize = self.header_format.rec_len
             if self.vlrs != []:
-                filesize += sum([len(x) for x in self.vlrs]) 
+                filesize += sum([len(x) for x in self.vlrs])  
             self.vlr_stop = filesize 
 
             if "pt_dat_format_id" in self.header.__dict__.keys():
@@ -167,9 +168,11 @@ class FileManager():
             self.set_header_property("pt_dat_rec_len", int(self.point_format.rec_len))
             self.set_header_property("header_size", self.header_format.rec_len)
             self.header.refresh_attrs() 
-            self.set_vlrs(self.vlrs)
-            self.get_header(self.mode)
+            self.header.ensure_required_fields() 
+            self.set_vlrs(self.vlrs) 
             self.populate_vlrs()
+
+            self.header.date = datetime.datetime.now()
             self.seek(self.header.header_size, rel = False)
             self.point_refs = False
             self._current = 0
@@ -263,7 +266,7 @@ class FileManager():
         '''Catalogue the variable length records'''
         self.vlrs = []
         self.seek(self.header.header_size, rel = False)
-        for i in xrange(self.header.num_variable_len_recs):
+        for i in xrange(self.header.num_variable_len_recs): 
             new_vlr = VLR(None, None, None)
             new_vlr.build_from_reader(self)
             self.vlrs.append(new_vlr)
@@ -330,6 +333,7 @@ class FileManager():
         #return([Point(self,x) for x in self._get_raw_dimension(0, self.header.data_record_length)])
         #return((x[0] for x in self.data_provider._pmap))
         return(self.data_provider._pmap)
+    
     def get_raw_point(self, index):
         '''Return the raw bytestring associated with point of number index'''
         #start = (self.header.data_offset + 
@@ -759,8 +763,10 @@ class Writer(FileManager):
             self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = b"".join([x.pack() for x in points])
             self.data_provider.point_map()
         else:
-             self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = points.tostring()
-             self.data_provider.point_map()
+             #self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()] = points.tostring()
+             #self.data_provider._pmap["point"] = points["point"]
+             self.data_provider._pmap[:] = points[:]
+             #self.data_provider.point_map()
         #single_fmt = self.point_format.pt_fmt_long[1:]
         #big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count]) 
         #out = []

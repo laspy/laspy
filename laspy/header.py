@@ -116,6 +116,9 @@ class Header(object):
             self.file_mode = "w"
         else:
             self.file_mode = file_mode
+
+        if self.file_mode == "w":
+            self.allow_all_overwritables()
         ## Add attributes from kwargs - these need to be dumped to a data File
         ## once it's built.
 
@@ -139,8 +142,15 @@ class Header(object):
     def setup_writer_attrs(self):
         '''Allow all fields to be overwritten, wire up writer, clear attribute_list.'''
         self.attribute_list = []
+        self.file_mode = "w"
         self.writer = self.reader
         self.allow_all_overwritables()
+
+    def ensure_required_fields(self):
+        offset = self.data_offset
+        if offset == 0:
+            self.writer.set_header_property("offset_to_point_data", self.header_format.rec_len)
+
     
     def allow_all_overwritables(self):
         '''Allow all specs belonging to header instance to be overwritable.'''
@@ -473,8 +483,7 @@ class Header(object):
         return self.reader.get_pointrecordscount()
     doc = '''Returns the number of user-defined header records in the header. 
     '''
-    records_count = property(get_recordscount, None, None, doc)
-    num_vlrs = records_count
+    records_count = property(get_recordscount, None, None, doc) 
 
     def get_dataformatid(self):
         '''The point format value as an integer
@@ -485,10 +494,10 @@ class Header(object):
         '''Set the data format ID. This is only available for files in write mode which have not yet been given points.'''
         if value not in range(6):
             raise LaspyHeaderException("Format ID must be 3, 2, 1, or 0")
-        if not self.mode in ("w", "w+"):
+        if not self.file_mode in ("w", "w+"):
             raise LaspyHeaderException("Point Format ID can only be set for " + 
                                         "files in write or append mode.")
-        if self.writer.get_recordscount() > 0:
+        if self.writer.get_pointrecordscount() > 0:
             raise LaspyHeaderException("Modification of the format of existing " + 
                                         "points is not currently supported. Make " + 
                                         "your modifications in numpy and create " + 
@@ -515,8 +524,10 @@ class Header(object):
 
     doc = '''The header format for the file. Supports .xml and .etree methods.'''
     def set_schema(self, value):
-        raise NotImplementedError("Converseion between formats is not supported.")
-    
+        if self.file_mode != "w": 
+            raise NotImplementedError("Converseion between formats is not supported.")
+        else:
+            self.reader.header_format = value
     schema = property(get_schema, set_schema, None, doc) 
     header_format = schema
     def get_compressed(self):
