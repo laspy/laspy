@@ -264,8 +264,9 @@ class FileManager():
         self.vlrs = []
         self.seek(self.header.header_size, rel = False)
         for i in xrange(self.header.num_variable_len_recs):
-            self.vlrs.append(VLR(self))
-            #self.seek(self.vlrs[-1].rec_len_after_header)
+            new_vlr = VLR(None, None, None)
+            new_vlr.build_from_reader(self)
+            self.vlrs.append(new_vlr)
             if self.data_provider._mmap.tell() > self.header.data_offset:
                 self.seek(self.header.data_offset, rel = False)
                 raise LaspyException("Error, Calculated Header Data "

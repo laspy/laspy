@@ -27,31 +27,41 @@ class VLR():
     description, and finally VLR_body, which is a byte string containing the actual 
     VLR data. For an example and clarification about these fields, see the tutorial 
     documentation.'''
-    def __init__(self, reader=False, attr_dict = False):
+    def __init__(self, user_id, record_id, VLR_body, **kwargs):
+        self.user_id = str(user_id) + " "*(16-len(str(user_id)))
+        self.record_id = record_id
+        self.VLR_body = VLR_body
+        try:
+            self.rec_len_after_header = len(self.VLR_body)
+        except(TypeError):
+            self.rec_len_after_header = 0
+        for key in kwargs:
+            if key == "description":
+                self.description = kwargs[key]
+            else:
+                self.description = "\x00"*32
+            if key == "reserved":
+                self.reserved = kwargs[key]
+            else:
+                self.reserved = 0
+            if not key in ["description", "reserved"]:
+                raise LaspyException("Unknown Argument to VLR: " + str(key))
+
+        self.isVLR = True
+        self.fmt = util.Format("VLR")
+
+    def build_from_reader(self, reader):
         '''Build a vlr from an attribute dictionary or a reader capable of reading in the data.'''
-        ### VLR CONTENT ###
-        if not attr_dict:
-            self.reserved = reader.read_words("reserved")
-            self.user_id = "".join(reader.read_words("user_id"))
-            self.record_id = reader.read_words("record_id")
-            self.rec_len_after_header = reader.read_words("rec_len_after_header")
-            self.description = "".join(reader.read_words("description"))
-            self.VLR_body = reader.read(self.rec_len_after_header)
-            ### LOGICAL CONTENT ###
-            self.isVLR = True
-            self.fmt = reader.vlr_formats
-        elif not reader:
-            self.reserved = attr_dict["reserved"]
-            self.user_id = attr_dict["user_id"]
-            self.record_id = attr_dict["record_id"]
-            self.rec_len_after_header = attr_dict["rec_len_after_header"]
-            self.description = attr_dict["description"]
-            self.VLR_body = attr_dict["VLR_body"]
-            self.fmt = util.Format("VLR")
-            self.isVLR = True
-        else:
-            raise LaspyException("VLR Instances must be instantiated from a properly prepared reader (not reccommended) " +  
-                    "or from a dictonary containing the necessary attributes (reccommended).")
+        self.reserved = reader.read_words("reserved")
+        self.user_id = "".join(reader.read_words("user_id"))
+        self.record_id = reader.read_words("record_id")
+        self.rec_len_after_header = reader.read_words("rec_len_after_header")
+        self.description = "".join(reader.read_words("description"))
+        self.VLR_body = reader.read(self.rec_len_after_header)
+        ### LOGICAL CONTENT ###
+        self.isVLR = True
+        self.fmt = reader.vlr_formats
+
     def __len__(self):
         '''Return the size of the vlr object in bytes'''
         return self.rec_len_after_header + 54

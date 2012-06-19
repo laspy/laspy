@@ -36,6 +36,11 @@ for i in xrange(len(inFile1.reader.vlrs)):
             print("vlr # " + str(i) + ", field: " + spec.name + " is identical.")
         else:
             print("vlr # " + str(i) + ", field: " + spec.name + " differs,")
+    if vlr1.VLR_body == vlr2.VLR_body:
+        print("vlr # " + str(i) + ", field: Body is identical.")
+    else:
+        print("vlr # " + str(i) + ", field: Body differs.")
+
 
 spec = inFile1.reader.point_format.lookup.keys()
 print("Testing Dimensions")
