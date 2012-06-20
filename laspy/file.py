@@ -94,10 +94,10 @@ class File(object):
             if isinstance(self._header,  header.HeaderManager):
                 vlrs = self._header.vlrs
                 self._header = self._header.get_copy() 
-            if self._vlrs != False:
-                self._vlrs.extend(vlrs)
-            else:
-                self._vlrs = vlrs
+                if self._vlrs != False:
+                    self._vlrs.extend(vlrs)
+                else:
+                    self._vlrs = vlrs
             self._writer = base.Writer(self.filename, mode = "w",
                                       header = self._header,vlrs = self._vlrs)
             self._reader = self._writer
