@@ -9,6 +9,9 @@ setting valid header attributes. This is accessed from a :obj:`laspy.file.File` 
 :obj:`laspy.file.File`.header.<header attribute>.
 
 .. autoclass:: laspy.header.Header
+    :members:
+
+.. autoclass:: laspy.header.HeaderManager 
     :members: __init__,data_format_id, data_offset,data_record_length, date, file_signature, file_source_id, global_encoding, guid, header_size, 
               max, major_version,min, minor_version,offset, padding, project_id, point_return_count,scale, schema,software_id, system_id, 
               update_histogram, update_min_max, version, vlrs 

@@ -143,9 +143,10 @@ Once you've found your data subset of interest, you probably want to store it so
 How about in a new .LAS file?
 
 When creating a new .LAS file using the write mode of :obj:`laspy.file.File`, 
-we need to provide a :obj:`laspy.header.Header` instance. We could instantiate 
-a new instance without much input, but it will make potentially untrue assumptions 
-about the point and file format. Luckily, we have a header ready to go:
+we need to provide a :obj:`laspy.header.Header` instance, or a :obj:`laspy.header.HeaderManager` 
+instance. We could instantiate a new instance without much input, but it will 
+make potentially untrue assumptions about the point and file format. Luckily, we 
+have a HeaderManager (which has a header) ready to go:
 
     .. code-block:: python
         
@@ -161,10 +162,10 @@ a las file in place, you can open it in read-write mode, as follows:
         
         inFile = File("./test/data/close_points.las", mode = "rw")
         
-        # Let's say the offset is incorrect:
-        old_offset = inFile.header.offset
-        old_offset[0] += 100
-        inFile.header.offset = old_offset
+        # Let's say the X offset is incorrect:
+        old_location_offset = inFile.header.offset
+        old_location_offset[0] += 100
+        inFile.header.offset = old_location_offset
 
         # Lets also say our Y and Z axes are flipped. 
         Z = inFile.Z

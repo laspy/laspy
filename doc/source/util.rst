@@ -7,4 +7,4 @@ Header**
 
 
 .. automodule:: laspy.util
-    :members: Format, Point, Spec, LaspyException, 
+    :members: Format, Point, Spec, LaspyException 

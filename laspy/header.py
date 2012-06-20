@@ -88,6 +88,10 @@ class VLR():
         return(out)
 
 class Header(object):
+    '''The low level header class. Header is built from a laspy.util.Format 
+    instance, or assumes a default file format of 1.2. Header is usually interacted with via
+    the HeaderManager class, an instance of which readers, writers, and file 
+    objects retain a reference of.'''
     def __init__(self, fmt = False, **kwargs):
         # At least generate a default las format
         if fmt == False:
@@ -106,6 +110,9 @@ class Header(object):
             self.pt_dat_format_id = 0
 
 class HeaderManager(object):
+    '''HeaderManager provides the public API for interacting with header objects. 
+    It requires a Header instance and a reader/writer instance. 
+    HeaderManager instances are referred to in reader/writer/file object code as header.'''
     def __init__(self, header, reader):
         '''Build the header manager object'''
         self.reader = reader
@@ -114,17 +121,25 @@ class HeaderManager(object):
         self.file_mode = reader.mode
         if self.file_mode == "w":
             self.allow_all_overwritables()
-        
 
     def get_copy(self):
+        '''Populate and return a Header instance with data matching the file to which 
+        the HeaderManager belongs. This is useful for creating new files with modified
+        formats.'''
         new_header = Header(fmt = self._header.format)
         for dim in self._header.format.specs:
             new_header.__dict__[dim.name] = self.reader.get_header_property(dim.name)
         return(new_header)
 
     def flush(self):
+        '''Push all data in the header.Header instance to the file.'''
         for dim in self._header.format.specs:
             self.reader.set_header_property(dim.name, self._header.__dict__[dim.name])
+
+    def pull(self):
+        '''Load all header data from file into the header.Header instance.'''
+        for dim in self._header.format.specs:
+            self._header.__dict__[dim.name] = self.reader.get_header_property(dim.name)
 
     def allow_all_overwritables(self):
         '''Allow all specs belonging to header instance to be overwritable.'''
