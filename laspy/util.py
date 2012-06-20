@@ -17,6 +17,7 @@ fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
 LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
         ,ctypes.c_float:"<f", ctypes.c_char:"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
 npFmt = {"<L":"i4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
+defaults = {"<L":0, "<H":0, "<B": "0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
 
 class Spec():
     '''Holds information about how to read and write a particular field. 
@@ -32,6 +33,10 @@ class Spec():
             self.num = num
             self.pack = pack
             self.np_fmt = npFmt[self.fmt]
+            if self.num == 1 or type(defaults[self.fmt])== str:
+                self.default = defaults[self.fmt]*self.num
+            else:
+                self.default = [defaults[self.fmt]]*self.num
             self.overwritable = overwritable
             self.idx = idx
         else:

@@ -92,12 +92,14 @@ class Header(object):
         # At least generate a default las format
         if fmt == False:
             fmt = util.Format("h1.2")
+            kwargs["version_major"] = 1
+            kwargs["version_minor"] = 2
         self.format = fmt
         for dim in self.format.specs:
             if dim.name in kwargs.keys():
                 self.__dict__[dim.name] = kwargs[dim.name]
             else:
-                self.__dict__[dim.name] = "\x00"*(dim.num*dim.length )
+                self.__dict__[dim.name] = dim.default
 
         # At least make sure we have a default point format
         if not "point_format" in kwargs.keys():

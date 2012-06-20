@@ -603,7 +603,7 @@ class File(object):
 
     doc = '''The point format of the file, stored as a laspy.util.Format instance. Supports .xml and .etree methods.'''
     point_format = property(get_point_format, None, None, doc)
-    pt_dat_format_id = point_format
+
     
 
 
