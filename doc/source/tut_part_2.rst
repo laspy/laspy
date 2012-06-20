@@ -31,6 +31,10 @@ into some of laspy's internal functionality:
 
         # Iterate over all of the available point format specifications, attepmt to 
         # copy them to the new file. If we fail, print a message. 
+        
+        # Take note of the get_dimension and set_dimension functions. These are
+        # useful for automating dimension oriented tasks, because they just require
+        # the dim name to do the lookup. 
 
         for dim in inFile.reader.point_format.specs:
             print("Copying dimension: " + dim.name)
