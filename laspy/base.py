@@ -153,10 +153,11 @@ class FileManager():
         self._header = header
         self.header = HeaderManager(header = header, reader = self)
 
-        if self._header.pt_dat_format_id != None:
-            self.point_format = Format(str(self._header.pt_dat_format_id))
-        else:
-            self.point_format = Format("0")
+        #if self._header.pt_dat_format_id != None:
+        #    self.point_format = Format(str(self._header.pt_dat_format_id))
+        #else:
+        #    self.point_format = Format("0")
+        self.point_format = Format(self._header.pt_dat_format_id)
 
         self.initialize_file_padding(vlrs)
 
@@ -165,7 +166,7 @@ class FileManager():
         self.header.flush()
         if not vlrs in [[], False]:
             self.set_vlrs(vlrs)
-        if self._header.created_year == "\x00"*2:
+        if self._header.created_year == 0:
             self.header.date = datetime.datetime.now()
         
         if vlrs != False:
@@ -180,7 +181,7 @@ class FileManager():
         if vlrs != False:
             filesize += sum([len(x) for x in vlrs])
         self.vlr_stop = filesize
-        if self._header.offset_to_point_data != "\x00"*4:
+        if self._header.offset_to_point_data != 0:
             filesize = max(self._header.offset_to_point_data, filesize)
         self._header.offset_to_point_data = filesize 
         self.data_provider.fileref.write("\x00"*filesize)
@@ -814,7 +815,11 @@ class Writer(FileManager):
         if dim.num == 1:
             lb = rec_offs + dim.offs
             ub = lb + dim.length 
-            self.data_provider._mmap[lb:ub] = pack(dim.fmt, val)
+            try:
+                self.data_provider._mmap[lb:ub] = pack(dim.fmt, val)
+            except:
+                self.data_provider._mmap[lb:ub] = pack(dim.fmt, int(val))
+
             return
 
         try:
@@ -827,9 +832,13 @@ class Writer(FileManager):
                                 str(dim.name) +" should be length " + 
                                 str(dim.num) +", received " + str(dimlen) ))
         def f(x):
+            try:
+                outbyte = pack(dim.fmt, val[x])
+            except:
+                outbyte = pack(dim.fmt, int(val[x]))
             self.data_provider._mmap[(x*dim.length + rec_offs + 
                     dim.offs):((x+1)*dim.length + rec_offs 
-                    + dim.offs)]=pack(dim.fmt, val[x])
+                    + dim.offs)]=outbyte
         map(f, xrange(dim.num))
         return
 
