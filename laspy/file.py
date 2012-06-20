@@ -1,5 +1,6 @@
 import base
 import util
+import header
 import copy
 import os
 
@@ -71,6 +72,7 @@ class File(object):
                 self._reader = base.Reader(self.filename,mode= self._mode)            
                 self._header = self._reader.get_header() 
             else: 
+                raise LaspyException("Headers must currently be stored in the file.")
                 self._reader = base.Reader(self.filename, mode = self._mode, header=self._header)
 
             if self.in_srs:
@@ -83,15 +85,14 @@ class File(object):
                 self._writer = base.Writer(self.filename,mode = self._mode)
                 self._reader = self._writer
                 self._header = self._reader.get_header()
+            else:
+                raise LaspyException("Headers must currently be stored in the file.")
     
         if self._mode == 'w': 
             if self._header == None:
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
-            if self._header.reader != False:
-                # Do a shallow copy of header, so we don't screw it up for the 
-                # read mode file.
-                self._header = self._header.get_copy()
-                self._header.file_mode = "w" 
+            if isinstance(self._header,  header.HeaderManager):
+                self._header = self._header.get_copy() 
             self._writer = base.Writer(self.filename, mode = "w",
                                       header = self._header,vlrs = self._vlrs)
             self._reader = self._writer
@@ -602,7 +603,7 @@ class File(object):
 
     doc = '''The point format of the file, stored as a laspy.util.Format instance. Supports .xml and .etree methods.'''
     point_format = property(get_point_format, None, None, doc)
-
+    pt_dat_format_id = point_format
     
 
 

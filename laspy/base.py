@@ -96,7 +96,7 @@ class DataProvider():
         self._pmap[key.start:key.stop] = [(x,) for x in value]
 
     def filesize(self):
-        '''Return the size of the current map'''
+        '''Return the size ofs the current map'''
         if self._mmap == False:
             raise LaspyException("File not mapped")
         return(self._mmap.size())
@@ -161,16 +161,15 @@ class FileManager():
         self.initialize_file_padding(vlrs)
 
         ## We have a file to store data now.
+        self.data_provider.remap()
         self.header.flush()
         if not vlrs in [[], False]:
             self.set_vlrs(vlrs)
-        if self._header.created_year == None:
+        if self._header.created_year == "\x00"*2:
             self.header.date = datetime.datetime.now()
         
         if vlrs != False:
-            self.set_vlrs(vlrs)
-
-        self.data_provider.map()
+            self.set_vlrs(vlrs) 
         self.populate_vlrs()
         
         return
@@ -181,9 +180,9 @@ class FileManager():
         if vlrs != False:
             filesize += sum([len(x) for x in vlrs])
         self.vlr_stop = filesize
-        if self._header.offset_to_point_data != None:
+        if self._header.offset_to_point_data != "\x00"*4:
             filesize = max(self._header.offset_to_point_data, filesize)
-            self._header.offset_to_point_data = filesize
+        self._header.offset_to_point_data = filesize 
         self.data_provider.fileref.write("\x00"*filesize)
         return
 

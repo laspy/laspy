@@ -89,6 +89,7 @@ class VLR():
 
 class Header(object):
     def __init__(self, fmt = False, **kwargs):
+        # At least generate a default las format
         if fmt == False:
             fmt = util.Format("h1.2")
         self.format = fmt
@@ -96,13 +97,15 @@ class Header(object):
             if dim.name in kwargs.keys():
                 self.__dict__[dim.name] = kwargs[dim.name]
             else:
-                self.__dict__[dim.name] = None 
+                self.__dict__[dim.name] = "\x00"*(dim.num*dim.length )
+
+        # At least make sure we have a default point format
+        if not "point_format" in kwargs.keys():
+            self.pt_dat_format_id = 0
 
 class HeaderManager(object):
-    def __init__(self, header, reader = False):
+    def __init__(self, header, reader):
         '''Build the header manager object'''
-        if reader == False or not isinstance(header, Header):
-            raise LaspyException("HeaderManager instance requires a valid reader and header.")
         self.reader = reader
         self.writer = reader
         self._header = header 
@@ -461,6 +464,7 @@ class HeaderManager(object):
     '''The data format ID for the file, determines what point fields are present.'''
     dataformat_id = property(get_dataformatid, set_dataformatid, None, doc)
     data_format_id = dataformat_id
+    pt_dat_format_id = data_format_id
 
     def get_datarecordlength(self):
         '''Return the size of each point record'''
