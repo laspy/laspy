@@ -18,9 +18,9 @@ into some of laspy's internal functionality:
         # Open an input file in read mode.
         inFile = File.File("./test/data/simple.las",mode= "r")
 
-        # Use the copy method of HeaderManager objects to get a new Header instance
-        # so we don't  have to modify the read mode header. 
-        new_header = inFile.header.copy()
+        # Call copy on the HeaderManager object to get a more portable Header instance.
+        # This means we don't  have to modify the header on the read mode inFile. 
+        new_header = copy.copy(inFile.header)
         # Update the fields we want to change, the header format and data_format_id
         new_header.format = 1.1
         new_header.pt_dat_format_id = 0

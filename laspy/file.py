@@ -93,7 +93,7 @@ class File(object):
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
             if isinstance(self._header,  header.HeaderManager):
                 vlrs = self._header.vlrs
-                self._header = self._header.get_copy() 
+                self._header = self._header.copy() 
                 if self._vlrs != False:
                     self._vlrs.extend(vlrs)
                 else:

@@ -2,6 +2,7 @@ import datetime
 from uuid import UUID
 import util
 from struct import pack
+import copy
 #import numpypy
 #import numpy as np
 def leap_year(year):
@@ -144,14 +145,15 @@ class HeaderManager(object):
         if self.file_mode == "w":
             self.allow_all_overwritables()
 
-    def get_copy(self):
+    def copy(self):
+        return(self.__copy__())
+
+    def __copy__(self):
         '''Populate and return a Header instance with data matching the file to which 
         the HeaderManager belongs. This is useful for creating new files with modified
         formats.'''
-        new_header = Header(fmt = self._header.format)
-        for dim in self._header.format.specs:
-            new_header.__dict__[dim.name] = self.reader.get_header_property(dim.name)
-        return(new_header)
+        self.pull()
+        return copy.copy(self._header)
 
     def flush(self):
         '''Push all data in the header.Header instance to the file.'''
