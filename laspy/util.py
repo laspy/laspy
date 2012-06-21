@@ -70,7 +70,11 @@ class Format():
         '''Build the :obj:`laspy.util.Format` instance. '''
         fmt = str(fmt)
         self.fmt = fmt
-        self._etree = etree.Element("Format")
+        try:
+            self._etree = etree.Element("Format")
+        except:
+            print("There was an error initializing the etree instance, XML and 
+                    Etree methods may throw exceptions.")
         self.specs = []
         self.rec_len = 0
         self.pt_fmt_long = "<"
