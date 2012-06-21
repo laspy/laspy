@@ -610,7 +610,7 @@ class Reader(FileManager):
 class Writer(FileManager):
 
     def close(self, ignore_header_changes = False):
-        '''Flush changes to mmap and close mmap and fileref'''
+        '''Flush changes to mmap and close mmap and fileref''' 
         if not ignore_header_changes:
             self.header.update_histogram()
             self.header.update_min_max() 

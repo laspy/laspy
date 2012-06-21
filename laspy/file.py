@@ -602,6 +602,11 @@ class File(object):
         if self._mode != "r":
             #core.las.LASWriter_WritePoint(self.handle, pt.handle)
             pass
+    def __enter__(self):
+        return(self)
+
+    def __exit__(self,type, value, traceback):
+        self.close()
 
     def get_point_format(self):
         return self._reader.point_format
