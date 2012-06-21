@@ -196,6 +196,21 @@ class Format():
         '''Return an XML etree object, describing all of the :obj:`laspy.util.Spec` objects belonging to the Format.'''
         return(self._etree)
 
+    def __getitem__(self, index):
+        try:
+            index.stop
+        except AttributeError:
+            return self.specs[index]
+        if index.step:
+            step = index.step
+        else:
+            step = 1
+        return(self.specs[index.start:index.stop:step])
+    
+    def __iter__(self):
+        for item in self.specs:
+            yield item
+
 class Point():
     '''A data structure for reading and storing point data. The lastest version 
     of laspy's api does not use the Point class' reading capabilities, and it is important
