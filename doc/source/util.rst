@@ -7,14 +7,14 @@ Header**
 
 
 .. autoclass:: laspy.util.Format
-    ::members:: __init__, __getitem__, __iter__, etree , xml
+    :members: __init__, __getitem__, __iter__, etree , xml
 
 .. autoclass:: laspy.util.Point
-    ::members:: pack, make_nice
+    :members: pack, make_nice
 
 .. autoclass:: laspy.util.Spec
-    ::members:: __init__, etree, xml
+    :members: __init__, etree, xml
 
 .. autoclass:: laspy.util.LaspyException
-    ::members::
+    :members:
 

@@ -193,12 +193,12 @@ class HeaderManager(object):
 
     def get_filesourceid(self):
         '''Get the file source id for the file.'''
-        return self.reader.get_header_property("file_src")
+        return self.reader.get_header_property("file_source_id")
 
     def set_filesourceid(self, value):
         '''Set the file source id'''
         self.assertWriteMode()
-        self.writer.set_header_property("file_src", value)
+        self.writer.set_header_property("file_source_id", value)
     doc = '''The file source ID for the file.'''
     filesource_id = property(get_filesourceid, set_filesourceid, None, doc)
     file_source_id = filesource_id
@@ -361,26 +361,26 @@ class HeaderManager(object):
 
     def get_systemid(self):
         '''Returns the system identifier specified in the file'''
-        return self.reader.get_header_property("sys_id")
+        return self.reader.get_header_property("system_id")
 
     def set_systemid(self, value):
         '''Sets the system identifier. The value is truncated to 31
         characters'''
         self.assertWriteMode()
-        self.writer.set_header_property("sys_id", value)
+        self.writer.set_header_property("system_id", value)
         return
     doc = '''The system ID for the file'''
     system_id = property(get_systemid, set_systemid, None, doc)
 
     def get_softwareid(self):
         '''Returns the software identifier specified in the file'''
-        return self.reader.get_header_property("gen_soft")
+        return self.reader.get_header_property("software_id")
 
     def set_softwareid(self, value):
         '''Sets the software identifier.
         '''
         self.assertWriteMode()
-        return(self.writer.set_header_property("gen_soft", value))
+        return(self.writer.set_header_property("software_id", value))
     doc = '''The software ID for the file''' 
     software_id = property(get_softwareid, set_softwareid, None, doc)
 
@@ -446,7 +446,7 @@ class HeaderManager(object):
     def get_dataoffset(self):
         '''Returns the location in bytes of where the data block of the LAS
         file starts'''
-        return self.reader.get_header_property("offset_to_point_data")
+        return self.reader.get_header_property("data_offset")
 
     def set_dataoffset(self, value):
         '''Sets the data offset
@@ -486,7 +486,7 @@ class HeaderManager(object):
     def get_dataformatid(self):
         '''The point format value as an integer
         '''
-        return self.reader.get_header_property("pt_dat_format_id") 
+        return self.reader.get_header_property("data_format_id") 
 
     def set_dataformatid(self, value):
         '''Set the data format ID. This is only available for files in write mode which have not yet been given points.'''
@@ -500,17 +500,17 @@ class HeaderManager(object):
                                         "points is not currently supported. Make " + 
                                         "your modifications in numpy and create " + 
                                         "a new file.")
-        self.writer.set_header_property("pt_dat_format_id", value)
+        self.writer.set_header_property("data_format_id", value)
         return 
     '''The data format ID for the file, determines what point fields are present.'''
     dataformat_id = property(get_dataformatid, set_dataformatid, None, doc)
     data_format_id = dataformat_id
-    pt_dat_format_id = data_format_id
+    
 
     def get_datarecordlength(self):
         '''Return the size of each point record'''
         lenDict = {0:20,1:28,2:26,3:34,4:57,5:63}
-        return lenDict[self.pt_dat_format_id] 
+        return lenDict[self.data_format_id] 
     doc = '''The length of each point record.'''
     data_record_length = property(get_datarecordlength,
                                   None,
@@ -557,7 +557,7 @@ class HeaderManager(object):
         if not self.mode in ("w", "w+"):
             raise LaspyHeaderException("File must be open in write or append mode " + 
                                         "to change the number of point records.")
-        self.writer.set_header_property("num_pt_recs", value)
+        self.writer.set_header_property("point_records_count", value)
         
         '''Sets the number of point records expected in the file.
 
@@ -580,7 +580,7 @@ class HeaderManager(object):
         '''Gets the histogram of point records by return number for returns
         0...8
         '''
-        return self.reader.get_header_property("num_pts_by_return")   
+        return self.reader.get_header_property("point_return_count")   
 
     def set_pointrecordsbyreturncount(self, value):
 
@@ -589,7 +589,7 @@ class HeaderManager(object):
         Preferred method is to use header.update_histogram.
         '''
         self.assertWriteMode()
-        self.writer.set_header_property("num_pts_by_return", value)
+        self.writer.set_header_property("point_return_count", value)
         return  
     doc = '''The histogram of point records by return number.''' 
     point_return_count = property(get_pointrecordsbyreturncount,
@@ -619,7 +619,7 @@ class HeaderManager(object):
         #    raw_hist[0][ret] -= t
         #    t += raw_hist[0][ret]
         try:
-            self.writer.set_header_property("num_pts_by_return", raw_hist)
+            self.writer.set_header_property("point_return_count", raw_hist)
         except(LaspyException):
             raise LaspyException("There was an error updating the num_points_by_return header field. " + 
         "This is often caused by mal-formed header information. LAS Specifications differ on the length of this field, "+ 

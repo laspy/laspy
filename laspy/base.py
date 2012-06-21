@@ -153,11 +153,11 @@ class FileManager():
         self._header = header
         self.header = HeaderManager(header = header, reader = self)
 
-        #if self._header.pt_dat_format_id != None:
-        #    self.point_format = Format(str(self._header.pt_dat_format_id))
+        #if self._header.data_format_id != None:
+        #    self.point_format = Format(str(self._header.data_format_id))
         #else:
         #    self.point_format = Format("0")
-        self.point_format = Format(self._header.pt_dat_format_id)
+        self.point_format = Format(self._header.data_format_id)
 
         self.initialize_file_padding(vlrs)
 
@@ -181,9 +181,9 @@ class FileManager():
         if vlrs != False:
             filesize += sum([len(x) for x in vlrs])
         self.vlr_stop = filesize
-        if self._header.offset_to_point_data != 0:
-            filesize = max(self._header.offset_to_point_data, filesize)
-        self._header.offset_to_point_data = filesize 
+        if self._header.data_offset != 0:
+            filesize = max(self._header.data_offset, filesize)
+        self._header.data_offset = filesize 
         self.data_provider.fileref.write("\x00"*filesize)
         return
 
@@ -522,7 +522,7 @@ class FileManager():
         return(self.get_dimension("pt_src_id"))
     
     def get_gps_time(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (1,2,3,4,5):
             return(self.get_dimension("gps_time"))
         raise LaspyException("GPS Time is not defined on pt format: "
@@ -530,69 +530,69 @@ class FileManager():
     
     ColException = "Color is not available for point format: "
     def get_red(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("red"))
         raise LaspyException(ColException + str(fmt))
     
     def get_green(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("green"))
         raise LaspyException(ColException + str(fmt))
 
     
     def get_blue(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("blue"))
         raise LaspyException(ColException + str(fmt))
 
 
     def get_wave_packet_descp_idx(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (4, 5):
             return(self.get_dimension("wave_packet_descp_idx"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def get_byte_offset_to_wavefm_data(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (4, 5):
             return(self.get_dimension("byte_offset_to_wavefm_data"))
         raise LaspyException("Byte Offset to Waveform Data Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def get_wavefm_pkt_size(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (4, 5):
             return(self.get_dimension("wavefm_pkt_size"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
     def get_return_pt_wavefm_loc(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (4, 5):
             return(self.get_dimension("return_pt_wavefm_loc"))
         raise LaspyException("Return Pointt Waveformm Loc Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def get_x_t(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (4, 5):
             return(self.get_dimension("X_t"))
         raise LaspyException("X(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def get_y_t(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (4, 5):
             return(self.get_dimension("Y_t"))
         raise LaspyException("Y(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def get_z_t(self):
-        fmt = self.header.pt_dat_format_id
+        fmt = self.header.data_format_id
         if fmt in (4, 5):
             return(self.get_dimension("Z_t"))
         raise LaspyException("Z(t) Not"
@@ -632,7 +632,7 @@ class Writer(FileManager):
             current_padding = self.get_padding()
             old_offset = self.header.data_offset
             new_offset = current_padding + self.header.header_size + sum([len(x) for x in value])
-            self.set_header_property("offset_to_point_data", new_offset)
+            self.set_header_property("data_offset", new_offset)
             self.set_header_property("num_variable_len_recs", len(value))
             self.data_provider.fileref.seek(0, 0)
             dat_part_1 = self.data_provider.fileref.read(self.header.header_size)
@@ -675,7 +675,7 @@ class Writer(FileManager):
                 raise NotImplementedError
         elif self.mode == "rw":
             old_offset = self.header.data_offset
-            self.set_header_property("offset_to_point_data",
+            self.set_header_property("data_offset",
                                             self.vlr_stop +  value)
             #self.header.data_offset = self.vlr_stop + value 
             self.data_provider._mmap.flush() 
@@ -721,7 +721,7 @@ class Writer(FileManager):
 
         if not self.has_point_records:
             self.has_point_records = True
-            self.set_header_property("num_pt_recs", len(new_dim))
+            self.set_header_property("point_records_count", len(new_dim))
             self.pad_file_for_point_recs(len(new_dim)) 
         ptrecs = self.get_pointrecordscount()
         if len(new_dim) != ptrecs:
@@ -799,7 +799,7 @@ class Writer(FileManager):
         idx = (xrange(len(self.point_refs)))
         def f(x):
             self.data_provider._mmap[self.point_refs[x]:self.point_refs[x] 
-                    + self.header.pt_dat_rec_len] = new_raw_points[x]
+                    + self.header.data_record_length] = new_raw_points[x]
         map(f, idx)
         self.data_provider.point_map()
 
@@ -1034,7 +1034,7 @@ class Writer(FileManager):
     
     def set_gps_time(self, data):
         '''Wrapper for set_dimension("gps_time")'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (1,2,3,4,5):    
             self.set_dimension("gps_time", data)
             return
@@ -1042,7 +1042,7 @@ class Writer(FileManager):
     
     def set_red(self, red):
         '''Wrapper for set_dimension("red")'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (2,3,5):
             self.set_dimension("red", red)
             return
@@ -1050,7 +1050,7 @@ class Writer(FileManager):
 
     def set_green(self, green):
         '''Wrapper for set_dimension("green")'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (2,3,5):
             self.set_dimension("green", green)
             return
@@ -1060,7 +1060,7 @@ class Writer(FileManager):
     
     def set_blue(self, blue):
         '''Wrapper for set_dimension("blue")'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (2,3,5):
             self.set_dimension("blue", blue)
             return
@@ -1069,7 +1069,7 @@ class Writer(FileManager):
     def set_wave_packet_descp_idx(self, idx):
         '''Wrapper for set_dimension("wave_packet_descp_idx") This is not currently functional, 
         since addition of waveform data broke the numpy point map.'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (4, 5):
             self.set_dimension("wave_packet_descp_index", idx)
             return
@@ -1078,7 +1078,7 @@ class Writer(FileManager):
     def set_byte_offset_to_wavefm_data(self, idx):
         '''Wrapper for set_dimension("byte_offset_to_wavefm_data"), not currently functional,
         because addition of waveform data broke the numpy point map.'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (4, 5):
             self.set_dimension("byte_offset_to_wavefm_data", idx)
             return
@@ -1089,7 +1089,7 @@ class Writer(FileManager):
     def set_wavefm_pkt_size(self, size):
         '''Wrapper for set_dimension("wavefm_pkt_size"), not currently functional, because
         addition of waveform data broke the numpy point map.'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (4, 5):
             self.set_dimension("wavefm_pkt_size", size)
             return
@@ -1099,7 +1099,7 @@ class Writer(FileManager):
         '''Wrapper for set_dimension("return_pt_wavefm_loc"), not currently functional,
         because addition of waveform data broke the numpy point map.'''
         
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (4, 5):
             self.set_dimension("return_pt_wavefm_loc", loc)
             return
@@ -1107,7 +1107,7 @@ class Writer(FileManager):
     
     def set_x_t(self, x):
         '''Wrapper for set_dimension("X_t")'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (4, 5):
             self.set_dimension("X_t", x)
             return
@@ -1115,7 +1115,7 @@ class Writer(FileManager):
 
     def set_y_t(self, y):
         '''Wrapper for set_dimension("Y_t")'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (4, 5):
             self.set_dimension("Y_t", y)
             return
@@ -1123,7 +1123,7 @@ class Writer(FileManager):
     
     def set_z_t(self, z):
         '''Wrapper for set_dimension("Z_t")'''
-        vsn = self.header.pt_dat_format_id
+        vsn = self.header.data_format_id
         if vsn in (4, 5):
             self.set_dimension("Z_t", z)
             return

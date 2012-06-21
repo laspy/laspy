@@ -37,13 +37,13 @@ class LasReaderTestCase(unittest.TestCase):
         ## The following conditional code is redundant for 
         ## simple.las, which of course has only one pt. format.
         ## Perhaps find several other files?
-        if LasFile._header.pt_dat_format_id in (1,2,3,4,5):
+        if LasFile._header.data_format_id in (1,2,3,4,5):
             self.gps_time = list(LasFile.gps_time)
-        if LasFile._header.pt_dat_format_id in (2,3,5):
+        if LasFile._header.data_format_id in (2,3,5):
             self.red = list(LasFile.red)
             self.green = list(LasFile.green)
             self.blue = list(LasFile.blue)
-        if LasFile._header.pt_dat_format_id in (4,5):
+        if LasFile._header.data_format_id in (4,5):
             self.wave_form_packet_Desc_index = list(LasFile.wave_packet_desc_index)
             self.byte_offset_to_waveform = list(LasFile.byte_offset_to_waveform)
             self.waveform_packet_size = list(LasFile.waveform_packet_size)
