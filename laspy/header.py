@@ -92,22 +92,17 @@ class Header(object):
     instance, or assumes a default file format of 1.2. Header is usually interacted with via
     the HeaderManager class, an instance of which readers, writers, and file 
     objects retain a reference of.'''
-    def __init__(self, fmt = False, **kwargs):
+    def __init__(self, file_version = 1.2, point_format = 0, **kwargs):
         # At least generate a default las format
-        if fmt == False:
-            fmt = util.Format("h1.2")
-            kwargs["version_major"] = 1
-            kwargs["version_minor"] = 2
+        fmt = util.Format("h" + str(file_version))
+        kwargs["version_major"] = str(file_version)[0]
+        kwargs["version_minor"] = str(file_version)[2]
         self.format = fmt
         for dim in self.format.specs:
             if dim.name in kwargs.keys():
                 self.__dict__[dim.name] = kwargs[dim.name]
             else:
                 self.__dict__[dim.name] = dim.default
-
-        # At least make sure we have a default point format
-        if not "point_format" in kwargs.keys():
-            self.pt_dat_format_id = 0
 
 class HeaderManager(object):
     '''HeaderManager provides the public API for interacting with header objects. 
