@@ -73,8 +73,9 @@ class Format():
         try:
             self._etree = etree.Element("Format")
         except:
-            print("There was an error initializing the etree instance, XML and 
-                    Etree methods may throw exceptions.")
+            print("There was an error initializing the etree instance, XML and " + 
+                   " Etree methods may throw exceptions.")
+            self._etree = False
         self.specs = []
         self.rec_len = 0
         self.pt_fmt_long = "<"
@@ -192,7 +193,8 @@ class Format():
         self.rec_len += num*fmtLen[LEfmt[fmt]]
         self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable, idx = len(self.specs)))
         self.pt_fmt_long += LEfmt[fmt][1]
-        self._etree.append(self.specs[-1].etree()) 
+        if self._etree != False:
+            self._etree.append(self.specs[-1].etree()) 
     def xml(self):
         '''Return an XML Formatted string, describing all of the :obj:`laspy.util.Spec` objects belonging to the Format.'''
         return(etree.tostring(self._etree)) 
