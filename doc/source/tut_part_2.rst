@@ -40,13 +40,13 @@ into some of laspy's internal functionality:
         # useful for automating dimension oriented tasks, because they just require
         # the dim name to do the lookup. 
 
-        for dim in inFile.reader.point_format.specs:
-            print("Copying dimension: " + dim.name)
-            in_dim = inFile.reader.get_dimension(dim.name)
+        for spec in inFile.reader.point_format:
+            print("Copying dimension: " + spec.name)
+            in_spec = inFile.reader.get_dimension(spec.name)
             try:
-                outFile.writer.set_dimension(dim.name, in_dim)
+                outFile.writer.set_dimension(spec.name, in_dim)
             except(util.LaspyException):
-                print("Couldn't set dimension: " + dim.name + 
+                print("Couldn't set dimension: " + spec.name + 
                         " with file format " + str(outFile.header.version) + 
                         ", and point_format " + str(outFile.header.data_format_id))
 

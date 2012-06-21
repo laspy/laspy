@@ -197,6 +197,7 @@ class Format():
         return(self._etree)
 
     def __getitem__(self, index):
+        '''Provide slicing functionality: return specs[index]'''
         try:
             index.stop
         except AttributeError:
@@ -208,6 +209,7 @@ class Format():
         return(self.specs[index.start:index.stop:step])
     
     def __iter__(self):
+        '''Provide iterating functionality for spec in specs'''
         for item in self.specs:
             yield item
 
