@@ -111,7 +111,7 @@ class File(object):
             self._reader.close()
             self._reader = None
             self._header = None
-        else:
+        else: 
             self._writer.close(ignore_header_changes)    
             self._reader = None
             self._writer = None
@@ -606,7 +606,8 @@ class File(object):
         return(self)
 
     def __exit__(self,type, value, traceback):
-        self.close()
+        ## Updating header changes is slow.
+        self.close(ignore_header_changes = True)
 
     def get_point_format(self):
         return self._reader.point_format

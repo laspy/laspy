@@ -3,8 +3,7 @@ from uuid import UUID
 import util
 from struct import pack
 import copy
-#import numpypy
-#import numpy as np
+import numpy as np
 def leap_year(year):
     if (year % 400) == 0:
         return True
@@ -43,7 +42,7 @@ class VLR():
             else:
                 self.reserved = 0
             if not key in ["description", "reserved"]:
-                raise LaspyException("Unknown Argument to VLR: " + str(key))
+                raise util.LaspyException("Unknown Argument to VLR: " + str(key))
         self.reserved = 0
         self.isVLR = True
         self.fmt = util.Format("VLR")
@@ -83,7 +82,7 @@ class VLR():
         if diff > 0:
             out += "\x00"*diff
         elif diff < 0:
-            raise LaspyException("Invalid Data in VLR: too long for specified rec_len." + 
+            raise util.LaspyException("Invalid Data in VLR: too long for specified rec_len." + 
                                 " rec_len_after_header = " + str(self.rec_len_after_header) + 
                                 " actual length = " + str(len(self.VLR_body)))
         return(out)
@@ -602,26 +601,28 @@ class HeaderManager(object):
         '''Update the histogram of returns by number'''
         rawdata = map(lambda x: (x==0)*1 + (x!=0)*x, 
                      self.writer.get_return_num())
+        #if self.version == "1.3":
+        #    histDict = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0}
+        #elif self.version in ["1.0", "1.1", "1.2"]:
+        #    histDict = {1:0, 2:0, 3:0, 4:0, 5:0}
+        #else:
+        #    raise LaspyException("Invalid file version: " + self.version)
+        #for i in rawdata:
+        #    histDict[i] += 1        
+        #raw_hist = histDict.values()
         if self.version == "1.3":
-            histDict = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0}
-        elif self.version in ["1.0", "1.1", "1.2"]:
-            histDict = {1:0, 2:0, 3:0, 4:0, 5:0}
+            raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6,7,8])
         else:
-            raise LaspyException("Invalid file version: " + self.version)
-        for i in rawdata:
-            histDict[i] += 1        
-        raw_hist = histDict.values()
-        # raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
-        # Does the user count [1,2,3,4,5] as one point return of lenght 5, or as 5 from 1 to 5?
+            raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
         #print("Raw Hist: " + str(raw_hist))
         #t = raw_hist[0][4]
         #for ret in [3,2,1,0]:
         #    raw_hist[0][ret] -= t
         #    t += raw_hist[0][ret]
         try:
-            self.writer.set_header_property("point_return_count", raw_hist)
-        except(LaspyException):
-            raise LaspyException("There was an error updating the num_points_by_return header field. " + 
+            self.writer.set_header_property("point_return_count", raw_hist[0])
+        except(util.LaspyException):
+            raise util.LaspyException("There was an error updating the num_points_by_return header field. " + 
         "This is often caused by mal-formed header information. LAS Specifications differ on the length of this field, "+ 
         "and it is therefore important to set the header version correctly. In the meantime, try File.close(ignore_header_changes = True)" 
         )
@@ -630,12 +631,12 @@ class HeaderManager(object):
         x = list(self.writer.get_x())
         y = list(self.writer.get_y())
         z = list(self.writer.get_z()) 
-        self.writer.set_header_property("x_max", max(x))
-        self.writer.set_header_property("x_min", min(x))
-        self.writer.set_header_property("y_max", max(y))
-        self.writer.set_header_property("y_min", min(y))
-        self.writer.set_header_property("z_max", max(z))
-        self.writer.set_header_property("z_min", min(z))
+        self.writer.set_header_property("x_max", np.max(x))
+        self.writer.set_header_property("x_min", np.min(x))
+        self.writer.set_header_property("y_max", np.max(y))
+        self.writer.set_header_property("y_min", np.min(y))
+        self.writer.set_header_property("z_max", np.max(z))
+        self.writer.set_header_property("z_min", np.min(z))
 
     def get_scale(self):
         '''Gets the scale factors in [x, y, z] for the point data.
