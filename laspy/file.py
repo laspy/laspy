@@ -6,8 +6,7 @@ import os
 
 class File(object):
     ''' Base file object in laspy. Provides access to most laspy functionality,
-    and holds references to the :obj:`laspy.file.File.header`, :obj:`laspy.file.File.reader`,
-    and potentially :obj:`laspy.file.File.writer` objects. 
+    and holds references to the HeaderManager, Reader, and potentially Writer objects. 
     '''
     def __init__(self, filename,
                        header=None,
@@ -72,7 +71,7 @@ class File(object):
                 self._reader = base.Reader(self.filename,mode= self._mode)            
                 self._header = self._reader.get_header() 
             else: 
-                raise LaspyException("Headers must currently be stored in the file.")
+                raise util.LaspyException("Headers must currently be stored in the file.")
                 self._reader = base.Reader(self.filename, mode = self._mode, header=self._header)
 
             if self.in_srs:
@@ -86,7 +85,7 @@ class File(object):
                 self._reader = self._writer
                 self._header = self._reader.get_header()
             else:
-                raise LaspyException("Headers must currently be stored in the file.")
+                raise util.LaspyException("Headers must currently be stored in the file.")
     
         if self._mode == 'w': 
             if self._header == None:
