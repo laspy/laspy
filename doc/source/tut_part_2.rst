@@ -12,7 +12,6 @@ into some of laspy's internal functionality:
         
         from laspy import file as File
         from laspy import header
-        from laspy import util
         import copy
 
         # Open an input file in read mode.
@@ -38,13 +37,13 @@ into some of laspy's internal functionality:
         
         # Take note of the get_dimension and set_dimension functions. These are
         # useful for automating dimension oriented tasks, because they just require
-        # the dim name to do the lookup. 
+        # the spec name to do the lookup. 
 
         for spec in inFile.reader.point_format:
             print("Copying dimension: " + spec.name)
             in_spec = inFile.reader.get_dimension(spec.name)
             try:
-                outFile.writer.set_dimension(spec.name, in_dim)
+                outFile.writer.set_dimension(spec.name, in_spec)
             except(util.LaspyException):
                 print("Couldn't set dimension: " + spec.name + 
                         " with file format " + str(outFile.header.version) + 

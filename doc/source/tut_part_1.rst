@@ -91,7 +91,7 @@ based on the :obj:`laspy.util.Format` objects which are used to parse the file.
 
         # Find out what the point format looks like.
         pointformat = inFile.point_format
-        for spec in inFile.point_format.specs:
+        for spec in inFile.point_format:
             print(spec.name)
 
         #Like XML or etree objects instead?
@@ -103,7 +103,7 @@ based on the :obj:`laspy.util.Format` objects which are used to parse the file.
 
         #Lets take a look at the header also. 
         headerformat = inFile.header.header_format
-        for spec in headerformat.specs:
+        for spec in headerformat:
             print(spec.name)
 
 
