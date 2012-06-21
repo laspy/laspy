@@ -216,7 +216,7 @@ class Format():
 class Point():
     '''A data structure for reading and storing point data. The lastest version 
     of laspy's api does not use the Point class' reading capabilities, and it is important
-    to not that reading and writing points does not require a list of point instances. 
+    to note that reading and writing points does not require a list of point instances. 
     See :obj:`laspy.file.points` for more details'''
     def __init__(self, reader, bytestr = False, unpacked_list = False, nice = False):
         '''Build a point instance, either by being given a reader which can provide data or by a list of unpacked attributes.'''

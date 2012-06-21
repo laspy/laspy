@@ -26,7 +26,7 @@ you may need to run the above comands as root, e.g.
     
         $ sudo python setup.py build
 
-Once you successfully build and install the library, run the test suite to make sure everythingis working:
+Once you successfully build and install the library, run the test suite to make sure everything is working:
 
     .. code-block:: sh
     
