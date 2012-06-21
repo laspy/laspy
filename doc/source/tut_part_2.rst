@@ -13,21 +13,25 @@ into some of laspy's internal functionality:
         from laspy import file as File
         from laspy import header
         from laspy import util
+        import copy
 
         # Open an input file in read mode.
         inFile = File.File("./test/data/simple.las",mode= "r")
 
-        # Use the get_copy method of HeaderManager objects to get a new low level
-        # header instance. 
-        new_header = inFile.header.get_copy()
-        # Update the fields we want to change, the header format and pt_dat_format_id
-        new_header.format = util.Format("h1.1")
+        # Use the copy method of HeaderManager objects to get a new Header instance
+        # so we don't  have to modify the read mode header. 
+        new_header = inFile.header.copy()
+        # Update the fields we want to change, the header format and data_format_id
+        new_header.format = 1.1
         new_header.pt_dat_format_id = 0
 
         # Now we can create a new output file with our modified header.
         # Note that we need to give the file the VLRs manually, because the low level
         # header doesn't know about them, while the header manager does. 
-        outFile = File.File("./test/data/output.las",mode= "w",vlrs = inFile.header.vlrs, header = new_header)
+        outFile = File.File("./test/data/output.las",
+                            mode= "w",
+                            vlrs = inFile.header.vlrs, 
+                            header = new_header)
 
         # Iterate over all of the available point format specifications, attepmt to 
         # copy them to the new file. If we fail, print a message. 

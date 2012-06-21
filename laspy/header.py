@@ -97,12 +97,39 @@ class Header(object):
         fmt = util.Format("h" + str(file_version))
         kwargs["version_major"] = str(file_version)[0]
         kwargs["version_minor"] = str(file_version)[2]
-        self.format = fmt
+        self._format = fmt
         for dim in self.format.specs:
             if dim.name in kwargs.keys():
                 self.__dict__[dim.name] = kwargs[dim.name]
             else:
                 self.__dict__[dim.name] = dim.default
+
+    def reformat(self, file_version):
+        new_format = Format("h" + str(file_version))
+        self.version_major = str(file_version)[0]
+        self.version_minor = str(file_version)[1]
+        
+        # Set defaults for newly available fields.
+        for item in new_format.specs:
+            if not item.name in self.__dict__.keys__():
+                self.__dict__[item.name] = item.default
+
+        # Clear no longer available fields. 
+        for item in self.format.specs:
+            if not item.name in new_format.lookup.keys(): 
+                self.__dict__[item.name] = None
+        
+        self._format = new_format
+
+    def get_format(self):
+        return self._format
+
+    doc = '''The laspy.util.Format instance of the header, builds and stores
+    specifications for the data fields belonging to the header. Assigning to format
+    will re-format the header.'''
+    format = property(get_format, reformat, None, doc)
+
+
 
 class HeaderManager(object):
     '''HeaderManager provides the public API for interacting with header objects. 
