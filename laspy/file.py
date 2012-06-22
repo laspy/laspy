@@ -323,7 +323,7 @@ class File(object):
         self._writer.set_num_returns(num)
         return
 
-    num_returns = property(get_return_num, set_num_returns, None, None)
+    num_returns = property(get_num_returns, set_num_returns, None, None)
 
     def get_scan_dir_flag(self):
         return(self._reader.get_scan_dir_flag())

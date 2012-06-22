@@ -479,38 +479,38 @@ class FileManager():
     
     def get_return_num(self):
         rawDim = self.get_flag_byte()
-        return((self.packed_str(self.binary_str(x)[0:3]) for x in rawDim)) 
+        return(np.array([self.packed_str(self.binary_str(x)[0:3]) for x in rawDim])) 
 
     def get_num_returns(self):
         rawDim = self.get_flag_byte()
-        return((self.packed_str(self.binary_str(x)[3:6]) for x in rawDim))  
+        return(np.array([self.packed_str(self.binary_str(x)[3:6]) for x in rawDim]))  
 
     def get_scan_dir_flag(self):
         rawDim = self.get_flag_byte()
-        return((self.packed_str(self.binary_str(x)[6]) for x in rawDim))   
+        return(np.array([self.packed_str(self.binary_str(x)[6]) for x in rawDim])) 
 
     def get_edge_flight_line(self):
         rawDim = self.get_flag_byte()
-        return((self.packed_str(self.binary_str(x)[7]) for x in rawDim))
+        return(np.array(([self.packed_str(self.binary_str(x)[7]) for x in rawDim])))
     
     def get_raw_classification(self):
         return(self.get_dimension("raw_classification"))
     
     def get_classification(self): 
-        return(self.packed_str(self.binary_str(x)[0:5]) 
-                for x in self.get_raw_classification()) 
+        return(np.array([self.packed_str(self.binary_str(x)[0:5]) 
+                for x in self.get_raw_classification()])) 
 
     def get_synthetic(self):
-        return(self.packed_str(self.binary_str(x)[5]) 
-                for x in self.get_raw_classification()) 
+        return(np.array([self.packed_str(self.binary_str(x)[5]) 
+                for x in self.get_raw_classification()])) 
 
     def get_key_point(self):
-        return(self.packed_str(self.binary_str(x)[6]) 
-                for x in self.get_raw_classification()) 
+        return(np.array([self.packed_str(self.binary_str(x)[6]) 
+                for x in self.get_raw_classification()])) 
 
     def get_withheld(self):
-        return(self.packed_str(self.binary_str(x)[7]) 
-                for x in self.get_raw_classification()) 
+        return(np.array([self.packed_str(self.binary_str(x)[7]) 
+                for x in self.get_raw_classification()])) 
     
     def get_scan_angle_rank(self):
         return(self.get_dimension("scan_angle_rank"))

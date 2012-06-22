@@ -137,10 +137,28 @@ only the points from a file which are within a certain distance of the first poi
         print("We're keeping %i points out of %i total"%(len(points_kept), len(inFile)))
 
 
+For another example, lets say we're interested only in the last return from each pulse in order to 
+do ground detection. We can easily figure out which points are the last return by finding out for which points
+return_num is equal to num_returns. 
+
+    .. note::
+        
+        Unpacking a bit field like num_returns can be much slower than a whole byte, because
+        the whole byte must be read by numpy and then converted in pure python. 
+
+    .. code-block:: python
+
+        # Grab the return_num and num_returns dimensions
+        num_returns = inFile.num_returns
+        return_num = inFile.return_num
+        ground_points = inFile.points[num_returns == return_num]
+
+        print("%i points out of %i were ground points." % (len(ground_points), len(inFile)))
+        
 **Writing Data**
 
-Once you've found your data subset of interest, you probably want to store it somewhere. 
-How about in a new .LAS file?
+Once you've found your data subsets of interest, you probably want to store them somewhere. 
+How about in new .LAS files?
 
 When creating a new .LAS file using the write mode of :obj:`laspy.file.File`, 
 we need to provide a :obj:`laspy.header.Header` instance, or a :obj:`laspy.header.HeaderManager` 
@@ -150,10 +168,13 @@ have a HeaderManager (which has a header) ready to go:
 
     .. code-block:: python
         
-        outFile = File("./test/data/close_points.las", mode = "w", header = inFile.header)
-        outFile.points = points_kept
-        outFile.close()
+        outFile1 = File("./test/data/close_points.las", mode = "w", header = inFile.header)
+        outFile1.points = points_kept
+        outFile1.close()
 
+        outFile2 = File("./test/data/ground_points.las", mode = "w", header = inFile.header)
+        outFile2.points = ground_points
+        outFile2.close()
 
 That covers the basics of read and write mode. If, however, you'd like to modify
 a las file in place, you can open it in read-write mode, as follows:
