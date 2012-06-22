@@ -114,7 +114,8 @@ only the points from a file which are within a certain distance of the first poi
 
     .. code-block:: python
     
-        # Grab the scaled x, y, and z dimensions and stick them together in an nx3 numpy array
+        # Grab the scaled x, y, and z dimensions and stick them together 
+        # in an nx3 numpy array
 
         coords = np.vstack((inFile.x, inFile.y, inFile.z)).transpose()
 
@@ -153,7 +154,8 @@ return_num is equal to num_returns.
         return_num = inFile.return_num
         ground_points = inFile.points[num_returns == return_num]
 
-        print("%i points out of %i were ground points." % (len(ground_points), len(inFile)))
+        print("%i points out of %i were ground points." % (len(ground_points), 
+                len(inFile)))
         
 **Writing Data**
 
@@ -168,11 +170,13 @@ have a HeaderManager (which has a header) ready to go:
 
     .. code-block:: python
         
-        outFile1 = File("./test/data/close_points.las", mode = "w", header = inFile.header)
+        outFile1 = File("./test/data/close_points.las", mode = "w", 
+                        header = inFile.header)
         outFile1.points = points_kept
         outFile1.close()
 
-        outFile2 = File("./test/data/ground_points.las", mode = "w", header = inFile.header)
+        outFile2 = File("./test/data/ground_points.las", mode = "w", 
+                        header = inFile.header)
         outFile2.points = ground_points
         outFile2.close()
 
@@ -234,11 +238,145 @@ description fields you can do so with additional arguments:
 
         inFile = File("./test/data/close_points.las", mode = "rw")
         # Instantiate a new VLR.
-        new_vlr = VLR(user_id = "The User ID", record_id = 1, VLR_body = "\x00" * 1000)
+        new_vlr = VLR(user_id = "The User ID", record_id = 1, 
+                      VLR_body = "\x00" * 1000)
         # Do the same thing without keword args
         new_vlr = VLR("The User ID", 1, "\x00" * 1000)
         # Do the same thing, but add a description field. 
-        new_vlr = VLR("The User ID",1, "\x00" * 1000, description = "A decription goes here.")
+        new_vlr = VLR("The User ID",1, "\x00" * 1000, 
+                        description = "A decription goes here.")
+        
+        # Append our new vlr to the current list. As the above dataset is derived 
+        # from simple.las which has no VLRS, this will be an empty list.
+        old_vlrs = inFile.header.vlrs
+        old_vlrs.append(new_vlr)
+        inFile.header.vlrs = old_vlrs
+        inFile.close()
+
+
+
+        #######################
+
+
+Here is a collection of the code on this page, copypasta ready:
+
+
+    .. code-block:: python 
+
+        import numpy as np
+        from laspy.file import File
+        inFile = File("./test/data/simple.las", mode = "r")
+        # Grab all of the points from the file.
+        point_records = inFile.points
+
+        # Grab just the X dimension from the file, and scale it.
+        def scaled_x_dimension(las_file):
+            x_dimension = las_file.X
+            scale = las_file.header.scale[0]
+            offset = las_file.header.offset[0]
+            return(x_dimension*scale + offset)
+        scaled_x = scaled_x_dimension(inFile)
+
+        # Find out what the point format looks like.
+        print("Examining Point Format: ")
+        pointformat = inFile.point_format
+        for spec in inFile.point_format:
+            print(spec.name)
+
+        #Like XML or etree objects instead?
+        print("Grabbing xml...")
+        a_mess_of_xml = pointformat.xml()
+        an_etree_object = pointformat.etree()
+
+        #It looks like we have color data in this file, so we can grab:
+        blue = inFile.blue
+
+        #Lets take a look at the header also. 
+        print("Examining Header Format:")
+        headerformat = inFile.header.header_format
+        for spec in headerformat:
+            print(spec.name)
+
+        print("Find close points...")
+        # Grab the scaled x, y, and z dimensions and stick them together 
+        # in an nx3 numpy array
+
+        coords = np.vstack((inFile.x, inFile.y, inFile.z)).transpose()
+
+        # Pull off the first point
+        first_point = coords[0,:]
+
+        # Calculate the euclidean distance from all points to the first point
+
+        distances = np.sum((coords - first_point)**2, axis = 1)
+
+        # Create an array of indicators for whether or not a point is less than
+        # 500000 units away from the first point
+
+        keep_points = distances < 500000
+
+        # Grab an array of all points which meet this threshold
+
+        points_kept = inFile.points[keep_points]
+
+        print("We're keeping %i points out of %i total"%(len(points_kept), len(inFile)))
+
+
+        print("Find ground points...")
+        # Grab the return_num and num_returns dimensions
+        num_returns = inFile.num_returns
+        return_num = inFile.return_num
+        ground_points = inFile.points[num_returns == return_num]
+
+        print("%i points out of %i were ground points." % (len(ground_points), 
+                len(inFile)))
+       
+        
+        print("Writing output files...")
+        outFile1 = File("./test/data/close_points.las", mode = "w", 
+                        header = inFile.header)
+        outFile1.points = points_kept
+        outFile1.close()
+
+        outFile2 = File("./test/data/ground_points.las", mode = "w", 
+                        header = inFile.header)
+        outFile2.points = ground_points
+        outFile2.close()
+
+
+        print("Trying out read/write mode.")
+        inFile = File("./test/data/close_points.las", mode = "rw")
+        
+        # Let's say the X offset is incorrect:
+        old_location_offset = inFile.header.offset
+        old_location_offset[0] += 100
+        inFile.header.offset = old_location_offset
+
+        # Lets also say our Y and Z axes are flipped. 
+        Z = inFile.Z
+        Y = inFile.Y
+        inFile.Y = Z
+        inFile.Z = Y
+
+        # Enough changes, let's go ahead and close the file:
+        inFile.close()
+
+        
+        print("Trying out VLRs...")
+        # Import the :obj:`laspy.header.VLR` class.
+        
+        from laspy.file import File
+        from laspy.header import VLR
+
+        inFile = File("./test/data/close_points.las", mode = "rw")
+        # Instantiate a new VLR.
+        new_vlr = VLR(user_id = "The User ID", record_id = 1, 
+                      VLR_body = "\x00" * 1000)
+        # Do the same thing without keword args
+        new_vlr = VLR("The User ID", 1, "\x00" * 1000)
+        # Do the same thing, but add a description field. 
+        new_vlr = VLR("The User ID",1, "\x00" * 1000, 
+                        description = "A decription goes here.")
         
         # Append our new vlr to the current list. As the above dataset is derived 
         # from simple.las which has no VLRS, this will be an empty list.
