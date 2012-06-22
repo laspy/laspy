@@ -157,6 +157,24 @@ return_num is equal to num_returns.
         print("%i points out of %i were ground points." % (len(ground_points), 
                 len(inFile)))
         
+
+Since the data are simply returned as numpy arrays, we can use all sorts of 
+analysis and plotting tools. For example, if you have matplotlib installed, you 
+could quickly make a histogram of the intensity dimension:
+
+    .. code-block:: python
+
+        import matplotlib.pyplot as plt
+        plt.hist(inFile.intensity)
+        plt.title("Histogram of the Intensity Dimension")
+        plt.show()
+
+    .. image:: ./_static/tutorial_histogram.png 
+        :width: 600
+
+        
+
+
 **Writing Data**
 
 Once you've found your data subsets of interest, you probably want to store them somewhere. 
