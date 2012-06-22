@@ -528,25 +528,25 @@ class FileManager():
         raise LaspyException("GPS Time is not defined on pt format: "
                         + str(fmt))
     
-    ColException = "Color is not available for point format: "
+
     def get_red(self):
         fmt = self.header.data_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("red"))
-        raise LaspyException(ColException + str(fmt))
+        raise LaspyException("Color is not available for point format: " + str(fmt))
     
     def get_green(self):
         fmt = self.header.data_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("green"))
-        raise LaspyException(ColException + str(fmt))
+        raise LaspyException("Color is not available for point format: " + str(fmt))
 
     
     def get_blue(self):
         fmt = self.header.data_format_id
         if fmt in (2,3,5):
             return(self.get_dimension("blue"))
-        raise LaspyException(ColException + str(fmt))
+        raise LaspyException("Color is not available for point format: " + str(fmt))
 
 
     def get_wave_packet_descp_idx(self):
