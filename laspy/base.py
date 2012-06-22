@@ -1,4 +1,4 @@
-from mmap import mmap
+import mmap
 from header import HeaderManager, Header, leap_year, VLR
 import datetime
 from struct import pack, unpack, Struct
@@ -18,6 +18,7 @@ class DataProvider():
         self._mmap = False
         self._pmap = False
         self.manager = manager
+        self.mode = manager.mode
     
     def open(self, mode):
         '''Open the file, catch simple problems.'''
@@ -59,9 +60,13 @@ class DataProvider():
         if self.fileref == False:
             raise LaspyException("File not opened.")
         try:
-            self._mmap = mmap(self.fileref.fileno(), 0)
-        except(Exception):
-            self._mmap = mmap(self.fileref.fileno(), 0)
+            if self.mode == "r":
+                self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
+            elif self.mode in ("w", "rw"):
+                self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_WRITE)
+            else:
+                raise LaspyException("Invalid Mode: " + str(self.mode))
+        except(Exception): 
             raise LaspyException("Error mapping file.")
 
     def remap(self,flush = True, point_map = False):
