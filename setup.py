@@ -3,7 +3,7 @@ from setuptools import setup
 import laspy
 
 # Get text from README.txt
-readme_text = file('README.md', 'rb').read()
+readme_text = file('README.rst', 'rb').read()
 
     
 setup(name          = 'laspy',
