@@ -18,6 +18,67 @@ def leap_year(year):
 class LaspyHeaderException(Exception):
     pass
 
+class EVLR():
+    ''' An extended VLR as defined in LAS specification 1.4'''
+    def __init__(self, user_id, record_id, VLR_body, **kwargs):
+        '''Build the EVLR using the required arguments user_id, record_id, and
+        VLR_body. The user can also specify the reserved and description fields if desired.'''
+        try:
+            self.rec_len_after_header = len(self.VLR_body)
+        except(TypeError):
+            self.rec_len_after_header = 0
+        for key in kwargs:
+            if key == "description":
+                self.description = str(kwargs[key]) + "\x00"*(32-len(kwargs[key]))
+            else:
+                self.description = "\x00"*32
+            if key == "reserved":
+                self.reserved = kwargs[key]
+            else:
+                self.reserved = 0
+            if not key in ["description", "reserved"]:
+                raise util.LaspyException("Unknown Argument to VLR: " + str(key))
+
+    def build_from_reader(self, reader):
+        '''Build a vlr from a reader capable of reading in the data.'''
+        self.reserved = reader.read_words("e_reserved")
+        self.user_id = "".join(reader.read_words("e_user_id"))
+        self.record_id = reader.read_words("e_record_id")
+        self.rec_len_after_header = reader.read_words("e_rec_len_after_header")
+        self.description = "".join(reader.read_words("e_description"))
+        self.VLR_body = reader.read(self.rec_len_after_header)
+        ### LOGICAL CONTENT ###
+        self.isEVLR = True
+        self.fmt = reader.evlr_formats
+
+    def __len__(self):
+        '''Return the size of the vlr object in bytes'''
+        return self.rec_len_after_header + 60
+
+    def pack(self, name, val): 
+        '''Pack a VLR field into bytes.'''
+        spec = self.fmt.lookup[name]
+        if spec.num == 1:
+            return(pack(spec.fmt, val))
+        return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
+    
+    def to_byte_string(self):
+        '''Pack the entire VLR into a byte string.'''
+        out = (self.pack("reserved", self.reserved) + 
+               self.pack("user_id", self.user_id) + 
+               self.pack("record_id", self.record_id) + 
+               self.pack("rec_len_after_header", self.rec_len_after_header) + 
+               self.pack("description", self.description) +
+               self.VLR_body)
+        diff = (self.rec_len_after_header - len(self.VLR_body))
+        if diff > 0:
+            out += "\x00"*diff
+        elif diff < 0:
+            raise util.LaspyException("Invalid Data in EVLR: too long for specified rec_len." + 
+                                " rec_len_after_header = " + str(self.rec_len_after_header) + 
+                                " actual length = " + str(len(self.VLR_body)))
+        return(out)
+
 
 class VLR():
     '''An object to create/read/store data from LAS Variable Length Records.

@@ -113,6 +113,7 @@ class FileManager():
         as well as upon completion of file modification actions like changing the 
         header padding.'''
         self.vlr_formats = Format("VLR")
+        self.evlr_formats = Format("EVLR")
         self.mode = mode
         self.data_provider = DataProvider(filename, self) 
         self.setup_memoizing()

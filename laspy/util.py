@@ -84,7 +84,7 @@ class Format():
         self.specs = []
         self.rec_len = 0
         self.pt_fmt_long = "<"
-        if not (fmt in ("0", "1", "2", "3", "4", "5", "VLR", "h1.0", "h1.1", "h1.2", "h1.3")):
+        if not (fmt in ("0", "1", "2", "3", "4", "5","6","7","8","9","10", "VLR", "EVLR", "h1.0", "h1.1", "h1.2", "h1.3", "h1.4")):
             raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
         if fmt in ("0", "1", "2", "3", "4", "5"):
@@ -158,7 +158,15 @@ class Format():
             self.add("record_id", ctypes.c_ushort, 1)
             self.add("rec_len_after_header", ctypes.c_ushort, 1)
             self.add("description", ctypes.c_char, 32, pack = True)
-        
+
+        if fmt == "EVLR":
+            self.format_type = "EVLR"
+            self.add("reserved", ctypes.c_ushort, 1)
+            self.add("user_id", ctypes.c_char, 16)
+            self.add("record_id", ctypes.c_ushort, 1)
+            self.add("rec_len_after_header", ctypes.c_ulonglong, 1)
+            self.add("description", ctypes.c_char, 32, pack = True)
+
         ## Header Fields
         if fmt[0] == "h": 
             self.format_type = "header version = " + fmt[1:]
