@@ -609,6 +609,12 @@ class FileManager():
             return(self.get_dimension("Z_t"))
         raise LaspyException("Z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
+    def get_extra_bytes(self):
+        if "extra_bytes" in self.point_format.lookup.keys():
+            return(self.get_dimension("extra_bytes"))
+        else:
+            raise LaspyException("Extra bytes not present in record")
+
 
 class Reader(FileManager):
     def close(self):
@@ -1140,3 +1146,10 @@ class Writer(FileManager):
             self.set_dimension("Z_t", z)
             return
         raise LaspyException("Z_t Not Available for Point Format: " + str(vsn))
+
+    def set_extra_bytes(self, extra_bytes):
+        '''Wrapper for set_dimension("extra_bytes")'''
+        if "extra_bytes" in self.point_format.lookup.keys():
+            self.set_dimension("extra_bytes", extra_bytes)
+        else:
+            raise LaspyException("extra_bytes not present in file.")

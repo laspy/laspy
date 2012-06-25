@@ -528,7 +528,16 @@ class File(object):
 
     z_t = property(get_z_t, set_z_t, None, None)
 
+    def get_extra_bytes(self):
+        return(self._reader.get_extra_bytes())
+    def set_extra_bytes(self, new):
+        self.assertWriteMode()
+        self._writer.set_extra_bytes(new)
 
+    doc = '''It is possible to specify a data_record_length longer than the default, 
+            and the extra space is treated by laspy as raw bytes accessable via this extra_bytes property.'''
+    extra_bytes = property(get_extra_bytes, set_extra_bytes, None, doc)
+        
     def __iter__(self):
         '''Iterator support (read mode only)
 
