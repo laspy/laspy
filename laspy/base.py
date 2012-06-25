@@ -30,7 +30,7 @@ class DataProvider():
     def point_map(self):
         '''Create the numpy point map based on the point format.'''
         if type(self._mmap) == bool:
-            self.map()
+            self.map() 
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))])
  
@@ -142,7 +142,11 @@ class FileManager():
         self.point_refs = False
         self.has_point_records = True
         self._current = 0
-        self.point_format = Format(self.header.data_format_id) 
+
+        extrabytes = self.header.data_record_length-{0:20,1:28,2:26,3:34,4:57,5:63}[self.header.data_format_id]
+        extrabytes = (extrabytes >= 0)*extrabytes + (extrabytes < 0)*0
+        self.point_format = Format(self.header.data_format_id,extra_bytes= extrabytes)  
+
         self.data_provider.point_map()
         if vlrs != False:
             self.set_vlrs(vlrs)
@@ -157,18 +161,18 @@ class FileManager():
         self.header_format = header.format 
         self._header = header
         self.header = HeaderManager(header = header, reader = self)
-
-        #if self._header.data_format_id != None:
-        #    self.point_format = Format(str(self._header.data_format_id))
-        #else:
-        #    self.point_format = Format("0")
-        self.point_format = Format(self._header.data_format_id)
+        
 
         self.initialize_file_padding(vlrs)
 
         ## We have a file to store data now.
         self.data_provider.remap()
         self.header.flush()
+
+        extrabytes = self.header.data_record_length-{0:20,1:28,2:26,3:34,4:57,5:63}[self.header.data_format_id]
+        extrabytes = (extrabytes >= 0)*extrabytes + (extrabytes < 0)*0
+        self.point_format = Format(self.header.data_format_id,extra_bytes =  extrabytes)  
+        
         if not vlrs in [[], False]:
             self.set_vlrs(vlrs)
         if self._header.created_year == 0:
@@ -425,7 +429,7 @@ class FileManager():
     def _get_raw_datum(self, rec_offs, spec):
         '''return raw bytes associated with non dimension field (VLR/Header)'''
         return(self.data_provider._mmap[(rec_offs + spec.offs):(rec_offs + spec.offs 
-                        + spec.num*spec.length)])
+                        + spec.num*spec.length)]) 
 
     def _get_datum(self, rec_offs, spec):
         '''Return unpacked data assocaited with non dimension field (VLR/Header)'''
@@ -441,10 +445,13 @@ class FileManager():
     def get_raw_header_property(self, name):
         '''Wrapper for grabbing raw header bytes with _get_raw_datum'''
         spec = self.header_format.lookup[name]
+
         return(self._get_raw_datum(0, spec))
     
     def get_header_property(self, name):
         '''Wrapper for grabbing unpacked header data with _get_datum'''
+        spec = self.header_format.lookup[name]
+
         if name in self.header_changes:
             spec = self.header_format.lookup[name]
             new_val = self._get_datum(0, spec)

@@ -17,6 +17,8 @@ fmtLen = {"<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
 LEfmt = {ctypes.c_long:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
         ,ctypes.c_float:"<f", ctypes.c_char:"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
 npFmt = {"<L":"i4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
+
+
 defaults = {"<L":0, "<H":0, "<B": "0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
 
 class Spec():
@@ -33,6 +35,9 @@ class Spec():
             self.num = num
             self.pack = pack
             self.np_fmt = npFmt[self.fmt]
+            if self.fmt == "<B" and num > 1:
+                self.np_fmt = "V" + str(num)
+            
             if self.num == 1 or type(defaults[self.fmt])== str:
                 self.default = defaults[self.fmt]*self.num
             else:
@@ -66,7 +71,7 @@ class Format():
     supports the :obj:`laspy.util.Format.xml` and :obj:`laspy.util.Format.etree`
     methods for interrogating the members of a format. This can be useful in finding out
     what dimensions are available from a given point format, among other things.''' 
-    def __init__(self, fmt, overwritable = False):
+    def __init__(self, fmt, overwritable = False, extra_bytes = False):
         '''Build the :obj:`laspy.util.Format` instance. '''
         fmt = str(fmt)
         self.fmt = fmt
@@ -179,6 +184,10 @@ class Format():
                 self.add("z_max", ctypes.c_double, 1)
                 self.add("z_min", ctypes.c_double, 1)
 
+        ## Shared 
+
+        if not extra_bytes in (0, False): 
+            self.add("extra_bytes", ctypes.c_ubyte, extra_bytes) 
         self.lookup = {}
         for spec in self.specs:
             self.lookup[spec.name] = spec
@@ -192,7 +201,8 @@ class Format():
             offs = last.offs + last.num*fmtLen[last.fmt]
         self.rec_len += num*fmtLen[LEfmt[fmt]]
         self.specs.append(Spec(name, offs, fmt, num, pack, overwritable =  overwritable, idx = len(self.specs)))
-        self.pt_fmt_long += LEfmt[fmt][1]
+        self.pt_fmt_long +=(str(num) +  LEfmt[fmt][1])
+
         if self._etree != False:
             self._etree.append(self.specs[-1].etree()) 
     def xml(self):

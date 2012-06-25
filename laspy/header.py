@@ -98,24 +98,23 @@ class Header(object):
         kwargs["version_major"] = str(file_version)[0]
         kwargs["version_minor"] = str(file_version)[2]
         self._format = fmt
-        for dim in self.format.specs:
+        for dim in self._format.specs:
             if dim.name in kwargs.keys():
                 self.__dict__[dim.name] = kwargs[dim.name]
             else:
                 self.__dict__[dim.name] = dim.default
 
     def reformat(self, file_version):
-        new_format = Format("h" + str(file_version))
+        new_format = util.Format("h" + str(file_version))
         self.version_major = str(file_version)[0]
-        self.version_minor = str(file_version)[1]
-        
+        self.version_minor = str(file_version)[2]
         # Set defaults for newly available fields.
         for item in new_format.specs:
-            if not item.name in self.__dict__.keys__():
+            if not item.name in self.__dict__.keys():
                 self.__dict__[item.name] = item.default
 
         # Clear no longer available fields. 
-        for item in self.format.specs:
+        for item in self._format.specs:
             if not item.name in new_format.lookup.keys(): 
                 self.__dict__[item.name] = None
         
@@ -508,8 +507,10 @@ class HeaderManager(object):
 
     def get_datarecordlength(self):
         '''Return the size of each point record'''
-        lenDict = {0:20,1:28,2:26,3:34,4:57,5:63}
-        return lenDict[self.data_format_id] 
+        #lenDict = {0:20,1:28,2:26,3:34,4:57,5:63}
+        #return lenDict[self.data_format_id] 
+        return(self.reader.get_header_property("data_record_length"))
+
     doc = '''The length of each point record.'''
     data_record_length = property(get_datarecordlength,
                                   None,

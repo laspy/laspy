@@ -1,4 +1,4 @@
 python setup.py register
-python sdist upload
-python bdist_egg upload
+python setup.py sdist upload
+python setup.py bdist_egg upload
 
