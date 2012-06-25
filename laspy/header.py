@@ -41,11 +41,11 @@ class EVLR():
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''
-        self.reserved = reader.read_words("e_reserved")
-        self.user_id = "".join(reader.read_words("e_user_id"))
-        self.record_id = reader.read_words("e_record_id")
-        self.rec_len_after_header = reader.read_words("e_rec_len_after_header")
-        self.description = "".join(reader.read_words("e_description"))
+        self.reserved = reader.read_words("reserved", "evlr")
+        self.user_id = "".join(reader.read_words("user_id", "evlr"))
+        self.record_id = reader.read_words("record_id", "evlr")
+        self.rec_len_after_header = reader.read_words("rec_len_after_header", "evlr")
+        self.description = "".join(reader.read_words("description", "evlr"))
         self.VLR_body = reader.read(self.rec_len_after_header)
         ### LOGICAL CONTENT ###
         self.isEVLR = True
@@ -63,7 +63,7 @@ class EVLR():
         return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
     
     def to_byte_string(self):
-        '''Pack the entire VLR into a byte string.'''
+        '''Pack the entire EVLR into a byte string.'''
         out = (self.pack("reserved", self.reserved) + 
                self.pack("user_id", self.user_id) + 
                self.pack("record_id", self.record_id) + 

@@ -114,7 +114,7 @@ class DataProvider():
 
 class FileManager():
     '''Superclass of Reader and Writer, provides most of the data manipulation functionality in laspy.''' 
-    def __init__(self,filename, mode, header = False, vlrs = False): 
+    def __init__(self,filename, mode, header = False, vlrs = False, evlrs = False): 
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding.'''
@@ -130,16 +130,16 @@ class FileManager():
         self._current = 0 
 
         if self.mode in ("r", "rw"):
-            self.setup_read_write(vlrs)
+            self.setup_read_write(vlrs, evlrs)
             return
 
         elif self.mode == "w":
-            self.setup_write(header, vlrs)
+            self.setup_write(header, vlrs, evlrs)
             return
         else:
             raise LaspyException("Append Mode Not Supported")
         
-    def setup_read_write(self, vlrs):
+    def setup_read_write(self, vlrs, evlrs):
         self.data_provider.open("r+b")
         self.data_provider.map() 
         self.header_format = Format("h" + self.grab_file_version())
@@ -158,9 +158,11 @@ class FileManager():
         self.data_provider.point_map()
         if vlrs != False:
             self.set_vlrs(vlrs)
+        if evlrs != False:
+            self.set_evlrs(vlrs)
         return
 
-    def setup_write(self,header, vlrs):
+    def setup_write(self,header, vlrs, evlrs):
         if header == False:
             raise LaspyException("Write mode requires a valid header object.")
         ## No file to store data yet.
@@ -183,13 +185,12 @@ class FileManager():
         
         if not vlrs in [[], False]:
             self.set_vlrs(vlrs)
+        if not evlrs in [[], False]:
+            self.set_evlrs(vlrs)
         if self._header.created_year == 0:
-            self.header.date = datetime.datetime.now()
-        
-        if vlrs != False:
-            self.set_vlrs(vlrs) 
+            self.header.date = datetime.datetime.now() 
         self.populate_vlrs()
-        
+        self.populate_evlrs()
         return
 
 
@@ -299,7 +300,10 @@ class FileManager():
 
     def populate_evlrs(self): 
         '''Catalogue the extended variable length records'''
-        self.vlrs = []
+        if not self.header.version in ("1.3", "1.4"):
+            return
+        self.evlrs = []
+    
         if self.header.version == "1.3":
             self.seek(self.header.start_wavefm_data_rec, rel = False)
             num_vlrs = 1
@@ -334,7 +338,11 @@ class FileManager():
         '''Populate and return list of :obj:`laspy.header.VLR` objects`.'''
         self.populate_vlrs()
         return(self.vlrs)
-    
+   
+    def get_evlrs(self):
+        self.populate_evlrs()
+        return(self.evlrs)
+
     def get_padding(self):
         '''Return the padding between the end of the VLRs and the beginning of
         the point records'''
@@ -675,6 +683,9 @@ class Writer(FileManager):
     def __del__(self): 
         self.close()
 
+    def set_evlrs(self, value):
+        raise NotImplementedError
+    
     def set_vlrs(self, value): 
         if value == False or len(value) == 0:
             return
