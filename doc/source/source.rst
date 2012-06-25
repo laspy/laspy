@@ -1,6 +1,6 @@
 
 API Documentation
-==============
+=================
 
 .. toctree::
     file

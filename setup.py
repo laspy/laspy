@@ -1,11 +1,9 @@
-
-from glob import glob
 from setuptools import setup
 
 import laspy
 
 # Get text from README.txt
-#readme_text = file('docs/source/README.txt', 'rb').read()
+readme_text = file('README.md', 'rb').read()
 
     
 setup(name          = 'laspy',
@@ -16,7 +14,11 @@ setup(name          = 'laspy',
       author        = 'Grant Brown',
       author_email  = 'grant.brown73@gmail.com',
       url   = 'https://github.com/grantbrown/laspy',
-      long_description = '',
+      long_description = '''Laspy is a python library for reading, writing, and 
+                        modifying .LAS LIDAR files. It provides both a dimension 
+                        and point focused API. Documentation is available at 
+                        www.laspy.org, and the source is available at 
+                        www.github.com/grantbrown/laspy''',
       packages      = ['laspy'],
       install_requires = ['numpy'],
       test_suite = 'test.test_laspy',
