@@ -303,6 +303,7 @@ class HeaderManager(object):
 
     def get_waveform_data_packets_internal(self):
         raise NotImplementedError("LAS Version 1.3 not yet supported.")
+
     def set_waveform_data_packets_internal(self, value):
         raise NotImplementedError("LAS Version 1.3 not yet supported.")
     waveform_data_packets_internal = property(get_waveform_data_packets_internal, 
@@ -817,6 +818,64 @@ class HeaderManager(object):
     '''
     max = property(get_max, set_max, None, doc)
     
+
+    def get_start_wavefm_data_record(self):
+        if not self.version in ("1.3", "1.4"):
+            raise util.LaspyException("Waveform data not present in version: " + self.version)
+        return(self.reader.get_header_property("start_wavefm_data_rec"))
+
+    def set_start_wavefm_data_record(self, value):
+        self.assertWriteMode()
+        if not self.version in ("1.3", "1.4"):
+            raise util.LaspyException("Waveform data not present in version: " + self.version)
+        self.reader.set_header_property("start_wavefm_data_rec", value)
+
+    start_wavefm_data_rec = property(get_start_wavefm_data_record, set_start_wavefm_data_record, None, None)
+
+    def get_start_first_EVLR(self):
+        if not self.version == "1.4":
+            raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
+        return(self.reader.get_header_property("start_first_EVLR"))
+
+    def set_start_first_EVLR(self, value):
+        if not self.version == "1.4":
+            raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
+        self.reader.set_header_property("start_first_EVLR",value)
+        return
+
+    start_first_EVLR = property(get_start_first_EVLR, set_start_first_EVLR, None, None)
+
+    def get_num_EVLRs(self):
+        if not self.version == "1.4":
+            raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
+        return(self.reader.get_header_property("num_EVLRs"))
+
+    def set_num_EVLRs(self, value):
+        if not self.version == "1.4":
+            raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
+        self.assertWriteMode()
+        self.reader.set_header_property("num_EVLRs", value)
+
+    def get_legacy_point_records_count(self):
+        if not self.version == "1.4":
+            raise util.LaspyException("Point records count is only denoted as legacy in version 1.4 files.")
+        return(self.reader.get_header_property("legacy_point_records_count"))
+
+    def set_legacy_point_records_count(self, value):
+        if not self.version == "1.4":
+            raise util.LaspyException("Point records count is only denoted as legacy in version 1.4 files.")
+        self.reader.set_header_property("legacy_point_records_count", value)
+
+    def get_legacy_point_return_count(self):
+        if not self.version == "1.4":
+            raise util.LaspyException("Point return count is only denoted as legacy in version 1.4 files.")
+        return(self.reader.get_header_property("legacy_point_return_count"))
+
+    def set_legacy_point_return_count(self, value):
+        if not self.version == "1.4":
+            raise util.LaspyException("Point return count is only denoted as legacy in version 1.4 files.")
+        self.reader.set_header_property("legacy_point_return_count", value)
+
     def xml(self):
         '''Return an xml repreentation of header data. (not implemented)'''
         raise NotImplementedError
@@ -825,7 +884,6 @@ class HeaderManager(object):
         '''Return an etree representation of header data. (not implemented)'''
         raise NotImplementedError
 
-    ### VLR MANIPULATION NOT IMPLEMENTED
     def add_vlr(self, value):
         return
    
