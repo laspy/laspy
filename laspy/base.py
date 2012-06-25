@@ -17,6 +17,7 @@ class DataProvider():
         self.fileref = False
         self._mmap = False
         self._pmap = False
+        self._evlrmap = False
         self.manager = manager
         self.mode = manager.mode
     
@@ -28,14 +29,19 @@ class DataProvider():
             raise LaspyException("Error opening file")
 
     def point_map(self):
-        '''Create the numpy point map based on the point format.'''
+        '''Create the numpy point map based on the point format.'''   
         if type(self._mmap) == bool:
             self.map() 
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
-                                [x.np_fmt for x in self.manager.point_format.specs]))])
- 
-        self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
+                                [x.np_fmt for x in self.manager.point_format.specs]))]) 
+        if not self.manager.header.version in ("1.3", 1.4):
+            self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
+        else:
+            self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
+                        offset = self.manager.header.data_offset,
+                        count = self.manager.header.point_records_count)
+    
     def close(self, flush = True):
         '''Close the data provider and flush changes if _mmap and _pmap exist.''' 
         if flush and self.manager.has_point_records: 
@@ -312,8 +318,8 @@ class FileManager():
         '''calculate the number of point records'''
         if self.calc_point_recs != False:
             return(self.calc_point_recs)
-        
-        if self.header.get_version != "1.3":
+        version = self.header.get_version()
+        if not version in ("1.3", "1.4"):
             try:
                 return(len(self.data_provider._pmap))
             except:
@@ -321,12 +327,17 @@ class FileManager():
                     self.header.data_offset)/self.header.data_record_length)
                 self.calc_point_recs = new_val
                 return(new_val)
-        else:
-            raise LaspyException("Version 1.3 is currently broken due to waveform data.")
-            new_val = ((self.header.StWavefmDatPktRec-
-                self.header.data_offset)/self.header.data_record_length)       
+        elif version == "1.3": 
+            new_val = ((self.header.istart_wavefm_data_rec)-
+                    self.header.data_offset)/self.header.data_record_length
             self.calc_point_recs = new_val
             return(new_val)
+        elif version == "1.4":
+            new_val = ((self.header.start_first_EVLR)-
+                    self.header.data_offset)/self.header.data_record_length
+            self.calc_point_recs = new_val
+            return(new_val)
+
 
     def set_input_srs(self):
         pass
