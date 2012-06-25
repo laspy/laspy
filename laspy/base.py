@@ -143,9 +143,10 @@ class FileManager():
         self.data_provider.open("r+b")
         self.data_provider.map() 
         self.header_format = Format("h" + self.grab_file_version())
-        self.vlr_formats = Format("VLR")
         self.get_header()
         self.populate_vlrs()
+        if self.header.version in ("1.3", "1.4"):
+            self.populate_evlrs()
         self.point_refs = False
         self.has_point_records = True
         self._current = 0
@@ -244,11 +245,19 @@ class FileManager():
             return
         self.data_provider._mmap.seek(bytes, 0)
         
-    def read_words(self, name):
+    def read_words(self, name, rec_type = "vlr"):
         '''Read a consecutive sequence of packed binary data, return a single 
         element or list.'''
+        if rec_type == "vlr":
+            source = self.vlr_formats
+        elif rec_type == "evlr":
+            source = self.evlr_formats
+        elif rec_type == "header":
+            source = self.header_format
+        else:
+            raise LaspyException("Invalid source: " + str(rec_type))
         try:
-            dim = self.vlr_formats.lookup[name]
+            dim = source.lookup[name]
         except KeyError:
             raise LaspyException("Dimension " + name + " not found.")
         return(self._read_words(dim.fmt, dim.num, dim.length))
@@ -287,6 +296,23 @@ class FileManager():
         except:
             self.header = HeaderManager(header = Header(), reader = self)
             return(self.header)
+
+    def populate_evlrs(self): 
+        '''Catalogue the extended variable length records'''
+        self.vlrs = []
+        if self.header.version == "1.3":
+            self.seek(self.header.start_wavefm_data_rec, rel = False)
+            num_vlrs = 1
+        elif self.header.version == "1.4":
+            self.seek(self.header.start_first_EVLR)
+            num_vlrs = self.get_header_property("num_EVLRs")
+        for i in xrange(num_vlrs): 
+            new_vlr = EVLR(None, None, None)
+            new_vlr.build_from_reader(self)
+            self.evlrs.append(new_vlr)  
+        self.header.__dict__["evlrs"] = self.vlrs
+        return
+
 
     def populate_vlrs(self): 
         '''Catalogue the variable length records'''
