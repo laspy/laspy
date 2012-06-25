@@ -489,6 +489,26 @@ class LasWriteModeTestCase(unittest.TestCase):
         self.assertTrue((list(Y) == list(File2.get_y())))
         self.assertTrue((list(Z) == list(File2.get_z())))
 
+    def test_format_change_and_extra_bytes(self):
+        File1 = self.File1
+        new_header = File1.header.copy()
+        new_header.format = 1.2
+        new_header.data_format_id = 0
+        new_header.data_record_length = 50
+       
+        
+        File2 = File.File(self.output_tempfile, mode = "w", 
+                            header = new_header)
+        for dim in File1.point_format:
+            in_dim = File1.reader.get_dimension(dim.name)
+            if dim.name in File2.point_format.lookup:
+                File2.writer.set_dimension(dim.name, in_dim)
+        File2.extra_bytes = ["Test"] * len(File2)
+
+        self.assertTrue("Test" in str(File2.get_extra_bytes()[14]))
+
+
+
     def tearDown(self):
         self.File1.close()
         os.remove(self.tempfile)
