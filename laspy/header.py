@@ -24,20 +24,18 @@ class EVLR():
         '''Build the EVLR using the required arguments user_id, record_id, and
         VLR_body. The user can also specify the reserved and description fields if desired.'''
         try:
+            self.VLR_body = VLR_body
             self.rec_len_after_header = len(self.VLR_body)
         except(TypeError):
             self.rec_len_after_header = 0
-        for key in kwargs:
-            if key == "description":
-                self.description = str(kwargs[key]) + "\x00"*(32-len(kwargs[key]))
-            else:
-                self.description = "\x00"*32
-            if key == "reserved":
-                self.reserved = kwargs[key]
-            else:
-                self.reserved = 0
-            if not key in ["description", "reserved"]:
-                raise util.LaspyException("Unknown Argument to VLR: " + str(key))
+        if "description" in kwargs:
+            self.description = str(kwargs["description"]) + "\x00"*(32-len(kwargs["description"]))
+        else:
+            self.description = "\x00"*32
+        if "reserved" in kwargs:
+            self.reserved = kwargs["reserved"]
+        else:
+            self.reserved = 0 
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''
@@ -93,17 +91,14 @@ class VLR():
             self.rec_len_after_header = len(self.VLR_body)
         except(TypeError):
             self.rec_len_after_header = 0
-        for key in kwargs:
-            if key == "description":
-                self.description = str(kwargs[key]) + "\x00"*(32-len(kwargs[key]))
-            else:
-                self.description = "\x00"*32
-            if key == "reserved":
-                self.reserved = kwargs[key]
-            else:
-                self.reserved = 0
-            if not key in ["description", "reserved"]:
-                raise util.LaspyException("Unknown Argument to VLR: " + str(key))
+        if "description" in kwargs:
+            self.description = str(kwargs["description"]) + "\x00"*(32-len(kwargs["description"]))
+        else:
+            self.description = "\x00"*32
+        if "reserved" in kwargs:
+            self.reserved = kwargs["reserved"]
+        else:
+            self.reserved = 0 
         self.reserved = 0
         self.isVLR = True
         self.fmt = util.Format("VLR")
