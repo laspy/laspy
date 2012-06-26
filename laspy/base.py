@@ -128,7 +128,8 @@ class FileManager():
 
         self.point_refs = False
         self._current = 0 
-
+        
+        self.padded = False
         if self.mode in ("r", "rw"):
             self.setup_read_write(vlrs, evlrs)
             return
@@ -298,16 +299,16 @@ class FileManager():
         ## Why is this != neccesary?
         try:
             return(self.header)
-        except:
-            print("Using header version: %s"%str(file_version))
+        except: 
             self.header = HeaderManager(header = Header(file_version), reader = self)
             return(self.header)
 
     def populate_evlrs(self): 
         '''Catalogue the extended variable length records'''
+        self.evlrs = []
         if not self.header.version in ("1.3", "1.4"):
             return
-        self.evlrs = []
+        
     
         if self.header.version == "1.3":  
             self.seek(self.header.start_wavefm_data_rec, rel = False)
@@ -820,6 +821,9 @@ class Writer(FileManager):
         called for the first time on a file in write mode. ''' 
         # When creating a file in write mode with EVLRs, this method is called
         # an extra time, which causes a performance hit. 
+        if self.padded == num_recs:
+            self.data_provider.point_map()
+            return
         bytes_to_pad = num_recs * self.point_format.rec_len
         #old_size = self.data_provider.filesize()
         old_size = self.header.data_offset 
@@ -830,7 +834,7 @@ class Writer(FileManager):
         self.data_provider.fileref.flush()
         self.data_provider.remap(flush = False, point_map = True) 
         # Write Phase complete, enter rw mode?
-        
+        self.padded = num_recs
         return
 
     def set_dimension(self, name,new_dim):
