@@ -71,7 +71,7 @@ class File(object):
                 self._reader = base.Reader(self.filename,mode= self._mode)            
                 self._header = self._reader.get_header() 
             else: 
-                raise util.LaspyException("Headers must currently be stored in the file.")
+                raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
                 self._reader = base.Reader(self.filename, mode = self._mode, header=self._header)
 
             if self.in_srs:
@@ -85,7 +85,7 @@ class File(object):
                 self._reader = self._writer
                 self._header = self._reader.get_header()
             else:
-                raise util.LaspyException("Headers must currently be stored in the file.")
+                raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
     
         if self._mode == 'w': 
             if self._header == None:

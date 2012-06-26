@@ -192,10 +192,8 @@ class Format():
                 self.add("point_records_count", ctypes.c_ulong, 1)         
             else:
                 self.add("legacy_point_records_count", ctypes.c_ulong, 1)
-                self.add("legacy_point_return_count", ctypes.c_ulong, 5)
-            if fmt == "h1.3":
-                self.add("point_return_count",  ctypes.c_ulong, 7)
-            elif fmt in ("h1.0", "h1.1", "h1.2"):
+                self.add("legacy_point_return_count", ctypes.c_ulong, 5) 
+            if fmt in ("h1.0", "h1.1", "h1.2", "h1.3"):
                 self.add("point_return_count", ctypes.c_long, 5)
 
             self.add("x_scale", ctypes.c_double, 1)

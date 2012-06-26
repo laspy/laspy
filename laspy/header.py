@@ -23,8 +23,10 @@ class EVLR():
     def __init__(self, user_id, record_id, VLR_body, **kwargs):
         '''Build the EVLR using the required arguments user_id, record_id, and
         VLR_body. The user can also specify the reserved and description fields if desired.'''
-        try:
-            self.VLR_body = VLR_body
+        self.user_id = str(user_id) + "\x00"*(16-len(str(user_id)))
+        self.record_id = record_id
+        self.VLR_body = VLR_body
+        try: 
             self.rec_len_after_header = len(self.VLR_body)
         except(TypeError):
             self.rec_len_after_header = 0
@@ -36,6 +38,7 @@ class EVLR():
             self.reserved = kwargs["reserved"]
         else:
             self.reserved = 0 
+        self.fmt = util.Format("EVLR")
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''

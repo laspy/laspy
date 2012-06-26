@@ -34,7 +34,7 @@ class DataProvider():
             self.map() 
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))]) 
-        if not self.manager.header.version in ("1.3", 1.4):
+        if not self.manager.header.version in ("1.3", 1.4): 
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
         else:
@@ -150,8 +150,8 @@ class FileManager():
         self.point_refs = False
         self.has_point_records = True
         self._current = 0
-
-        extrabytes = self.header.data_record_length-{0:20,1:28,2:26,3:34,4:57,5:63}[self.header.data_format_id]
+        
+        extrabytes = self.header.data_record_length-Format(self.header.data_format_id).rec_len
         extrabytes = (extrabytes >= 0)*extrabytes + (extrabytes < 0)*0
         self.point_format = Format(self.header.data_format_id,extra_bytes= extrabytes)  
 
@@ -178,8 +178,8 @@ class FileManager():
         ## We have a file to store data now.
         self.data_provider.remap()
         self.header.flush()
-
-        extrabytes = self.header.data_record_length-{0:20,1:28,2:26,3:34,4:57,5:63}[self.header.data_format_id]
+        
+        extrabytes = self.header.data_record_length-Format(self.header.data_format_id).rec_len
         extrabytes = (extrabytes >= 0)*extrabytes + (extrabytes < 0)*0
         self.point_format = Format(self.header.data_format_id,extra_bytes =  extrabytes)  
         
@@ -190,12 +190,13 @@ class FileManager():
         if self._header.created_year == 0:
             self.header.date = datetime.datetime.now() 
         self.populate_vlrs()
-        self.populate_evlrs()
+        #self.populate_evlrs()
         return
 
 
     def initialize_file_padding(self, vlrs):
         filesize = self._header.format.rec_len
+        self._header.header_size = filesize
         if vlrs != False:
             filesize += sum([len(x) for x in vlrs])
         self.vlr_stop = filesize
@@ -304,9 +305,7 @@ class FileManager():
             return
         self.evlrs = []
     
-        if self.header.version == "1.3":
-            print("Seeking to: " + str(self.header.start_wavefm_data_rec))
-            print("File Size: " + str(self.data_provider._mmap.size()))
+        if self.header.version == "1.3": 
             self.seek(self.header.start_wavefm_data_rec, rel = False)
             num_vlrs = 1
         elif self.header.version == "1.4":
@@ -363,8 +362,8 @@ class FileManager():
                     self.header.data_offset)/self.header.data_record_length)
                 self.calc_point_recs = new_val
                 return(new_val)
-        elif version == "1.3": 
-            new_val = ((self.header.istart_wavefm_data_rec)-
+        elif version == "1.3":  
+            new_val = ((self.header.start_wavefm_data_rec)-
                     self.header.data_offset)/self.header.data_record_length
             self.calc_point_recs = new_val
             return(new_val)
