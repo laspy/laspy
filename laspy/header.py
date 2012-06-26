@@ -220,6 +220,7 @@ class HeaderManager(object):
     def pull(self):
         '''Load all header data from file into the header.Header instance.'''
         for dim in self._header.format.specs:
+            print(dim.name)
             self._header.__dict__[dim.name] = self.reader.get_header_property(dim.name)
 
     def allow_all_overwritables(self):
@@ -898,6 +899,14 @@ class HeaderManager(object):
         the existing list with get_vlrs and append to it.
         '''
     vlrs = property(get_vlrs, set_vlrs, None, doc)
+
+    def get_evlrs(self):
+        return(self.reader.get_evlrs())
+    def set_evlrs(self, value):
+        self.assertWriteMode()
+        self.reader.set_vlrs(value)
+
+    evlrs = property(get_evlrs, set_evlrs, None, None)
 
     def get_srs(self):
         raise NotImplementedError 
