@@ -724,12 +724,16 @@ class Writer(FileManager):
             self.data_provider.close(flush=False)
             self.data_provider.open("w+b")
             self.data_provider.fileref.write(dat_part_1)
-            for evlr in value:
-                byte_string = evlr.to_byte_string()
-                self.data_provider.fileref.write(byte_string) 
+            total_evlrs = sum([len(x) for x in value])
+            self.data_provider.fileref.write("\x00"*total_evlrs) 
             self.data_provider.fileref.close()
             self.data_provider.open("r+b")
             self.data_provider.map()
+            self.seek(old_offset, rel = False)
+
+            for evlr in value: 
+                self.data_provider._mmap.write(evlr.to_byte_string())
+
             if self.has_point_records:
                 self.data_provider.point_map()
         else:
