@@ -11,16 +11,19 @@ LAS files are binary files packed according to several specifications.
 
 **LAS Specifications**
 
-Currently, laspy supports LAS formats 1.0 to 1.2, although support for 1.3 formatted files
-is a definite, and mostly complete, next step. The specifications are detailed below:
+Currently, laspy 1.0 supports LAS formats 1.0 to 1.2, although support for 1.3 formatted files
+is preliminarily supported by the latest source at github. The LAS specifications are detailed below:
 
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf 
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf 
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf 
-http://www.asprs.org/a/society/committees/standards/asprs_las_spec_v13.pdf
+http://www.asprs.org/a/society/committees/standards/LAS_1_3_r11.pdf
 
-There is also a version 1.4 specification, but it is not much used in practice yet, and laspy does not
-currently support it.
+There is also a version 1.4 specification, but support for it is not yet complete.
+
+.. note::
+    If you have access to good version 1.3 or version 1.4 LAS files, shoot us an email:
+    grant.brown73@gmail.com
 
 Much of the data required for laspy to know how to read the LAS file is present 
 in the header, which laspy interacts with according to the pattern below. There are 
