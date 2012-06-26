@@ -173,7 +173,7 @@ class Format():
             self.add("file_sig",ctypes.c_char, 4, pack = True, overwritable=overwritable)
             self.add("file_source_id", ctypes.c_ushort, 1)
             self.add("global_encoding",ctypes.c_ushort, 1)
-            self.add("proj_id_1",ctypes.c_long, 1)
+            self.add("proj_id_1",ctypes.c_ulong, 1)
             self.add("proj_id_2", ctypes.c_ushort, 1)
             self.add("proj_id_3", ctypes.c_ushort, 1)
             self.add("proj_id_4", ctypes.c_ubyte, 8)
@@ -184,17 +184,17 @@ class Format():
             self.add("created_day", ctypes.c_ushort, 1)
             self.add("created_year", ctypes.c_ushort,1)
             self.add("header_size", ctypes.c_ushort, 1, overwritable=overwritable)
-            self.add("data_offset", ctypes.c_long, 1)
-            self.add("num_variable_len_recs",  ctypes.c_long, 1)
+            self.add("data_offset", ctypes.c_ulong, 1)
+            self.add("num_variable_len_recs",  ctypes.c_ulong, 1)
             self.add("data_format_id",  ctypes.c_ubyte, 1, overwritable=overwritable)
             self.add("data_record_length",  ctypes.c_ushort, 1)
             if fmt != "h1.4":
-                self.add("point_records_count", ctypes.c_long, 1)         
+                self.add("point_records_count", ctypes.c_ulong, 1)         
             else:
-                self.add("legacy_point_records_count", ctypes.c_long, 1)
-                self.add("legacy_point_return_count", ctypes.c_long, 5)
+                self.add("legacy_point_records_count", ctypes.c_ulong, 1)
+                self.add("legacy_point_return_count", ctypes.c_ulong, 5)
             if fmt == "h1.3":
-                self.add("point_return_count",  ctypes.c_long, 7)
+                self.add("point_return_count",  ctypes.c_ulong, 7)
             elif fmt in ("h1.0", "h1.1", "h1.2"):
                 self.add("point_return_count", ctypes.c_long, 5)
 
