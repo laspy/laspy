@@ -55,6 +55,18 @@ try:
 except:
     print("There was a problem comparing vlrs.")
 
+print("Checking EVLRs")
+try:
+    for i in xrange(len(inFile1.header.evlrs)):
+        vlr1 = inFile1.header.evlrs[i].to_byte_string()
+        vlr2 = inFile1.header.evlrs[i].to_byte_string()
+        if vlr1 == vlr2:
+            print("EVLRs are identical.")
+        else:
+            print("EVLRs differ.")
+except:
+    print("There was a problem comparing EVLRs")
+
 spec = inFile1.reader.point_format.lookup.keys()
 print("Testing Dimensions")
 passed = 0

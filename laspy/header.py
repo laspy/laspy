@@ -39,6 +39,7 @@ class EVLR():
         else:
             self.reserved = 0 
         self.fmt = util.Format("EVLR")
+        self.isEVLR = True
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''
@@ -220,7 +221,6 @@ class HeaderManager(object):
     def pull(self):
         '''Load all header data from file into the header.Header instance.'''
         for dim in self._header.format.specs:
-            print(dim.name)
             self._header.__dict__[dim.name] = self.reader.get_header_property(dim.name)
 
     def allow_all_overwritables(self):
@@ -672,8 +672,8 @@ class HeaderManager(object):
         #for i in rawdata:
         #    histDict[i] += 1        
         #raw_hist = histDict.values()
-        if self.version == "1.3":
-            raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6,7,8])
+        if self.version == "1.4":
+            raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
         else:
             raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
         #print("Raw Hist: " + str(raw_hist))

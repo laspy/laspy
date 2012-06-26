@@ -143,7 +143,7 @@ class FileManager():
         self.data_provider.open("r+b")
         self.data_provider.map() 
         self.header_format = Format("h" + self.grab_file_version())
-        self.get_header()
+        self.get_header(self.grab_file_version())
         self.populate_vlrs()
         self.point_refs = False
         self.has_point_records = True
@@ -181,7 +181,7 @@ class FileManager():
         if not vlrs in [[], False]:
             self.set_vlrs(vlrs)
         if not evlrs in [[], False]:
-            self.set_evlrs(vlrs)
+            self.set_evlrs(evlrs)
         if self._header.created_year == 0:
             self.header.date = datetime.datetime.now() 
         self.populate_vlrs()
@@ -269,7 +269,7 @@ class FileManager():
 
     def _read_words(self, fmt, num, bytes):
         '''Read a consecutive sequence of packed binary data, return a single
-        element or list'''
+        element or list''' 
         outData = []
         for i in xrange(num):
             dat = self.read(bytes)
@@ -293,13 +293,14 @@ class FileManager():
         self.seek(0, rel = True)
         return(str(v1) +"." +  str(v2))
 
-    def get_header(self):
+    def get_header(self, file_version = 1.2):
         '''Return the header object, or create one if absent.'''
         ## Why is this != neccesary?
         try:
             return(self.header)
         except:
-            self.header = HeaderManager(header = Header(), reader = self)
+            print("Using header version: %s"%str(file_version))
+            self.header = HeaderManager(header = Header(file_version), reader = self)
             return(self.header)
 
     def populate_evlrs(self): 
@@ -694,8 +695,47 @@ class Writer(FileManager):
         self.close()
 
     def set_evlrs(self, value):
-        raise NotImplementedError
-    
+        if value == False or len(value) == 0:
+            return
+        if not all([x.isEVLR for x in value]):
+            raise LaspyException("set_evlrs requers an iterable object " + 
+                        "composed of :obj:`laspy.header.EVLR` objects.")
+        elif self.mode == "w+":
+            raise NotImplementedError
+        elif self.mode in ("rw", "w"): 
+            if self.header.version == "1.3":
+                old_offset = self.header.start_wavefm_data_rec
+            elif self.header.version == "1.4":
+                old_offset = self.header.start_first_EVLR
+                self.set_header_property("num_evlrs", len(value))
+            else:
+                raise LaspyException("Invalid File Version for EVLRs: " + str(self.header.version))
+            if not self.has_point_records:
+                if old_offset != 0:
+                    self.pad_file_for_point_recs(self.get_pointrecordscount())
+                else:
+                    old_offset = self.header.data_offset
+                    self.pad_file_for_point_recs(self.get_pointrecordscount())
+
+            self.data_provider.fileref.seek(0, 0)
+            dat_part_1 = self.data_provider.fileref.read(old_offset)
+            # Manually Close:
+            self.data_provider.close(flush=False)
+            self.data_provider.open("w+b")
+            self.data_provider.fileref.write(dat_part_1)
+            for evlr in value:
+                byte_string = evlr.to_byte_string()
+                self.data_provider.fileref.write(byte_string) 
+            self.data_provider.fileref.close()
+            self.data_provider.open("r+b")
+            self.data_provider.map()
+            if self.has_point_records:
+                self.data_provider.point_map()
+        else:
+            raise(LaspyException("set_vlrs requires the file to be opened in a " + 
+                "write mode, and must be performed before point information is provided." + 
+                "Try closing the file and opening it in rw mode. "))
+ 
     def set_vlrs(self, value): 
         if value == False or len(value) == 0:
             return
@@ -777,10 +817,13 @@ class Writer(FileManager):
     def pad_file_for_point_recs(self,num_recs): 
         '''Pad the file with null bytes out to a calculated length based on 
         the data given. This is usually a side effect of set_dimension being 
-        called for the first time on a file in write mode. '''
+        called for the first time on a file in write mode. ''' 
+        # When creating a file in write mode with EVLRs, this method is called
+        # an extra time, which causes a performance hit. 
         bytes_to_pad = num_recs * self.point_format.rec_len
         #old_size = self.data_provider.filesize()
         old_size = self.header.data_offset 
+        
         self.data_provider._mmap.flush()
         self.data_provider.fileref.seek(old_size, 0)
         self.data_provider.fileref.write("\x00" * (bytes_to_pad))

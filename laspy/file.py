@@ -13,7 +13,8 @@ class File(object):
                        vlrs=False,
                        mode='r',
                        in_srs=None,
-                       out_srs=None):
+                       out_srs=None,
+                       evlrs = False):
         '''Instantiate a file object to represent an LAS file.
 
         :arg filename: The filename to open
@@ -53,6 +54,7 @@ class File(object):
         self.filename = os.path.abspath(filename)
         self._header = header
         self._vlrs = vlrs
+        self._evlrs = evlrs
         self._mode = mode.lower()
         self.in_srs = in_srs
         self.out_srs = out_srs
@@ -92,13 +94,19 @@ class File(object):
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
             if isinstance(self._header,  header.HeaderManager):
                 vlrs = self._header.vlrs
+                evlrs = self._header.evlrs
                 self._header = self._header.copy() 
                 if self._vlrs != False:
                     self._vlrs.extend(vlrs)
                 else:
                     self._vlrs = vlrs
+                if self._evlrs != False:
+                    self._evlrs.extend(evlrs)
+                else:
+                    self._evlrs = evlrs
             self._writer = base.Writer(self.filename, mode = "w",
-                                      header = self._header,vlrs = self._vlrs)
+                                      header = self._header, 
+                                      vlrs = self._vlrs, evlrs = self._evlrs)
             self._reader = self._writer
         if self._mode == 'w+':
             raise NotImplementedError
