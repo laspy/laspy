@@ -30,9 +30,10 @@ class Spec():
             self.name = name
             self.offs = offs
             self.Format = fmt
-            self.fmt = LEfmt[fmt]
-            self.length = fmtLen[self.fmt]
             self.num = num
+            self.fmt = LEfmt[fmt]
+            self.full_fmt = LEfmt[fmt][0] + str(self.num) + LEfmt[fmt][1]
+            self.length = fmtLen[self.fmt]
             self.pack = pack
             self.np_fmt = npFmt[self.fmt]
             if self.fmt == "<B" and num > 1:

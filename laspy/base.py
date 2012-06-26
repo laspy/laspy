@@ -1,5 +1,5 @@
 import mmap
-from header import HeaderManager, Header, leap_year, VLR
+from header import HeaderManager, Header, VLR, EVLR
 import datetime
 from struct import pack, unpack, Struct
 from util import *
@@ -37,7 +37,7 @@ class DataProvider():
         if not self.manager.header.version in ("1.3", 1.4): 
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
-        else:
+        else: 
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset,
                         count = self.manager.header.point_records_count)
@@ -145,17 +145,15 @@ class FileManager():
         self.header_format = Format("h" + self.grab_file_version())
         self.get_header()
         self.populate_vlrs()
-        if self.header.version in ("1.3", "1.4"):
-            self.populate_evlrs()
         self.point_refs = False
         self.has_point_records = True
         self._current = 0
         
-        extrabytes = self.header.data_record_length-Format(self.header.data_format_id).rec_len
-        extrabytes = (extrabytes >= 0)*extrabytes + (extrabytes < 0)*0
-        self.point_format = Format(self.header.data_format_id,extra_bytes= extrabytes)  
+        self.correct_rec_len()
 
         self.data_provider.point_map()
+        if self.header.version in ("1.3", "1.4"):
+            self.populate_evlrs()
         if vlrs != False:
             self.set_vlrs(vlrs)
         if evlrs != False:
@@ -179,10 +177,7 @@ class FileManager():
         self.data_provider.remap()
         self.header.flush()
         
-        extrabytes = self.header.data_record_length-Format(self.header.data_format_id).rec_len
-        extrabytes = (extrabytes >= 0)*extrabytes + (extrabytes < 0)*0
-        self.point_format = Format(self.header.data_format_id,extra_bytes =  extrabytes)  
-        
+        self.correct_rec_len()
         if not vlrs in [[], False]:
             self.set_vlrs(vlrs)
         if not evlrs in [[], False]:
@@ -193,6 +188,13 @@ class FileManager():
         #self.populate_evlrs()
         return
 
+    def correct_rec_len(self):
+        extrabytes = self.header.data_record_length-Format(self.header.data_format_id).rec_len
+        if extrabytes >= 0:
+            self.point_format = Format(self.header.data_format_id,extra_bytes= extrabytes)
+        else:
+            self.point_format = Format(self.header.data_format_id)
+            self.set_header_property("data_record_length", self.point_format.rec_len) 
 
     def initialize_file_padding(self, vlrs):
         filesize = self._header.format.rec_len
@@ -261,8 +263,9 @@ class FileManager():
         try:
             dim = source.lookup[name]
         except KeyError:
-            raise LaspyException("Dimension " + name + " not found.")
+            raise LaspyException("Dimension " + name + " not found.")       
         return(self._read_words(dim.fmt, dim.num, dim.length))
+       
 
     def _read_words(self, fmt, num, bytes):
         '''Read a consecutive sequence of packed binary data, return a single
@@ -305,11 +308,11 @@ class FileManager():
             return
         self.evlrs = []
     
-        if self.header.version == "1.3": 
+        if self.header.version == "1.3":  
             self.seek(self.header.start_wavefm_data_rec, rel = False)
             num_vlrs = 1
         elif self.header.version == "1.4":
-            self.seek(self.header.start_first_EVLR)
+            self.seek(self.header.start_first_EVLR, rel = False)
             num_vlrs = self.get_header_property("num_EVLRs")
         for i in xrange(num_vlrs): 
             new_vlr = EVLR(None, None, None)
@@ -363,15 +366,21 @@ class FileManager():
                 self.calc_point_recs = new_val
                 return(new_val)
         elif version == "1.3":  
-            new_val = ((self.header.start_wavefm_data_rec)-
-                    self.header.data_offset)/self.header.data_record_length
-            self.calc_point_recs = new_val
+            if self.header.start_wavefm_data_rec != 0: 
+                new_val = ((self.header.start_wavefm_data_rec)-
+                        self.header.data_offset)/self.header.data_record_length
+                self.calc_point_recs = new_val
+            else:
+                return(self.get_header_property("point_records_count"))
             return(new_val)
         elif version == "1.4":
-            new_val = ((self.header.start_first_EVLR)-
-                    self.header.data_offset)/self.header.data_record_length
-            self.calc_point_recs = new_val
-            return(new_val)
+            if self.header.start_first_evlr !=-0:
+                new_val = ((self.header.start_first_evlr)-
+                        self.header.data_offset)/self.header.data_record_length
+                self.calc_point_recs = new_val
+                return(new_val)
+            else:
+                return(self.get_header_property("point_records_count"))
 
 
     def set_input_srs(self):

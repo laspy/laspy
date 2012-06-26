@@ -27,7 +27,7 @@ class EVLR():
         self.record_id = record_id
         self.VLR_body = VLR_body
         try: 
-            self.rec_len_after_header = len(self.VLR_body)
+            self.rec_len_after_header = len(self.VLR_body) 
         except(TypeError):
             self.rec_len_after_header = 0
         if "description" in kwargs:
@@ -60,7 +60,7 @@ class EVLR():
         '''Pack a VLR field into bytes.'''
         spec = self.fmt.lookup[name]
         if spec.num == 1:
-            return(pack(spec.fmt, val))
+            return(pack(spec.full_fmt, val))
         return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
     
     def to_byte_string(self):
