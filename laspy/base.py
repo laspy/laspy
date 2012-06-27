@@ -546,7 +546,13 @@ class FileManager():
     
     def get_flag_byte(self):
         return(self.get_dimension("flag_byte"))
-    
+   
+    def get_classification_flags(self):
+        return(self.get_dimension("classification_flags"))
+
+    def get_classification_byte(self):
+        return(self.get_dimension("classification_byte"))
+
     def get_return_num(self):
         rawDim = self.get_flag_byte()
         if self.header.data_format_id in (0,1,2,3,4,5):
