@@ -47,7 +47,7 @@ class LasReaderTestCase(unittest.TestCase):
             self.wave_form_packet_Desc_index = list(LasFile.wave_packet_desc_index)
             self.byte_offset_to_waveform = list(LasFile.byte_offset_to_waveform)
             self.waveform_packet_size = list(LasFile.waveform_packet_size)
-            self.return_pt_waveform_loc = list(LasFile.return_pt_waveform_loc)
+            self.return_point_waveform_loc = list(LasFile.return_point_waveform_loc)
             self.x_t = list(LasFile.x_t)
             self.y_t = list(LasFile.y_t )
             self.z_t = list(LasFile.z_t)
@@ -320,9 +320,9 @@ class LasWriterTestCase(unittest.TestCase):
     #    w2 = self.FileObject.get_waveform_pkt_size()
     #    self.assertTrue((w1 == w2))
     #def test_return_pt_wavefm_loc(self):
-    #    w1 = self.FileObject.return_pt_waveform_loc + 1
-    #    self.FileObject.return_pt_waveform_loc = w1
-    #    w2 = self.FileObject.get_return_pt_waveform_loc
+    #    w1 = self.FileObject.return_point_waveform_loc + 1
+    #    self.FileObject.return_point_waveform_loc = w1
+    #    w2 = self.FileObject.get_return_point_waveform_loc
     #    self.assertTrue((w1 == w2))
     #def test_x_t(self):
     #    x1 = self.FileObject.x_t + 1
@@ -561,6 +561,14 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.waveform_packet_size))
         File2.waveform_packet_size += 1
         self.assertTrue(all(test1 != File2.waveform_packet_size))
+    
+    def test_return_point_waveform_loc(self):
+        test1 = self.File1.return_point_waveform_loc 
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.points = self.File1.points
+        self.assertTrue(all(test1 == File2.return_point_waveform_loc))
+        File2.return_point_waveform_loc += 1
+        self.assertTrue(all(test1 != File2.return_point_waveform_loc))
 
 
 

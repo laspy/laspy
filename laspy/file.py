@@ -489,25 +489,25 @@ class File(object):
                                             None, None)
     
     def get_waveform_packet_size(self):
-        return(self._reader.get_wavefm_pkt_size())
+        return(self._reader.get_waveform_packet_size())
     def set_waveform_packet_size(self, size):
         self.assertWriteMode()
-        self._writer.set_wavefm_pkt_size(size)
+        self._writer.set_waveform_packet_size(size)
         return
 
     waveform_packet_size = property(get_waveform_packet_size, 
                                     set_waveform_packet_size, 
                                     None, None)
     
-    def get_return_pt_waveform_loc(self):
-        return(self._reader.get_return_pt_wavefm_loc())
-    def set_return_pt_waveform_loc(self, loc):
+    def get_return_point_waveform_loc(self):
+        return(self._reader.get_return_point_waveform_loc())
+    def set_return_point_waveform_loc(self, loc):
         self.assertWriteMode()
-        self._writer.set_return_pt_wavefm_loc(loc)
+        self._writer.set_return_point_waveform_loc(loc)
         return
 
-    return_pt_waveform_loc = property(get_return_pt_waveform_loc, 
-                                      set_return_pt_waveform_loc,
+    return_point_waveform_loc = property(get_return_point_waveform_loc, 
+                                      set_return_point_waveform_loc,
                                       None, None)
     
     def get_x_t(self):
