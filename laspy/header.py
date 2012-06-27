@@ -300,6 +300,20 @@ class HeaderManager(object):
 
     gps_time_type = property(get_gps_time_type, set_gps_time_type, None, doc)
 
+    def get_wkt(self):
+        if self.data_format_id > 5:
+            raw_encoding = self.get_global_encoding()
+            return(self.reader.binary_str(raw_encoding, 16)[4])
+        else:
+            raise LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
+    def set_wkt(self, value):
+        self.assertWriteMode()
+        if self.data_format_id > 5:
+            raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
+            self.set_global_encoding(self.reader.packed_str(raw_encoding[1:4] + str(value) + raw_encoding[5:16]))
+        else:
+            raise LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
+
     def get_waveform_data_packets_internal(self):
         raise NotImplementedError("LAS Version 1.3 not yet supported.")
 
