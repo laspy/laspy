@@ -468,10 +468,10 @@ class File(object):
     Blue = blue
 
     def get_wave_packet_desc_index(self):
-        return(self._reader.get_wave_packet_descp_idx())
+        return(self._reader.get_wave_packet_desc_index())
     def set_wave_packet_desc_index(self,idx):
         self.assertWriteMode()
-        self._writer.set_wave_packet_descp_idx(idx)
+        self._writer.set_wave_packet_desc_index(idx)
         return
 
     wave_packet_desc_index = property(get_wave_packet_desc_index,

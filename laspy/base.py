@@ -615,10 +615,10 @@ class FileManager():
         raise LaspyException("Color is not available for point format: " + str(fmt))
 
 
-    def get_wave_packet_descp_idx(self):
+    def get_wave_packet_desc_index(self):
         fmt = self.header.data_format_id
         if fmt in (4, 5):
-            return(self.get_dimension("wave_packet_descp_idx"))
+            return(self.get_dimension("wave_packet_desc_index"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
@@ -1250,12 +1250,12 @@ class Writer(FileManager):
             return
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
 
-    def set_wave_packet_descp_idx(self, idx):
-        '''Wrapper for set_dimension("wave_packet_descp_idx") This is not currently functional, 
+    def set_wave_packet_desc_index(self, idx):
+        '''Wrapper for set_dimension("wave_packet_desc_index") This is not currently functional, 
         since addition of waveform data broke the numpy point map.'''
         vsn = self.header.data_format_id
         if vsn in (4, 5):
-            self.set_dimension("wave_packet_descp_index", idx)
+            self.set_dimension("wave_packet_desc_index", idx)
             return
         raise LaspyException("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
 
