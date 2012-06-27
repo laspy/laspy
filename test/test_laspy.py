@@ -554,6 +554,15 @@ class LasV_13TestCase(unittest.TestCase):
         File2.byte_offset_to_waveform_data += 1
         self.assertTrue(all(test1 != File2.byte_offset_to_waveform_data))
 
+    def test_waveform_packet_size(self):
+        test1 = self.File1.waveform_packet_size 
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.points = self.File1.points
+        self.assertTrue(all(test1 == File2.waveform_packet_size))
+        File2.waveform_packet_size += 1
+        self.assertTrue(all(test1 != File2.waveform_packet_size))
+
+
 
     def tearDown(self):
         self.File1.close()

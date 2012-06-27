@@ -629,10 +629,10 @@ class FileManager():
         raise LaspyException("Byte Offset to Waveform Data Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
-    def get_wavefm_pkt_size(self):
+    def get_waveform_packet_size(self):
         fmt = self.header.data_format_id
         if fmt in (4, 5):
-            return(self.get_dimension("wavefm_pkt_size"))
+            return(self.get_dimension("waveform_packet_size"))
         raise LaspyException("Wave Packet Description Index Not"
                        + " Available for Pt Fmt: " + str(fmt))
 
@@ -1270,12 +1270,12 @@ class Writer(FileManager):
 
 
     
-    def set_wavefm_pkt_size(self, size):
-        '''Wrapper for set_dimension("wavefm_pkt_size"), not currently functional, because
+    def set_waveform_packet_size(self, size):
+        '''Wrapper for set_dimension("waveform_packet_size"), not currently functional, because
         addition of waveform data broke the numpy point map.'''
         vsn = self.header.data_format_id
         if vsn in (4, 5):
-            self.set_dimension("wavefm_pkt_size", size)
+            self.set_dimension("waveform_packet_size", size)
             return
         raise LaspyException("Waveform Packet Size Not Available for Point Format: " + str(vsn))
     

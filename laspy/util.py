@@ -112,7 +112,7 @@ class Format():
         if fmt == "4":
             self.add("wave_packet_desc_index", ctypes.c_ubyte, 1)
             self.add("byte_offset_to_waveform_data", ctypes.c_ulonglong,1)
-            self.add("wavefm_pkt_size",ctypes.c_long, 1)
+            self.add("waveform_packet_size",ctypes.c_long, 1)
             self.add("return_pt_wavefm_loc",  ctypes.c_float, 1)
             self.add("x_t", ctypes.c_float, 1)
             self.add("y_t", ctypes.c_float, 1)           
