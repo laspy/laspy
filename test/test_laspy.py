@@ -538,6 +538,23 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertEqual(self.File1.header.evlrs[0].to_byte_string(),
                         File2.header.evlrs[0].to_byte_string())
 
+    def test_wave_packet_desc_index(self):
+        test1 = self.File1.wave_packet_desc_index 
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.points = self.File1.points
+        self.assertTrue(all(test1 == File2.wave_packet_desc_index))
+        File2.wave_packet_desc_index += 1
+        self.assertTrue(all(test1 != File2.wave_packet_desc_index))
+
+    def test_byte_offset_to_waveform_data(self):
+        test1 = self.File1.byte_offset_to_waveform_data 
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.points = self.File1.points
+        self.assertTrue(all(test1 == File2.byte_offset_to_waveform_data))
+        File2.byte_offset_to_waveform_data += 1
+        self.assertTrue(all(test1 != File2.byte_offset_to_waveform_data))
+
+
     def tearDown(self):
         self.File1.close()
         os.remove(self.tempfile)

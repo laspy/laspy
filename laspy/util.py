@@ -111,7 +111,7 @@ class Format():
             self.add("blue" , ctypes.c_ushort,1)
         if fmt == "4":
             self.add("wave_packet_desc_index", ctypes.c_ubyte, 1)
-            self.add("byte_offset_to_wavefm_data", ctypes.c_ulonglong,1)
+            self.add("byte_offset_to_waveform_data", ctypes.c_ulonglong,1)
             self.add("wavefm_pkt_size",ctypes.c_long, 1)
             self.add("return_pt_wavefm_loc",  ctypes.c_float, 1)
             self.add("x_t", ctypes.c_float, 1)
@@ -119,7 +119,7 @@ class Format():
             self.add("z_t", ctypes.c_float, 1)
         elif fmt == "5":
             self.add("wave_packet_desc_index", ctypes.c_ubyte, 1)
-            self.add("byte_offset_to_wavefm_data", ctypes.c_ulonglong,1)
+            self.add("byte_offset_to_waveform_data", ctypes.c_ulonglong,1)
             self.add("wavefm_pkt_size", ctypes.c_ulong, 1)
             self.add("return_pt_wavefm_loc", ctypes.c_float, 1)
             self.add("x_t", ctypes.c_float, 1)
@@ -145,7 +145,7 @@ class Format():
             self.add("NIR", ctypes.c_ushort, 1)
         if fmt in ("9", "10"):
             self.add("wave_packet_desc_index", ctypes.c_ubyte, 1)
-            self.add("byte_offset_to_wavefm_data", ctypes.c_ulonglong,1)
+            self.add("byte_offset_to_waveform_data", ctypes.c_ulonglong,1)
             self.add("wavefm_pkt_size", ctypes.c_ulong, 1)
             self.add("return_pt_wavefm_loc", ctypes.c_float, 1)
             self.add("x_t", ctypes.c_float, 1)

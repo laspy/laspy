@@ -478,10 +478,10 @@ class File(object):
                                       set_wave_packet_desc_index, None, None)
     
     def get_byte_offset_to_waveform_data(self):
-        return(self._reader.get_byte_offset_to_wavefm_data())
+        return(self._reader.get_byte_offset_to_waveform_data())
     def set_byte_offset_to_waveform_data(self, idx):
         self.assertWriteMode()
-        self._writer.set_byte_offset_to_wavefm_data(idx)
+        self._writer.set_byte_offset_to_waveform_data(idx)
         return
 
     byte_offset_to_waveform_data = property(get_byte_offset_to_waveform_data,
