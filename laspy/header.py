@@ -315,7 +315,7 @@ class HeaderManager(object):
                                               None, None)
 
     def get_waveform_data_packets_external(self):
-        raw_encoding = self.get_globnal_encoding()
+        raw_encoding = self.get_global_encoding()
         return(self.reader.binary_str(raw_encoding, 16)[2])
 
     def set_waveform_data_packets_external(self, value):
@@ -328,7 +328,7 @@ class HeaderManager(object):
                                               set_waveform_data_packets_external, 
                                               None, None)
     def get_synthetic_return_num(self):
-        raw_encoding = self.get_globnal_encoding()
+        raw_encoding = self.get_global_encoding()
         return(self.reader.binary_str(raw_encoding, 16)[3])
 
     def set_synthetic_return_num(self, value):
@@ -354,6 +354,8 @@ class HeaderManager(object):
             self.set_global_encoding(self.reader.packed_str(raw_encoding[1:4] + str(value) + raw_encoding[5:16]))
         else:
             raise util.LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
+
+    wkt = property(get_wkt, set_wkt, None, None)
 
     def get_projectid(self): 
         p1 = self.reader.get_raw_header_property("proj_id_1")
