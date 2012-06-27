@@ -130,11 +130,9 @@ class Format():
             self.add("Y", ctypes.c_long, 1)
             self.add("Z", ctypes.c_long, 1)
             self.add("intensity", ctypes.c_ushort, 1)
-            # Tag these new bit fields as extended, or ext_
-            # This shouldn't change the public API
-            self.add("ext_flag_byte", ctypes.c_ubyte, 1)
-            self.add("ext_classification_flags", ctypes.c_ubyte, 1)
-            self.add("ext_raw_classification", ctypes.c_ubyte, 1)
+            self.add("flag_byte", ctypes.c_ubyte, 1)
+            self.add("classification_flags", ctypes.c_ubyte, 1)
+            self.add("classification_byte", ctypes.c_ubyte, 1)
             self.add("user_data", ctypes.c_ubyte, 1)
             self.add("scan_angle", ctypes.c_short, 1)
             self.add("pt_src_id", ctypes.c_ushort, 1)

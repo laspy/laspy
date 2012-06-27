@@ -562,19 +562,28 @@ class FileManager():
             return(np.array([self.packed_str(self.binary_str(x)[4:8]) for x in rawDim]))  
 
     def get_scan_dir_flag(self):
-        rawDim = self.get_flag_byte()
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            rawDim = self.get_flag_byte()
+        elif self.header.data_format_id in (6,7,8,9,10):
+            rawDim = self.get_classification_flags()
         return(np.array([self.packed_str(self.binary_str(x)[6]) for x in rawDim])) 
 
-    def get_edge_flight_line(self):
-        rawDim = self.get_flag_byte()
+    def get_edge_flight_line(self): 
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            rawDim = self.get_flag_byte() 
+        elif self.header.data_format_id in (6,7,8,9,10):
+            rawDim = self.get_classification_flags() 
         return(np.array(([self.packed_str(self.binary_str(x)[7]) for x in rawDim])))
     
     def get_raw_classification(self):
         return(self.get_dimension("raw_classification"))
     
     def get_classification(self): 
-        return(np.array([self.packed_str(self.binary_str(x)[0:5]) 
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            return(np.array([self.packed_str(self.binary_str(x)[0:5]) 
                 for x in self.get_raw_classification()])) 
+        elif self.header.data_format_id in (6,7,8,9,10):
+            return(self.get_dimension("classification_byte"))
 
     def get_synthetic(self):
         return(np.array([self.packed_str(self.binary_str(x)[5]) 
