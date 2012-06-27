@@ -1093,20 +1093,31 @@ class Writer(FileManager):
     ########
 
     def set_return_num(self, num):
-        '''Set the binary field return_num in the flag_byte'''
-        flag_byte = self.binary_str_arr(self.get_flag_byte())
-        newBits = self.binary_str_arr(num, 3)
-        outByte = self.bitpack((newBits,flag_byte), ((0,3), (3,8)))
-        self.set_dimension("flag_byte", outByte)
+        '''Set the binary field return_num in the flag_byte''' 
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            flag_byte = self.binary_str_arr(self.get_flag_byte())
+            newBits = self.binary_str_arr(num, 3)
+            outByte = self.bitpack((newBits,flag_byte), ((0,3), (3,8)))
+            self.set_dimension("flag_byte", outByte)
+        elif self.header.data_format_id in (6,7,8,9,10):
+            flag_byte = self.binary_str_arr(self.get_flag_byte())
+            newBits = self.binary_str_arr(num, 4)
+            outByte = self.bitpack((newBits,flag_byte), ((0,4), (4,8)))
+            self.set_dimension("flag_byte", outByte)
         return
 
     def set_num_returns(self, num):
         '''Set the binary field num_returns in the flag_byte'''
-        flag_byte = self.binary_str_arr(self.get_flag_byte())
-        newBits = self.binary_str_arr(num, 3)
-        outByte = self.bitpack((flag_byte,newBits,flag_byte), 
-            ((0,3),(0,3), (6,8)))
-        self.set_dimension("flag_byte", outByte)
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            flag_byte = self.binary_str_arr(self.get_flag_byte())
+            newBits = self.binary_str_arr(num, 3)
+            outByte = self.bitpack((flag_byte, newBits,flag_byte), ((0,3),(0,3),(6,8)))
+            self.set_dimension("flag_byte", outByte)
+        elif self.header.data_format_id in (6,7,8,9,10):
+            flag_byte = self.binary_str_arr(self.get_flag_byte())
+            newBits = self.binary_str_arr(num, 4)
+            outByte = self.bitpack((flag_byte, newBits,flag_byte), ((0,4), (0,4), (4,8)))
+            self.set_dimension("flag_byte", outByte)
         return
 
     def set_scan_dir_flag(self, flag): 
