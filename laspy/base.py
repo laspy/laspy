@@ -1120,11 +1120,16 @@ class Writer(FileManager):
 
     def set_edge_flight_line(self, line):
         '''Set the binary field edge_flight_line in the flag_byte'''
-        flag_byte = self.binary_str_arr(self.get_flag_byte())
-        newBits = self.binary_str_arr(line, 1)
-        outByte = self.bitpack((flag_byte,newBits), 
-            ((0,7),(0,1)))
-        self.set_dimension("flag_byte", outByte)
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            raw_dim = self.binary_str_arr(self.get_flag_byte())
+            newBits = self.binary_str_arr(line, 1)
+            outByte = self.bitpack((raw_dim, newBits), ((0,7), (0,1)))
+            self.set_dimension("flag_byte", outByte)
+        elif self.header.data_format_id in (6,7,8,9,10):
+            raw_dim = self.binary_str_arr(self.get_classification_flags()) 
+            newBits = self.binary_str_arr(line, 1)
+            outByte = self.bitpack((raw_dim, newBits), ((0,7), (0,1)))
+            self.set_dimension("classification_flags", outByte)
         return
 
     def set_classification_byte(self, value):
