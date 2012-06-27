@@ -328,9 +328,15 @@ class HeaderManager(object):
                                               set_waveform_data_packets_external, 
                                               None, None)
     def get_synthetic_return_num(self):
-        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+        raw_encoding = self.get_globnal_encoding()
+        return(self.reader.binary_str(raw_encoding, 16)[3])
+
     def set_synthetic_return_num(self, value):
-        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+        self.assertWriteMode()
+        raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
+        self.set_global_encoding(self.reader.packed_str(raw_encoding[0:3], + str(value) + raw_encoding[4:]))
+        return
+
     synthetic_return_num = property(get_synthetic_return_num, set_synthetic_return_num, 
                                     None, None)
 
