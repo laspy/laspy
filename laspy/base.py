@@ -1111,11 +1111,18 @@ class Writer(FileManager):
 
     def set_scan_dir_flag(self, flag): 
         '''Set the binary field scan_dir_flag in the flag_byte'''
-        flag_byte = self.binary_str_arr(self.get_flag_byte())
-        newBits = self.binary_str_arr(flag, 1)
-        outByte = self.bitpack((flag_byte,newBits,flag_byte), 
-            ((0,6),(0,1), (7,8)))
-        self.set_dimension("flag_byte", outByte)
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            flag_byte = self.binary_str_arr(self.get_flag_byte())
+            newBits = self.binary_str_arr(flag, 1)
+            outByte = self.bitpack((flag_byte,newBits,flag_byte), 
+                ((0,6),(0,1), (7,8)))
+            self.set_dimension("flag_byte", outByte)
+        elif self.header.data_format_id in (6,7,8,9,10):
+            flag_byte = self.binary_str_arr(self.get_classification_flags())
+            newBits = self.binary_str_arr(flag, 1)
+            outByte = self.bitpack((flag_byte,newBits,flag_byte), 
+                ((0,6),(0,1), (7,8)))
+            self.set_dimension("classification_flags", outByte)
         return
 
     def set_edge_flight_line(self, line):
