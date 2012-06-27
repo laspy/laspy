@@ -549,11 +549,17 @@ class FileManager():
     
     def get_return_num(self):
         rawDim = self.get_flag_byte()
-        return(np.array([self.packed_str(self.binary_str(x)[0:3]) for x in rawDim])) 
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            return(np.array([self.packed_str(self.binary_str(x)[0:3]) for x in rawDim])) 
+        elif self.header.data_format_id in (6,7,8,9,10):
+            return(np.array([self.packed_str(self.binary_str(x)[0:4]) for x in rawDim]))
 
     def get_num_returns(self):
         rawDim = self.get_flag_byte()
-        return(np.array([self.packed_str(self.binary_str(x)[3:6]) for x in rawDim]))  
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            return(np.array([self.packed_str(self.binary_str(x)[3:6]) for x in rawDim]))  
+        elif self.header.data_format_id in (6,7,8,9,10):
+            return(np.array([self.packed_str(self.binary_str(x)[4:8]) for x in rawDim]))  
 
     def get_scan_dir_flag(self):
         rawDim = self.get_flag_byte()
