@@ -1127,6 +1127,12 @@ class Writer(FileManager):
         self.set_dimension("flag_byte", outByte)
         return
 
+    def set_classification_byte(self, value):
+        raise NotImplementedError
+
+    def set_classification_flags(self, value):
+        raise NotImplementedError
+
     def set_raw_classification(self, classification):
         '''Set the entire classification byte at once. This is faster than setting the binary fields individually, 
         but care must be taken that the values mean what you think they do. '''
