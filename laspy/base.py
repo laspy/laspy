@@ -37,10 +37,7 @@ class DataProvider():
         if not self.manager.header.version in ("1.3", 1.4): 
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
-        else: 
-            print("Point Mapping. I'm using count: " + str(self.manager.header.point_records_count))
-            print("mmap size is " + str(self._mmap.size()))
-            print("Header Prop is " + str(self.manager.get_header_property("point_records_count")))
+        else:  
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset,
                         count = self.manager.header.point_records_count)
