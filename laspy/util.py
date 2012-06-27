@@ -212,7 +212,7 @@ class Format():
             if fmt in ("h1.3", "h1.4"):
                 self.add("start_wavefm_data_rec", ctypes.c_ulonglong, 1)
             if fmt == "h1.4":
-                self.add("start_first_EVLR", ctypes.c_ulonglong, 1)
+                self.add("start_first_evlr", ctypes.c_ulonglong, 1)
                 self.add("num_evlrs", ctypes.c_ulong, 1)
                 self.add("point_records_count", ctypes.c_ulonglong, 1)
                 self.add("point_return_count", ctypes.c_ulonglong, 15)

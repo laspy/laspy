@@ -645,7 +645,7 @@ class HeaderManager(object):
         return self.reader.get_pointrecordscount()
 
     def set_pointrecordscount(self, value):
-        if not self.mode in ("w", "w+"):
+        if not self.file_mode in ("w", "w+"):
             raise LaspyHeaderException("File must be open in write or append mode " + 
                                         "to change the number of point records.")
         self.writer.set_header_property("point_records_count", value)
@@ -861,18 +861,18 @@ class HeaderManager(object):
 
     start_wavefm_data_rec = property(get_start_wavefm_data_record, set_start_wavefm_data_record, None, None)
 
-    def get_start_first_EVLR(self):
+    def get_start_first_evlr(self):
         if not self.version == "1.4":
             raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
-        return(self.reader.get_header_property("start_first_EVLR"))
+        return(self.reader.get_header_property("start_first_evlr"))
 
-    def set_start_first_EVLR(self, value):
+    def set_start_first_evlr(self, value):
         if not self.version == "1.4":
             raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
-        self.reader.set_header_property("start_first_EVLR",value)
+        self.reader.set_header_property("start_first_evlr",value)
         return
 
-    start_first_EVLR = property(get_start_first_EVLR, set_start_first_EVLR, None, None)
+    start_first_evlr = property(get_start_first_evlr, set_start_first_evlr, None, None)
 
     def get_num_EVLRs(self):
         if not self.version == "1.4":
@@ -934,7 +934,7 @@ class HeaderManager(object):
         return(self.reader.get_evlrs())
     def set_evlrs(self, value):
         self.assertWriteMode()
-        self.reader.set_vlrs(value)
+        self.reader.set_evlrs(value)
 
     evlrs = property(get_evlrs, set_evlrs, None, None)
 

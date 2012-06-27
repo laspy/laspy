@@ -38,6 +38,9 @@ class DataProvider():
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
         else: 
+            print("Point Mapping. I'm using count: " + str(self.manager.header.point_records_count))
+            print("mmap size is " + str(self._mmap.size()))
+            print("Header Prop is " + str(self.manager.get_header_property("point_records_count")))
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset,
                         count = self.manager.header.point_records_count)
@@ -155,6 +158,8 @@ class FileManager():
         self.data_provider.point_map()
         if self.header.version in ("1.3", "1.4"):
             self.populate_evlrs()
+        else:
+            self.evlrs = []
         if vlrs != False:
             self.set_vlrs(vlrs)
         if evlrs != False:
@@ -183,6 +188,8 @@ class FileManager():
             self.set_vlrs(vlrs)
         if not evlrs in [[], False]:
             self.set_evlrs(evlrs)
+        else:
+            self.evlrs = []
         if self._header.created_year == 0:
             self.header.date = datetime.datetime.now() 
         self.populate_vlrs()
@@ -314,13 +321,12 @@ class FileManager():
             self.seek(self.header.start_wavefm_data_rec, rel = False)
             num_vlrs = 1
         elif self.header.version == "1.4":
-            self.seek(self.header.start_first_EVLR, rel = False)
+            self.seek(self.header.start_first_evlr, rel = False)
             num_vlrs = self.get_header_property("num_EVLRs")
         for i in xrange(num_vlrs): 
             new_vlr = EVLR(None, None, None)
             new_vlr.build_from_reader(self)
             self.evlrs.append(new_vlr)  
-        self.header.__dict__["evlrs"] = self.vlrs
         return
 
 
@@ -337,7 +343,6 @@ class FileManager():
                 raise LaspyException("Error, Calculated Header Data "
                     "Overlaps The Point Records!")
         self.vlr_stop = self.data_provider._mmap.tell()
-        self.header.__dict__["vlrs"] = self.vlrs
         return
 
     def get_vlrs(self):
@@ -356,34 +361,7 @@ class FileManager():
 
     def get_pointrecordscount(self):
         '''calculate the number of point records'''
-        if self.calc_point_recs != False:
-            return(self.calc_point_recs)
-        version = self.header.get_version()
-        if not version in ("1.3", "1.4"):
-            try:
-                return(len(self.data_provider._pmap))
-            except:
-                new_val =  ((self.data_provider._mmap.size()-
-                    self.header.data_offset)/self.header.data_record_length)
-                self.calc_point_recs = new_val
-                return(new_val)
-        elif version == "1.3":  
-            if self.header.start_wavefm_data_rec != 0: 
-                new_val = ((self.header.start_wavefm_data_rec)-
-                        self.header.data_offset)/self.header.data_record_length
-                self.calc_point_recs = new_val
-            else:
-                return(self.get_header_property("point_records_count"))
-            return(new_val)
-        elif version == "1.4":
-            if self.header.start_first_evlr !=-0:
-                new_val = ((self.header.start_first_evlr)-
-                        self.header.data_offset)/self.header.data_record_length
-                self.calc_point_recs = new_val
-                return(new_val)
-            else:
-                return(self.get_header_property("point_records_count"))
-
+        return(self.get_header_property("point_records_count"))
 
     def set_input_srs(self):
         pass
@@ -728,16 +706,32 @@ class Writer(FileManager):
             if self.header.version == "1.3":
                 old_offset = self.header.start_wavefm_data_rec
             elif self.header.version == "1.4":
-                old_offset = self.header.start_first_EVLR
+                old_offset = self.header.start_first_evlr
                 self.set_header_property("num_evlrs", len(value))
             else:
                 raise LaspyException("Invalid File Version for EVLRs: " + str(self.header.version))
+            # Good we know where the EVLRs should go... but what about if we don't have point records yet?
+            # We can't make that decision yet, in case the user wants to subset the data. 
             if not self.has_point_records:
-                if old_offset != 0:
-                    self.pad_file_for_point_recs(self.get_pointrecordscount())
+                old_offset = self.header.data_offset
+                if self.header.version == "1.3":
+                    self.header.start_wavefm_data_rec = old_offset
                 else:
-                    old_offset = self.header.data_offset
-                    self.pad_file_for_point_recs(self.get_pointrecordscount())
+                    if len(value) == 1:
+                        self.header.start_first_evlr = old_offset
+                        self.header.start_wavefm_data_rec = old_offset
+                    else:
+                        wf = self.header.start_wavefm_data_rec
+                        fe = self.header.start_first_evlr
+                        new_wvfm = wf - min(wf, fe) + old_offset
+                        new_frst = fe - min(wf, fe) + old_offset
+                        self.header.start_wavefm_data_rec = new_wvfm
+                        self.header.start_first_evlr = new_frst
+                #if old_offset != 0:
+                #    self.pad_file_for_point_recs(self.get_pointrecordscount())
+                #else:
+                #    old_offset = self.header.data_offset
+                #    self.pad_file_for_point_recs(self.get_pointrecordscount())
 
             self.data_provider.fileref.seek(0, 0)
             dat_part_1 = self.data_provider.fileref.read(old_offset)
@@ -757,8 +751,10 @@ class Writer(FileManager):
 
             if self.has_point_records:
                 self.data_provider.point_map()
+            self.populate_evlrs()
+
         else:
-            raise(LaspyException("set_vlrs requires the file to be opened in a " + 
+            raise(LaspyException("set_evlrs requires the file to be opened in a " + 
                 "write mode, and must be performed before point information is provided." + 
                 "Try closing the file and opening it in rw mode. "))
  
@@ -815,7 +811,7 @@ class Writer(FileManager):
                 self.data_provider.remap()
                 return
             else:
-                raise NotImplementedError
+                raise LaspyException("Laspy does not yet support assignment of EVLRs for files which already contain point records.")
         elif self.mode == "rw":
             old_offset = self.header.data_offset
             self.set_header_property("data_offset",
@@ -843,24 +839,34 @@ class Writer(FileManager):
     def pad_file_for_point_recs(self,num_recs): 
         '''Pad the file with null bytes out to a calculated length based on 
         the data given. This is usually a side effect of set_dimension being 
-        called for the first time on a file in write mode. ''' 
-        # When creating a file in write mode with EVLRs, this method is called
-        # an extra time, which causes a performance hit. 
-        if self.padded == num_recs:
-            self.data_provider.point_map()
-            return
+        called for the first time on a file in write mode. '''
         bytes_to_pad = num_recs * self.point_format.rec_len
-        #old_size = self.data_provider.filesize()
-        old_size = self.header.data_offset 
+        self.header.point_records_count = num_recs
+        if self.evlrs in [False, []]:
+            #old_size = self.data_provider.filesize()
+            old_size = self.header.data_offset     
+            self.data_provider._mmap.flush()
+            self.data_provider.fileref.seek(old_size, 0)
+            self.data_provider.fileref.write("\x00" * (bytes_to_pad))
+            self.data_provider.fileref.flush()
+            self.data_provider.remap(flush = False, point_map = True) 
+            # Write Phase complete, enter rw mode?
+            self.padded = num_recs
+            return
+        else:
+            d1 = self.data_provider._mmap[0:self.header.data_offset]
+            d2 = self.data_provider._mmap[self.header.data_offset:self.data_provider._mmap.size()]
+            self.data_provider.close()
+            self.data_provider.open("w+b")
+            self.data_provider.fileref.write(d1)
+            self.data_provider.fileref.write("\x00"*(bytes_to_pad))
+            self.data_provider.fileref.write(d2)
+            self.data_provider.close()
+            self.data_provider.remap(point_map = True)
+            self.header.start_wavefm_data_rec += bytes_to_pad
+            if self.header.version == "1.4":
+                self.header.start_first_evlr += bytes_to_pad
         
-        self.data_provider._mmap.flush()
-        self.data_provider.fileref.seek(old_size, 0)
-        self.data_provider.fileref.write("\x00" * (bytes_to_pad))
-        self.data_provider.fileref.flush()
-        self.data_provider.remap(flush = False, point_map = True) 
-        # Write Phase complete, enter rw mode?
-        self.padded = num_recs
-        return
 
     def set_dimension(self, name,new_dim):
         '''Set a dimension (X,Y,Z etc) to the given value.'''
