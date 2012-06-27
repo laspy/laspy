@@ -1128,22 +1128,25 @@ class Writer(FileManager):
         return
 
     def set_classification_byte(self, value):
-        raise NotImplementedError
+        self.set_dimension("classification_byte", value)
 
     def set_classification_flags(self, value):
-        raise NotImplementedError
+        self.set_dimension("classification_flags",value)
 
     def set_raw_classification(self, classification):
         '''Set the entire classification byte at once. This is faster than setting the binary fields individually, 
         but care must be taken that the values mean what you think they do. '''
         self.set_dimension("raw_classification", classification)
-           
+
     def set_classification(self, classification):
         '''Set the binary classification field inside the raw classification byte'''
-        class_byte = self.binary_str_arr(self.get_raw_classification())
-        new_bits = self.binary_str_arr(classification, 5)
-        out_byte = self.bitpack((new_bits, class_byte), ((0,5),(5,8)))
-        self.set_dimension("raw_classification", out_byte)
+        if self.header.data_format_id in (0,1,2,3,4,5):
+            class_byte = self.binary_str_arr(self.get_raw_classification())
+            new_bits = self.binary_str_arr(classification, 5)
+            out_byte = self.bitpack((new_bits, class_byte), ((0,5), (5,8)))
+            self.set_raw_classification(out_byte)
+        elif self.header.data_format_id in (6,7,8,9,10):
+            self.set_dimension("classification_byte", classification)
         return
 
     def set_synthetic(self, synthetic):
