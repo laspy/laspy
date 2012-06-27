@@ -300,34 +300,29 @@ class HeaderManager(object):
 
     gps_time_type = property(get_gps_time_type, set_gps_time_type, None, doc)
 
-    def get_wkt(self):
-        if self.data_format_id > 5:
-            raw_encoding = self.get_global_encoding()
-            return(self.reader.binary_str(raw_encoding, 16)[4])
-        else:
-            raise LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
-    def set_wkt(self, value):
-        self.assertWriteMode()
-        if self.data_format_id > 5:
-            raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
-            self.set_global_encoding(self.reader.packed_str(raw_encoding[1:4] + str(value) + raw_encoding[5:16]))
-        else:
-            raise LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
-
     def get_waveform_data_packets_internal(self):
-        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+        raw_encoding = self.get_global_encoding()
+        return(self.reader.binary_str(raw_encoding, 16)[1])
 
     def set_waveform_data_packets_internal(self, value):
-        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+        self.assertWriteMode()
+        raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
+        self.set_global_encoding(self.reader.packed_str(raw_encoding[0] + str(value) + raw_encoding[2:]))
+        return
+
     waveform_data_packets_internal = property(get_waveform_data_packets_internal, 
                                               set_waveform_data_packets_internal,
                                               None, None)
 
     def get_waveform_data_packets_external(self):
-        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+        raw_encoding = self.get_globnal_encoding()
+        return(self.reader.binary_str(raw_encoding, 16)[2])
 
     def set_waveform_data_packets_external(self, value):
-        raise NotImplementedError("LAS Version 1.3 not yet supported.")
+        self.assertWriteMode()
+        raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
+        self.set_global_encoding(self.reader.packed_str(raw_encoding[0:2], + str(value) + raw_encoding[3:]))
+        return
 
     waveform_data_packets_external = property(get_waveform_data_packets_external,
                                               set_waveform_data_packets_external, 
@@ -338,6 +333,21 @@ class HeaderManager(object):
         raise NotImplementedError("LAS Version 1.3 not yet supported.")
     synthetic_return_num = property(get_synthetic_return_num, set_synthetic_return_num, 
                                     None, None)
+
+    def get_wkt(self):
+        if self.data_format_id > 5:
+            raw_encoding = self.get_global_encoding()
+            return(self.reader.binary_str(raw_encoding, 16)[4])
+        else:
+            raise util.LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
+
+    def set_wkt(self, value):
+        self.assertWriteMode()
+        if self.data_format_id > 5:
+            raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
+            self.set_global_encoding(self.reader.packed_str(raw_encoding[1:4] + str(value) + raw_encoding[5:16]))
+        else:
+            raise util.LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
 
     def get_projectid(self): 
         p1 = self.reader.get_raw_header_property("proj_id_1")
