@@ -622,10 +622,10 @@ class LasV_14TestCase(unittest.TestCase):
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
         self.assertEqual(self.File1.header.evlrs[0].to_byte_string(),
                         File2.header.evlrs[0].to_byte_string())
+        File2.points = self.File1.points
         outevlrs = []
         [outevlrs.append(File2.header.evlrs[0]) for i in xrange(50)]
         File2.header.evlrs = outevlrs
-        import pdb; pdb.set_trace()
         File2.close()
         File2 = File.File(self.output_tempfile, mode = "r")
         self.assertTrue(len(File2.header.evlrs) == 50)
