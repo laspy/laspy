@@ -159,7 +159,7 @@ around a bit.
  Scanner Channel         scanner_channel        2
  Scan Direction Flag     scan_dir_flag          1
  Edge of Flight Line     edge_flight_line       1
-======================  ====================  ==============================
+======================  =====================  ==============================
 
 *Classification Byte*
 
@@ -240,7 +240,7 @@ The five possible point formats are detailed below:
  Blue                    blue                  unsigned short[1] (2)
 ======================  ====================  ==============================
 
-*Point Format 4* (Not Currently Supported)
+*Point Format 4*
 
 ===============================  ==============================  ==============================
  Field Name                       Laspy Abbreviation              File Format[number] (length)
@@ -263,7 +263,7 @@ The five possible point formats are detailed below:
  Z(t)                             z_t                             float[1] (4)
 ===============================  ==============================  ==============================
 
-*Point Format 5* (Not Currently Supported)
+*Point Format 5*
 
 ===============================  ==============================  ==============================
  Field Name                       Laspy Abbreviation              File Format[number] (length)
@@ -288,6 +288,12 @@ The five possible point formats are detailed below:
  Y(t)                             y_t                             float[1] (4)
  Z(t)                             z_t                             float[1] (4)
 ===============================  ==============================  ==============================
+
+*Point Format 6*
+*Point Format 7*
+*Point Format 8*
+*Point Format 9*
+*Point Format 10*
 
 
 
