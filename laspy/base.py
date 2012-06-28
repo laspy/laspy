@@ -522,8 +522,14 @@ class FileManager():
     def get_flag_byte(self):
         return(self.get_dimension("flag_byte"))
    
-    def get_classification_flags(self):
+    def get_raw_classification_flags(self):
         return(self.get_dimension("classification_flags"))
+
+    def get_classification_flags(self): 
+        if not self.header.data_format_id in (6,7,8,9,10):
+            return(self.get_classification())
+        rawDim = self.get_raw_classification_flags()
+        return(np.array([self.packed_str(self.binary_str(x)[0:4]) for x in rawDim]))
 
     def get_classification_byte(self):
         return(self.get_dimension("classification_byte"))
@@ -546,14 +552,14 @@ class FileManager():
         if self.header.data_format_id in (0,1,2,3,4,5):
             rawDim = self.get_flag_byte()
         elif self.header.data_format_id in (6,7,8,9,10):
-            rawDim = self.get_classification_flags()
+            rawDim = self.get_raw_classification_flags()
         return(np.array([self.packed_str(self.binary_str(x)[6]) for x in rawDim])) 
 
     def get_edge_flight_line(self): 
         if self.header.data_format_id in (0,1,2,3,4,5):
             rawDim = self.get_flag_byte() 
         elif self.header.data_format_id in (6,7,8,9,10):
-            rawDim = self.get_classification_flags() 
+            rawDim = self.get_raw_classification_flags() 
         return(np.array(([self.packed_str(self.binary_str(x)[7]) for x in rawDim])))
     
     def get_raw_classification(self):
@@ -1132,7 +1138,7 @@ class Writer(FileManager):
                 ((0,6),(0,1), (7,8)))
             self.set_dimension("flag_byte", outByte)
         elif self.header.data_format_id in (6,7,8,9,10):
-            flag_byte = self.binary_str_arr(self.get_classification_flags())
+            flag_byte = self.binary_str_arr(self.get_raw_classification_flags())
             newBits = self.binary_str_arr(flag, 1)
             outByte = self.bitpack((flag_byte,newBits,flag_byte), 
                 ((0,6),(0,1), (7,8)))
@@ -1147,7 +1153,7 @@ class Writer(FileManager):
             outByte = self.bitpack((raw_dim, newBits), ((0,7), (0,1)))
             self.set_dimension("flag_byte", outByte)
         elif self.header.data_format_id in (6,7,8,9,10):
-            raw_dim = self.binary_str_arr(self.get_classification_flags()) 
+            raw_dim = self.binary_str_arr(self.get_raw_classification_flags()) 
             newBits = self.binary_str_arr(line, 1)
             outByte = self.bitpack((raw_dim, newBits), ((0,7), (0,1)))
             self.set_dimension("classification_flags", outByte)
@@ -1156,8 +1162,18 @@ class Writer(FileManager):
     def set_classification_byte(self, value):
         self.set_dimension("classification_byte", value)
 
-    def set_classification_flags(self, value):
+    def set_raw_classification_flags(self, value):
         self.set_dimension("classification_flags",value)
+    
+    def set_classification_flags(self, value): 
+        if not self.header.data_format_id in (6,7,8,9,10):
+            self.set_classification(value)
+            return
+        rawDim = self.binary_str_arr(self.get_raw_classification_flags()) 
+        new_bits = self.binary_str_arr(value, 4) 
+        outbyte = self.bitpack((new_bits, rawDim), ((0,4), (4,8)))
+        self.set_raw_classification_flags(outbyte)
+        return
 
     def set_raw_classification(self, classification):
         '''Set the entire classification byte at once. This is faster than setting the binary fields individually, 
@@ -1165,10 +1181,12 @@ class Writer(FileManager):
         self.set_dimension("raw_classification", classification)
 
     def set_classification(self, classification):
-        '''Set the binary classification field inside the raw classification byte'''
+        '''Point Formats <6: Set the binary classification field inside the raw classification byte
+           Point Formats >5: Set the classification byte.
+        '''
         if self.header.data_format_id in (0,1,2,3,4,5):
             class_byte = self.binary_str_arr(self.get_raw_classification())
-            new_bits = self.binary_str_arr(classification, 5)
+            new_bits = self.binary_str_arr(classification, 4)
             out_byte = self.bitpack((new_bits, class_byte), ((0,5), (5,8)))
             self.set_raw_classification(out_byte)
         elif self.header.data_format_id in (6,7,8,9,10):

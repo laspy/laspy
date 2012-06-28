@@ -105,6 +105,9 @@ while (mostly) avoiding backwards incompatability.
         the original 1.0 specification used a point field called *"File Marker"*, which was
         generally neglected. We will therefore use the more recent *"User Data"* nomenclature.
 
+
+**Point Formats 0-5**
+
 There are two bytes per point record dedicated to sub-byte length fields, one called by laspy *flag_byte*
 and the other called *raw_classification*. These are detailed below, and are available from Laspy
 in the same way as full size dimensions:
@@ -131,6 +134,41 @@ in the same way as full size dimensions:
  Key Point               key_point             1
  Withheld                withheld              1
 ======================  ====================  ==============================
+
+
+**Point Formats 6-10**
+
+The new point formats introduced by LAS specification 1.4 shuffle the bit fields 
+around a bit. 
+
+*Flag Byte*
+
+======================  ====================  ==============================
+ Field Name              Laspy Abbreviation    Length(in bits)
+======================  ====================  ==============================
+ Return Number           return_num            4
+ Number of Returns       num_returns           4
+======================  ====================  ==============================
+
+*Classification Flags*
+
+======================  =====================  ==============================
+ Field Name              Laspy Abbreviation     Length(in bits)
+======================  =====================  ==============================
+ Classification Flags    classification_flags   4
+ Scanner Channel         scanner_channel        2
+ Scan Direction Flag     scan_dir_flag          1
+ Edge of Flight Line     edge_flight_line       1
+======================  ====================  ==============================
+
+*Classification Byte*
+
+LAS 1.4 introduces a byte sized classification field, and this is interpreted 
+as an integer. For information on the interpretation of the Classification Byte
+field, see the LAS specification. This dimension is accessable in laspy as simply
+:obj:`laspy.file.File`.classification for files which make the field available. 
+In files without the full byte classification, this property provides the 4 bit 
+classification field which becomes "classification_flags" in 1.4. 
 
 The five possible point formats are detailed below:
 
