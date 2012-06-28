@@ -583,6 +583,13 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.y_t))
         File2.y_t += 1
         self.assertTrue(all(test1 != File2.y_t))
+    def test_z_t(self):
+        test1 = self.File1.z_t 
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.points = self.File1.points
+        self.assertTrue(all(test1 == File2.z_t))
+        File2.z_t += 1
+        self.assertTrue(all(test1 != File2.z_t))
 
 
     def tearDown(self):
