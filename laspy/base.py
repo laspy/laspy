@@ -646,22 +646,22 @@ class FileManager():
     def get_x_t(self):
         fmt = self.header.data_format_id
         if fmt in (4, 5):
-            return(self.get_dimension("X_t"))
+            return(self.get_dimension("x_t"))
         raise LaspyException("X(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def get_y_t(self):
         fmt = self.header.data_format_id
         if fmt in (4, 5):
-            return(self.get_dimension("Y_t"))
+            return(self.get_dimension("y_t"))
         raise LaspyException("Y(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
 
     def get_z_t(self):
         fmt = self.header.data_format_id
         if fmt in (4, 5):
-            return(self.get_dimension("Z_t"))
-        raise LaspyException("Z(t) Not"
+            return(self.get_dimension("z_t"))
+        raise LaspyException("z(t) Not"
                        + " Available for Pt Fmt: " +str(fmt))
     def get_extra_bytes(self):
         if "extra_bytes" in self.point_format.lookup.keys():
