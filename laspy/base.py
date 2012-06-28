@@ -34,7 +34,7 @@ class DataProvider():
             self.map() 
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))]) 
-        if not self.manager.header.version in ("1.3", 1.4): 
+        if not self.manager.header.version in ("1.3", "1.4"): 
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
         else:  
@@ -319,7 +319,7 @@ class FileManager():
             num_vlrs = 1
         elif self.header.version == "1.4":
             self.seek(self.header.start_first_evlr, rel = False)
-            num_vlrs = self.get_header_property("num_EVLRs")
+            num_vlrs = self.get_header_property("num_evlrs")
         for i in xrange(num_vlrs): 
             new_vlr = EVLR(None, None, None)
             new_vlr.build_from_reader(self)
