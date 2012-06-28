@@ -42,7 +42,7 @@ class EVLR():
         self.isEVLR = True
 
     def build_from_reader(self, reader):
-        '''Build a vlr from a reader capable of reading in the data.'''
+        '''Build an evlr from a reader capable of reading in the data.'''
         self.reserved = reader.read_words("reserved", "evlr")
         self.user_id = "".join(reader.read_words("user_id", "evlr"))
         self.record_id = reader.read_words("record_id", "evlr")
@@ -54,11 +54,11 @@ class EVLR():
         self.fmt = reader.evlr_formats
 
     def __len__(self):
-        '''Return the size of the vlr object in bytes'''
+        '''Return the size of the evlr object in bytes'''
         return self.rec_len_after_header + 60
 
     def pack(self, name, val): 
-        '''Pack a VLR field into bytes.'''
+        '''Pack an EVLR field into bytes.'''
         spec = self.fmt.lookup[name]
         if spec.num == 1:
             return(pack(spec.full_fmt, val))
