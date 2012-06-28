@@ -569,7 +569,13 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.return_point_waveform_loc))
         File2.return_point_waveform_loc += 1
         self.assertTrue(all(test1 != File2.return_point_waveform_loc))
-
+    def test_x_t(self):
+        test1 = self.File1.x_t 
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.points = self.File1.points
+        self.assertTrue(all(test1 == File2.x_t))
+        File2.x_t += 1
+        self.assertTrue(all(test1 != File2.x_t))
 
 
     def tearDown(self):

@@ -1290,28 +1290,28 @@ class Writer(FileManager):
         raise LaspyException("Return Point Waveform Loc Not Available for Point Format: " + str(vsn))
     
     def set_x_t(self, x):
-        '''Wrapper for set_dimension("X_t")'''
+        '''Wrapper for set_dimension("x_t")'''
         vsn = self.header.data_format_id
         if vsn in (4, 5):
-            self.set_dimension("X_t", x)
+            self.set_dimension("x_t", x)
             return
-        raise LaspyException("X_t Not Available for Point Format: " + str(vsn))
+        raise LaspyException("x_t Not Available for Point Format: " + str(vsn))
 
     def set_y_t(self, y):
-        '''Wrapper for set_dimension("Y_t")'''
+        '''Wrapper for set_dimension("y_t")'''
         vsn = self.header.data_format_id
         if vsn in (4, 5):
-            self.set_dimension("Y_t", y)
+            self.set_dimension("y_t", y)
             return
-        raise LaspyException("Y_t Not Available for Point Format: " + str(vsn))
+        raise LaspyException("y_t Not Available for Point Format: " + str(vsn))
     
     def set_z_t(self, z):
-        '''Wrapper for set_dimension("Z_t")'''
+        '''Wrapper for set_dimension("z_t")'''
         vsn = self.header.data_format_id
         if vsn in (4, 5):
-            self.set_dimension("Z_t", z)
+            self.set_dimension("z_t", z)
             return
-        raise LaspyException("Z_t Not Available for Point Format: " + str(vsn))
+        raise LaspyException("z_t Not Available for Point Format: " + str(vsn))
 
     def set_extra_bytes(self, extra_bytes):
         '''Wrapper for set_dimension("extra_bytes")'''
