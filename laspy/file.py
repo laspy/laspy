@@ -543,7 +543,9 @@ class File(object):
         self._writer.set_extra_bytes(new)
 
     doc = '''It is possible to specify a data_record_length longer than the default, 
-            and the extra space is treated by laspy as raw bytes accessable via this extra_bytes property.'''
+            and the extra space is treated by laspy as raw bytes accessable via this extra_bytes property. 
+            This dimension is only assignable for files in write mode which were instantiated with the appropriate
+            data_record_length from the header.'''
     extra_bytes = property(get_extra_bytes, set_extra_bytes, None, doc)
         
     def __iter__(self):

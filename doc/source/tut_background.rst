@@ -11,18 +11,18 @@ LAS files are binary files packed according to several specifications.
 
 **LAS Specifications**
 
-Currently, laspy 1.0 supports LAS formats 1.0 to 1.2, although support for 1.3 formatted files
-is preliminarily supported by the latest source at github. The LAS specifications are detailed below:
+laspy 1.0 supports LAS formats 1.0 to 1.2, and provides preliminary support for formats 1.3 and 1.4. 
 
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf 
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf 
 http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf 
 http://www.asprs.org/a/society/committees/standards/LAS_1_3_r11.pdf
-
+http://www.asprs.org/a/society/committees/standards/LAS_1_4_r11.pdf
 There is also a version 1.4 specification, but support for it is not yet complete.
 
 .. note::
-    If you have access to good version 1.3 or version 1.4 LAS files, shoot us an email:
+    If you have access to good version 1.3 or version 1.4 LAS files, or feedback on any
+    of the features of laspy, shoot us an email:
     grant.brown73@gmail.com
 
 Much of the data required for laspy to know how to read the LAS file is present 
@@ -31,6 +31,8 @@ some minor departures from the raw specification for convenience, namely combini
 the Day+Year fields into a python :obj:`datetime.datetime` object, and placing
 the X Y and Z scale and offset values together. 
 
+
+**Version 1.0 - 1.2**
 
 ===============================  ==============================  ==============================
  Field Name                       Laspy Abbreviation              File Format[number] (length)
@@ -61,22 +63,41 @@ the X Y and Z scale and offset values together.
  Min (X, Y, Z)                    min                             double[3] (24)
 ===============================  ==============================  ==============================
 
-In addition, the LAS 1.3 specification adds a "Start of Waveform Data Packet Record"
-field at the end of the header. 
+**Version 1.3 (appended)**
 
-Broadly speaking, these three specifications are cumulative - each adds more potential 
-configurations to the last, while (mostly) avoiding backwards incompatability. 
+===============================  ==============================  ==============================
+ Start of waveform data record    start_waveform_data_rec         unsigned long long[1] (8)
+===============================  ==============================  ==============================
+
+**Version 1.4 (appended)**
+
+===============================  ==============================  ==============================
+ Start of first EVLR              start_first_evlr                unsigned long long[1] (8) 
+ Number of EVLRs                  num_evlrs                       unsigned long[1] (4)
+ Number of point records          point_records_count             unsigned long long[1] (8)
+ Number of points by return ct.   point_return_count              unsigned long long[15] (120)
+===============================  ==============================  ==============================
+
+
+In addition, the LAS 1.4 specification replaces the point_records_count and point_return_count
+fields present in previous versions with legacy_point_records_count and legacy_point_return_count, 
+which match the specification of their original counterparts. 
+
+Therefore broadly speaking, with the exception of the 1.4 legacy fields and format changes, these 
+specifications are cumulative - each adds more potential configurations to the last, 
+while (mostly) avoiding backwards incompatability. 
 
 **Point Formats**
 
-======================  =========================
+======================  ==================================
  LAS Format              Point Formats Supported
-======================  =========================
+======================  ==================================
  Version 1.0             0, 1
  Version 1.1             0, 1
  Version 1.2             0, 1, 2, 3
  Version 1.3             0, 1, 2, 3, 4, 5
-======================  ========================= 
+ Version 1.4             0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+======================  ==================================
 
     .. note::
         Where there exist discrepencies between the use of point fields between
