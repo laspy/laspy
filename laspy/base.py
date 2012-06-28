@@ -1318,4 +1318,4 @@ class Writer(FileManager):
         if "extra_bytes" in self.point_format.lookup.keys():
             self.set_dimension("extra_bytes", extra_bytes)
         else:
-            raise LaspyException("extra_bytes not present in file.")
+            raise LaspyException("Extra bytes not present in point format. Try creating a new file with an extended point record length.")

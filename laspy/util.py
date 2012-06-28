@@ -13,13 +13,14 @@ class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
     pass
 
-fmtLen = {"<l":4, "<L":4, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
+fmtLen = {"<l":4, "<L":4, "<h":2, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
 LEfmt = {ctypes.c_long:"<l",ctypes.c_ulong:"<L", ctypes.c_ushort:"<H", ctypes.c_ubyte:"<B"
-        ,ctypes.c_float:"<f", ctypes.c_char:"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q"}
-npFmt = {"<l":"i4", "<L":"u4", "<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
+        ,ctypes.c_float:"<f", ctypes.c_char:"<s", ctypes.c_double:"<d", ctypes.c_ulonglong:"<Q",
+        ctypes.c_short:"<h"}
+npFmt = {"<l":"i4", "<L":"u4", "<h":"i2","<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
 
 
-defaults = {"<L":0,"<l":0, "<H":0, "<B": "0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
+defaults = {"<L":0,"<l":0, "<H":0, "<h":0, "<B": "0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
 
 class Spec():
     '''Holds information about how to read and write a particular field. 
