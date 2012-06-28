@@ -630,6 +630,31 @@ class LasV_14TestCase(unittest.TestCase):
         File2 = File.File(self.output_tempfile, mode = "r")
         self.assertTrue(len(File2.header.evlrs) == 50)
 
+
+    def test_classification_variables(self):
+        classification = self.File1.classification
+        classification_flags = self.File1.classification_flags
+        scanner_channel = self.File1.scanner_channel
+        scan_dir_flag = self.File1.scan_dir_flag
+        edge_flight_line = self.File1.edge_flight_line
+
+        return_num = self.File1.return_num
+        num_returns = self.File1.num_returns
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.classification = classification
+        File2.classification_flags = classification_flags
+        File2.scan_dir_flag = scan_dir_flag
+        File2.edge_flight_line = edge_flight_line
+        File2.return_num = return_num
+        File2.num_returns = num_returns
+        
+        self.assertTrue(all(num_returns == File2.get_num_returns()))
+        self.assertTrue(all(return_num == File2.get_return_num())) 
+        self.assertTrue(all(edge_flight_line == File2.get_edge_flight_line())) 
+        self.assertTrue(all(scan_dir_flag ==File2.get_scan_dir_flag() )) 
+        self.assertTrue(all(classification_flags == File2.get_classification_flags())) 
+        self.assertTrue(all(classification == File2.get_classification())) 
+
     def tearDown(self):
         self.File1.close()
         os.remove(self.tempfile)

@@ -373,6 +373,22 @@ class File(object):
                               set_classification, None, None)
     Classification = classification
 
+    def get_classification_flags(self):
+        return(self._reader.get_classification_flags())
+    def set_classification_flags(self,value):
+        self.assertWriteMode()
+        self._writer.set_classification_flags(value)
+
+    classification_flags = property(get_classification_flags, set_classification_flags, None, None) 
+
+    def get_scanner_channel(self):
+        return(self._writer.get_scanner_channel())
+    def set_scanner_channel(self, value):
+        self.assertWriteMode()
+        self._writer.set_scanner_channel(value)
+
+    scanner_channel = property(get_scanner_channel, set_scanner_channel, None, None)
+
     def get_synthetic(self):
         return(self._reader.get_synthetic())
     def set_synthetic(self, synthetic):
