@@ -596,7 +596,6 @@ class LasV_13TestCase(unittest.TestCase):
         self.File1.close()
         os.remove(self.tempfile)
 
-
 class LasV_14TestCase(unittest.TestCase):
     simple = './test/data/simple1_4.las'
     tempfile = 'v14.las'
@@ -623,6 +622,13 @@ class LasV_14TestCase(unittest.TestCase):
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
         self.assertEqual(self.File1.header.evlrs[0].to_byte_string(),
                         File2.header.evlrs[0].to_byte_string())
+        outevlrs = []
+        [outevlrs.append(File2.header.evlrs[0]) for i in xrange(50)]
+        File2.header.evlrs = outevlrs
+        import pdb; pdb.set_trace()
+        File2.close()
+        File2 = File.File(self.output_tempfile, mode = "r")
+        self.assertTrue(len(File2.header.evlrs) == 50)
 
     def tearDown(self):
         self.File1.close()
