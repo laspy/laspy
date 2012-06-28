@@ -704,10 +704,11 @@ class HeaderManager(object):
         #for i in rawdata:
         #    histDict[i] += 1        
         #raw_hist = histDict.values()
-        if self.version == "1.4":
-            raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
+        if self.data_format_id in (range(6)):
+            raw_hist = np.histogram(rawdata, bins = range(1,7))
+            
         else:
-            raw_hist = np.histogram(rawdata, bins = [1,2,3,4,5,6])
+            raw_hist = np.histogram(rawdata, bins = range(1,17)) 
         #print("Raw Hist: " + str(raw_hist))
         #t = raw_hist[0][4]
         #for ret in [3,2,1,0]:
