@@ -597,6 +597,37 @@ class LasV_13TestCase(unittest.TestCase):
         os.remove(self.tempfile)
 
 
+class LasV_14TestCase(unittest.TestCase):
+    simple = './test/data/simple1_4.las'
+    tempfile = 'v14.las'
+    output_tempfile = 'v14-output.las'
+    def setUp(self):
+        shutil.copyfile(self.simple, self.tempfile)  
+        self.File1 = File.File(self.tempfile, mode = "rw")
+
+    def test_glob_encode(self):
+        old = self.File1.header.gps_time_type
+        self.assertTrue(old == '0')
+        self.File1.header.gps_time_type = '1'
+        self.assertEqual(self.File1.header.get_gps_time_type(), '1')
+        
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        self.assertEqual(self.File1.header.waveform_data_packets_internal,
+                        File2.header.waveform_data_packets_internal)
+        self.assertEqual(self.File1.header.waveform_data_packets_external,
+                        File2.header.waveform_data_packets_external)
+        self.assertEqual(self.File1.header.synthetic_return_num, 
+                        File2.header.synthetic_return_num)
+    
+    def test_evlr(self):
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        self.assertEqual(self.File1.header.evlrs[0].to_byte_string(),
+                        File2.header.evlrs[0].to_byte_string())
+
+    def tearDown(self):
+        self.File1.close()
+        os.remove(self.tempfile)
+
 
 
 def test_laspy():
@@ -605,5 +636,7 @@ def test_laspy():
     header_writer = unittest.TestLoader().loadTestsFromTestCase(LasHeaderWriterTestCase)
     write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
     las13 = unittest.TestLoader().loadTestsFromTestCase(LasV_13TestCase)
-    return unittest.TestSuite([las13, reader, writer, header_writer, write_mode])
+    las14 = unittest.TestLoader().loadTestsFromTestCase(LasV_14TestCase)
+
+    return unittest.TestSuite([reader, writer, header_writer, write_mode, las13, las14])
 
