@@ -79,7 +79,7 @@ the X Y and Z scale and offset values together.
 
 ===============================  ==============================  ==============================
  Start of first EVLR              start_first_evlr                unsigned long long[1] (8) 
- Number of EVLRs                  num_evlrs                       unsigned long[1] (4)
+ Number of EVLRs                  (handled internally)            unsigned long[1] (4)
  Number of point records          point_records_count             unsigned long long[1] (8)
  Number of points by return ct.   point_return_count              unsigned long long[15] (120)
 ===============================  ==============================  ==============================
