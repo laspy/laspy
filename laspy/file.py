@@ -489,6 +489,14 @@ class File(object):
         self.assertWriteMode()
         self._writer.set_wave_packet_desc_index(idx)
         return
+    
+    def get_nir(self):
+        return(self._reader.get_nir())
+    def set_nir(self, value):
+        self.assertWriteMode()
+        self._writer.set_nir(value)
+
+    nir = property(get_nir, set_nir, None, None)
 
     wave_packet_desc_index = property(get_wave_packet_desc_index,
                                       set_wave_packet_desc_index, None, None)

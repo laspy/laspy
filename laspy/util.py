@@ -143,7 +143,7 @@ class Format():
             self.add("blue", ctypes.c_ushort, 1)
             self.add("green", ctypes.c_ushort, 1)
         if fmt in ("8", "10"):
-            self.add("NIR", ctypes.c_ushort, 1)
+            self.add("nir", ctypes.c_ushort, 1)
         if fmt in ("9", "10"):
             self.add("wave_packet_desc_index", ctypes.c_ubyte, 1)
             self.add("byte_offset_to_waveform_data", ctypes.c_ulonglong,1)

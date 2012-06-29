@@ -626,6 +626,11 @@ class FileManager():
             return(self.get_dimension("blue"))
         raise LaspyException("Color is not available for point format: " + str(fmt))
 
+    def get_nir(self):
+        fmt = self.header.data_format_id
+        if fmt in (8,10):
+            return(self.get_dimension("nir"))
+        raise LaspyException("NIR is not available for point format: "+str(fmt))
 
     def get_wave_packet_desc_index(self):
         fmt = self.header.data_format_id
@@ -1281,6 +1286,12 @@ class Writer(FileManager):
             self.set_dimension("blue", blue)
             return
         raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
+
+    def set_nir(self, value):
+        fmt = self.header.data_format_id
+        if fmt in (8,10):
+            self.get_dimension("nir", value)
+        raise LaspyException("NIR is not available for point format: "+str(fmt))
 
     def set_wave_packet_desc_index(self, idx):
         '''Wrapper for set_dimension("wave_packet_desc_index") This is not currently functional, 
