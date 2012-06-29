@@ -3,7 +3,10 @@ from setuptools import setup
 import laspy
 
 # Get text from README.txt
-readme_text = file('README.rst', 'rb').read()
+try:
+    readme_text = file('README.rst', 'rb').read()
+except:
+    readme_text = "See documentation at www.laspy.org"
 
     
 setup(name          = 'laspy',
