@@ -22,10 +22,10 @@ setup(name          = 'laspy',
                         and point focused API. Documentation is available at 
                         www.laspy.org, and the source is available at 
                         www.github.com/grantbrown/laspy''',
-      packages      = ['laspy'],
+      packages      = ['laspy', 'laspytest'],
       install_requires = ['numpy'],
-      test_suite = 'test.test_laspy',
-      data_files = None,
+      test_suite = 'laspytest.test_laspy',
+      data_files = [("laspytest/data", ["simple.las", "simple1_3.las", "simple1_4.las"])], 
       zip_safe = False,
       classifiers   = [
         'Development Status :: 4 - Beta',
