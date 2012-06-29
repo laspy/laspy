@@ -222,28 +222,9 @@ a las file in place, you can open it in read-write mode, as follows:
 
 **Variable Length Records**
 
-Each LAS file can contain a number of variable length records, or VLRs. These can
-be used to store specific georeferencing information, or user/software specific 
-data. The LAS specifications linked above define several specific VLRs, however 
-laspy does not parse VLRs at this level of detail. Instead, laspy documents the 
-VLR header, which should always be in a common format, and stores the raw bytes of the
-remaining record. 
-
-:obj:`laspy.header.VLR` Attributes:
-
-======================  ===============  ======================
- Name                    Format in File   Length
-======================  ===============  ======================
-reserved                Unsigned Short    2
-user_id                 Character         16
-record_id               Unsigned Short    2
-rec_len_after_header    Unsigned Short    2
-description             Character         32
-VLR_body                Raw Bytes         rec_len_after_header
-======================  ===============  ======================
-
 To create a VLR, you really only need to know user_id, record_id, and the data
-you want to store in VLR_body. The rest of the attributes are filled with null bytes
+you want to store in VLR_body (For a fuller discussion of what a VLR is, see the 
+background section). The rest of the attributes are filled with null bytes
 or calculated according to your input, but if you'd like to specify the reserved or 
 description fields you can do so with additional arguments:
 
@@ -272,9 +253,7 @@ description fields you can do so with additional arguments:
         inFile.close()
 
 
-
-        #######################
-
+**Putting it all together.**
 
 Here is a collection of the code on this page, copypasta ready:
 
