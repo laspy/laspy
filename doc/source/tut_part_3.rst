@@ -49,9 +49,12 @@ EVLRS work very much the same way as traditional VLRs, though they are stored in
 a different part of the file. 
 
     .. code-block:: python
+
         from laspy.header import EVLR
-        outFile_14 = File("./test/data/output_14.las", mode = "w", header = inFile_v14.header)
-        new_evlr = EVLR(user_id = 10, record_id = 2, VLR_body = "Lots of data can go here.")
+        outFile_14 = File("./test/data/output_14.las", mode = "w",
+                        header = inFile_v14.header)
+        new_evlr = EVLR(user_id = 10, record_id = 2, 
+                        VLR_body = "Lots of data can go here.")
         #outFile_14 has the same, single EVLR as inFile
         old_evlrs = outFile_14.header.evlrs 
         old_evlrs.append(new_evlr)
