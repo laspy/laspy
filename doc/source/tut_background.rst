@@ -13,17 +13,23 @@ LAS files are binary files packed according to several specifications.
 
 laspy 1.0 supports LAS formats 1.0 to 1.2, and provides preliminary support for formats 1.3 and 1.4. 
 
-http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf 
-http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf 
-http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf 
-http://www.asprs.org/a/society/committees/standards/LAS_1_3_r11.pdf
-http://www.asprs.org/a/society/committees/standards/LAS_1_4_r11.pdf
-There is also a version 1.4 specification, but support for it is not yet complete.
+=== ================================================================================
+
+1.0  http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf 
+1.1  http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf 
+1.2  http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf 
+1.3  http://www.asprs.org/a/society/committees/standards/LAS_1_3_r11.pdf
+1.4  http://www.asprs.org/a/society/committees/standards/LAS_1_4_r11.pdf
+
+=== ================================================================================
+   
 
 .. note::
     If you have access to good version 1.3 or version 1.4 LAS files, or feedback on any
     of the features of laspy, shoot us an email:
     grant.brown73@gmail.com
+
+**LAS Headers**
 
 Much of the data required for laspy to know how to read the LAS file is present 
 in the header, which laspy interacts with according to the pattern below. There are 
@@ -32,7 +38,7 @@ the Day+Year fields into a python :obj:`datetime.datetime` object, and placing
 the X Y and Z scale and offset values together. 
 
 
-**Version 1.0 - 1.2**
+**Header: Version 1.0 - 1.2**
 
 ===============================  ==============================  ==============================
  Field Name                       Laspy Abbreviation              File Format[number] (length)
@@ -63,13 +69,13 @@ the X Y and Z scale and offset values together.
  Min (X, Y, Z)                    min                             double[3] (24)
 ===============================  ==============================  ==============================
 
-**Version 1.3 (appended)**
+**Header: Version 1.3 (appended)**
 
 ===============================  ==============================  ==============================
  Start of waveform data record    start_waveform_data_rec         unsigned long long[1] (8)
 ===============================  ==============================  ==============================
 
-**Version 1.4 (appended)**
+**Header: Version 1.4 (appended)**
 
 ===============================  ==============================  ==============================
  Start of first EVLR              start_first_evlr                unsigned long long[1] (8) 
@@ -106,7 +112,7 @@ while (mostly) avoiding backwards incompatability.
         generally neglected. We will therefore use the more recent *"User Data"* nomenclature.
 
 
-**Point Formats 0-5**
+**Sub-Byte Fields: Point Formats 0-5**
 
 There are two bytes per point record dedicated to sub-byte length fields, one called by laspy *flag_byte*
 and the other called *raw_classification*. These are detailed below, and are available from Laspy
@@ -136,7 +142,7 @@ in the same way as full size dimensions:
 ======================  ====================  ==============================
 
 
-**Point Formats 6-10**
+**Sub-Byte Fields: Point Formats 6-10**
 
 The new point formats introduced by LAS specification 1.4 shuffle the bit fields 
 around a bit. 
@@ -170,6 +176,8 @@ field, see the LAS specification. This dimension is accessable in laspy as simpl
 In files without the full byte classification, this property provides the 4 bit 
 classification field which becomes "classification_flags" in 1.4. 
 
+
+**Point Format Specifications**
 The five possible point formats are detailed below:
 
 *Point Format 0*
@@ -404,5 +412,83 @@ The five possible point formats are detailed below:
  Z(t)                             z_t                             float[1] (4)
 ===============================  ==============================  ==============================
 
+**Variable Length Records, Extended Variable Length Records**
 
+Each LAS file can also contain a number of variable length records, or VLRs. These can
+be used to store specific georeferencing information, or user/software specific 
+data. The LAS specifications linked above define several specific VLRs, however 
+laspy does not parse VLRs at this level of detail. Instead, laspy documents the 
+VLR header, which should always be in a common format, and stores the raw bytes of the
+remaining record. 
+
+The LAS 1.3 specification also adds the concept of an extended VLR. In 1.3, waveform
+data is stored at the end of the file in a variable length record which can contain
+more data than the original VLR, due to the larger data type for the "rec_len_after_header" field. 
+This EVLR is known as the Waveform Data Packet Record. 
+
+In the LAS 1.4 specification, more than one EVLR may be present. The headers to these
+newer formats therefore provide the byte offset to the Waveform Data Packet Record, 
+as well as the byte offset to the first EVLR record. These numbers may be the same 
+or different. 
+
+To summarize in tabular form, LAS files follow the following structure:
+
+
+== =========================
+ #  Formats 1.0 through 1.2
+== =========================
+ 1  Header
+ 2  VLR(s)
+ 3  Point Records
+== =========================
+
+\
+
+== ============================= 
+ #  Format 1.3
+== =============================
+ 1  Header
+ 2  VLR(s)
+ 3  Point Records
+ 4  Waveform Data Packet Record
+== =============================
+
+\
+
+== ============================================= 
+ #  Format 1.4
+== =============================================
+ 1  Header
+ 2  VLR(s)
+ 3  Point Records
+ 4  EVLR(s), including Waveform Data if present
+== =============================================
+
+\
+
+:obj:`laspy.header.VLR` Attributes:
+
+======================  ===============  ======================
+ Name                    Format in File   Length
+======================  ===============  ======================
+reserved                Unsigned Short    2
+user_id                 Character         16
+record_id               Unsigned Short    2
+rec_len_after_header    Unsigned Short    2
+description             Character         32
+VLR_body                Raw Bytes         rec_len_after_header
+======================  ===============  ======================
+
+:obj:`laspy.header.EVLR` Attributes:
+
+======================  ==================  ======================
+ Name                    Format in File      Length
+======================  ==================  ======================
+reserved                Unsigned Short       2
+user_id                 Character            16
+record_id               Unsigned Short       2
+rec_len_after_header    Unsigned LongLong    8
+description             Character            32
+VLR_body                Raw Bytes            rec_len_after_header
+======================  ==================  ======================
 
