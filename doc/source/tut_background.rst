@@ -307,10 +307,29 @@ The five possible point formats are detailed below:
  GPS Time                         gps_time                        double[1] (8)
 ===============================  ==============================  ==============================
 
-
-
-
 *Point Format 7*
+
+===============================  ==============================  ==============================
+ Field Name                       Laspy Abbreviation              File Format[number] (length)
+===============================  ==============================  ==============================
+ X                                X (x for scaled)                long[1] (4)
+ Y                                Y (y for scaled)                long[1] (4)
+ Z                                Z (z for scaled)                long[1] (4)
+ Intensity                        intensity                       unsigned short[1] (2)
+ (Flag Byte)                      flag_byte                       unsigned byte[1]  (1)
+ (Classification Flags)           classification_flags            unsigned byte[1]  (1)
+ classification                   classification                  unsigned byte[1] (1)
+ User Data                        user_data                       unsigned char[1]  (1)
+ Scan Angle                       scan_angle                      short[1] (2)
+ Point Source Id                  pt_src_id                       unsigned short[1] (2)
+ GPS Time                         gps_time                        double[1] (8)
+ Red                              red                             unsigned short[1] (2)
+ Green                            green                           unsigned short[1] (2)
+ Blue                             blue                            unsigned short[1] (2)
+===============================  ==============================  ==============================
+
+
+
 *Point Format 8*
 *Point Format 9*
 *Point Format 10*
