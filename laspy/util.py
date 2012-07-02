@@ -319,7 +319,7 @@ class ExtraBytesStruct():
     def get_property(self, name):
         fmt = self.fmt.specs[self.get_property_idx(name)]
         return(unpack(fmt.full_fmt, 
-            self.data[fmt.offs:(fmt.offs + fmt.length*fmt.num)])) 
+            self.data[fmt.offs:(fmt.offs + fmt.length*fmt.num)])[0]) 
 
     def set_property(self, name, value):
         fmt = self.fmt.specs(self.get_property_idx(name))
