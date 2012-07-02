@@ -18,6 +18,7 @@ def leap_year(year):
 class LaspyHeaderException(Exception):
     pass
 
+        
 class EVLR():
     ''' An extended VLR as defined in LAS specification 1.4'''
     def __init__(self, user_id, record_id, VLR_body, **kwargs):
@@ -91,6 +92,7 @@ class VLR():
         self.user_id = str(user_id) + "\x00"*(16-len(str(user_id)))
         self.record_id = record_id
         self.VLR_body = VLR_body
+        self.type = 0
         try:
             self.rec_len_after_header = len(self.VLR_body)
         except(TypeError):
@@ -106,6 +108,8 @@ class VLR():
         self.reserved = 0
         self.isVLR = True
         self.fmt = util.Format("VLR")
+        if self.user_id == "LASF_Spec" and self.record_id == 4:
+            self.setup_extra_bytes_spec(self.VLR_body)
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''
@@ -115,9 +119,27 @@ class VLR():
         self.rec_len_after_header = reader.read_words("rec_len_after_header")
         self.description = "".join(reader.read_words("description"))
         self.VLR_body = reader.read(self.rec_len_after_header)
+        if "LASF_Spec" in self.user_id and self.record_id == 4:
+            self.setup_extra_bytes_spec(self.VLR_body)
         ### LOGICAL CONTENT ###
         self.isVLR = True
         self.fmt = reader.vlr_formats
+
+    def setup_extra_bytes_spec(self, VLR_body):
+        self.type = 1
+        self.extra_dimensions = []
+        if self.rec_len_after_header % 192 != 0:
+            raise util.LaspyException("""Invalid record length for extra bytes
+                                     specification, must be multiple of 192.""")
+        else:
+            recs = self.rec_len_after_header / 192
+            for i in xrange(recs):
+                new_rec = util.ExtraBytesStruct(self, i)
+            self.add_extra_dim(new_rec)
+        
+    def add_extra_dim(self, new_rec):
+        self.extra_dimensions.append(new_rec)
+
 
     def __len__(self):
         '''Return the size of the vlr object in bytes'''

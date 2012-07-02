@@ -87,7 +87,7 @@ class Format():
         self.specs = []
         self.rec_len = 0
         self.pt_fmt_long = "<"
-        if not (fmt in ("0", "1", "2", "3", "4", "5","6","7","8","9","10", "VLR", "EVLR", "h1.0", "h1.1", "h1.2", "h1.3", "h1.4")):
+        if not (fmt in ("0", "1", "2", "3", "4", "5","6","7","8","9","10", "VLR", "EVLR", "h1.0", "h1.1", "h1.2", "h1.3", "h1.4", "extra_bytes_struct")):
             raise LaspyException("Invalid format: " + str(fmt))
         ## Point Fields
         if fmt in ([str(x) for x in range(11)]):
@@ -104,7 +104,7 @@ class Format():
         if fmt[0] == "h": 
             self.build_header(fmt)
         if fmt == "extra_bytes_struct":
-            self.setup_extra_bytes_struct()
+            self.build_extra_bytes_struct()
         ## Shared 
         self.build_extra_bytes(extra_bytes)
         self.setup_lookup()
@@ -115,9 +115,12 @@ class Format():
         self.add("options", ctypes.c_ubyte, 1)
         self.add("name", ctypes.c_char, 32)
         self.add("unused", ctypes.c_ubyte, 4)
-        self.add("no_data", ctypes.c_ubyte, 3)
-        self.add("min", ctypes.c_ubyte, 3)
-        self.add("max", ctypes.c_ubyte, 3)
+        # The meaning of the following fields is context dependent, but they're 
+        # always in three blocks of eight bytes. Is there a better way to represent 
+        # this data at this stage?
+        self.add("no_data", ctypes.c_double, 3)
+        self.add("min", ctypes.c_double, 3)
+        self.add("max", ctypes.c_double, 3)
         self.add("scale", ctypes.c_double, 3)
         self.add("offset", ctypes.c_double, 3)
         self.add("description", ctypes.c_char, 32)
@@ -294,6 +297,74 @@ class Format():
         '''Provide iterating functionality for spec in specs'''
         for item in self.specs:
             yield item
+
+class ExtraBytesStruct():
+    def __init__(self, vlr_parent, body_offset):
+        self.fmt = Format("extra_bytes_struct")
+        self.packer = Struct(fmt.pt_fmt_long)
+        self.data = self.packer.unpack(vlr_parent.VLR_body[192*body_offset:192*(body_offset+1)])
+        self.names = [x.name for x in self.data]
+        self.vlr_parent = vlr_parent
+        self.body_offset = body_offset
+
+    def get_property_idx(self, name):
+        idx = 0
+        for i in self.names:
+            if name == i:
+                return(idx)
+            idx += 1
+        return(None)
+
+    def get_property(self, name):
+        return(self.data[self.get_property_idx(name)])
+
+    def set_property(self, name, value):
+        self.data[self.get_property_idx(name)] = value
+        
+        idx_start = 192*self.body_offset
+        idx_stop = 192*(self.body_offset + 1)
+        
+        d1 = self.vlr_parent.VLR_body[0:idx_start]
+        d2 = self.vlr_parent.VLR_body[idx_stop:len(self.vlr_parent.VLR_body)]
+        self.vlr_parent.VLR_body = (d1 + self.packer.pack(self.fmt.pt_fmt_long, 
+                                    self.data) + d2)
+        return
+
+    def get_reserved(self):
+        return(self.get_property("reserved"))
+    def set_reserved(self, value):
+        self.set_property("reserved", value)
+    reserved = property(get_reserved, set_reserved, None, None)
+
+    def get_data_type(self):
+        return(self.get_property("data_type"))
+    def set_data_type(self, value):
+        self.set_property("data_type", value)
+    data_type = property(get_data_type, set_data_type, None, None)
+
+    def get_options(self):
+        return(self.get_property("options"))
+    def set_options(self, value):
+        self.set_property("options", value)
+    options = property(get_options, set_options, None, None)
+
+    def get_name(self):
+        return(self.get_property("name"))
+    def set_name(self, value):
+        self.set_property("name", value)
+    name = property(get_name, set_name, None, None)
+
+    def get_min(self):
+        return(self.get_property("min"))
+    def set_min(self, value):
+        self.set_property("min", value)
+    min = property(get_min, set_min, None, None)
+
+
+
+    
+        
+
 
 class Point():
     '''A data structure for reading and storing point data. The lastest version 
