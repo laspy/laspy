@@ -1,5 +1,5 @@
 import ctypes
-from struct import  Struct
+from struct import pack, unpack, Struct
 
 try: import elementtree.ElementTree as etree
 except ImportError:
@@ -301,9 +301,10 @@ class Format():
 class ExtraBytesStruct():
     def __init__(self, vlr_parent, body_offset):
         self.fmt = Format("extra_bytes_struct")
-        self.packer = Struct(fmt.pt_fmt_long)
-        self.data = self.packer.unpack(vlr_parent.VLR_body[192*body_offset:192*(body_offset+1)])
-        self.names = [x.name for x in self.data]
+        self.packer = Struct(self.fmt.pt_fmt_long)
+        #self.data = self.packer.unpack(vlr_parent.VLR_body[192*body_offset:192*(body_offset+1)])
+        self.data = vlr_parent.VLR_body[192*body_offset:192*(body_offset + 1)]
+        self.names = [x.name for x in self.fmt.specs]
         self.vlr_parent = vlr_parent
         self.body_offset = body_offset
 
@@ -316,10 +317,13 @@ class ExtraBytesStruct():
         return(None)
 
     def get_property(self, name):
-        return(self.data[self.get_property_idx(name)])
+        fmt = self.fmt.specs[self.get_property_idx(name)]
+        return(unpack(fmt.full_fmt, 
+            self.data[fmt.offs:(fmt.offs + fmt.length*fmt.num)])) 
 
     def set_property(self, name, value):
-        self.data[self.get_property_idx(name)] = value
+        fmt = self.fmt.specs(self.get_property_idx(name))
+        self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, value) + self.data[fmt.offs:len(self.data)]  
         
         idx_start = 192*self.body_offset
         idx_stop = 192*(self.body_offset + 1)
