@@ -354,16 +354,42 @@ class ExtraBytesStruct():
         self.set_property("name", value)
     name = property(get_name, set_name, None, None)
 
+    def get_no_data(self):
+        return(self.get_property("no_data"))
+    def set_no_data(self, value):
+        self.set_property("no_data", value)
+    no_data = property(get_no_data, set_no_data, None, None)
+
     def get_min(self):
         return(self.get_property("min"))
     def set_min(self, value):
         self.set_property("min", value)
     min = property(get_min, set_min, None, None)
 
+    def get_max(self):
+        return(self.get_property("max"))
+    def set_max(self, value):
+        self.set_property("max", value)
+    max = property(get_max, set_max, None, None)
 
+    def get_scale(self):
+        return(self.get_property("scale"))
+    def set_scale(self, value):
+        self.set_property("scale", value)
+    scale = property(get_scale, set_scale, None, None)
 
-    
-        
+    def get_offset(self):
+        return(self.get_property("offset"))
+    def set_offset(self, value):
+        self.set_property("offset", value)
+    offset = property(get_offset, set_offset, None, None)
+
+    def get_description(self):
+        return(self.get_property("description"))
+    def set_description(self):
+        self.set_property(self, "description")
+    description = property(get_description, set_description, None, None)
+
 
 
 class Point():
