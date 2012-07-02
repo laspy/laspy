@@ -105,10 +105,13 @@ class Format():
             self.build_header(fmt)
         ## Shared 
         self.build_extra_bytes(extra_bytes)
+        self.setup_lookup()
         
     def build_extra_bytes(self, extra_bytes):
         if not extra_bytes in (0, False): 
             self.add("extra_bytes", ctypes.c_ubyte, extra_bytes) 
+
+    def setup_lookup(self):
         self.lookup = {}
         for spec in self.specs:
             self.lookup[spec.name] = spec
