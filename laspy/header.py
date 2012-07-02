@@ -41,6 +41,23 @@ class EVLR():
             self.reserved = 0 
         self.fmt = util.Format("EVLR")
         self.isEVLR = True
+        self.type = 0
+        if self.user_id == "LASF_Spec" and self.record_id == 4:
+            self.setup_extra_bytes_spec(self.VLR_body)
+
+    def setup_extra_bytes_spec(self, VLR_body):
+        self.type = 1
+        self.extra_dimensions = []
+        if self.rec_len_after_header % 192 != 0:
+            raise util.LaspyException("""Invalid record length for extra bytes
+                                     specification, must be multiple of 192.""")
+        else:
+            recs = self.rec_len_after_header / 192
+            for i in xrange(recs):
+                new_rec = util.ExtraBytesStruct()
+                new_rec.build_from_vlr(self, i)
+            self.add_extra_dim(new_rec)
+
 
     def build_from_reader(self, reader):
         '''Build an evlr from a reader capable of reading in the data.'''
@@ -50,6 +67,9 @@ class EVLR():
         self.rec_len_after_header = reader.read_words("rec_len_after_header", "evlr")
         self.description = "".join(reader.read_words("description", "evlr"))
         self.VLR_body = reader.read(self.rec_len_after_header)
+        if self.user_id == "LASF_Spec" and self.record_id == 4:
+            self.setup_extra_bytes_spec(self.VLR_body)
+
         ### LOGICAL CONTENT ###
         self.isEVLR = True
         self.fmt = reader.evlr_formats

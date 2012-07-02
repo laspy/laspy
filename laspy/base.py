@@ -161,6 +161,9 @@ class FileManager():
             self.set_vlrs(vlrs)
         if evlrs != False:
             self.set_evlrs(vlrs)
+
+        eb_vlrs = [x for x in self.vlrs if x.type == 1]
+        eb_vlrs.extend([x for x in self.evlrs if x.type == 1])
         return
 
     def setup_write(self,header, vlrs, evlrs):
