@@ -143,7 +143,6 @@ class VLR():
     def add_extra_dim(self, new_rec):
         new_name = new_rec.name.replace("\x00", "").replace(" ", "_").lower()
         self.__dict__[new_name] = new_rec
-        print("New Name = " + new_name)
         self.extra_dimensions.append(new_rec)
 
 

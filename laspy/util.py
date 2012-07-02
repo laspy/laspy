@@ -298,7 +298,7 @@ class Format():
         for item in self.specs:
             yield item
 
-class ExtraBytesStruct():
+class ExtraBytesStruct(object):
     def __init__(self, data_type = 0, options = 0, name = "\x00"*32, 
                  unused = [0]*4, no_data = [0.0]*3, min = [0.0]*3, 
                  max = [0.0]*3, scale = [0.0]*3, offset = [0.0]*3, 
@@ -326,7 +326,6 @@ class ExtraBytesStruct():
         self.data = vlr_parent.VLR_body[192*body_offset:192*(body_offset + 1)]
         self.vlr_parent = vlr_parent
         self.body_offset = body_offset
-        print("Built from VLR, name is: " + self.name)
     
     def assertWriteable(self):
         if self.writeable or self.vlr_parent.reader == False:
@@ -345,7 +344,6 @@ class ExtraBytesStruct():
         raise LaspyException("Property: " + str(name) + " not found. ")
 
     def get_property(self, name):
-        print("Getting Property")
         fmt = self.fmt.specs[self.get_property_idx(name)]
         unpacked = unpack(fmt.full_fmt, 
                    self.data[fmt.offs:(fmt.offs + fmt.length*fmt.num)])
@@ -354,14 +352,11 @@ class ExtraBytesStruct():
         return(unpacked)
 
     def set_property(self, name, value):
-        print("Setting Property")
         self.assertWriteable()
         fmt = self.fmt.specs[self.get_property_idx(name)]
         if isinstance(value, int) or isinstance(value, str):
             self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, value) + self.data[fmt.offs:len(self.data)]  
-        else:
-            print(fmt.name)
-            print(value)
+        else: 
             self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, *value) + self.data[fmt.offs:len(self.data)]  
 
         if self.vlr_parent != False:
@@ -414,11 +409,9 @@ class ExtraBytesStruct():
         self.set_property("max", value)
     max = property(get_max, set_max, None, None)
 
-    def get_scale(self):
-        print("Getting Scale")
+    def get_scale(self): 
         return(self.get_property("scale"))
     def set_scale(self, value):
-        print("Setting scale. ")
         self.set_property("scale", value)
     scale = property(get_scale, set_scale, None, None)
 
