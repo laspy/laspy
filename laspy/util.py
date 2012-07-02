@@ -103,10 +103,25 @@ class Format():
         ## Header Fields
         if fmt[0] == "h": 
             self.build_header(fmt)
+        if fmt == "extra_bytes_struct":
+            self.setup_extra_bytes_struct()
         ## Shared 
         self.build_extra_bytes(extra_bytes)
         self.setup_lookup()
         
+    def build_extra_bytes_struct(self):
+        self.add("reserved", ctypes.c_ubyte, 2)
+        self.add("data_type", ctypes.c_ubyte, 1)
+        self.add("options", ctypes.c_ubyte, 1)
+        self.add("name", ctypes.c_char, 32)
+        self.add("unused", ctypes.c_ubyte, 4)
+        self.add("no_data", ctypes.c_ubyte, 3)
+        self.add("min", ctypes.c_ubyte, 3)
+        self.add("max", ctypes.c_ubyte, 3)
+        self.add("scale", ctypes.c_double, 3)
+        self.add("offset", ctypes.c_double, 3)
+        self.add("description", ctypes.c_char, 32)
+
     def build_extra_bytes(self, extra_bytes):
         if not extra_bytes in (0, False): 
             self.add("extra_bytes", ctypes.c_ubyte, extra_bytes) 
