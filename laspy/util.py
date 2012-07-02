@@ -299,14 +299,42 @@ class Format():
             yield item
 
 class ExtraBytesStruct():
-    def __init__(self, vlr_parent, body_offset):
+    def __init__(self, data_type = 0, options = 0, name = "\x00"*32, 
+                 unused = [0]*4, no_data = [0.0]*3, min = [0.0]*3, 
+                 max = [0.0]*3, scale = [0.0]*3, offset = [0.0]*3, 
+                 description = "\x00"*32):
         self.fmt = Format("extra_bytes_struct")
         self.packer = Struct(self.fmt.pt_fmt_long)
-        #self.data = self.packer.unpack(vlr_parent.VLR_body[192*body_offset:192*(body_offset+1)])
-        self.data = vlr_parent.VLR_body[192*body_offset:192*(body_offset + 1)]
+        self.writeable = True
+        self.vlr_parent = False
         self.names = [x.name for x in self.fmt.specs]
+
+        self.data = "\x00"*192
+        self.set_property("data_type" , data_type)
+        self.set_property("options" , options)
+        self.set_property("name" , name )
+        self.set_property("unused" , unused )
+        self.set_property("no_data" , no_data)
+        self.set_property("min" , min)
+        self.set_property("max" , max)
+        self.set_property("scale" , scale )
+        self.set_property("offset" , offset)
+        self.set_property("description" , description)
+
+    def build_from_vlr(self, vlr_parent, body_offset):
+        self.writeable = False
+        self.data = vlr_parent.VLR_body[192*body_offset:192*(body_offset + 1)]
         self.vlr_parent = vlr_parent
         self.body_offset = body_offset
+        print("Built from VLR, name is: " + self.name)
+    
+    def assertWriteable(self):
+        if self.writeable or self.vlr_parent.reader == False:
+            return
+        raise LaspyException("""To modify VLRs and EVLRs, you must create new
+                            variable length records, and then replace them via 
+                            file.header.vlrs or file.header.evlrs. To do otherwise 
+                            would cause data concurrency issues.""")
 
     def get_property_idx(self, name):
         idx = 0
@@ -314,9 +342,10 @@ class ExtraBytesStruct():
             if name == i:
                 return(idx)
             idx += 1
-        return(None)
+        raise LaspyException("Property: " + str(name) + " not found. ")
 
     def get_property(self, name):
+        print("Getting Property")
         fmt = self.fmt.specs[self.get_property_idx(name)]
         unpacked = unpack(fmt.full_fmt, 
                    self.data[fmt.offs:(fmt.offs + fmt.length*fmt.num)])
@@ -325,16 +354,22 @@ class ExtraBytesStruct():
         return(unpacked)
 
     def set_property(self, name, value):
-        fmt = self.fmt.specs(self.get_property_idx(name))
-        self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, value) + self.data[fmt.offs:len(self.data)]  
-        
-        idx_start = 192*self.body_offset
-        idx_stop = 192*(self.body_offset + 1)
-        
-        d1 = self.vlr_parent.VLR_body[0:idx_start]
-        d2 = self.vlr_parent.VLR_body[idx_stop:len(self.vlr_parent.VLR_body)]
-        self.vlr_parent.VLR_body = (d1 + self.packer.pack(self.fmt.pt_fmt_long, 
-                                    self.data) + d2)
+        print("Setting Property")
+        self.assertWriteable()
+        fmt = self.fmt.specs[self.get_property_idx(name)]
+        if isinstance(value, int) or isinstance(value, str):
+            self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, value) + self.data[fmt.offs:len(self.data)]  
+        else:
+            print(fmt.name)
+            print(value)
+            self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, *value) + self.data[fmt.offs:len(self.data)]  
+
+        if self.vlr_parent != False:
+            idx_start = 192*self.body_offset
+            idx_stop = 192*(self.body_offset + 1) 
+            d1 = self.vlr_parent.VLR_body[0:idx_start]
+            d2 = self.vlr_parent.VLR_body[idx_stop:len(self.vlr_parent.VLR_body)]
+            self.vlr_parent.VLR_body = (d1 + self.data + d2)
         return
 
     def get_reserved(self):
@@ -380,8 +415,10 @@ class ExtraBytesStruct():
     max = property(get_max, set_max, None, None)
 
     def get_scale(self):
+        print("Getting Scale")
         return(self.get_property("scale"))
     def set_scale(self, value):
+        print("Setting scale. ")
         self.set_property("scale", value)
     scale = property(get_scale, set_scale, None, None)
 

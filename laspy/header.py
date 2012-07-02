@@ -93,6 +93,7 @@ class VLR():
         self.record_id = record_id
         self.VLR_body = VLR_body
         self.type = 0
+        self.reader = False
         try:
             self.rec_len_after_header = len(self.VLR_body)
         except(TypeError):
@@ -113,6 +114,7 @@ class VLR():
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''
+        self.reader = reader
         self.reserved = reader.read_words("reserved")
         self.user_id = "".join(reader.read_words("user_id"))
         self.record_id = reader.read_words("record_id")
@@ -134,12 +136,14 @@ class VLR():
         else:
             recs = self.rec_len_after_header / 192
             for i in xrange(recs):
-                new_rec = util.ExtraBytesStruct(self, i)
+                new_rec = util.ExtraBytesStruct()
+                new_rec.build_from_vlr(self, i)
             self.add_extra_dim(new_rec)
         
     def add_extra_dim(self, new_rec):
         new_name = new_rec.name.replace("\x00", "").replace(" ", "_").lower()
         self.__dict__[new_name] = new_rec
+        print("New Name = " + new_name)
         self.extra_dimensions.append(new_rec)
 
 

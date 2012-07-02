@@ -344,9 +344,15 @@ class FileManager():
 
     def get_vlrs(self):
         '''Populate and return list of :obj:`laspy.header.VLR` objects`.'''
-        self.populate_vlrs()
-        return(self.vlrs)
-   
+        try:
+            return(self.vlrs)
+        except:
+            self.populate_vlrs()
+            return(self.vlrs)
+    
+    def push_vlrs(self):
+        self.set_vlrs(self.vlrs)
+
     def get_evlrs(self):
         self.populate_evlrs()
         return(self.evlrs)
@@ -804,6 +810,7 @@ class Writer(FileManager):
             self.data_provider.open("r+b")
             self.data_provider.map()
             self.data_provider.point_map()
+            self.populate_vlrs
         elif self.mode == "w" and not self.has_point_records:
             self.seek(self.header.header_size, rel = False)
             for vlr in value: 
