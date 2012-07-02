@@ -162,11 +162,15 @@ class FileManager():
         if evlrs != False:
             self.set_evlrs(vlrs)
 
+        # If extra-bytes descriptions exist in VLRs, use them.
         eb_vlrs = [x for x in self.vlrs if x.type == 1]
         eb_vlrs.extend([x for x in self.evlrs if x.type == 1])
         if len(eb_vlrs) > 1:
             raise LaspyException("Only one ExtraBytes VLR currently allowed.")
-
+        elif len(eb_vlrs) == 1:
+            new_pt_fmt = Format(self.point_format.fmt, extradims = eb_vlrs[0].extra_dimensions)
+            self.point_format = new_pt_fmt
+            self.data_provider.remap(point_map = True)
         return
 
     def setup_write(self,header, vlrs, evlrs):

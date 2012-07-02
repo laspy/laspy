@@ -22,6 +22,39 @@ npFmt = {"<l":"i4", "<L":"u4", "<h":"i2","<H":"u2", "<B":"u1", "<f":"f4", "<s":"
 
 defaults = {"<L":0,"<l":0, "<H":0, "<h":0, "<B": "0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
 
+edim_fmt_dict = {
+    1:(ctypes.c_ubyte,1), 
+    2:(ctypes.c_char,1), 
+    3:(ctypes.c_ushort,1), 
+    4:(ctypes.c_short,1),
+    5:(ctypes.c_ulong,1), 
+    6:(ctypes.c_long,1),
+    7:(ctypes.c_ulonglong,1),
+    8:(ctypes.c_longlong,1),
+    9:(ctypes.c_float,1),
+    10:(ctypes.c_double,1),
+    11:(ctypes.c_ubyte,2),
+    12:(ctypes.c_char,2),
+    13:(ctypes.c_ushort,2),
+    14:(ctypes.c_short,2),
+    15:(ctypes.c_ulong,2),
+    16:(ctypes.c_long,2),
+    17:(ctypes.c_ulonglong,2),
+    18:(ctypes.c_longlong,2),
+    19:(ctypes.c_float,2),
+    20:(ctypes.c_double,2),
+    21:(ctypes.c_ubyte,3),
+    22:(ctypes.c_char,3),
+    23:(ctypes.c_ushort,3),
+    24:(ctypes.c_short,3),
+    25:(ctypes.c_ulong,3),
+    26:(ctypes.c_long,3),
+    27:(ctypes.c_ulonglong,3),
+    28:(ctypes.c_longlong,3),
+    29:(ctypes.c_float,3),
+    30:(ctypes.c_double,3)
+    }
+
 class Spec():
     '''Holds information about how to read and write a particular field. 
         These are usually created by :obj:`laspy.util.Format` objects.'''
@@ -183,11 +216,6 @@ class Format():
             self.add("num_evlrs", ctypes.c_ulong, 1)
             self.add("point_records_count", ctypes.c_ulonglong, 1)
             self.add("point_return_count", ctypes.c_ulonglong, 15)
-        # Add any available extra dimensions
-        # Must be tuples or lists following [name, type, num]
-        for item in self.extradims:
-            self.add(item[0], item[1], item[2])
-
 
     def build_evlr_format(self, fmt):
         self.add("reserved", ctypes.c_ushort, 1)
@@ -266,6 +294,11 @@ class Format():
             self.add("x_t", ctypes.c_float, 1)
             self.add("y_t", ctypes.c_float, 1)          
             self.add("z_t", ctypes.c_float, 1)
+        # Add any available extra dimensions
+        # Must be tuples or lists following [name, type, num]
+        for item in self.extradims:
+            newfmt = self.translate_extra_spec(item)
+            self.add(newfmt[0], newfmt[1], newfmt[2])
 
     def add(self, name, fmt, num, pack = False, overwritable = True):
         if len(self.specs) == 0:
@@ -285,6 +318,17 @@ class Format():
     def etree(self):
         '''Return an XML etree object, describing all of the :obj:`laspy.util.Spec` objects belonging to the Format.'''
         return(self._etree)
+        
+    
+    def translate_extra_spec(self, extra_dim):
+        if extra_dim.data_type == 0:
+            name = extra_dim.name.replace("\x00", "").replace(" ", "_").lower()
+            fmt = ctypes.c_ubyte
+            num = extra_dim.options
+            return((name, fmt, num))
+        else:
+            spec = edim_fmt_dict[extra_dim.data_type]
+            return(extra_dim.name.replace("\x00", "").replace(" ", "_").lower(), spec[0], spec[1])
 
     def __getitem__(self, index):
         '''Provide slicing functionality: return specs[index]'''
