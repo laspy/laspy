@@ -164,6 +164,9 @@ class FileManager():
 
         eb_vlrs = [x for x in self.vlrs if x.type == 1]
         eb_vlrs.extend([x for x in self.evlrs if x.type == 1])
+        if len(eb_vlrs) > 1:
+            raise LaspyException("Only one ExtraBytes VLR currently allowed.")
+
         return
 
     def setup_write(self,header, vlrs, evlrs):

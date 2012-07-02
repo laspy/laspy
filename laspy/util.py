@@ -73,11 +73,12 @@ class Format():
     supports the :obj:`laspy.util.Format.xml` and :obj:`laspy.util.Format.etree`
     methods for interrogating the members of a format. This can be useful in finding out
     what dimensions are available from a given point format, among other things.''' 
-    def __init__(self, fmt, overwritable = False, extra_bytes = False):
+    def __init__(self, fmt, overwritable = False, extra_bytes = False, extradims = []):
         '''Build the :obj:`laspy.util.Format` instance. '''
         fmt = str(fmt)
         self.fmt = fmt
         self.overwritable = overwritable
+        self.extradims = extradims
         try:
             self._etree = etree.Element("Format")
         except:
@@ -182,7 +183,11 @@ class Format():
             self.add("num_evlrs", ctypes.c_ulong, 1)
             self.add("point_records_count", ctypes.c_ulonglong, 1)
             self.add("point_return_count", ctypes.c_ulonglong, 15)
-                
+        # Add any available extra dimensions
+        # Must be tuples or lists following [name, type, num]
+        for item in self.extradims:
+            self.add(item[0], item[1], item[2])
+
 
     def build_evlr_format(self, fmt):
         self.add("reserved", ctypes.c_ushort, 1)
