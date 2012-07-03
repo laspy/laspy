@@ -80,6 +80,15 @@ class File(object):
                 self._reader.SetInputSRS(self.in_srs)
             if self.out_srs:
                 self._reader.SetOutputSRS(self.out_srs)
+            ## Wire up API for extra dimensions
+            if self._reader.extra_dimensions != []:
+                for dimension in self._reader.extra_dimensions:
+                    def _get(self):
+                        return(self._reader.get_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower()))
+                    setattr(self.__class__, 
+                            dimension.name.replace("\x00", "").replace(" ", "_").lower(),
+                            property(_get, None, None, None)) 
+
 
         if self._mode == 'rw':
             if self._header == None:
