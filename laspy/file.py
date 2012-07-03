@@ -122,14 +122,16 @@ class File(object):
             ## Wire up API for any extra Dimensions
             if self._writer.extra_dimensions != []:
                 for dimension in self._writer.extra_dimensions:
-                    def _get(self):
-                        return(self._writer.get_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower()))
-                    def _set(self,value):
-                        self.assertWriteMode()
-                        self._writer.set_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower(), value)
-                    setattr(self.__class__, 
-                            dimension.name.replace("\x00", "").replace(" ", "_").lower(),
-                            property(_get, _set, None, None)) 
+                    dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                    self.addProperty(dimname) 
+
+
+
+
+
+
+
+
 
         if self._mode == 'w+':
             raise NotImplementedError
