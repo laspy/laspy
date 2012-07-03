@@ -185,7 +185,6 @@ class FileManager():
         self.header_format = header.format 
         self._header = header
         self.header = HeaderManager(header = header, reader = self)
-        
 
         self.initialize_file_padding(vlrs)
 
@@ -203,7 +202,18 @@ class FileManager():
         if self._header.created_year == 0:
             self.header.date = datetime.datetime.now() 
         self.populate_vlrs()
-        #self.populate_evlrs()
+        self.populate_evlrs()
+        # If extra-bytes descriptions exist in VLRs, use them.
+        eb_vlrs = [x for x in self.vlrs if x.type == 1]
+        eb_vlrs.extend([x for x in self.evlrs if x.type == 1])
+        self.extra_dimensions = []
+        if len(eb_vlrs) > 1:
+            raise LaspyException("Only one ExtraBytes VLR currently allowed.")
+        elif len(eb_vlrs) == 1:
+            self.extra_dimensions = eb_vlrs[0].extra_dimensions
+            new_pt_fmt = Format(self.point_format.fmt, extradims 
+                    = self.extra_dimensions)
+            self.point_format = new_pt_fmt
         return
 
     def correct_rec_len(self):
@@ -367,8 +377,11 @@ class FileManager():
         self.set_vlrs(self.vlrs)
 
     def get_evlrs(self):
-        self.populate_evlrs()
-        return(self.evlrs)
+        try:
+            return(self.evlrs)
+        except:
+            self.populate_evlrs()
+            return(self.evlrs)
 
     def get_padding(self):
         '''Return the padding between the end of the VLRs and the beginning of
@@ -823,7 +836,7 @@ class Writer(FileManager):
             self.data_provider.open("r+b")
             self.data_provider.map()
             self.data_provider.point_map()
-            self.populate_vlrs
+            self.populate_vlrs()
         elif self.mode == "w" and not self.has_point_records:
             self.seek(self.header.header_size, rel = False)
             for vlr in value: 
@@ -833,6 +846,7 @@ class Writer(FileManager):
             raise(LaspyException("set_vlrs requires the file to be opened in a " + 
                 "write mode, and must be performed before point information is provided." + 
                 "Try closing the file and opening it in rw mode. "))
+
 
     def set_padding(self, value):
         '''Set the padding between end of VLRs and beginning of point data'''
