@@ -24,11 +24,6 @@ laspy 1.0 supports LAS formats 1.0 to 1.2, and provides preliminary support for 
 === ================================================================================
    
 
-.. note::
-    If you have access to good version 1.3 or version 1.4 LAS files, or feedback on any
-    of the features of laspy, shoot us an email:
-    grant.brown73@gmail.com
-
 **LAS Headers**
 
 Much of the data required for laspy to know how to read the LAS file is present 

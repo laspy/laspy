@@ -83,11 +83,8 @@ class File(object):
             ## Wire up API for extra dimensions
             if self._reader.extra_dimensions != []:
                 for dimension in self._reader.extra_dimensions:
-                    def _get(self):
-                        return(self._reader.get_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower()))
-                    setattr(self.__class__, 
-                            dimension.name.replace("\x00", "").replace(" ", "_").lower(),
-                            property(_get, None, None, None)) 
+                    dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                    self.addProperty(dimname)
 
 
         if self._mode == 'rw':
@@ -98,14 +95,8 @@ class File(object):
                 ## Wire up API for any extra Dimensions
                 if self._writer.extra_dimensions != []:
                     for dimension in self._writer.extra_dimensions:
-                        def _get(self):
-                            return(self._writer.get_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower()))
-                        def _set(self,value):
-                            self.assertWriteMode()
-                            self._writer.set_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower(), value)
-                        setattr(self.__class__, 
-                                dimension.name.replace("\x00", "").replace(" ", "_").lower(),
-                                property(_get, _set, None, None)) 
+                        dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                        self.addProperty(dimname) 
             else:
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
     
@@ -155,6 +146,14 @@ class File(object):
             self._reader = None
             self._writer = None
             self._header = None
+
+    def addProperty(self, name):
+        def fget(self):
+            return(self._writer.get_dimension(name))
+        def fset(self, value):
+            self.assertWriteMode()
+            self._writer.set_dimension(name, value)
+        setattr(self.__class__, name, property(fget, fset, None, None))
 
     def assertWriteMode(self):
         if self._mode == "r":
