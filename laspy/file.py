@@ -627,9 +627,10 @@ class File(object):
             else:
                 self.close()
                 self.open()
+        else:
+            print("Iteration only supported in read mode, try using FileObject.points")
+            yield(None)
 
-
-    ### END OF GB REVISIONS ###
 
     def __getitem__(self, index):
         '''Index and slicing support

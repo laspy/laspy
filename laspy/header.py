@@ -20,6 +20,12 @@ class LaspyHeaderException(Exception):
 
 
 class ExtraBytesStruct(object):
+    '''This class provides a frontend for the Extra Bytes Struct as defined
+    in the LAS 1.4 specification. All Arguments are assumed to be default values
+    unless specified - the two really key ones are name and data_type. This structure
+    lives in the VLR_body property of a laspy.header.VLR instance, and multiple 
+    ExtraByteStruct records can be present together. Each ExtraBytesStruct instance
+    describes an additional dimension present at the end of each point record. ''' 
     def __init__(self, data_type = 0, options = 0, name = "\x00"*32, 
                  unused = [0]*4, no_data = [0.0]*3, min = [0.0]*3, 
                  max = [0.0]*3, scale = [0.0]*3, offset = [0.0]*3, 
@@ -73,6 +79,8 @@ class ExtraBytesStruct(object):
         return(unpacked)
     
     def to_byte_string(self):
+        '''Return the struct as a string of raw bytes. This is useful for providing
+        the struct to a VLR instance via VLR_body.'''
         return(self.data)
 
     def set_property(self, name, value):

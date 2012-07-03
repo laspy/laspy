@@ -28,6 +28,10 @@ class DataProvider():
         except(Exception):
             raise LaspyException("Error opening file")
     def get_point_map(self, informat):
+        '''Get point map is used to build and return a numpy frombuffer view of the mmapped data, 
+        using a valid laspy.util.Format instance for the desired point format. This method is used 
+        to provide access to extra_bytes even when dimensions have been explicitly defined via an 
+        extra_bytes VLR record.'''
         if type(self._mmap) == bool:
             self.map() 
         self.pointfmt = np.dtype([("point", zip([x.name for x in informat.specs],

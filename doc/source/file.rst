@@ -4,11 +4,11 @@ File
 The File class is the core laspy tool. It provides access to point records and 
 dimensions via the :obj:`laspy.base.reader` and :obj:`laspy.base.writer` classes, 
 and holds a reference to a :obj:`laspy.header.HeaderManager` instance to provide
-heade reading and modifying capability. It is also iterable and sliceable.
+header reading and modifying capability. It is also iterable and sliceable.
 
 **Dimensions:**
     In addition to grabbing whole point records, it is possible 
-    to obtain and set individuals dimensions as well. The dimensions available
+    to obtain and set individual dimensions as well. The dimensions available
     to a particular file depend on the point format, a summary of which is 
     available via the File.point_format.xml() method. Dimensions might
     be used as follows: ::
@@ -21,6 +21,11 @@ heade reading and modifying capability. It is also iterable and sliceable.
         >>> FileObject.Y = X
         >>> FileObject.close()
 
+        # Print out a list of available point dimensions:
+        >>> for dim in FileObject.point_format:
+        >>>     print(i.name)
+        # Alternately, grab descriptive xml:
+        >>> FileObject.point_format.xml()
 
 .. autoclass:: laspy.file.File
     :members: __init__, __iter__, __getitem__, __len__,close, header, open, points, 

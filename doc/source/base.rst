@@ -20,4 +20,4 @@ as file reading capability.
     :members: close, pad_file_for_point_recs, _set_datum, set_dimension, set_header_property,set_padding,  set_points, set_vlrs
 
 .. autoclass:: laspy.base.DataProvider
-    :members: __getitem__, __setitem__, close,map, open, point_map, remap
+    :members: __getitem__, __setitem__, close,map, open, point_map,get_point_map, remap

@@ -9,6 +9,19 @@ container for moving header data around. Most of the header API is located in
 the :obj:`laspy.header.HeaderManager` class, which holds a :obj:`laspy.header.Header` instance. 
 This is accessed from a :obj:`laspy.file.File` object as :obj:`laspy.file.File`.header
 
+Additionally, this module holds the VLR and EVLR classes, for regular and extended
+variable length records as defined in the various LAS specifications. 
+
+Finally, this module provides ExtraBytesStruct, which is a frontend for defining
+additional dimensions in the LAS file via an Extra Bytes type VLR. See the tutorial
+for an example of this (the LAS specification is also a helpful reference.)
+
+.. autoclass:: laspy.header.ExtraBytesStruct
+    :members: __init__, to_byte_string
+
+.. autoclass:: laspy.header.EVLR
+    :members: __init__, __len__, to_byte_string
+
 .. autoclass:: laspy.header.Header
     :members: format
 
