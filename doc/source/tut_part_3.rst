@@ -82,19 +82,123 @@ a different part of the file.
 
 **Extra Bytes**
 
-Let's create a LAS version 1.4 file from simple.las, and store some data in a new 
-dimension. 
+The extra bytes in a point record can now be described by a particular type of VLR.
+From the LAS 1.4 specification, a VLR which describes new dimensions should have the 
+following header information:
+
+    User ID:  LASF_Spec 
+    Record ID:  4 
+    Record Length after Header: n x 192 bytes
+
+where n is the number of new dimensions that the VLR will define. The actual dimension
+specification goes in the body of the VLR, and has the following structure:
+
+.. note::
+    Laspy coerces the no_data, max and min fields to have double precision format. 
+    If this is a problem for your application, let us know. 
+
+struct EXTRA_BYTES 
+
+============ ==============================
+ Name        Format[number] (Total Bytes)
+============ ==============================
+ reserved     unsigned char[2] (2)
+ data_type    unsigned char[1] (1)
+ options      unsigned char[1] (1)
+ name         char[32] (32)
+ unused       char[4] (4)
+ no_data      double[3] (24)
+ min          double[3] (24)
+ max          double[3] (24)
+ scale        scale[3] (24)
+ offset       offset[3] (24)
+ description  char[32] (24)
+
+
+======= ========================= ===================
+ Value   Meaning                   Size
+======= ========================= ===================
+ 0       Raw Extra Bytes           Value of "options" 
+ 1       unsigned char             1 byte 
+ 2       Char                      1 byte 
+ 3       unsigned short            2 bytes 
+ 4       Short                     2 bytes 
+ 5       unsigned long             4 bytes 
+ 6       Long                      4 bytes 
+ 7       unsigned long long        8 bytes 
+ 8       long long                 8 bytes 
+ 9       Float                     4 bytes 
+ 10      Double                    8 bytes 
+ 11      unsigned char[2]          2 byte 
+ 12      char[2]                   2 byte 
+ 13      unsigned short[2]         4 bytes 
+ 14      short[2]                  4 bytes 
+ 15      unsigned long[2]          8 bytes 
+ 16      long[2]                   8 bytes 
+ 17      unsigned long long[2]     16 bytes 
+ 18      long long[2]              16 bytes 
+ 19      float[2]                  8 bytes 
+ 20      double[2]                 16 bytes 
+ 21      unsigned char[3]          3 byte
+ 22      char[3]                   3 byte 
+ 23      unsigned short[3]         6 bytes 
+ 24      short[3]                  6 bytes
+ 25      unsigned long[3]          12 bytes 
+ 26      long[3]                   12 bytes 
+ 27      unsigned long long[3]     24 bytes 
+ 28      long long[3]              24 bytes 
+ 29      float[3]                  12 bytes 
+ 30      double[3]                 24 bytes
+ 
+ 
+Let's create a LAS version 1.4 file from simple.las, and store some data in new dimensions for illustration. 
 
     .. code-block:: python
         
         from laspy.file import File 
+        from laspy.header import VLR, ExtraBytesStruct
         import copy
 
         inFile = File("./laspytest/data/simple.las", mode = "r")
         
+        # We need to build the body of our dimension VLRs, and to do this we will
+        # use a class called ExtraBytesStruct. All we really need to tell it at this 
+        # point is the name of our dimension and the data type. 
+        extra_dimension_spec_1 = ExtraBytesStruct(name = "My Super Special Dimension",
+                                                data_type = 5)
+        extra_dimension_spec_2 = ExtraBytesStruct(name = "Another Special Dimension",
+                                                data_type = 5)
+        vlr_body = (extra_dimension_spec_1.to_byte_string() + 
+                   extra_dimension_spec_2.to_byte_string())
+
+        # Now we can create the VLR. Note the user_id and record_id choices. 
+        # These values are how the LAS specification determines that this is an 
+        # extra bytes record. The description is just good practice. 
+        extra_dim_vlr = VLR(user_id = "LASF_Spec",
+                            record_id = 4, 
+                            description = "Testing Extra Bytes.", 
+                            VLR_body = vlr_body)
+ 
+
+        # Now let's put together the header for our new file. We need to increase
+        # data_record_length to fit our new dimensions. See the data_type table 
+        # for details. We also need to change the file version
         new_header = copy.copy(inFile.header)
-        new_header.data_record_length += 4
+        new_header.data_record_length += 8
+        new_header.version_minor = 4
 
+        # Now we can create the file and give it our VLR.
+        new_file = File("./laspytest/data/new_14_file.las", mode = "w", 
+                        header = new_header, vlrs = [extra_dim_vlr])
+        
+        # Let's copy the existing data:
+        for dimension in inFile.point_format:
+            dim = inFile._reader.get_dimension(dimenson.name)
+            new_file._writer.set_dimension(dimension.name, dim)
 
+        # We should be able to acces our new dimensions based on the 
+        # Naming convention described above. Let's put some dummy data in them.
 
+        new_file.my_super_special_dimension = [0]*len(new_file)
+        new_file.another_special_dimensioon = [10]*len(new_file)
 

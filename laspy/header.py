@@ -1,7 +1,7 @@
 import datetime
 from uuid import UUID
 import util
-from struct import pack
+from struct import unpack, pack, Struct
 import copy
 import numpy as np
 def leap_year(year):
@@ -17,6 +17,139 @@ def leap_year(year):
 ## to update the file using reader/mmap. 
 class LaspyHeaderException(Exception):
     pass
+
+
+class ExtraBytesStruct(object):
+    def __init__(self, data_type = 0, options = 0, name = "\x00"*32, 
+                 unused = [0]*4, no_data = [0.0]*3, min = [0.0]*3, 
+                 max = [0.0]*3, scale = [0.0]*3, offset = [0.0]*3, 
+                 description = "\x00"*32):
+        self.fmt = util.Format("extra_bytes_struct")
+        self.packer = Struct(self.fmt.pt_fmt_long)
+        self.writeable = True
+        self.vlr_parent = False
+        self.names = [x.name for x in self.fmt.specs]
+
+        self.data = "\x00"*192
+        self.set_property("data_type" , data_type)
+        self.set_property("options" , options)
+        self.set_property("name" , name + "\x00"*(32-len(description)))
+        self.set_property("unused" , unused )
+        self.set_property("no_data" , no_data)
+        self.set_property("min" , min)
+        self.set_property("max" , max)
+        self.set_property("scale" , scale )
+        self.set_property("offset" , offset)
+        self.set_property("description" , description + "\x00"*(32-len(description)))
+
+    def build_from_vlr(self, vlr_parent, body_offset):
+        self.writeable = False
+        self.data = vlr_parent.VLR_body[192*body_offset:192*(body_offset + 1)]
+        self.vlr_parent = vlr_parent
+        self.body_offset = body_offset
+    
+    def assertWriteable(self):
+        if self.writeable or self.vlr_parent.reader == False:
+            return
+        raise util.LaspyException("""To modify VLRs and EVLRs, you must create new
+                            variable length records, and then replace them via 
+                            file.header.vlrs or file.header.evlrs. To do otherwise 
+                            would cause data concurrency issues.""")
+
+    def get_property_idx(self, name):
+        idx = 0
+        for i in self.names:
+            if name == i:
+                return(idx)
+            idx += 1
+        raise util.LaspyException("Property: " + str(name) + " not found. ")
+
+    def get_property(self, name):
+        fmt = self.fmt.specs[self.get_property_idx(name)]
+        unpacked = unpack(fmt.full_fmt, 
+                   self.data[fmt.offs:(fmt.offs + fmt.length*fmt.num)])
+        if len(unpacked) == 1:
+            return(unpacked[0])
+        return(unpacked)
+    
+    def to_byte_string(self):
+        return(self.data)
+
+    def set_property(self, name, value):
+        self.assertWriteable()
+        fmt = self.fmt.specs[self.get_property_idx(name)]
+        if isinstance(value, int) or isinstance(value, str):
+            self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, value) + self.data[fmt.offs:len(self.data)]  
+        else: 
+            self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, *value) + self.data[fmt.offs:len(self.data)]  
+
+        if self.vlr_parent != False:
+            idx_start = 192*self.body_offset
+            idx_stop = 192*(self.body_offset + 1) 
+            d1 = self.vlr_parent.VLR_body[0:idx_start]
+            d2 = self.vlr_parent.VLR_body[idx_stop:len(self.vlr_parent.VLR_body)]
+            self.vlr_parent.VLR_body = (d1 + self.data + d2)
+        return
+
+    def get_reserved(self):
+        return(self.get_property("reserved"))
+    def set_reserved(self, value):
+        self.set_property("reserved", value)
+    reserved = property(get_reserved, set_reserved, None, None)
+
+    def get_data_type(self):
+        return(self.get_property("data_type"))
+    def set_data_type(self, value):
+        self.set_property("data_type", value)
+    data_type = property(get_data_type, set_data_type, None, None)
+
+    def get_options(self):
+        return(self.get_property("options"))
+    def set_options(self, value):
+        self.set_property("options", value)
+    options = property(get_options, set_options, None, None)
+
+    def get_name(self):
+        return(self.get_property("name"))
+    def set_name(self, value):
+        self.set_property("name", value)
+    name = property(get_name, set_name, None, None)
+
+    def get_no_data(self):
+        return(self.get_property("no_data"))
+    def set_no_data(self, value):
+        self.set_property("no_data", value)
+    no_data = property(get_no_data, set_no_data, None, None)
+
+    def get_min(self):
+        return(self.get_property("min"))
+    def set_min(self, value):
+        self.set_property("min", value)
+    min = property(get_min, set_min, None, None)
+
+    def get_max(self):
+        return(self.get_property("max"))
+    def set_max(self, value):
+        self.set_property("max", value)
+    max = property(get_max, set_max, None, None)
+
+    def get_scale(self): 
+        return(self.get_property("scale"))
+    def set_scale(self, value):
+        self.set_property("scale", value)
+    scale = property(get_scale, set_scale, None, None)
+
+    def get_offset(self):
+        return(self.get_property("offset"))
+    def set_offset(self, value):
+        self.set_property("offset", value)
+    offset = property(get_offset, set_offset, None, None)
+
+    def get_description(self):
+        return(self.get_property("description"))
+    def set_description(self):
+        self.set_property(self, "description")
+    description = property(get_description, set_description, None, None)
 
         
 class EVLR():
@@ -54,7 +187,7 @@ class EVLR():
         else:
             recs = self.rec_len_after_header / 192
             for i in xrange(recs):
-                new_rec = util.ExtraBytesStruct()
+                new_rec = ExtraBytesStruct()
                 new_rec.build_from_vlr(self, i)
             self.add_extra_dim(new_rec)
 
@@ -156,7 +289,7 @@ class VLR():
         else:
             recs = self.rec_len_after_header / 192
             for i in xrange(recs):
-                new_rec = util.ExtraBytesStruct()
+                new_rec = ExtraBytesStruct()
                 new_rec.build_from_vlr(self, i) 
                 self.add_extra_dim(new_rec)
         
