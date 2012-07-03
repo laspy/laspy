@@ -474,6 +474,7 @@ class LasWriteModeTestCase(unittest.TestCase):
         self.assertTrue((list(X) == list(File2.get_x())))
         self.assertTrue((list(Y) == list(File2.get_y())))
         self.assertTrue((list(Z) == list(File2.get_z())))
+        File2.close(ignore_header_changes = True)
 
     def test_using_existing_header(self):
         header_object = self.File1.header
@@ -488,6 +489,7 @@ class LasWriteModeTestCase(unittest.TestCase):
         self.assertTrue((list(X) == list(File2.get_x())))
         self.assertTrue((list(Y) == list(File2.get_y())))
         self.assertTrue((list(Z) == list(File2.get_z())))
+        File2.close(ignore_header_changes = True)		
 
     def test_format_change_and_extra_bytes(self):
         File1 = self.File1
@@ -506,7 +508,7 @@ class LasWriteModeTestCase(unittest.TestCase):
         File2.extra_bytes = ["Test"] * len(File2)
 
         self.assertTrue("Test" in str(File2.get_extra_bytes()[14]))
-
+        File2.close(ignore_header_changes = True)
     def tearDown(self):
         self.File1.close()
         os.remove(self.tempfile)
@@ -532,12 +534,12 @@ class LasV_13TestCase(unittest.TestCase):
                         File2.header.waveform_data_packets_external)
         self.assertEqual(self.File1.header.synthetic_return_num, 
                         File2.header.synthetic_return_num)
-    
+        File2.close(ignore_header_changes = True)    
     def test_evlr(self):
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
         self.assertEqual(self.File1.header.evlrs[0].to_byte_string(),
                         File2.header.evlrs[0].to_byte_string())
-
+        File2.close(ignore_header_changes = True)
     def test_wave_packet_desc_index(self):
         test1 = self.File1.wave_packet_desc_index 
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -545,7 +547,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.wave_packet_desc_index))
         File2.wave_packet_desc_index += 1
         self.assertTrue(all(test1 != File2.wave_packet_desc_index))
-
+        File2.close(ignore_header_changes = True)
     def test_byte_offset_to_waveform_data(self):
         test1 = self.File1.byte_offset_to_waveform_data 
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -553,7 +555,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.byte_offset_to_waveform_data))
         File2.byte_offset_to_waveform_data += 1
         self.assertTrue(all(test1 != File2.byte_offset_to_waveform_data))
-
+        File2.close(ignore_header_changes = True)
     def test_waveform_packet_size(self):
         test1 = self.File1.waveform_packet_size 
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -561,7 +563,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.waveform_packet_size))
         File2.waveform_packet_size += 1
         self.assertTrue(all(test1 != File2.waveform_packet_size))
-    
+        File2.close(ignore_header_changes = True)    
     def test_return_point_waveform_loc(self):
         test1 = self.File1.return_point_waveform_loc 
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -569,6 +571,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.return_point_waveform_loc))
         File2.return_point_waveform_loc += 1
         self.assertTrue(all(test1 != File2.return_point_waveform_loc))
+        File2.close(ignore_header_changes = True)
     def test_x_t(self):
         test1 = self.File1.x_t 
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -576,6 +579,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.x_t))
         File2.x_t += 1
         self.assertTrue(all(test1 != File2.x_t))
+        File2.close(ignore_header_changes = True)
     def test_y_t(self):
         test1 = self.File1.y_t 
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -583,6 +587,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.y_t))
         File2.y_t += 1
         self.assertTrue(all(test1 != File2.y_t))
+        File2.close(ignore_header_changes = True)
     def test_z_t(self):
         test1 = self.File1.z_t 
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -590,7 +595,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertTrue(all(test1 == File2.z_t))
         File2.z_t += 1
         self.assertTrue(all(test1 != File2.z_t))
-
+        File2.close(ignore_header_changes = True)
 
     def tearDown(self):
         self.File1.close()
@@ -617,7 +622,7 @@ class LasV_14TestCase(unittest.TestCase):
                         File2.header.waveform_data_packets_external)
         self.assertEqual(self.File1.header.synthetic_return_num, 
                         File2.header.synthetic_return_num)
-    
+        File2.close(ignore_header_changes = True)    
     def test_evlr(self):
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
         self.assertEqual(self.File1.header.evlrs[0].to_byte_string(),
@@ -629,7 +634,7 @@ class LasV_14TestCase(unittest.TestCase):
         File2.close()
         File2 = File.File(self.output_tempfile, mode = "r")
         self.assertTrue(len(File2.header.evlrs) == 50)
-
+        File2.close(ignore_header_changes = True)
 
     def test_classification_variables(self):
         classification = self.File1.classification
@@ -654,7 +659,7 @@ class LasV_14TestCase(unittest.TestCase):
         self.assertTrue(all(scan_dir_flag ==File2.get_scan_dir_flag() )) 
         self.assertTrue(all(classification_flags == File2.get_classification_flags())) 
         self.assertTrue(all(classification == File2.get_classification())) 
-
+        File2.close(ignore_header_changes = True)
     def tearDown(self):
         self.File1.close()
         os.remove(self.tempfile)
