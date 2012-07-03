@@ -27,6 +27,20 @@ class DataProvider():
             self.fileref = open(self.filename, mode)
         except(Exception):
             raise LaspyException("Error opening file")
+    def get_point_map(self, informat):
+        if type(self._mmap) == bool:
+            self.map() 
+        self.pointfmt = np.dtype([("point", zip([x.name for x in informat.specs],
+                                [x.np_fmt for x in informat.specs]))]) 
+        if not self.manager.header.version in ("1.3", "1.4"): 
+            _pmap = np.frombuffer(self._mmap, self.pointfmt, 
+                        offset = self.manager.header.data_offset)
+        else:  
+            _pmap = np.frombuffer(self._mmap, self.pointfmt, 
+                        offset = self.manager.header.data_offset,
+                        count = self.manager.header.point_records_count)
+        return(_pmap)
+
 
     def point_map(self):
         '''Create the numpy point map based on the point format.'''   
@@ -169,6 +183,7 @@ class FileManager():
         if len(eb_vlrs) > 1:
             raise LaspyException("Only one ExtraBytes VLR currently allowed.")
         elif len(eb_vlrs) == 1:
+            self.naive_point_format = self.point_format
             self.extra_dimensions = eb_vlrs[0].extra_dimensions
             new_pt_fmt = Format(self.point_format.fmt, extradims 
                     = self.extra_dimensions)
@@ -210,6 +225,7 @@ class FileManager():
         if len(eb_vlrs) > 1:
             raise LaspyException("Only one ExtraBytes VLR currently allowed.")
         elif len(eb_vlrs) == 1:
+            self.naive_point_format = self.point_format
             self.extra_dimensions = eb_vlrs[0].extra_dimensions
             new_pt_fmt = Format(self.point_format.fmt, extradims 
                     = self.extra_dimensions)
@@ -715,6 +731,9 @@ class FileManager():
     def get_extra_bytes(self):
         if "extra_bytes" in self.point_format.lookup.keys():
             return(self.get_dimension("extra_bytes"))
+        elif self.extra_dimensions != []:
+            newmap = self.data_provider.get_point_map(self.naive_point_format) 
+            return(newmap["point"]["extra_bytes"])
         else:
             raise LaspyException("Extra bytes not present in record")
 
@@ -1394,5 +1413,9 @@ class Writer(FileManager):
         '''Wrapper for set_dimension("extra_bytes")'''
         if "extra_bytes" in self.point_format.lookup.keys():
             self.set_dimension("extra_bytes", extra_bytes)
+        elif self.extra_dimensions != []:
+            newmap = self.data_provider.get_point_map(self.naive_point_format) 
+            newmap["point"]["extra_bytes"] = extra_bytes
         else:
             raise LaspyException("Extra bytes not present in point format. Try creating a new file with an extended point record length.")
+
