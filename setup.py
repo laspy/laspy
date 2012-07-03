@@ -26,6 +26,7 @@ setup(name          = 'laspy',
       install_requires = ['numpy'],
       test_suite = 'laspytest.test_laspy',
       data_files = [("laspytest/data", ["simple.las", "simple1_3.las", "simple1_4.las"])], 
+      include_package_data = True,
       zip_safe = False,
       classifiers   = [
         'Development Status :: 4 - Beta',
