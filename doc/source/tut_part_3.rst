@@ -19,8 +19,8 @@ The names of these new dimensions are constructed by using the name field specif
 in the VLR record, and replacing null bytes with python empty strings, spaces with 
 underscores, and upper case letters with lower case letters. For example, the field
 
-::
-    "Pulse Width\X00\X00\X00\X00\X00\X00\X00\X00\X00"
+    "Pulse Width\\X00\\X00\\X00\\X00\\X00\\X00\\X00\\X00\\X00"
+
 
 would become simply: "pulse_width"
 
@@ -50,7 +50,7 @@ Opening 1.3 and 1.4 files works exactly the same:
         inFile_v13.header.data_format_id
         inFile_v14.header.data_format_id
         
-        #Grab some dimensons as usual:
+        #Grab some dimensions as usual:
         v_13 points = inFile_v13.points
         x_t = inFile_v13.x_t
 
@@ -86,8 +86,10 @@ The extra bytes in a point record can now be described by a particular type of V
 From the LAS 1.4 specification, a VLR which describes new dimensions should have the 
 following header information:
 
-    User ID:  LASF_Spec 
+    User ID:  LASF_Spec
+
     Record ID:  4 
+    
     Record Length after Header: n x 192 bytes
 
 where n is the number of new dimensions that the VLR will define. The actual dimension
@@ -97,7 +99,8 @@ specification goes in the body of the VLR, and has the following structure:
     Laspy coerces the no_data, max and min fields to have double precision format. 
     If this is a problem for your application, let us know. 
 
-struct EXTRA_BYTES 
+
+*Extra Bytes Struct*
 
 ============ ==============================
  Name        Format[number] (Total Bytes)
@@ -113,7 +116,9 @@ struct EXTRA_BYTES
  scale        scale[3] (24)
  offset       offset[3] (24)
  description  char[32] (24)
+============ ==============================
 
+*Data Type Description*
 
 ======= ========================= ===================
  Value   Meaning                   Size
@@ -149,7 +154,9 @@ struct EXTRA_BYTES
  28      long long[3]              24 bytes 
  29      float[3]                  12 bytes 
  30      double[3]                 24 bytes
- 
+
+======= ========================= ===================
+
  
 Let's create a LAS version 1.4 file from simple.las, and store some data in new dimensions for illustration. 
 
@@ -185,7 +192,7 @@ Let's create a LAS version 1.4 file from simple.las, and store some data in new 
         # for details. We also need to change the file version
         new_header = copy.copy(inFile.header)
         new_header.data_record_length += 8
-        new_header.version_minor = 4
+        new_header.format = 1.4
 
         # Now we can create the file and give it our VLR.
         new_file = File("./laspytest/data/new_14_file.las", mode = "w", 
@@ -193,12 +200,11 @@ Let's create a LAS version 1.4 file from simple.las, and store some data in new 
         
         # Let's copy the existing data:
         for dimension in inFile.point_format:
-            dim = inFile._reader.get_dimension(dimenson.name)
+            dim = inFile._reader.get_dimension(dimension.name)
             new_file._writer.set_dimension(dimension.name, dim)
 
         # We should be able to acces our new dimensions based on the 
         # Naming convention described above. Let's put some dummy data in them.
-
         new_file.my_super_special_dimension = [0]*len(new_file)
-        new_file.another_special_dimensioon = [10]*len(new_file)
+        new_file.another_special_dimension = [10]*len(new_file)
 

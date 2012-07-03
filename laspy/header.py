@@ -30,7 +30,7 @@ class ExtraBytesStruct(object):
         self.vlr_parent = False
         self.names = [x.name for x in self.fmt.specs]
 
-        self.data = "\x00"*192
+        self.data = "\x00"*192 
         self.set_property("data_type" , data_type)
         self.set_property("options" , options)
         self.set_property("name" , name + "\x00"*(32-len(description)))
@@ -79,9 +79,11 @@ class ExtraBytesStruct(object):
         self.assertWriteable()
         fmt = self.fmt.specs[self.get_property_idx(name)]
         if isinstance(value, int) or isinstance(value, str):
-            self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, value) + self.data[fmt.offs:len(self.data)]  
+            packed = pack(fmt.full_fmt, value)
+            self.data = self.data[0:fmt.offs] + packed + self.data[fmt.offs + len(packed):len(self.data)]  
         else: 
-            self.data = self.data[0:fmt.offs] + pack(fmt.full_fmt, *value) + self.data[fmt.offs:len(self.data)]  
+            packed = pack(fmt.full_fmt, *value)
+            self.data = self.data[0:fmt.offs] + packed + self.data[fmt.offs + len(packed):len(self.data)]  
 
         if self.vlr_parent != False:
             idx_start = 192*self.body_offset
@@ -357,7 +359,8 @@ class Header(object):
         for item in self._format.specs:
             if not item.name in new_format.lookup.keys(): 
                 self.__dict__[item.name] = None
-        
+        if str(file_version) == "1.4":
+            self.point_return_count.extend([0]*10)
         self._format = new_format
 
     def get_format(self):
@@ -884,7 +887,8 @@ class HeaderManager(object):
         #for i in rawdata:
         #    histDict[i] += 1        
         #raw_hist = histDict.values()
-        if self.data_format_id in (range(6)):
+        #if self.data_format_id in (range(6)):
+        if self.version != "1.4":
             raw_hist = np.histogram(rawdata, bins = range(1,7))
             
         else:

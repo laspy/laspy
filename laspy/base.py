@@ -209,7 +209,9 @@ class FileManager():
         
         self.correct_rec_len()
         if not vlrs in [[], False]:
+            print("Setting VLRS")
             self.set_vlrs(vlrs)
+            print(self.vlrs)
         if not evlrs in [[], False]:
             self.set_evlrs(evlrs)
         else:
@@ -856,15 +858,39 @@ class Writer(FileManager):
             self.data_provider.map()
             self.data_provider.point_map()
             self.populate_vlrs()
-        elif self.mode == "w" and not self.has_point_records:
+        elif self.mode == "w" and not self.has_point_records: 
+            self.set_header_property("num_variable_len_recs", len(value))
             self.seek(self.header.header_size, rel = False)
-            for vlr in value: 
+            for vlr in value:
+                print(len(vlr.to_byte_string()))
                 self.data_provider._mmap.write(vlr.to_byte_string())
+            self.populate_vlrs()
             return
         else:
-            raise(LaspyException("set_vlrs requires the file to be opened in a " + 
-                "write mode, and must be performed before point information is provided." + 
-                "Try closing the file and opening it in rw mode. "))
+            current_size = self.data_provider._mmap.size()
+            current_padding = self.get_padding()
+            old_offset = self.header.data_offset
+            new_offset = current_padding + self.header.header_size + sum([len(x) for x in value])
+            self.set_header_property("data_offset", new_offset)
+            self.set_header_property("num_variable_len_recs", len(value))
+            self.data_provider.fileref.seek(0, 0)
+            dat_part_1 = self.data_provider.fileref.read(self.header.header_size)
+            self.data_provider.fileref.seek(old_offset, 0)
+            dat_part_2 = self.data_provider.fileref.read(current_size - old_offset)
+            # Manually Close:
+            self.data_provider.close(flush=False)
+            self.data_provider.open("w+b")
+            self.data_provider.fileref.write(dat_part_1)
+            for vlr in value:
+                byte_string = vlr.to_byte_string()
+                self.data_provider.fileref.write(byte_string)
+            self.data_provider.fileref.write("\x00"*current_padding)
+            self.data_provider.fileref.write(dat_part_2)
+            self.data_provider.fileref.close()
+            self.data_provider.open("r+b")
+            self.data_provider.map()
+            self.data_provider.point_map()
+            self.populate_vlrs() 
 
 
     def set_padding(self, value):

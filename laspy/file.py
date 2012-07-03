@@ -115,6 +115,7 @@ class File(object):
                     self._evlrs.extend(evlrs)
                 else:
                     self._evlrs = evlrs
+
             self._writer = base.Writer(self.filename, mode = "w",
                                       header = self._header, 
                                       vlrs = self._vlrs, evlrs = self._evlrs)
