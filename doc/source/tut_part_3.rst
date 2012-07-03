@@ -207,4 +207,11 @@ Let's create a LAS version 1.4 file from simple.las, and store some data in new 
         # Naming convention described above. Let's put some dummy data in them.
         new_file.my_super_special_dimension = [0]*len(new_file)
         new_file.another_special_dimension = [10]*len(new_file)
+        
+        # If we would rather grab a raw byte representation of all the extra dimensions, 
+        # we can use:
 
+        raw_bytes = new_file.extra_bytes
+
+        # This might be useful if we wanted to later take this data and put it back 
+        # into an older file version which doesn't support extra dimensions.

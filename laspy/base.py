@@ -209,9 +209,7 @@ class FileManager():
         
         self.correct_rec_len()
         if not vlrs in [[], False]:
-            print("Setting VLRS")
             self.set_vlrs(vlrs)
-            print(self.vlrs)
         if not evlrs in [[], False]:
             self.set_evlrs(evlrs)
         else:
@@ -862,7 +860,6 @@ class Writer(FileManager):
             self.set_header_property("num_variable_len_recs", len(value))
             self.seek(self.header.header_size, rel = False)
             for vlr in value:
-                print(len(vlr.to_byte_string()))
                 self.data_provider._mmap.write(vlr.to_byte_string())
             self.populate_vlrs()
             return
