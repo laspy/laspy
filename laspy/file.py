@@ -128,6 +128,18 @@ class File(object):
                                       header = self._header, 
                                       vlrs = self._vlrs, evlrs = self._evlrs)
             self._reader = self._writer
+            ## Wire up API for any extra Dimensions
+            if self._writer.extra_dimensions != []:
+                for dimension in self._writer.extra_dimensions:
+                    def _get(self):
+                        return(self._writer.get_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower()))
+                    def _set(self,value):
+                        self.assertWriteMode()
+                        self._writer.set_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower(), value)
+                    setattr(self.__class__, 
+                            dimension.name.replace("\x00", "").replace(" ", "_").lower(),
+                            property(_get, _set, None, None)) 
+
         if self._mode == 'w+':
             raise NotImplementedError
 
