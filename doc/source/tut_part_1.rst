@@ -47,7 +47,7 @@ The following short script does just this:
 
         import numpy as np
         from laspy.file import File
-        inFile = File("./test/data/simple.las", mode = "r")
+        inFile = File("./laspytest/data/simple.las", mode = "r")
 
 **Reading Data**
 
@@ -188,12 +188,12 @@ have a HeaderManager (which has a header) ready to go:
 
     .. code-block:: python
         
-        outFile1 = File("./test/data/close_points.las", mode = "w", 
+        outFile1 = File("./laspytest/data/close_points.las", mode = "w", 
                         header = inFile.header)
         outFile1.points = points_kept
         outFile1.close()
 
-        outFile2 = File("./test/data/ground_points.las", mode = "w", 
+        outFile2 = File("./laspytest/data/ground_points.las", mode = "w", 
                         header = inFile.header)
         outFile2.points = ground_points
         outFile2.close()
@@ -203,7 +203,7 @@ a las file in place, you can open it in read-write mode, as follows:
 
     .. code-block:: python
         
-        inFile = File("./test/data/close_points.las", mode = "rw")
+        inFile = File("./laspytest/data/close_points.las", mode = "rw")
         
         # Let's say the X offset is incorrect:
         old_location_offset = inFile.header.offset
@@ -235,7 +235,7 @@ description fields you can do so with additional arguments:
         from laspy.file import File
         from laspy.header import VLR
 
-        inFile = File("./test/data/close_points.las", mode = "rw")
+        inFile = File("./laspytest/data/close_points.las", mode = "rw")
         # Instantiate a new VLR.
         new_vlr = VLR(user_id = "The User ID", record_id = 1, 
                       VLR_body = "\x00" * 1000)
@@ -262,7 +262,7 @@ Here is a collection of the code on this page, copypasta ready:
 
         import numpy as np
         from laspy.file import File
-        inFile = File("./test/data/simple.las", mode = "r")
+        inFile = File("./laspytest/data/simple.las", mode = "r")
         # Grab all of the points from the file.
         point_records = inFile.points
 
@@ -330,19 +330,19 @@ Here is a collection of the code on this page, copypasta ready:
        
         
         print("Writing output files...")
-        outFile1 = File("./test/data/close_points.las", mode = "w", 
+        outFile1 = File("./laspytest/data/close_points.las", mode = "w", 
                         header = inFile.header)
         outFile1.points = points_kept
         outFile1.close()
 
-        outFile2 = File("./test/data/ground_points.las", mode = "w", 
+        outFile2 = File("./laspytest/data/ground_points.las", mode = "w", 
                         header = inFile.header)
         outFile2.points = ground_points
         outFile2.close()
 
 
         print("Trying out read/write mode.")
-        inFile = File("./test/data/close_points.las", mode = "rw")
+        inFile = File("./laspytest/data/close_points.las", mode = "rw")
         
         # Let's say the X offset is incorrect:
         old_location_offset = inFile.header.offset
@@ -365,7 +365,7 @@ Here is a collection of the code on this page, copypasta ready:
         from laspy.file import File
         from laspy.header import VLR
 
-        inFile = File("./test/data/close_points.las", mode = "rw")
+        inFile = File("./laspytest/data/close_points.las", mode = "rw")
         # Instantiate a new VLR.
         new_vlr = VLR(user_id = "The User ID", record_id = 1, 
                       VLR_body = "\x00" * 1000)

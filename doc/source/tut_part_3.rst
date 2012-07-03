@@ -1,5 +1,5 @@
-New Features: LAS Versions 1.3 and 1.4
-======================================
+New Format Features: LAS Versions 1.3 and 1.4
+=============================================
 
 There is not a great deal of LAS version 1.3 and 1.4 test data around, so laspy's
 implementation of these formats is neccesarily preliminary. Nevertheless, based
@@ -11,6 +11,24 @@ an extensive list of what laspy calls each of these dimensions, but here we'll
 provide some quick examples. More examples can be found by looking at the 
 ./test/test_laspy.py file included in the source. 
 
+Additionally, LAS version 1.4 provides the ability to specify an "extra bytes"
+variable length record (or EVLR) which can dynamically add additional dimensins. 
+Laspy now parses such records, and provides the specified dimensions accordingly. 
+
+The names of these new dimensions are constructed by using the name field specified
+in the VLR record, and replacing null bytes with python empty strings, spaces with 
+underscores, and upper case letters with lower case letters. For example, the field
+
+::
+    "Pulse Width\X00\X00\X00\X00\X00\X00\X00\X00\X00"
+
+would become simply: "pulse_width"
+
+In order to maintain backwards compatability, laspy also provides access to these 
+dimensions via :obj:`laspy.file.extra_bytes`, which provides raw access to the 
+extra bytes in point records (present when data_record_length is greater than 
+the default for a given point format).
+
 **Opening Files**
 
 Opening 1.3 and 1.4 files works exactly the same:
@@ -20,8 +38,8 @@ Opening 1.3 and 1.4 files works exactly the same:
         import numpy as np
         from laspy.file import Files
         
-        inFile_v13 = File("./test/data/simple1_3.las", mode = "r")
-        inFile_v14 = File("./test/data/simple1_4.las", mode = "r")
+        inFile_v13 = File("./laspytest/data/simple1_3.las", mode = "r")
+        inFile_v14 = File("./laspytest/data/simple1_4.las", mode = "r")
 
 **Reading Data - New Dimensions**
     
@@ -51,7 +69,7 @@ a different part of the file.
     .. code-block:: python
 
         from laspy.header import EVLR
-        outFile_14 = File("./test/data/output_14.las", mode = "w",
+        outFile_14 = File("./laspytest/data/output_14.las", mode = "w",
                         header = inFile_v14.header)
         new_evlr = EVLR(user_id = 10, record_id = 2, 
                         VLR_body = "Lots of data can go here.")
@@ -61,8 +79,22 @@ a different part of the file.
         outFile_14.header.evlrs = old_evlrs
         outFile_14.close()
 
-That covers the basics of new file manipulation, though this tutorial will be expanded
-as development continues. 
-        
 
+**Extra Bytes**
+
+Let's create a LAS version 1.4 file from simple.las, and store some data in a new 
+dimension. 
+
+    .. code-block:: python
         
+        from laspy.file import File 
+        import copy
+
+        inFile = File("./laspytest/data/simple.las", mode = "r")
+        
+        new_header = copy.copy(inFile.header)
+        new_header.data_record_length += 4
+
+
+
+

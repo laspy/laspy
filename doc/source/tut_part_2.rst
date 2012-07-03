@@ -15,7 +15,7 @@ into some of laspy's internal functionality:
         import copy
 
         # Open an input file in read mode.
-        inFile = File.File("./test/data/simple.las",mode= "r")
+        inFile = File.File("./laspytest/data/simple.las",mode= "r")
 
         # Call copy on the HeaderManager object to get a more portable Header instance.
         # This means we don't  have to modify the header on the read mode inFile. 
@@ -27,7 +27,7 @@ into some of laspy's internal functionality:
         # Now we can create a new output file with our modified header.
         # Note that we need to give the file the VLRs manually, because the low level
         # header doesn't know about them, while the header manager does. 
-        outFile = File.File("./test/data/output.las",
+        outFile = File.File("./laspytest/data/output.las",
                             mode= "w",
                             vlrs = inFile.header.vlrs, 
                             header = new_header)
