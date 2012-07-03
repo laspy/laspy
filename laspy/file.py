@@ -86,6 +86,17 @@ class File(object):
                 self._writer = base.Writer(self.filename,mode = self._mode)
                 self._reader = self._writer
                 self._header = self._reader.get_header()
+                ## Wire up API for any extra Dimensions
+                if self._writer.extra_dimensions != []:
+                    for dimension in self._writer.extra_dimensions:
+                        def _get(self):
+                            return(self._writer.get_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower()))
+                        def _set(self,value):
+                            self.assertWriteMode()
+                            self._writer.set_dimension(dimension.name.replace("\x00", "").replace(" ", "_").lower(), value)
+                        setattr(self.__class__, 
+                                dimension.name.replace("\x00", "").replace(" ", "_").lower(),
+                                property(_get, _set, None, None)) 
             else:
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
     

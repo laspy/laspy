@@ -157,8 +157,8 @@ class VLR():
             recs = self.rec_len_after_header / 192
             for i in xrange(recs):
                 new_rec = util.ExtraBytesStruct()
-                new_rec.build_from_vlr(self, i)
-            self.add_extra_dim(new_rec)
+                new_rec.build_from_vlr(self, i) 
+                self.add_extra_dim(new_rec)
         
     def add_extra_dim(self, new_rec):
         new_name = new_rec.name.replace("\x00", "").replace(" ", "_").lower()
