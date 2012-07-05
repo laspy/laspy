@@ -36,7 +36,7 @@ Opening 1.3 and 1.4 files works exactly the same:
     .. code-block:: python
 
         import numpy as np
-        from laspy.file import Files
+        from laspy.file import File
         
         inFile_v13 = File("./laspytest/data/simple1_3.las", mode = "r")
         inFile_v14 = File("./laspytest/data/simple1_4.las", mode = "r")
@@ -45,8 +45,9 @@ Opening 1.3 and 1.4 files works exactly the same:
     
     .. code-block:: python
         
-        #By checking the data_format_ids, we can see what new dimensions are present. 
-        # Our 1.3 file has data format 4, and our 1.4 file has data format 7.
+        #By checking the data_format_ids, we can see what new 
+        # dimensions are present. Our 1.3 file has data format 4, 
+        # and our 1.4 file has data format 7.
         inFile_v13.header.data_format_id
         inFile_v14.header.data_format_id
         
@@ -56,10 +57,12 @@ Opening 1.3 and 1.4 files works exactly the same:
 
         v_14_points = inFile_v14.points
         v_14_classification = inFile_v14.classification
-        # Note that classification means different things depending on the file version.
-        # Before v1.4, classification was part of the classification byte. This is 
-        # called classification flags in 1.4, and classification refers to a new 
-        # whole-byte field. For a discussion, see tutorial:background. 
+        
+        # Note that classification means different things depending on 
+        # the file version. Before v1.4, classification was part of the 
+        # classification byte. This is called classification flags in 1.4, 
+        # and classification refers to a new whole-byte field. For a 
+        # discussion, see tutorial:background. 
 
 **Writing Data + EVLRS**
 
@@ -168,9 +171,10 @@ Let's create a LAS version 1.4 file from simple.las, and store some data in new 
 
         inFile = File("./laspytest/data/simple.las", mode = "r")
         
-        # We need to build the body of our dimension VLRs, and to do this we will
-        # use a class called ExtraBytesStruct. All we really need to tell it at this 
-        # point is the name of our dimension and the data type. 
+        # We need to build the body of our dimension VLRs, and to do this we 
+        # will use a class called ExtraBytesStruct. All we really need to tell
+        # it at this point is the name of our dimension and the data type. 
+
         extra_dimension_spec_1 = ExtraBytesStruct(name = "My Super Special Dimension",
                                                 data_type = 5)
         extra_dimension_spec_2 = ExtraBytesStruct(name = "Another Special Dimension",
@@ -208,10 +212,10 @@ Let's create a LAS version 1.4 file from simple.las, and store some data in new 
         new_file.my_super_special_dimension = [0]*len(new_file)
         new_file.another_special_dimension = [10]*len(new_file)
         
-        # If we would rather grab a raw byte representation of all the extra dimensions, 
-        # we can use:
+        # If we would rather grab a raw byte representation of all the extra 
+        # dimensions, we can use:
 
         raw_bytes = new_file.extra_bytes
 
-        # This might be useful if we wanted to later take this data and put it back 
-        # into an older file version which doesn't support extra dimensions.
+        # This might be useful if we wanted to later take this data and put it
+        # back into an older file version which doesn't support extra dimensions.
