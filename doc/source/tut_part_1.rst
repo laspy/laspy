@@ -138,6 +138,36 @@ only the points from a file which are within a certain distance of the first poi
         print("We're keeping %i points out of %i total"%(len(points_kept), len(inFile)))
 
 
+As you can see, having the data in numpy arrays is very convenient. Even better, 
+it allows one to dump the data directly into any package with numpy/python bindings. 
+For example, if you're interested in calculating the nearest neighbors of a set of points,
+you might want to use a highly optimized package like FLANN (http://people.cs.ubc.ca/~mariusm/index.php/FLANN/FLANN)
+
+Here's an example doing just this:
+
+    .. code-block:: python
+    
+        from laspy.file import File
+        import pyflann as pf
+        import numpy as np
+
+        # Open a file in read mode:
+        inFile = File("./laspytest/data/simple.las")
+        # Grab a numpy dataset of our clustering dimensions:
+        dataset = np.vstack([inFile.X, inFile.Y, inFile.Z]).transpose()
+        
+        # Initialize a FLANN instance, 
+        # build its index, and find the nearest 5 neighbors of 
+        # the 100th point. 
+        flann = pf.FLANN()
+        
+        neighbors = flann.nn(dataset, num_neighbors = 5)
+        print("Five nearest neighbors of point 100: ")
+        print(neighbors[0])
+        print("Distances: ")
+        print(neighbors[1])
+
+
 For another example, lets say we're interested only in the last return from each pulse in order to 
 do ground detection. We can easily figure out which points are the last return by finding out for which points
 return_num is equal to num_returns. 
