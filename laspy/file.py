@@ -152,10 +152,10 @@ class File(object):
 
     def addProperty(self, name):
         def fget(self):
-            return(self._writer.get_dimension(name))
+            return(self._reader.get_dimension(name))
         def fset(self, value):
             self.assertWriteMode()
-            self._writer.set_dimension(name, value)
+            self._reader.set_dimension(name, value)
         setattr(self.__class__, name, property(fget, fset, None, None))
 
     def assertWriteMode(self):
