@@ -158,6 +158,11 @@ class File(object):
             self._reader.set_dimension(name, value)
         setattr(self.__class__, name, property(fget, fset, None, None))
 
+    def define_new_dimension(self, name, data_type, description):
+        self.assertWriteMode()
+        self._writer.define_new_dimension(name, data_type, description)
+        self.addProperty(name)
+
     def assertWriteMode(self):
         if self._mode == "r":
             raise util.LaspyException("File is not opened in a write mode.")         

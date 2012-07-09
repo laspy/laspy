@@ -204,7 +204,6 @@ class FileManager():
         self.header_format = header.format 
         self._header = header
         self.header = HeaderManager(header = header, reader = self)
-
         self.initialize_file_padding(vlrs)
 
         ## We have a file to store data now.
@@ -264,7 +263,7 @@ class FileManager():
             self.point_format = Format(self.header.data_format_id)
             self.set_header_property("data_record_length", self.point_format.rec_len) 
 
-    def initialize_file_padding(self, vlrs):
+    def initialize_file_padding(self, vlrs, header = False):
         filesize = self._header.format.rec_len
         self._header.header_size = filesize
         if vlrs != False:
@@ -881,7 +880,27 @@ class Writer(FileManager):
             self.data_provider.point_map()
             self.populate_vlrs()
         elif self.mode == "w" and not self.has_point_records: 
+
             self.set_header_property("num_variable_len_recs", len(value))
+            if (self.data_provider._mmap.size() < self.header.header_size + sum([len(x) for x in value])): 
+                old_offset = self.header.header_size
+                self.data_provider.fileref.seek(0, 0)
+                dat_part_1 = self.data_provider.fileref.read(self.header.header_size) 
+                # Manually Close:
+                self.data_provider.close(flush=False)
+                self.data_provider.open("w+b")
+                self.data_provider.fileref.write(dat_part_1)
+                for vlr in value:
+                    byte_string = vlr.to_byte_string()
+                    self.data_provider.fileref.write(byte_string)
+
+                self.data_provider.fileref.close()
+                self.data_provider.open("r+b")
+
+                self.data_provider.remap()
+                new_offset = self.header.header_size + sum([len(x) for x in value])
+                self.set_header_property("data_offset", new_offset)
+
             self.seek(self.header.header_size, rel = False)
             for vlr in value:
                 self.data_provider._mmap.write(vlr.to_byte_string())
@@ -954,6 +973,7 @@ class Writer(FileManager):
         '''Pad the file with null bytes out to a calculated length based on 
         the data given. This is usually a side effect of set_dimension being 
         called for the first time on a file in write mode. '''
+
         bytes_to_pad = num_recs * self.point_format.rec_len
         self.header.point_records_count = num_recs
         if self.evlrs in [False, []]:
@@ -1006,6 +1026,8 @@ class Writer(FileManager):
                 new_pt_fmt = Format(self.point_format.fmt, extradims 
                              = extra_dimension)
                 self.point_format = new_pt_fmt
+                self.set_header_property("data_record_length", self.point_format.rec_len)
+
                 eb_vlr_index = [x for x in range(len(self.vlrs)) if self.vlrs[x].type == 1][0]
                 new_vlr = copy.copy(eb_vlrs[0])
                 nvlrbs = new_dimension.to_byte_string()
@@ -1021,6 +1043,7 @@ class Writer(FileManager):
                 new_pt_fmt = Format(self.point_format.fmt, extradims 
                              = extra_dimension)
                 self.point_format = new_pt_fmt
+                self.set_header_property("data_record_length", self.point_format.rec_len)
                 eb_evlr_index = [x for x in range(len(self.evlrs)) if self.evlrs[x].type == 1][0]
                 new_vlr = copy.copy(eb_evlrs[0])
                 nvlrbs = new_dimension.to_byte_string()
@@ -1032,10 +1055,15 @@ class Writer(FileManager):
         else:
             # There are no current extra dimensions.
             new_vlr = VLR(user_id = "LASF_Spec", record_id = 4, VLR_body = new_dimension.to_byte_string())
-            old_vlrs.append(new_vlrs) 
+            old_vlrs.append(new_vlr) 
+            self.extra_dimensions = [new_dimension]
+            
+            new_pt_fmt = Format(self.point_format.fmt, extradims = self.extra_dimensions)
+            self.point_format = new_pt_fmt
+            self.set_header_property("data_record_length", self.point_format.rec_len)
             self.set_vlrs(old_vlrs)
             self.populate_vlrs()
-            self.extra_dimensions = [new_dimension]
+
     def set_dimension(self, name,new_dim):
         '''Set a dimension (X,Y,Z etc) to the given value.'''
         #if not "__len__" in dir(new_dim):
@@ -1044,8 +1072,10 @@ class Writer(FileManager):
 
         if not self.has_point_records:
             self.has_point_records = True
-            self.set_header_property("point_records_count", len(new_dim))
+            self.set_header_property("point_records_count", len(new_dim)) 
             self.pad_file_for_point_recs(len(new_dim)) 
+
+
         ptrecs = self.get_pointrecordscount()
         if len(new_dim) != ptrecs:
             raise LaspyException("Error, new dimension length (%s) does not match"%str(len(new_dim)) + " the number of points (%s)" % str(ptrecs))
