@@ -1,5 +1,5 @@
 import mmap
-from header import HeaderManager, Header, VLR, EVLR
+from header import HeaderManager, Header, VLR, EVLR, ExtraBytesStruct
 import datetime
 from struct import pack, unpack, Struct
 from util import *
@@ -981,7 +981,61 @@ class Writer(FileManager):
             if self.header.version == "1.4":
                 self.header.start_first_evlr += bytes_to_pad
         
+    def define_new_dimension(self,name, data_type,description = ""):
+        old_vlrs = self.vlrs
+        if self.has_point_records or not self.mode == "w":
+            raise LaspyException("New dimensions may be defined only for write mode files which do not yet possess point records.")
+        eb_vlrs = [x for x in self.vlrs if x.type == 1]
+        if self.header.version == "1.4":
+            eb_evlrs =  [x for x in self.evlrs if x.type == 1]
+            old_evlrs = self.evlrs
+        else:
+            eb_evlrs = []
+            old_evlrs = []
 
+        if ("extra_bytes" in self.point_format.lookup) and (len(eb_vlrs) != 0):
+            raise LaspyException("Adding a dimension is ambiguous when there are already extra bytes in the point records, but no VLR describing them.")
+        new_dimension = ExtraBytesStruct(name = name, data_type = data_type, description = description)
+        if len(eb_vlrs) + len(eb_evlrs) > 1:
+            raise LaspyException("Only one ExtraBytes VLR currently allowed.") 
+        elif len(eb_vlrs) + len(eb_evlrs) == 1:
+            if len(eb_vlrs) == 1:
+                extra_dimensions = eb_vlrs[0].extra_dimensions
+                extra_dimensions.extend(new_dimension)
+                self.extra_dimensions = extra_dimensions
+                new_pt_fmt = Format(self.point_format.fmt, extradims 
+                             = extra_dimension)
+                self.point_format = new_pt_fmt
+                eb_vlr_index = [x for x in range(len(self.vlrs)) if self.vlrs[x].type == 1][0]
+                new_vlr = copy.copy(eb_vlrs[0])
+                nvlrbs = new_dimension.to_byte_string()
+                new_vlr.VLR_body += nvlrbs 
+                new_vlr.rec_len_after_header += len(nvlrbs)
+                old_vlrs[eb_vlr_index] = new_vlr 
+                self.set_vlrs(old_vlrs)
+                self.populate_vlrs()
+            elif len(eb_evlrs) == 1:
+                extra_dimensions = eb_evlrs[0].extra_dimensions
+                extra_dimensions.extend(new_dimension)
+                self.extra_dimensions = extra_dimensions
+                new_pt_fmt = Format(self.point_format.fmt, extradims 
+                             = extra_dimension)
+                self.point_format = new_pt_fmt
+                eb_evlr_index = [x for x in range(len(self.evlrs)) if self.evlrs[x].type == 1][0]
+                new_vlr = copy.copy(eb_evlrs[0])
+                nvlrbs = new_dimension.to_byte_string()
+                new_vlr.VLR_body += nvlrbs 
+                new_vlr.rec_len_after_header += len(nvlrbs)
+                old_vlrs[eb_evlr_index] = new_vlr 
+                self.set_evlrs(old_evlrs)
+                self.populate_evlrs()
+        else:
+            # There are no current extra dimensions.
+            new_vlr = VLR(user_id = "LASF_Spec", record_id = 4, VLR_body = new_dimension.to_byte_string())
+            old_vlrs.append(new_vlrs) 
+            self.set_vlrs(old_vlrs)
+            self.populate_vlrs()
+            self.extra_dimensions = [new_dimension]
     def set_dimension(self, name,new_dim):
         '''Set a dimension (X,Y,Z etc) to the given value.'''
         #if not "__len__" in dir(new_dim):
