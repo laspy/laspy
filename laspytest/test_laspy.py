@@ -668,21 +668,25 @@ class LasV_14TestCase(unittest.TestCase):
 
     def test_vlr_defined_dimensions(self):
         new_header = self.File1.header.copy()
+        # Test basic numeric dimension
         new_dim_record1 = header.ExtraBytesStruct(name = "Test Dimension 1234", data_type = 5) 
+        # Test string dimension (len 3)
         new_dim_record2 = header.ExtraBytesStruct(name = "Test Dimension 5678", data_type = 22)
+        # Test integer array dimension (len 3)
+        new_dim_record3 = header.ExtraBytesStruct(name = "Test Dimension 9", data_type =  26) 
         new_VLR_rec = header.VLR(user_id = "LASF_Spec", record_id = 4, 
-                VLR_body = (new_dim_record1.to_byte_string() + new_dim_record2.to_byte_string()))
-        new_header.data_record_length += 7
+                VLR_body = (new_dim_record1.to_byte_string() + new_dim_record2.to_byte_string() + new_dim_record3.to_byte_string()))
+        new_header.data_record_length += (19)
         File2 = File.File(self.output_tempfile, mode = "w", header = new_header, vlrs = [new_VLR_rec], evlrs = self.File1.header.evlrs)
 
         File2.X = self.File1.X
-        import pdb; pdb.set_trace()
 
         File2._writer.set_dimension("test_dimension_1234", [4]*len(self.File1))
         File2._writer.set_dimension("test_dimension_5678", ["AAA"]*len(self.File1))
+        File2._writer.set_dimension("test_dimension_9", [[1,2,3]]*len(self.File1))
         self.assertTrue(all(np.array(["AAA"]*len(self.File1)) == File2.test_dimension_5678))
         self.assertTrue(all(np.array([4]*len(self.File1)) == File2.test_dimension_1234))
-
+        self.assertTrue(list(File2.test_dimension_9[100]) == [1,2,3])
         File2.close(ignore_header_changes = True)
 
 
