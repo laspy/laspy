@@ -17,7 +17,7 @@ fmtLen = {"<l":4, "<L":4, "<h":2, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8
 LEfmt = {"ctypes.c_long":"<l","ctypes.c_ulong":"<L", "ctypes.c_ushort":"<H", "ctypes.c_ubyte":"<B"
         ,"ctypes.c_float":"<f", "ctypes.c_char":"<s", "ctypes.c_double":"<d", "ctypes.c_ulonglong":"<Q",
         "ctypes.c_short":"<h"}
-npFmt = {"<l":"i4", "<L":"u4", "<h":"i2","<H":"u2", "<B":"u1", "<f":"f4", "<s":"s1", "<d":"f8", "<Q":"u8"}
+npFmt = {"<l":"i4", "<L":"u4", "<h":"i2","<H":"u2", "<B":"u1", "<f":"f4", "<s":"S1", "<d":"f8", "<Q":"u8"}
 
 
 defaults = {"<L":0,"<l":0, "<H":0, "<h":0, "<B": "0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
@@ -70,9 +70,16 @@ class Spec():
             self.length = fmtLen[self.fmt]
             self.pack = pack
             self.np_fmt = npFmt[self.fmt]
-            if self.fmt == "<B" and num > 1:
-                self.np_fmt = "V" + str(num)
-            
+            # Check if we need to do anything special to the numpy format
+            if self.num > 1:
+                if self.fmt == "<s":
+                    self.np_fmt = "S"+str(self.num)
+                elif self.fmt == "<B":
+                    self.np_fmt = "V" + str(num)
+
+                else:
+                    ## We need a sub-array
+                    self.np_fmt = str(self.num) + npFmt[self.fmt]            
             if self.num == 1 or type(defaults[self.fmt])== str:
                 self.default = defaults[self.fmt]*self.num
             else:
