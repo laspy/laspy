@@ -1223,9 +1223,9 @@ class Writer(FileManager):
     def set_scanner_channel(self, value): 
         if not self.header.data_format_id in (6,7,8,9,10):
             raise LaspyException("Scanner Channel not present for point format: " + str(self.header.data_format_id))
-        raw_dim = self.get_raw_classification_flags()
+        raw_dim = self.binary_str_arr(self.get_raw_classification_flags())
         new_bits = self.binary_str_arr(value, 2)
-        outByte = self.bitpack((raw_dim, new_bits, raw_dim), ((0,4), (4,6), (6,8)))
+        outByte = self.bitpack((raw_dim, new_bits, raw_dim), ((0,4), (0,2), (6,8)))
         self.set_raw_classification_flags(outByte) 
 
     def set_scan_dir_flag(self, flag): 

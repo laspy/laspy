@@ -649,6 +649,7 @@ class LasV_14TestCase(unittest.TestCase):
         File2.classification = classification
         File2.classification_flags = classification_flags
         File2.scan_dir_flag = scan_dir_flag
+        File2.scanner_channel = scanner_channel
         File2.edge_flight_line = edge_flight_line
         File2.return_num = return_num
         File2.num_returns = num_returns
@@ -659,6 +660,7 @@ class LasV_14TestCase(unittest.TestCase):
         self.assertTrue(all(scan_dir_flag ==File2.get_scan_dir_flag() )) 
         self.assertTrue(all(classification_flags == File2.get_classification_flags())) 
         self.assertTrue(all(classification == File2.get_classification())) 
+        self.assertTrue(all(scanner_channel == File2.get_scanner_channel()))
         File2.close(ignore_header_changes = True)
     def tearDown(self):
         self.File1.close()
