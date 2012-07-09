@@ -1069,16 +1069,18 @@ class HeaderManager(object):
 
     start_first_evlr = property(get_start_first_evlr, set_start_first_evlr, None, None)
 
-    def get_num_EVLRs(self):
+    def get_num_evlrs(self):
         if not self.version == "1.4":
             raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
-        return(self.reader.get_header_property("num_EVLRs"))
+        return(self.reader.get_header_property("num_evlrs"))
 
-    def set_num_EVLRs(self, value):
+    def set_num_evlrs(self, value):
         if not self.version == "1.4":
             raise util.LaspyException("EVLRs are present explicitly only in version 1.4")
         self.assertWriteMode()
-        self.reader.set_header_property("num_EVLRs", value)
+        self.reader.set_header_property("num_evlrs", value)
+    # Encourage users to use len(file.header.vlrs) 
+    #num_evlrs = property(get_num_evlrs, set_num_evlrs, None, None)
 
     def get_legacy_point_records_count(self):
         if not self.version == "1.4":

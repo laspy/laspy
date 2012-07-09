@@ -214,10 +214,13 @@ class FileManager():
         self.correct_rec_len()
         if not vlrs in [[], False]:
             self.set_vlrs(vlrs)
+        else:
+            self.vlrs = []
         if not evlrs in [[], False]:
             self.set_evlrs(evlrs)
         else:
             self.evlrs = []
+        self.verify_num_vlrs()
         if self._header.created_year == 0:
             self.header.date = datetime.datetime.now() 
         self.populate_vlrs()
@@ -236,6 +239,23 @@ class FileManager():
             self.point_format = new_pt_fmt
         return
 
+    def verify_num_vlrs(self):
+        headervlrs = self.get_header_property("num_variable_len_recs")
+        calc_headervlrs = len(self.vlrs)
+        if headervlrs != calc_headervlrs:
+            raise LaspyException('''Number of EVLRs provided does not match the number 
+                                 specified in the header. (copied headers do not maintain 
+                                 references to their EVLRs, that might be your problem. 
+                                 You can pass them explicitly to the File constructor.)''')
+
+        if self.header.version == "1.4":
+            calc_headerevlrs = len(self.evlrs)
+            headerevlrs = self.get_header_property("num_evlrs")
+            if headerevlrs != calc_headerevlrs:
+                raise LaspyException('''Number of EVLRs provided does not match the number 
+                                     specified in the header. (copied headers do not maintain 
+                                     references to their EVLRs, that might be your problem. 
+                                     You can pass them explicitly to the File constructor.)''')
     def correct_rec_len(self):
         extrabytes = self.header.data_record_length-Format(self.header.data_format_id).rec_len
         if extrabytes >= 0:
