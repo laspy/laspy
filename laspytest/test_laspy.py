@@ -178,6 +178,7 @@ class LasReaderTestCase(unittest.TestCase):
 class LasWriterTestCase(unittest.TestCase):
     simple = './laspytest/data/simple.las'
     tempfile = 'writer.las'
+    output_tempfile = 'writer_output.las'
     def setUp(self):
         shutil.copyfile(self.simple, self.tempfile)  
         self.FileObject = File.File(self.tempfile, mode = "rw")
@@ -303,7 +304,12 @@ class LasWriterTestCase(unittest.TestCase):
         self.FileObject.blue = b1
         b2 = self.FileObject.get_blue()
         self.assertTrue((b1 == list(b2)))
-
+    def test_vlr_defined_dimensions2(self):
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.FileObject.header)
+        File2.define_new_dimension("test_dimension", 5, "This is a test.")
+        File2.X = self.FileObject.X
+        self.assertTrue(File2.test_dimension[500] == 0)
+        File2.close(ignore_header_changes = True)
     #def test_wave_pkt_descp_idx(self):
     #    w1 = self.FileObject.wave_packet_descp_idx + 1
     #    self.FileObject.wave_packet_descp_idx = w1
@@ -688,6 +694,15 @@ class LasV_14TestCase(unittest.TestCase):
         self.assertTrue(all(np.array([4]*len(self.File1)) == File2.test_dimension_1234))
         self.assertTrue(list(File2.test_dimension_9[100]) == [1,2,3])
         File2.close(ignore_header_changes = True)
+
+
+    def test_vlr_defined_dimensions2(self):
+        File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
+        File2.define_new_dimension("test_dimension", 5, "This is a test.")
+        File2.X = self.File1.X
+        self.assertTrue(File2.test_dimension[500] == 0)
+        File2.close(ignore_header_changes = True)
+
 
 
 def test_laspy():

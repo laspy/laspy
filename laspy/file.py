@@ -126,14 +126,6 @@ class File(object):
                     dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname) 
 
-
-
-
-
-
-
-
-
         if self._mode == 'w+':
             raise NotImplementedError
 

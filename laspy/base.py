@@ -263,7 +263,7 @@ class FileManager():
             self.point_format = Format(self.header.data_format_id)
             self.set_header_property("data_record_length", self.point_format.rec_len) 
 
-    def initialize_file_padding(self, vlrs, header = False):
+    def initialize_file_padding(self, vlrs):
         filesize = self._header.format.rec_len
         self._header.header_size = filesize
         if vlrs != False:

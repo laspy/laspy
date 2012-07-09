@@ -160,8 +160,44 @@ specification goes in the body of the VLR, and has the following structure:
 
 ======= ========================= ===================
 
- 
-Let's create a LAS version 1.4 file from simple.las, and store some data in new dimensions for illustration. 
+**Adding Extra Dimensions - The laspy way.** 
+
+One can easily create new dimensions using the above data type table
+and a laspy file object. In fact, it is not even neccesary to use a 1.4 file 
+in this process, however other software will likely not know to use the new
+1.4 features in a previous file version. Most readers should, however, 
+be able to treat the extra dimensions as extra bytes. Here's the easy way to specify new dimensions:
+
+
+    .. code-block:: python
+        
+        from laspy.file import File
+
+        # Set up our input and output files.
+        inFile = File("./laspytest/data/simple.las", mode = "r")
+        outFile = File("./laspytest/data/output.las", mode = "w", 
+                    header = inFile.header)
+        # Define our new dimension. Note, this must be done before giving 
+        # the output file point records.
+        outFile.define_new_dimension(name = "my_special_dimension", 
+                                data_type = 5, description = "Test Dimension")
+        
+        # Lets go ahead and copy all the existing data from inFile:
+        for dimension in inFile.point_format:
+            dat = inFile.reader.get_dimension(dimension.name)
+            outFile.writer.set_dimension(dimension.name, dat)
+
+        # Now lets put data in our new dimension 
+        # (though we could have done this first)
+
+        # Note that the data type 5 refers to a long integer
+        outFile.my_special_dimension = range(len(inFile))
+        
+
+**Adding Extra Dimensions - The long way.**
+
+If you want to see what's happening when you create new dimensions at a level 
+much closer to the raw specification, laspy lets you create the requisite components manually. 
 
     .. code-block:: python
         
