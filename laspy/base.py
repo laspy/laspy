@@ -5,6 +5,7 @@ from struct import pack, unpack, Struct
 from util import *
 from types import GeneratorType
 import numpy as np
+import copy
 
 
 
@@ -1021,10 +1022,10 @@ class Writer(FileManager):
         elif len(eb_vlrs) + len(eb_evlrs) == 1:
             if len(eb_vlrs) == 1:
                 extra_dimensions = eb_vlrs[0].extra_dimensions
-                extra_dimensions.extend(new_dimension)
+                extra_dimensions.append(new_dimension)
                 self.extra_dimensions = extra_dimensions
                 new_pt_fmt = Format(self.point_format.fmt, extradims 
-                             = extra_dimension)
+                             = extra_dimensions)
                 self.point_format = new_pt_fmt
                 self.set_header_property("data_record_length", self.point_format.rec_len)
 
@@ -1038,10 +1039,10 @@ class Writer(FileManager):
                 self.populate_vlrs()
             elif len(eb_evlrs) == 1:
                 extra_dimensions = eb_evlrs[0].extra_dimensions
-                extra_dimensions.extend(new_dimension)
+                extra_dimensions.append(new_dimension)
                 self.extra_dimensions = extra_dimensions
                 new_pt_fmt = Format(self.point_format.fmt, extradims 
-                             = extra_dimension)
+                             = extra_dimensions)
                 self.point_format = new_pt_fmt
                 self.set_header_property("data_record_length", self.point_format.rec_len)
                 eb_evlr_index = [x for x in range(len(self.evlrs)) if self.evlrs[x].type == 1][0]

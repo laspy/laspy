@@ -699,8 +699,11 @@ class LasV_14TestCase(unittest.TestCase):
     def test_vlr_defined_dimensions2(self):
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
         File2.define_new_dimension("test_dimension", 5, "This is a test.")
+        File2.define_new_dimension("test_dimension2", 5, "This is a test.")
+
         File2.X = self.File1.X
         self.assertTrue(File2.test_dimension[500] == 0)
+        self.assertTrue(File2.test_dimension2[123] == 0)
         File2.close(ignore_header_changes = True)
 
 
