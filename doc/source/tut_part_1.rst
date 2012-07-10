@@ -158,14 +158,35 @@ Here's an example doing just this:
         
         # Initialize a FLANN instance, 
         # build its index, and find the nearest 5 neighbors of 
-        # the 100th point. 
+        # point 100. 
         flann = pf.FLANN()
         
-        neighbors = flann.nn(dataset, num_neighbors = 5)
+        neighbors = flann.nn(dataset, dataset[100,], num_neighbors = 5)
         print("Five nearest neighbors of point 100: ")
         print(neighbors[0])
         print("Distances: ")
         print(neighbors[1])
+
+
+Alternatively, one could use the built in KD-Tree functionality of scipy to do
+nearest neighbor queries:
+
+    .. code-block:: python
+
+        from laspy.file import File
+        from scipy.spatial.kdtree import KDTree
+        import numpy as np
+
+        # Open a file in read mode:
+        inFile = File("./laspytest/data/simple.las")
+        # Grab a numpy dataset of our clustering dimensions:
+        dataset = np.vstack([inFile.X, inFile.Y, inFile.Z]).transpose()
+        # Build the KD Tree
+        tree = KDTree(data)
+        # This should do the same as the FLANN example above, though it might
+        # be a little slower.
+        tree.query(dataset[100,], k = 5)
+
 
 
 For another example, lets say we're interested only in the last return from each pulse in order to 
