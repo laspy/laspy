@@ -156,10 +156,7 @@ Here's an example doing just this:
         # Grab a numpy dataset of our clustering dimensions:
         dataset = np.vstack([inFile.X, inFile.Y, inFile.Z]).transpose()
         
-        # Initialize a FLANN instance, 
-        # build its index, and find the nearest 5 neighbors of 
-        # point 100. 
-        flann = pf.FLANN()
+        # Find the nearest 5 neighbors of point 100. 
         
         neighbors = flann.nn(dataset, dataset[100,], num_neighbors = 5)
         print("Five nearest neighbors of point 100: ")
