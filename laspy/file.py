@@ -64,7 +64,7 @@ class File(object):
     def open(self):
         '''Open the file for processing, called by __init__
         '''
-        
+       
         if self._mode == 'r':
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)

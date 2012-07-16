@@ -32,12 +32,42 @@ if (point_format > 5 and file_version !="1.4"):
     raise Exception("Point formats 6-10 are only supported by LAS version 1.4 files.")
 if (point_format > 3 and not (file_version in ["1.3", "1.4"])):
     raise Exception("Point format %i is not available for file version %s" % (point_format, file_version))
-if (point_format > 2 and not (file_version in ["1.2", "1.3", "1.4"])):
+if (point_format >= 2 and not (file_version in ["1.2", "1.3", "1.4"])):
     raise Exception("Point format %i is not available for file version %s" % (point_format, file_version))
 
 old_file_version = inFile.header.version
 old_point_format = inFile.header.data_format_id
 print("Converting from file version %s to version %s." %(old_file_version, file_version)) 
 print("Converting from point format %i to format %i."%(old_point_format, point_format))
+
+
+try:
+    new_header = inFile.header.copy()
+    new_header.format = file_version
+    new_header.data_format_id = point_format
+    evlrs = inFile.header.evlrs
+    if file_version != "1.4" and old_file_version == "1.4":
+        print("Warning: input file has version 1.4, and output file does not. This may cause trunctation of header data.")
+        new_header.point_return_count = new_header.legacy_point_return_count
+        evlrs = []
+    outFile = File(args.out_file[0], header = new_header, mode = "w", vlrs = inFile.header.vlrs, evlrs = evlrs)
+except Exception, error:
+    print("There was an error instantiating the output file.")
+    print(error)
+    quit()
+
+try:
+    for dimension in inFile.point_format.specs:
+        if dimension.name in outFile.point_format.lookup:
+            outFile.writer.set_dimension(dimension.name, inFile.reader.get_dimension(dimension.name))
+            print("Copying: " + dimension.name)
+except Exception, error:
+    print("Error copying data.")
+    print(error)
+    quit()
+
+
+inFile.close()
+outFile.close(ignore_header_changes = True)
 
 

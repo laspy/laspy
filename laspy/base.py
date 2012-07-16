@@ -377,9 +377,12 @@ class FileManager():
             return
         
     
-        if self.header.version == "1.3":  
-            self.seek(self.header.start_wavefm_data_rec, rel = False)
-            num_vlrs = 1
+        if self.header.version == "1.3":
+            if self.header.start_wavefm_data_rec != 0:
+                self.seek(self.header.start_wavefm_data_rec, rel = False)
+                num_vlrs = 1
+            else:
+                num_vlrs = 0
         elif self.header.version == "1.4":
             self.seek(self.header.start_first_evlr, rel = False)
             num_vlrs = self.get_header_property("num_evlrs")
@@ -537,7 +540,7 @@ class FileManager():
                         + spec.num*spec.length)]) 
 
     def _get_datum(self, rec_offs, spec):
-        '''Return unpacked data assocaited with non dimension field (VLR/Header)'''
+        '''Return unpacked data assocaited with non dimension field (VLR/Header)''' 
         data = self._get_raw_datum(rec_offs, spec)
         if spec.num == 1:
             return(unpack(spec.fmt, data)[0])
@@ -554,7 +557,7 @@ class FileManager():
         return(self._get_raw_datum(0, spec))
     
     def get_header_property(self, name):
-        '''Wrapper for grabbing unpacked header data with _get_datum'''
+        '''Wrapper for grabbing unpacked header data with _get_datum''' 
         spec = self.header_format.lookup[name]
 
         if name in self.header_changes:
@@ -1166,6 +1169,7 @@ class Writer(FileManager):
     
     def _set_datum(self, rec_offs, dim, val):
         '''Set a non dimension field as with _set_raw_datum, but supply a formatted value''' 
+
         if dim.num == 1:
             lb = rec_offs + dim.offs
             ub = lb + dim.length 
