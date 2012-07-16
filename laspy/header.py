@@ -1109,6 +1109,9 @@ class HeaderManager(object):
         if not self.version == "1.4":
             raise util.LaspyException("Point records count is only denoted as legacy in version 1.4 files.")
         self.reader.set_header_property("legacy_point_records_count", value)
+    
+    legacy_point_records_count = property(get_legacy_point_records_count, set_legacy_point_records_count, None, None)
+
 
     def get_legacy_point_return_count(self):
         if not self.version == "1.4":
@@ -1119,6 +1122,8 @@ class HeaderManager(object):
         if not self.version == "1.4":
             raise util.LaspyException("Point return count is only denoted as legacy in version 1.4 files.")
         self.reader.set_header_property("legacy_point_return_count", value)
+
+    legacy_point_return_count = property(get_legacy_point_return_count, set_legacy_point_return_count, None, None)
 
     def xml(self):
         '''Return an xml repreentation of header data. (not implemented)'''

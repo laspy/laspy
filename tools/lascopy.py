@@ -48,8 +48,14 @@ try:
     evlrs = inFile.header.evlrs
     if file_version != "1.4" and old_file_version == "1.4":
         print("Warning: input file has version 1.4, and output file does not. This may cause trunctation of header data.")
-        new_header.point_return_count = new_header.legacy_point_return_count
+        new_header.point_return_count = inFile.header.legacy_point_return_count
+        new_header.point_records_count = inFile.header.legacy_point_records_count
+    if not (file_version in ["1.3", "1.4"]) and old_file_version in ["1.3", "1.4"]:
+        print("Stripping any EVLRs")
         evlrs = []
+    if (file_version == "1.3" and len(inFile.header.evlrs) > 1):
+        print("Too many EVLRs for format 1.3, keeping the first one.")
+        evlrs = inFile.header.evlrs[0]
     outFile = File(args.out_file[0], header = new_header, mode = "w", vlrs = inFile.header.vlrs, evlrs = evlrs)
 except Exception, error:
     print("There was an error instantiating the output file.")
