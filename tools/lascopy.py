@@ -1,4 +1,5 @@
-from laspy.file import  File
+from laspy.file import File
+from laspy.util import Format
 import argparse
 
 parser = argparse.ArgumentParser(description='Accept \"in_file\" and \"out_file\" .LAS files, and convert from \"in_file\" to \"out_file\" according to \"point_format\" and \"file_version\".')
@@ -43,8 +44,16 @@ print("Converting from point format %i to format %i."%(old_point_format, point_f
 
 try:
     new_header = inFile.header.copy()
-    new_header.format = file_version
+    new_header.format = file_version 
     new_header.data_format_id = point_format
+
+    old_data_rec_len = new_header.data_record_length
+    old_std_rec_len = Format(old_point_format).rec_len
+    diff =   old_data_rec_len - old_std_rec_len
+    if (diff > 0):
+        print("Extra Bytes Detected.")
+
+    new_header.data_record_length = Format(point_format).rec_len + ((diff > 0)*diff)
     evlrs = inFile.header.evlrs
     if file_version != "1.4" and old_file_version == "1.4":
         print("Warning: input file has version 1.4, and output file does not. This may cause trunctation of header data.")
@@ -57,6 +66,8 @@ try:
         print("Too many EVLRs for format 1.3, keeping the first one.")
         evlrs = inFile.header.evlrs[0]
     outFile = File(args.out_file[0], header = new_header, mode = "w", vlrs = inFile.header.vlrs, evlrs = evlrs)
+    if outFile.point_format.rec_len != outFile.header.data_record_length:
+        pass
 except Exception, error:
     print("There was an error instantiating the output file.")
     print(error)

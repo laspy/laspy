@@ -354,21 +354,6 @@ class Header(object):
             else:
                 self.__dict__[dim.name] = dim.default
 
-    def point_reformat(self, point_format):
-        '''Make sure data_record_length is updated when new format is supplied.'''
-        assert(str(point_format) in [str(x) for x in range(11)])
-        new_pt_format = util.Format(point_format)
-        self.__dict__["data_format_id"] = point_format
-        self.data_record_length = new_pt_format.rec_len
-
-    def get_point_format(self):
-        '''Get data_format_id'''
-        return(self.data_format_id)
-    doc = '''header.data_format_id is a property which returns data_format_id, and 
-            which, when set, automatically sets the data record length. To use a custom
-            data record length, set the length after the point format.'''
-    data_format_id = property(get_point_format, point_reformat, None, None)
-
     def reformat(self, file_version):
         if file_version == self._format.fmt[1:4]:
             return
