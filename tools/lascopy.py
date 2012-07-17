@@ -41,6 +41,8 @@ if (point_format >= 2 and not (file_version in ["1.2", "1.3", "1.4"])):
 
 old_file_version = inFile.header.version
 old_point_format = inFile.header.data_format_id
+print("Input File: " + args.in_file[0] + ", %i point records." % len(inFile))
+print("Output File: " + args.out_file[0])
 print("Converting from file version %s to version %s." %(old_file_version, file_version)) 
 print("Converting from point format %i to format %i."%(old_point_format, point_format))
 

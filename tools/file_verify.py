@@ -61,17 +61,22 @@ print_title("Checking Headers")
 try:
     passed = 0
     failed = 0
+    header_props = set()
     for item in inFile1.reader.header_format.specs:
-        outstr = "Header Property: %s" % item.name
+        header_props.add(item.name)
+    for item in inFile2.reader.header_format.specs:
+        header_props.add(item.name)
+    for item in header_props:
+        outstr = "Header Property: %s" % item
         outstr += " "*(50-len(outstr))
-        result = g(item.name)
+        result = g(item)
         if result == 1:
             print(outstr + "identical")
             passed += 1
         elif not result == 2:
             print(outstr + "different")
-            print("   File 1: " + str(inFile1.reader.get_header_property(item.name)))
-            print("   File 2: " + str(inFile2.reader.get_header_property(item.name)))
+            print("   File 1: " + str(inFile1.reader.get_header_property(item)))
+            print("   File 2: " + str(inFile2.reader.get_header_property(item)))
             failed += 1
     print("%i of %i header fields match." % (passed, passed + failed))
 except:
@@ -84,11 +89,14 @@ def checkVLR(specname, vlr1, vlr2):
 print_title("Checking VLRs")
 
 try:
-    for i in xrange(len(inFile1.header.vlrs)):
+    if len(inFile1.header.vlrs) != len(inFile2.header.vlrs):
+        print("Number of VLRs differs: file_1 has %i and file_2 has %i. Comparing where possible..."
+                % (len(inFile1.header.vlrs), len(inFile2.header.vlrs)))
+    for i in xrange(min(len(inFile1.header.vlrs), len(inFile2.header.vlrs))):
         outstr = "VLR Record: %i" %i
         outstr += " "*(50 - len(outstr))
         vlr1 = inFile1.header.vlrs[i].to_byte_string()
-        vlr2 = inFile1.header.vlrs[i].to_byte_string()
+        vlr2 = inFile2.header.vlrs[i].to_byte_string()
         if vlr1 == vlr2:
             print(outstr + "identical")
         else:
@@ -98,7 +106,11 @@ except:
 
 print_title("Checking EVLRs")
 try:
-    for i in xrange(len(inFile1.header.evlrs)):
+    if len(inFile1.header.evlrs) != len(inFile2.header.evlrs):
+        print("Number of VLRs differs: file_1 has %i and file_2 has %i. Comparing where possible..."
+                % (len(inFile1.header.evlrs), len(inFile2.header.evlrs)))
+
+    for i in xrange(min(len(inFile1.header.evlrs), len(inFile2.header.evlrs))):
         outstr = "EVLR Record: %i" %i
         outstr += " "*(50 - len(outstr))
         vlr1 = inFile1.header.evlrs[i].to_byte_string()
@@ -110,11 +122,15 @@ try:
 except:
     print("There was a problem comparing EVLRs")
 
-spec = inFile1.reader.point_format.lookup.keys()
+dims = set()
+for item in inFile1.reader.point_format.lookup.keys():
+    dims.add(item)
+for item in inFile2.reader.point_format.lookup.keys():
+    dims.add(item)
 print_title("Checking Dimensions")
 passed = 0
 failed = 0
-for dim in spec:
+for dim in dims:
     outstr = "Dimension: %s" % dim 
     outstr += " "*(50-len(outstr))
     if f(dim):
