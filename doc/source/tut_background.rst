@@ -156,7 +156,10 @@ around a bit.
 ======================  =====================  ==============================
  Field Name              Laspy Abbreviation     Length(in bits)
 ======================  =====================  ==============================
- Classification Flags    classification_flags   4
+ synthetic               synthetic              1
+ key point               key point              1
+ withheld                withheld               1
+ overlap                 overlap                1
  Scanner Channel         scanner_channel        2
  Scan Direction Flag     scan_dir_flag          1
  Edge of Flight Line     edge_flight_line       1

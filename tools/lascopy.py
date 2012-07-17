@@ -12,10 +12,12 @@ parser.add_argument('point_format', metavar='point_format', type=int, nargs='+',
 parser.add_argument('file_version', metavar='file_version', type=str, nargs='+',
                             help='output file version 1.0-1.4')
 parser.add_argument('-u', type=bool,help="Update the header histogram? (slow)", default=False)
-
+parser.add_argument('-b', type=bool,help="Attempt to preserve incompatable sub-byte sized data fields? (slow)", default=False)
 
 args = parser.parse_args()
-update_histogram = args.u
+
+UPDATE_HISTOGRAM= args.u
+PRESERVE = args.b
 
 ## Try to open in_file in read mode. 
 
@@ -41,11 +43,18 @@ if (point_format >= 2 and not (file_version in ["1.2", "1.3", "1.4"])):
 
 old_file_version = inFile.header.version
 old_point_format = inFile.header.data_format_id
+
+SUB_BYTE_COMPATABLE = (old_point_format <= 5) == (point_format <= 5)
+
 print("Input File: " + args.in_file[0] + ", %i point records." % len(inFile))
 print("Output File: " + args.out_file[0])
 print("Converting from file version %s to version %s." %(old_file_version, file_version)) 
 print("Converting from point format %i to format %i."%(old_point_format, point_format))
-
+if not SUB_BYTE_COMPATABLE:
+    print("""WARNING: The sub-byte sized fields differ between point formats 
+            %i and %i. By default this information will be lost. If you want 
+            laspy to try to preserve as much as possible, specify -b=True, though 
+            this may be quite slow depending on the size of the dataset.""")
 
 try:
     new_header = inFile.header.copy()
@@ -81,8 +90,19 @@ except Exception, error:
 try:
     for dimension in inFile.point_format.specs:
         if dimension.name in outFile.point_format.lookup:
+            if (not SUB_BYTE_COMPATABLE and dimension.name in ("raw_classification", 
+                "classification_flags", "classification_byte", "flag_byte")):
+                continue
             outFile.writer.set_dimension(dimension.name, inFile.reader.get_dimension(dimension.name))
             print("Copying: " + dimension.name)
+    if (not SUB_BYTE_COMPATABLE and PRESERVE):
+        # Are we converting down or up?
+        up = old_point_format < point_format
+        if up:
+            pass
+        else:
+            pass
+
 except Exception, error:
     print("Error copying data.")
     print(error)
@@ -90,6 +110,7 @@ except Exception, error:
 
 
 inFile.close()
-outFile.close(ignore_header_changes = not update_histogram)
+outFile.close(ignore_header_changes = not UPDATE_HISTOGRAM)
+
 
 

@@ -654,17 +654,36 @@ class FileManager():
             return(self.get_dimension("classification_byte"))
 
     def get_synthetic(self):
+        if self.header.data_format_id in (6,7,8,9,10):
+            rawDim = self.get_raw_classification_flags()
+            return(np.array([self.packed_str(self.binary_str(x)[0]) for x in rawDim])) 
+
         return(np.array([self.packed_str(self.binary_str(x)[5]) 
                 for x in self.get_raw_classification()])) 
 
     def get_key_point(self):
+        if self.header.data_format_id in (6,7,8,9,10):
+            rawDim = self.get_raw_classification_flags()
+            return(np.array([self.packed_str(self.binary_str(x)[1]) for x in rawDim])) 
+
         return(np.array([self.packed_str(self.binary_str(x)[6]) 
                 for x in self.get_raw_classification()])) 
 
     def get_withheld(self):
+        if self.header.data_format_id in (6,7,8,9,10):
+            rawDim = self.get_raw_classification_flags()
+            return(np.array([self.packed_str(self.binary_str(x)[2]) for x in rawDim])) 
+
         return(np.array([self.packed_str(self.binary_str(x)[7]) 
                 for x in self.get_raw_classification()])) 
     
+    def get_overlap(self):
+        if self.header.data_format_id in (6,7,8,9,10):
+            rawDim = self.get_raw_classification_flags()
+            return(np.array([self.packed_str(self.binary_str(x)[3]) for x in rawDim])) 
+        else:
+            raise LaspyException("Overlap only present in point formats > 5.")
+
     def get_scan_angle_rank(self):
         return(self.get_dimension("scan_angle_rank"))
     
@@ -1403,29 +1422,60 @@ class Writer(FileManager):
 
     def set_synthetic(self, synthetic):
         '''Set the binary field synthetic inside the raw classification byte'''
-        class_byte = self.binary_str_arr(self.get_raw_classification())
-        new_bits = self.binary_str_arr(synthetic, 1)
-        out_byte = self.bitpack((class_byte, new_bits, class_byte),
+        if self.header.data_format_id in (6,7,8,9,10):
+            class_byte = self.get_raw_classification_flags()
+            new_bits = self.binary_str_arr(synthetic, 1)
+            outbyte = self.bitpack((new_bits, class_byte), ((0,1), (1,8)))
+            self.set_raw_classification_flags(outbyte)
+        else:
+            class_byte = self.binary_str_arr(self.get_raw_classification())
+            new_bits = self.binary_str_arr(synthetic, 1)
+            out_byte = self.bitpack((class_byte, new_bits, class_byte),
                                    ((0,5), (0,1), (6,8)))
         self.set_dimension("raw_classification", out_byte)
         return
 
     def set_key_point(self, pt):
         '''Set the binary key_point field inside the raw classification byte'''
-        class_byte = self.binary_str_arr(self.get_raw_classification())
-        new_bits = self.binary_str_arr(pt, 1)
-        out_byte = self.bitpack((class_byte, new_bits, class_byte), 
+        if self.header.data_format_id in (6,7,8,9,10):
+            class_byte = self.get_raw_classification_flags()
+            new_bits = self.binary_str_arr(pt, 1)
+            outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,1),(0,1), (2,8)))
+            self.set_raw_classification_flags(outbyte)
+        else:
+            class_byte = self.binary_str_arr(self.get_raw_classification())
+            new_bits = self.binary_str_arr(pt, 1)
+            out_byte = self.bitpack((class_byte, new_bits, class_byte), 
                                 ((0,6),(0,1),(7,8)))
-        self.set_dimension("raw_classification", out_byte)
+            self.set_dimension("raw_classification", out_byte)
         return
  
     def set_withheld(self, withheld):
         '''Set the binary field withheld inside the raw classification byte'''
-        class_byte = self.binary_str_arr(self.get_raw_classification())
-        new_bits = self.binary_str_arr(withheld, 1)
-        out_byte = self.bitpack((class_byte, new_bits),
+        if self.header.data_format_id in (6,7,8,9,10):
+            class_byte = self.get_raw_classification_flags()
+            new_bits = self.binary_str_arr(withheld, 1)
+            outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,2),(0,1), (3,8)))
+            self.set_raw_classification_flags(outbyte)
+        else:
+            class_byte = self.binary_str_arr(self.get_raw_classification())
+            new_bits = self.binary_str_arr(withheld, 1)
+            out_byte = self.bitpack((class_byte, new_bits),
                                  ((0,7), (0,1)))
-        self.set_dimension("raw_classification", out_byte)
+            self.set_dimension("raw_classification", out_byte)
+        return
+
+    def set_overlap(self, overlap):
+        '''Set the binary field withheld inside the raw classification byte'''
+        if self.header.data_format_id in (6,7,8,9,10):
+            class_byte = self.get_raw_classification_flags()
+            new_bits = self.binary_str_arr(overlap, 1)
+            outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,3),(0,1), (4,8)))
+            self.set_raw_classification_flags(outbyte)
+        else:
+            raise LaspyException("Overlap only present in point formats > 5.")
+        return
+
 
     def set_scan_angle_rank(self, rank):
         '''Wrapper for set_dimension("scan_angle_rank")'''
