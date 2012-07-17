@@ -49,10 +49,18 @@ The following short script does just this:
         from laspy.file import File
         inFile = File("./laspytest/data/simple.las", mode = "r")
 
+When a file is opened in read mode, laspy first reads the header, processess any
+VLR and EVLR records, and then maps the point records with numpy. If no errors 
+are produced when calling the File constructor, you're ready to read data!
+
+
 **Reading Data**
 
 Now you're ready to read data from the file. This can be header information, 
-point data, or the contents of various VLR records:
+point data, or the contents of various VLR records. In general, point dimensions
+are accessable as properties of the main file object, and header properties 
+are accessable via the header property of the main file object. Refer to the 
+background section of the tutorial for a reference of laspy dimension and field names. 
 
     .. code-block:: python
        
@@ -77,7 +85,7 @@ point data, or the contents of various VLR records:
         the scaled value. Both methods support assignment as well, although due to
         rounding error assignment using the scaled dimensions is not reccomended.
 
-As you will have noticed, the :obj:`laspy.file.File` object *inFile* has a reference
+Again, the :obj:`laspy.file.File` object *inFile* has a reference
 to the :obj:`laspy.header.Header` object, which handles the getting and setting
 of information stored in the laspy header record of *simple.las*. Notice also that 
 the *scale* and *offset* values returned are actually lists of [*x scale, y scale, z scale*]
