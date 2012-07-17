@@ -31,7 +31,7 @@ def print_title(string):
 
 def f(x):
     try:
-        return(list(inFile1.reader.get_dimension(x)) == list(inFile2.reader.get_dimension(x)))
+        return(1*(list(inFile1.reader.get_dimension(x)) == list(inFile2.reader.get_dimension(x))))
     except:
         outstr = "Dimension: %s" %x
         outstr += " "*(50-len(outstr))
@@ -41,7 +41,7 @@ def f(x):
             print(outstr + "Not present in file_2.")
         else:
             print("There was an error comparing dimension: %s" + str(x))
-        return(False)
+        return(2)
 
 def g(x):
     try:
@@ -133,10 +133,11 @@ failed = 0
 for dim in dims:
     outstr = "Dimension: %s" % dim 
     outstr += " "*(50-len(outstr))
-    if f(dim):
+    result = f(dim)
+    if result == 1:
         passed += 1
         print(outstr +  "identical")
-    else:
+    elif result != 2:
         failed += 1
         print(outstr + "different")
 
