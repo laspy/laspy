@@ -2,20 +2,27 @@ from laspy import util
 from laspy import file as File
 import argparse
 
-parser = argparse.ArgumentParser(description='Compare LAS files file_1 and file_2 by dimension, header field, vlr and evlr.')
+
+## Setup argparse to accept command line arguments
+parser = argparse.ArgumentParser(
+        description='''Compare LAS files file_1 and file_2 by dimension, header
+                       field, vlr and evlr.''')
 parser.add_argument('file_1', metavar='file_1', type=str, nargs='+',
                     help='LAS file 1 path.')
 parser.add_argument('file_2', metavar='file_2', type=str, nargs='+',
                     help='LAS file 2 path.')
 
-parser.add_argument('-b', type=bool,help='Attempt to compare incompatable sub-byte sized data fields if present? (slow)', default=False)
+parser.add_argument('-b', type=bool,help='''Attempt to compare incompatable 
+        sub-byte sized data fields if present? (slow)''', default=False)
 
 args = parser.parse_args()
 
+## Set global varibles for convenience.
 file_1 = args.file_1[0]
 file_2 = args.file_2[0]
 PRESERVE = args.b 
 
+## Try to open both files in read mode.
 try:
     inFile1 = File.File(file_1,mode= "r")
     inFile2 = File.File(file_2,mode= "r")
@@ -24,7 +31,12 @@ except Exception, error:
     print(error)
     quit()
 
-SUB_BYTE_COMPATABLE = (inFile1.header.data_format_id <= 5) == (inFile2.header.data_format_id <= 5) 
+## Set global flag to indicate whether we need to look at incompatable 
+## bit field bytes. 
+SUB_BYTE_COMPATABLE = ((inFile1.header.data_format_id <= 5) == 
+                      (inFile2.header.data_format_id <= 5)) 
+
+## Warn the user if they chose not to check incompatable point formats.
 if (not SUB_BYTE_COMPATABLE) and (not PRESERVE):
     print("""WARNING: Point formats %i and %i have mismatched sub-byte fields. 
              The default behavior in this case is to ignore these fields during 
@@ -37,7 +49,7 @@ def print_title(string):
     print("#  " + string + " "*(65 - (len(string) + 4)) + "#")
     print("#"*65)
 
-
+## Define convenience function to try to compare point dimensions. 
 def f(x):
     try:
         return(1*(list(inFile1.reader.get_dimension(x)) == list(inFile2.reader.get_dimension(x))))
@@ -52,6 +64,7 @@ def f(x):
             print("There was an error comparing dimension: %s" + str(x))
         return(2)
 
+## Define convenience function to try to compare header fields. 
 def g(x):
     try:
         return((1*(inFile1.reader.get_header_property(x) == inFile2.reader.get_header_property(x))))
@@ -66,6 +79,7 @@ def g(x):
             print("There was an error while comparing header property: %s" + str(x))
         return(2)
 
+## Build union fo header fields, then check them.
 print_title("Checking Headers")
 try:
     passed = 0
@@ -91,10 +105,7 @@ try:
 except:
     print("There was an error while comparing headers. ")
 
-def checkVLR(specname, vlr1, vlr2):
-    return(vlr1.__dict__[specname] == vlr2.__dict__[specname])
-    
-
+## Check VLRs
 print_title("Checking VLRs")
 
 try:
@@ -113,6 +124,7 @@ try:
 except:
     print("There was a problem comparing VLRs")
 
+## Check EVLRs
 print_title("Checking EVLRs")
 try:
     if len(inFile1.header.evlrs) != len(inFile2.header.evlrs):
@@ -131,6 +143,7 @@ try:
 except:
     print("There was a problem comparing EVLRs")
 
+## Build a union of dimensions in each file, then compare them.
 dims = set()
 for item in inFile1.reader.point_format.lookup.keys():
     dims.add(item)
@@ -162,6 +175,7 @@ def print_sb(string, result):
         print(outstr + "different")
         return(0)
 
+## If we need to, compare valid sub-byte fields
 sb_total = 0
 if not SUB_BYTE_COMPATABLE and PRESERVE:
     print("Comparing sub-byte fields (this might take awhile)")
@@ -174,6 +188,8 @@ if not SUB_BYTE_COMPATABLE and PRESERVE:
     sb_total += print_sb("withheld", all(inFile1.withheld == inFile2.withheld))
     sb_total += print_sb("key_point", all(inFile1.key_point == inFile2.key_point))
 
+
+## Print summary
 print(str(passed) + " identical dimensions out of " + str(passed + failed))
 if not SUB_BYTE_COMPATABLE and PRESERVE:
     print("%i identical sub-byte fields out of %i" %(sb_total, 8))
