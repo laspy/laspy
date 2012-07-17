@@ -2,8 +2,8 @@ Laspy Tools
 ===========
 
 Laspy comes with several command line utilities which use the library. In the 
-laspy/tools directory, you should find lascopy.py and lasverify.py. These 
-are the two full utilites provided by laspy at the moment, though other (less complete)
+laspy/tools directory, you should find lascopy.py, lasexplorer.py, and lasverify.py. These 
+are the three full utilites provided by laspy at the moment, though other (less complete)
 code examples may be found in the laspy/misc directory.
 
 **lascopy**
@@ -63,6 +63,48 @@ the output file will not include them.
         cases such as this, a larger value may be stored in the input file than 
         can be written to the output file. If this occurs, a warning is printed 
         and the output file receives zeros for the offending fields. 
+
+**lasexplorer**
+
+*Overview*
+
+Lasexplorer is the simplest utility described here. It provides a basic entry
+point to start an interactive shell to try out the laspy API. It accepts one
+mandatory argument, the path to the file to be read. When run, the script reads
+in the requested file, and calls the resulting laspy file object inFile. Unless suppressed, 
+it also prints a brief summary of the LAS file supplied. 
+
+*Usage*
+
+The basic use case is simply:
+
+    .. code-block:: sh
+        
+        python -i lasexplorer.py ./path/to/las/file
+
+The shell defaults to read mode, which will prevent you from accidentally breaking
+any data files. If you want the ability to break stuff, however, you're free to specify 
+the optional mode argument to read/write:
+
+    .. code-block :: sh
+
+        python -i lasexplorer.py ./path/to/las/file -mode=rw
+
+The shell doesn't provide the ability to open write mode files from the command
+line, because this action requires a valid header object. If you'd like to experiment
+with write mode, however, you can easily instantiate pure write mode files once
+the shell is active:
+
+    .. code-block :: python
+        
+        new_write_mode_file = File("Path_to_file.las", mode = "w", 
+                                    header = inFile.header)
+
+If you'd like to supress the printed summary, simply specify -q=True:
+    
+    .. code block :: sh
+        
+        python -i lasexplorer.py ./path/to/las/file -q=True
 
 **lasverify**
 
