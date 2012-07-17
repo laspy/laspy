@@ -47,11 +47,22 @@ the output file will not include them.
 
     Suppose you want to convert ./file_1.LAS to point format 8 from 0, and to
     file version 1.4 from 1.0. Further, suppose that you want to make sure 
-    sub-byte fields are populated. You would call lascopy as:
+    sub-byte fields are populated and that the histogram is updated. 
+    You would call lascopy as:
 
     .. code-block:: sh
         
         python lascopy.py ./file_1.LAS ./file_2.LAS 8 1.4 -u=True -b=True
+
+
+    .. note::
+        Even if -b=True is specified, lascopy may not be able to store all sub-byte
+        data in the output format. This can occur when the input data has a larger
+        number of bits per field. For example, las point formats 6-10 reserve
+        four bits for return number, while formats 0-5 reserve only three. In 
+        cases such as this, a larger value may be stored in the input file than 
+        can be written to the output file. If this occurs, a warning is printed 
+        and the output file receives zeros for the offending fields. 
 
 **lasverify**
 

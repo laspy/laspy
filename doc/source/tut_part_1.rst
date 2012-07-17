@@ -69,6 +69,7 @@ point data, or the contents of various VLR records:
 
         scaled_x = scaled_x_dimension(inFile)
 
+
     .. note::
         Laspy can actually scale the x, y, and z dimensions for you. Upper case dimensions 
         (*las_file.X, las_file.Y, las_file.Z*) give the raw integer dimensions, 
