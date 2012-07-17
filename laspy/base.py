@@ -1423,22 +1423,23 @@ class Writer(FileManager):
     def set_synthetic(self, synthetic):
         '''Set the binary field synthetic inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.get_raw_classification_flags()
+            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
             new_bits = self.binary_str_arr(synthetic, 1)
-            outbyte = self.bitpack((new_bits, class_byte), ((0,1), (1,8)))
-            self.set_raw_classification_flags(outbyte)
+            out_byte = self.bitpack((new_bits, class_byte), 
+                                    ((0,1), (1,8)))
+            self.set_raw_classification_flags(out_byte)
         else:
             class_byte = self.binary_str_arr(self.get_raw_classification())
             new_bits = self.binary_str_arr(synthetic, 1)
             out_byte = self.bitpack((class_byte, new_bits, class_byte),
                                    ((0,5), (0,1), (6,8)))
-        self.set_dimension("raw_classification", out_byte)
+            self.set_dimension("raw_classification", out_byte)
         return
 
     def set_key_point(self, pt):
         '''Set the binary key_point field inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.get_raw_classification_flags()
+            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
             new_bits = self.binary_str_arr(pt, 1)
             outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,1),(0,1), (2,8)))
             self.set_raw_classification_flags(outbyte)
@@ -1453,7 +1454,7 @@ class Writer(FileManager):
     def set_withheld(self, withheld):
         '''Set the binary field withheld inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.get_raw_classification_flags()
+            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
             new_bits = self.binary_str_arr(withheld, 1)
             outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,2),(0,1), (3,8)))
             self.set_raw_classification_flags(outbyte)
@@ -1468,7 +1469,7 @@ class Writer(FileManager):
     def set_overlap(self, overlap):
         '''Set the binary field withheld inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.get_raw_classification_flags()
+            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
             new_bits = self.binary_str_arr(overlap, 1)
             outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,3),(0,1), (4,8)))
             self.set_raw_classification_flags(outbyte)

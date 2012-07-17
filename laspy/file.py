@@ -450,6 +450,16 @@ class File(object):
     withheld = property(get_withheld, set_withheld, None, None)
     Withheld = withheld
 
+    def get_overlap(self):
+        return(self._reader.get_overlap())
+    def set_overlap(self, overlap):
+        self.assertWriteMode()
+        self._writer.set_overlap(overlap)
+        return
+
+    overlap = property(get_overlap, set_overlap, None, None)
+
+
     def get_scan_angle_rank(self):
         return(self._reader.get_scan_angle_rank())
     def set_scan_angle_rank(self, rank):

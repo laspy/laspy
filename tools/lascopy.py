@@ -54,7 +54,7 @@ if not SUB_BYTE_COMPATABLE:
     print("""WARNING: The sub-byte sized fields differ between point formats 
             %i and %i. By default this information will be lost. If you want 
             laspy to try to preserve as much as possible, specify -b=True, though 
-            this may be quite slow depending on the size of the dataset.""")
+            this may be quite slow depending on the size of the dataset.""" % (old_point_format, point_format))
 
 try:
     new_header = inFile.header.copy()
@@ -97,11 +97,36 @@ try:
             print("Copying: " + dimension.name)
     if (not SUB_BYTE_COMPATABLE and PRESERVE):
         # Are we converting down or up?
+        print("Attepmpting to copy sub-byte fields (this might take awhile)")
         up = old_point_format < point_format
         if up:
-            pass
+            outFile.classification = inFile.classification
+            outFile.return_num = inFile.return_num
+            outFile.num_returns = inFile.num_returns
+            outFile.scan_dir_flag = inFile.scan_dir_flag
+            outFile.edge_flight_line = inFile.edge_flight_line
+            outFile.synthetic = inFile.synthetic
+            outFile.withheld = inFile.withheld
         else:
-            pass
+            try:
+                outFile.classification = inFile.classification
+            except Exception, error:
+                print("Error, couldnt set classification.")
+                print(error)
+            try:
+                outFile.return_num = inFile.return_num
+            except Exception, error:
+                print("Error, coun't set return number.")
+                print(error)
+            try:
+                outFile.num_returns = inFile.num_returns
+            except:
+                print("Error, couldn't set number of returns.")
+            outFile.scan_dir_flag = inFile.scan_dir_flag
+            outFile.edge_flight_line = inFile.edge_flight_line
+            outFile.synthetic = inFile.synthetic
+            outFile.withheld = inFile.withheld
+
 
 except Exception, error:
     print("Error copying data.")
@@ -111,6 +136,6 @@ except Exception, error:
 
 inFile.close()
 outFile.close(ignore_header_changes = not UPDATE_HISTOGRAM)
-
+print("Copy Complete")
 
 
