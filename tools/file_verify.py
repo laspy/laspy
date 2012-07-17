@@ -1,4 +1,3 @@
-import sys
 from laspy import util
 from laspy import file as File
 import argparse
@@ -9,11 +8,13 @@ parser.add_argument('file_1', metavar='file_1', type=str, nargs='+',
 parser.add_argument('file_2', metavar='file_2', type=str, nargs='+',
                     help='LAS file 2 path.')
 
+parser.add_argument('-b', type=bool,help='Attempt to compare incompatable sub-byte sized data fields if present? (slow)', default=False)
+
 args = parser.parse_args()
 
-print(args)
 file_1 = args.file_1[0]
 file_2 = args.file_2[0]
+PRESERVE = args.b 
 
 try:
     inFile1 = File.File(file_1,mode= "r")
@@ -22,6 +23,14 @@ except Exception, error:
     print("Error reading in files:")
     print(error)
     quit()
+
+SUB_BYTE_COMPATABLE = (inFile1.header.data_format_id <= 5) == (inFile2.header.data_format_id <= 5) 
+if (not SUB_BYTE_COMPATABLE) and (not PRESERVE):
+    print("""WARNING: Point formats %i and %i have mismatched sub-byte fields. 
+             The default behavior in this case is to ignore these fields during 
+             the file_verify procedure. If you want laspy to attempt to match up
+             sub-byte data between these two formats, specify -b=True 
+             (this might take some time depending on the size of the file)""")
 
 def print_title(string):
     print("#"*65)
@@ -36,9 +45,9 @@ def f(x):
         outstr = "Dimension: %s" %x
         outstr += " "*(50-len(outstr))
         if not (x in inFile1.point_format.lookup) and (x in inFile2.point_format.lookup):
-            print(outstr + "Not present in file_1.")
+            print(outstr + "not present in file_1.")
         elif not (x in inFile2.point_format.lookup) and (x in inFile1.point_format.lookup):
-            print(outstr + "Not present in file_2.")
+            print(outstr + "not present in file_2.")
         else:
             print("There was an error comparing dimension: %s" + str(x))
         return(2)
@@ -50,9 +59,9 @@ def g(x):
         outstr = "Header Property: %s" % x
         outstr += (" "*(50-len(outstr)))
         if not (x in inFile1.header.header_format.lookup) and (x in inFile2.header.header_format.lookup):
-            print(outstr + "Not present in file_1.")
+            print(outstr + "not present in file_1.")
         elif not (x in inFile2.header.header_format.lookup) and (x in inFile1.header.header_format.lookup):
-            print(outstr + "Not present in file_2.")
+            print(outstr + "not present in file_2.")
         else:
             print("There was an error while comparing header property: %s" + str(x))
         return(2)
@@ -131,6 +140,8 @@ print_title("Checking Dimensions")
 passed = 0
 failed = 0
 for dim in dims:
+    if not SUB_BYTE_COMPATABLE and dim in ("raw_classification","classification_flags", "classification_byte", "flag_byte"):
+        continue
     outstr = "Dimension: %s" % dim 
     outstr += " "*(50-len(outstr))
     result = f(dim)
@@ -141,6 +152,31 @@ for dim in dims:
         failed += 1
         print(outstr + "different")
 
+def print_sb(string, result):
+    outstr  ="Sub-byte field: " + string
+    outstr += " "*(50-len(outstr))
+    if result:
+        print(outstr + "identical")
+        return(1)
+    else:
+        print(outstr + "different")
+        return(0)
+
+sb_total = 0
+if not SUB_BYTE_COMPATABLE and PRESERVE:
+    print("Comparing sub-byte fields (this might take awhile)")
+    sb_total += print_sb("classification", all(inFile1.classification == inFile2.classification)) 
+    sb_total += print_sb("return_num", all(inFile1.return_num == inFile2.return_num))
+    sb_total += print_sb("num_returns", all(inFile1.num_returns == inFile2.num_returns))
+    sb_total += print_sb("scan_dir_flag", all(inFile1.scan_dir_flag == inFile2.scan_dir_flag))
+    sb_total += print_sb("edge_flight_line", all(inFile1.edge_flight_line == inFile2.edge_flight_line))
+    sb_total += print_sb("synthetic", all(inFile1.synthetic == inFile2.synthetic))
+    sb_total += print_sb("withheld", all(inFile1.withheld == inFile2.withheld))
+    sb_total += print_sb("key_point", all(inFile1.key_point == inFile2.key_point))
+
 print(str(passed) + " identical dimensions out of " + str(passed + failed))
+if not SUB_BYTE_COMPATABLE and PRESERVE:
+    print("%i identical sub-byte fields out of %i" %(sb_total, 8))
+
 inFile1.close()
 inFile2.close()

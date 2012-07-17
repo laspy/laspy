@@ -12,7 +12,7 @@ parser.add_argument('point_format', metavar='point_format', type=int, nargs='+',
 parser.add_argument('file_version', metavar='file_version', type=str, nargs='+',
                             help='output file version 1.0-1.4')
 parser.add_argument('-u', type=bool,help="Update the header histogram? (slow)", default=False)
-parser.add_argument('-b', type=bool,help="Attempt to preserve incompatable sub-byte sized data fields? (slow)", default=False)
+parser.add_argument('-b', type=bool,help="Attempt to preserve incompatable sub-byte sized data fields if present? (slow)", default=False)
 
 args = parser.parse_args()
 
@@ -50,7 +50,7 @@ print("Input File: " + args.in_file[0] + ", %i point records." % len(inFile))
 print("Output File: " + args.out_file[0])
 print("Converting from file version %s to version %s." %(old_file_version, file_version)) 
 print("Converting from point format %i to format %i."%(old_point_format, point_format))
-if not SUB_BYTE_COMPATABLE:
+if (not SUB_BYTE_COMPATABLE) and (not PRESERVE):
     print("""WARNING: The sub-byte sized fields differ between point formats 
             %i and %i. By default this information will be lost. If you want 
             laspy to try to preserve as much as possible, specify -b=True, though 
@@ -107,6 +107,7 @@ try:
             outFile.edge_flight_line = inFile.edge_flight_line
             outFile.synthetic = inFile.synthetic
             outFile.withheld = inFile.withheld
+            outFile.key_point = inFile.key_point
         else:
             try:
                 outFile.classification = inFile.classification
@@ -125,6 +126,7 @@ try:
             outFile.scan_dir_flag = inFile.scan_dir_flag
             outFile.edge_flight_line = inFile.edge_flight_line
             outFile.synthetic = inFile.synthetic
+            outFile.key_point = inFile.key_point
             outFile.withheld = inFile.withheld
 
 
