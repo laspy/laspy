@@ -11,8 +11,11 @@ parser.add_argument('point_format', metavar='point_format', type=int, nargs='+',
                            help='output point format (0-10)')
 parser.add_argument('file_version', metavar='file_version', type=str, nargs='+',
                             help='output file version 1.0-1.4')
+parser.add_argument('-u', type=bool,help="Update the header histogram? (slow)", default=False)
+
 
 args = parser.parse_args()
+update_histogram = args.u
 
 ## Try to open in_file in read mode. 
 
@@ -85,6 +88,6 @@ except Exception, error:
 
 
 inFile.close()
-outFile.close(ignore_header_changes = True)
+outFile.close(ignore_header_changes = not update_histogram)
 
 
