@@ -129,7 +129,7 @@ class File(object):
         if self._mode == 'w+':
             raise NotImplementedError
 
-    def close(self, ignore_header_changes = False):
+    def close(self, ignore_header_changes = False, minmax_mode="scaled"):
         '''Closes the LAS file
         '''
         if self._mode == "r":
@@ -137,7 +137,7 @@ class File(object):
             self._reader = None
             self._header = None
         else: 
-            self._writer.close(ignore_header_changes)    
+            self._writer.close(ignore_header_changes, minmax_mode)    
             self._reader = None
             self._writer = None
             self._header = None

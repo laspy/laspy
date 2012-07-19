@@ -434,7 +434,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.Z = z
         self.FileObject.header.update_min_max()
         file_max = self.FileObject.header.max
-        self.assertTrue(file_max == [x[0], y[0], z[0]])
+        self.assertTrue(file_max == [self.FileObject.x[0], self.FileObject.y[0], self.FileObject.z[0]])
     def test_histogram(self):
         h1 = self.FileObject.header.point_return_count
         self.FileObject.header.update_histogram()

@@ -916,11 +916,15 @@ class HeaderManager(object):
         "This is often caused by mal-formed header information. LAS Specifications differ on the length of this field, "+ 
         "and it is therefore important to set the header version correctly. In the meantime, try File.close(ignore_header_changes = True)" 
         )
-    def update_min_max(self):
+    def update_min_max(self, minmax_mode ="scaled"):
         '''Update the min and max X,Y,Z values.'''
-        x = list(self.writer.get_x())
-        y = list(self.writer.get_y())
-        z = list(self.writer.get_z()) 
+        if minmax_mode == "scaled":
+            scale=True
+        elif minmax_mode != "scaled":
+            scale=False
+        x = list(self.writer.get_x(scale))
+        y = list(self.writer.get_y(scale))
+        z = list(self.writer.get_z(scale)) 
         self.writer.set_header_property("x_max", np.max(x))
         self.writer.set_header_property("x_min", np.min(x))
         self.writer.set_header_property("y_max", np.max(y))

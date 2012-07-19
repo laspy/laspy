@@ -795,11 +795,11 @@ class Reader(FileManager):
 
 class Writer(FileManager):
 
-    def close(self, ignore_header_changes = False):
+    def close(self, ignore_header_changes = False, minmax_mode = "scaled"):
         '''Flush changes to mmap and close mmap and fileref''' 
         if (not ignore_header_changes) and (self.has_point_records):
             self.header.update_histogram()
-            self.header.update_min_max() 
+            self.header.update_min_max(minmax_mode) 
         self.data_provider.close()
    
     def __del__(self): 
