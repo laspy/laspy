@@ -58,7 +58,7 @@ are produced when calling the File constructor, you're ready to read data!
 
 Now you're ready to read data from the file. This can be header information, 
 point data, or the contents of various VLR records. In general, point dimensions
-are accessable as properties of the main file object, and header properties 
+are accessable as properties of the main file object, and header attributes 
 are accessable via the header property of the main file object. Refer to the 
 background section of the tutorial for a reference of laspy dimension and field names. 
 
@@ -116,6 +116,35 @@ based on the :obj:`laspy.util.Format` objects which are used to parse the file.
             print(spec.name)
 
 
+Many tasks require finding a subset of a larger data set. Luckily, numpy makes
+this very easy. For example, suppose we're interested in finding out whether a
+file has accurate min and max values for the X, Y, and Z dimensions. 
+
+    .. code-block:: python
+        
+        from laspy.file import File
+        import numpy as np
+
+        inFile = File("/path/to/lasfile", mode = "r")
+        # Some notes on the code below:
+        # 1. inFile.header.max returns a list: [max x, max y, max z]
+        # 2. np.logical_or is a numpy method which performs an element-wise "or"
+        #    comparison on the arrays given to it. In this case, we're interested
+        #    in points where a XYZ value is less than the minimum, or greater than 
+        #    the maximum. 
+        # 3. np.where is another numpy method which returns an array containing
+        #    the indexes of the "True" elemets of an input array. 
+
+        # Get arrays which indicate invalid X, Y, or Z values.
+        X_invalid = np.logical_or((inFile.header.min[0] > inFile.x), 
+                                  (inFile.header.max[0] < inFile.x))
+        Y_invalid = np.logical_or((inFile.header.min[1] > inFile.y), 
+                                  (inFile.header.max[1] < inFile.y))
+        Z_invalid = np.logical_or((inFile.header.min[2] > inFile.z),
+                                  (inFile.header.max[2] < inFile.z))
+        bad_indices = np.where(np.logical_or(X_invalid, Y_invalid, Z_invalid))
+
+        print(bad_indices)
 
 
 Now lets do something a bit more complicated. Say we're interested in grabbing
