@@ -33,6 +33,17 @@ the Day+Year fields into a python :obj:`datetime.datetime` object, and placing
 the X Y and Z scale and offset values together. 
 
 
+.. note::
+
+    The various LAS specifications say that the Max and Min X Y Z fields store unscaled values, however
+    LAS data in the wild appears not to follow this convention. Therefore, by default, laspy stores
+    the scaled double precision values and updates header files accordingly on file close. This can be 
+    overridden by supplying one of several optional arguments to file.close(). First, 
+    you can simply not update the header at all, by specifying  ignore_header_changes=True.
+    Second, you can ask that laspy store the unscaled values explicitly, by specifying minmax_mode="unscaled".
+
+    If this sounds like gibberish, feel free to ignore it!
+
 **Header: Version 1.0 - 1.2**
 
 ===============================  ==============================  ==============================
@@ -156,7 +167,10 @@ around a bit.
 ======================  =====================  ==============================
  Field Name              Laspy Abbreviation     Length(in bits)
 ======================  =====================  ==============================
- Classification Flags    classification_flags   4
+ synthetic               synthetic              1
+ key point               key point              1
+ withheld                withheld               1
+ overlap                 overlap                1
  Scanner Channel         scanner_channel        2
  Scan Direction Flag     scan_dir_flag          1
  Edge of Flight Line     edge_flight_line       1

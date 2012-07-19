@@ -64,7 +64,7 @@ class File(object):
     def open(self):
         '''Open the file for processing, called by __init__
         '''
-        
+       
         if self._mode == 'r':
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
@@ -129,7 +129,7 @@ class File(object):
         if self._mode == 'w+':
             raise NotImplementedError
 
-    def close(self, ignore_header_changes = False):
+    def close(self, ignore_header_changes = False, minmax_mode="scaled"):
         '''Closes the LAS file
         '''
         if self._mode == "r":
@@ -137,7 +137,7 @@ class File(object):
             self._reader = None
             self._header = None
         else: 
-            self._writer.close(ignore_header_changes)    
+            self._writer.close(ignore_header_changes, minmax_mode)    
             self._reader = None
             self._writer = None
             self._header = None
@@ -449,6 +449,16 @@ class File(object):
 
     withheld = property(get_withheld, set_withheld, None, None)
     Withheld = withheld
+
+    def get_overlap(self):
+        return(self._reader.get_overlap())
+    def set_overlap(self, overlap):
+        self.assertWriteMode()
+        self._writer.set_overlap(overlap)
+        return
+
+    overlap = property(get_overlap, set_overlap, None, None)
+
 
     def get_scan_angle_rank(self):
         return(self._reader.get_scan_angle_rank())
