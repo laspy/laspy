@@ -37,12 +37,18 @@ setup(name          = 'laspy',
                         and point focused API. Documentation is available at 
                         www.laspy.org, and the source is available at 
                         www.github.com/grantbrown/laspy''',
-      packages      = ['laspy', 'laspytest'],
+      packages      = ['laspy', 'laspytest','laspy.tools'],
       install_requires = ['numpy'],
       test_suite = 'laspytest.test_laspy',
       data_files = [("laspytest/data", ["simple.las", "simple1_3.las", "simple1_4.las"])], 
       include_package_data = True,
       zip_safe = False,
+      entry_points = {'console_scripts':['lascopy = laspy.tools.lascopy:main',
+                                         'lasexplorer = laspy.tools.lasexplorer:main',
+                                         'lasverify = laspy.tools.lasverify:main',
+                                         'lasvalidate = laspy.tools.lasvalidate:main'
+                                        ]},
+
       classifiers   = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

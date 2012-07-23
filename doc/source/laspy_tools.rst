@@ -1,10 +1,12 @@
 Laspy Tools
 ===========
 
-Laspy comes with several command line utilities which use the library. In the 
-laspy/tools directory, you should find lascopy.py, lasexplorer.py, and lasverify.py. These 
-are the three full utilites provided by laspy at the moment, though other (less complete)
-code examples may be found in the laspy/misc directory.
+Laspy comes with several command line utilities which use the library. When laspy 
+is installed with setup.py, these scripts are built and installed by setuptools, 
+and shold become available to the command line envionment you're using. The tools include
+lascopy, lasexplorer, lasverify, and lasvalidate. These are the four full utilites 
+provided by laspy at the moment, though other (less complete) code examples may 
+be found in the laspy/misc directory.
 
 **lascopy**
 
@@ -20,13 +22,13 @@ the output file will not include them.
 
     .. code-block:: sh
         
-        python lascopy.py -h
+        lascopy -h
 
     In general, lascopy is called as:
 
     .. code-block:: sh
         
-        python lascopy.py ./path/to/input/file ./path/to/output/file <output point format> <output file format>
+        lascopy ./path/to/input/file ./path/to/output/file <output point format> <output file format>
 
     lascopy also accepts the optional logical arguments, -b and -u. 
     
@@ -41,7 +43,7 @@ the output file will not include them.
     5, there is excess point return data which can not fit into the header. 
 
     Both of these options are associated with substantial overhead, and as a 
-    result they are False by default. 
+    result they are set to False by default. 
     
 *example*
 
@@ -52,7 +54,7 @@ the output file will not include them.
 
     .. code-block:: sh
         
-        python lascopy.py ./file_1.LAS ./file_2.LAS 8 1.4 -u=True -b=True
+        lascopy ./file_1.LAS ./file_2.LAS 8 1.4 -u=True -b=True
 
 
     .. note::
@@ -80,15 +82,15 @@ The basic use case is simply:
 
     .. code-block:: sh
         
-        python -i lasexplorer.py ./path/to/las/file
+        lasexplorer ./path/to/las/file
 
 The shell defaults to read mode, which will prevent you from accidentally breaking
 any data files. If you want the ability to break stuff, however, you're free to specify 
-the optional mode argument to read/write:
+the optional mode argument, and set it to read/write:
 
     .. code-block :: sh
 
-        python -i lasexplorer.py ./path/to/las/file -mode=rw
+        lasexplorer ./path/to/las/file -mode=rw
 
 The shell doesn't provide the ability to open write mode files from the command
 line, because this action requires a valid header object. If you'd like to experiment
@@ -100,12 +102,41 @@ the shell is active:
         new_write_mode_file = File("Path_to_file.las", mode = "w", 
                                     header = inFile.header)
 
+This is fine for learning how to use the API, but any substantial work is better
+done with a dedicated script (see tutorial for details on scripting with laspy).
+
 If you'd like to supress the printed summary, simply specify -q=True:
     
     .. code block :: sh
         
         python -i lasexplorer.py ./path/to/las/file -q=True
 
+**lasvalidate**
+
+*overview*
+
+Lasvalidate is a simple validation tool for las files. Currently, it runs three tests though this may be expanded. 
+First, it checks if all points fall inside the bounding box specified by file.header.max
+and file.header.min. Second, it checks that the bounding box is precise, that is, 
+that the max and min values specified by the header are equal to the max and min values
+prensent in the point data within a given tolerance. Finally, it checks that the X
+and Y range data makes sense. Lasvalidate produces a log file to indicate problems. 
+
+*usage*
+
+Lasvalidate is called as:
+
+    .. code-block:: sh
+        
+        lasvalidate ./path/to/las/file
+
+Optionally, the user can specify -log=/path/to/logfile and -tol=tolerance, where -log specifies
+where the log will be written, and -tol determines the tolerance for comparisons of actual and header
+max/min data. By default, the logfile is written to ./lasvalidate.log, and the tolerance is set to 0.01
+
+
+
+        
 **lasverify**
 
 *overview*
@@ -120,7 +151,7 @@ In general, lasverify is called as:
 
     .. code-block:: sh 
         
-        python lasverify.py ./path/to/file/1 ./path/to/file/2
+        lasverify ./path/to/file/1 ./path/to/file/2
 
     There is one additional argument,-b, which is similar in function to its 
     counterpart in lascopy. Specifying -b=True will cause lasverify to dig into
