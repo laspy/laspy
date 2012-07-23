@@ -22,6 +22,13 @@ class validate():
         tmp = open(self.args.log, "w")
         tmp.close()
 
+    def bb(self,inFile, xval, yval, zval):
+        X_invalid = np.logical_or((inFile.header.min[0] > xval), (inFile.header.max[0] < xval))
+        Y_invalid = np.logical_or((inFile.header.min[1] > yval), (inFile.header.max[1] < yval))
+        Z_invalid = np.logical_or((inFile.header.min[2] > zval), (inFile.header.max[2] < zval))
+
+        bad_indices = np.where(np.logical_or(X_invalid, Y_invalid, Z_invalid))
+        return(bad_indices)
 
     def test1(self, inFile):
         print("Test 1: Checking that all points fall inside header bounding box: ")
@@ -30,21 +37,26 @@ class validate():
         for i in bb:
             print("..." + str(i))
 
-        X_invalid = np.logical_or((inFile.header.min[0] > inFile.x), (inFile.header.max[0] < inFile.x))
-        Y_invalid = np.logical_or((inFile.header.min[1] > inFile.y), (inFile.header.max[1] < inFile.y))
-        Z_invalid = np.logical_or((inFile.header.min[2] > inFile.z), (inFile.header.max[2] < inFile.z))
+        bad_indices = self.bb(inFile, inFile.x, inFile.y, inFile.z)
 
-        bad_indices = np.where(np.logical_or(X_invalid, Y_invalid, Z_invalid))
         if len(bad_indices[0] == 0):
             print("... Header bounding box errors detected.")
             if len(bad_indices[0]) == len(inFile):
-                print("... All points outside bounding box.")
+                new_bi = self.bb(inFile, inFile.X, inFile.Y, inFile.Z)[0]
+                if len(new_bi) < len(inFile):
+                    print("... Using unscaled values gives fewer invalid points: " + str(len(new_bi)) + ", header appears to use unscaled data.")
+                    logging.info("Header appears to use unscaled data in max/min. This may follow spec, but is less common than using scaled data. ")
+                else:
+                    print("... Bounding box appears to be invalid.")
+                    logging.info("Bounding box appears to be invalid.")
+                    
             else:
                 print("... printing bad indices to log: " + self.args.log)
                 for i in bad_indices[0]:
                     logging.info("Point outside header bounding box: %i" % i)
         else:
             print("... passed.")
+
     def test2(self, inFile):
         print("Test 2: Checking that header bounding box is precise.")
         actual_max = [np.max(vec) for vec in [inFile.x, inFile.y, inFile.z]]
@@ -70,12 +82,28 @@ class validate():
             print("... passed")
         else:
             print("... failed")
+    def test3(self, inFile):
+        print("Test 3: Checking that X and Y range values are reasonable.")
+        X_range = np.max(inFile.x) - np.min(inFile.x)
+        Y_range = np.max(inFile.y) - np.min(inFile.y)
+        err = 0
+        if X_range > 2000:
+            err += 1
+            print("... X range may be unreasonable: " + str(X_range))
+            logging.info("X range may be unreasonable: " + str(X_range))
+        if Y_range > 2000:
+            err += 1
+            print("... Y range may be unreasonable: " + str(Y_range))
+            logging.info("Y range may be unreasonable: " + str(Y_range))
+        if err == 0:
+            print("... passed")
 
     def validate(self):
         print("Reading in file: " + self.args.in_file[0])
         inFile = File(self.args.in_file[0], mode = "r")
         self.test1(inFile)
         self.test2(inFile)
+        self.test3(inFile)
 
 
 def main():
