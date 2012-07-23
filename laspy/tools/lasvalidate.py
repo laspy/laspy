@@ -7,6 +7,8 @@ class validate():
     def __init__(self):
         self.parse_args()
         self.clear_log()
+        self.errors = 0
+        self.tests = 0
 
     def parse_args(self):        
         parser = argparse.ArgumentParser(description="""Accept the path to a .LAS file, 
@@ -54,8 +56,10 @@ class validate():
                 print("... printing bad indices to log: " + self.args.log)
                 for i in bad_indices[0]:
                     logging.info("Point outside header bounding box: %i" % i)
+            self.errors += 1
         else:
             print("... passed.")
+        self.tests += 1
 
     def test2(self, inFile):
         print("Test 2: Checking that header bounding box is precise.")
@@ -81,7 +85,10 @@ class validate():
         if err == 0:
             print("... passed")
         else:
+            self.errors += 1
             print("... failed")
+        self.tests += 1
+
     def test3(self, inFile):
         print("Test 3: Checking that X and Y range values are reasonable.")
         X_range = np.max(inFile.x) - np.min(inFile.x)
@@ -97,6 +104,10 @@ class validate():
             logging.info("Y range may be unreasonable: " + str(Y_range))
         if err == 0:
             print("... passed")
+        else:
+            print("... failed")
+            self.errors += 1
+        self.tests += 1
 
     def validate(self):
         print("Reading in file: " + self.args.in_file[0])
@@ -104,6 +115,7 @@ class validate():
         self.test1(inFile)
         self.test2(inFile)
         self.test3(inFile)
+        print(str(self.errors) + " errors out of " + str(self.tests) + " tests")
 
 
 def main():
