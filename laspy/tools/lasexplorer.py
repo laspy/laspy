@@ -53,7 +53,10 @@ class lasexplorer():
     def explore(self):
         inFile = self.inFile
         interp = code.InteractiveConsole(locals={"inFile":inFile}) 
-        interp.interact()
+        try:
+            interp.interact()
+        except KeyboardInterrupt, SystemExit:
+            quit()
 
 def main():
     expl = lasexplorer()
