@@ -284,6 +284,36 @@ have a HeaderManager (which has a header) ready to go:
         outFile2.points = ground_points
         outFile2.close()
 
+For another example, let's return to the bounding box script above. Let's say we
+want to keep only points which fit within the given bounding box, and store them to 
+a new file:
+
+
+    .. code-block:: python
+        
+        from laspy.file import File
+        import numpy as np
+
+        inFile = File("/path/to/lasfile", mode = "r")
+        
+        # Get arrays which indicate VALID X, Y, or Z values.
+
+        X_invalid = np.logical_and((inFile.header.min[0] <= inFile.x), 
+                                  (inFile.header.max[0] >= inFile.x))
+        Y_invalid = np.logical_and((inFile.header.min[1] <= inFile.y), 
+                                  (inFile.header.max[1] >= inFile.y))
+        Z_invalid = np.logical_and((inFile.header.min[2] <= inFile.z),
+                                  (inFile.header.max[2] >= inFile.z))
+        good_indices = np.where(np.logical_and(X_invalid, Y_invalid, Z_invalid))
+        good_points = inFile.points[good_indices]
+
+        output_file = File("/path/to/output/lasfile", mode = "w", header = inFile.header)
+        output_file.points = good_points
+        output_file.close()
+
+
+
+
 That covers the basics of read and write mode. If, however, you'd like to modify
 a las file in place, you can open it in read-write mode, as follows:
 
