@@ -19,6 +19,35 @@ class LaspyHeaderException(Exception):
     pass
 
 
+class ParseableVLR():
+    def parse_data():
+        if "LASF_Projection" in self.user_id and self.record_id == 2111:
+            pass
+            # OGC Math Transform WKT Record
+        elif "LASF_Projection" in self.user_id and self.record_id == 2112:
+            # OGC Coordinate System WKT
+            pass
+        elif "LASF_Projection" in self.user_id and self.record_id == 34735:
+            # GeoKeyDictionaryTag Record
+            pass
+        elif "LASF_Projection" in self.user_id and self.record_id == 34736:
+            # Geo Double Params Tag Record
+            pass
+        elif "LASF_Projection" in self.user_id and self.record_id == 34737:
+            # GeoAsciiParamsTagRecord
+            pass
+        elif "LASF_Spec" in self.user_id and self.record_id == 0:            
+            # Classification Lookup
+            pass
+        elif "LASF_Spec" in self.user_id and self.record_id == 3:            
+            #Text Area Description
+            pass
+        elif "LASF_Spec" in self.user_id and self.record_id == 4:            
+            # Extra Bytes
+            pass
+
+
+
 class ExtraBytesStruct(object):
     '''This class provides a frontend for the Extra Bytes Struct as defined
     in the LAS 1.4 specification. All Arguments are assumed to be default values
