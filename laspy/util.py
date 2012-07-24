@@ -130,7 +130,7 @@ class Format():
         self.pt_fmt_long = "<"
         if not (fmt in ("0", "1", "2", "3", "4", "5","6","7","8","9","10", "VLR", 
                         "EVLR", "h1.0", "h1.1", "h1.2", "h1.3", "h1.4", 
-                        "extra_bytes_struct", None)):
+                        "extra_bytes_struct", "None")):
             raise LaspyException("Invalid format: " + str(fmt))
         if self.fmt == None:
             return

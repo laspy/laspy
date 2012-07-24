@@ -92,6 +92,21 @@ class ParseableVLR():
         elif "LASF_Spec" in self.user_id and self.record_id == 4:            
             # Extra Bytes, currently handled by VLR constructor
             pass
+        
+        if self.body_fmt != None:
+            self.parsed_body = unpack(self.body_fmt.pt_fmt_long, self.VLR_body)
+        else:
+            self.parsed_body = None
+    
+
+    def body_summary(self):
+        if self.body_fmt == None:
+            return
+        idx = 0
+        for i in self.body_fmt:
+            out = str(self.parsed_body[idx])
+            print(i.name + ": " + (20-len(i.name))*" "  + out)
+            idx += 1
 
 class ExtraBytesStruct(object):
     '''This class provides a frontend for the Extra Bytes Struct as defined
@@ -244,6 +259,8 @@ class EVLR(ParseableVLR):
         self.user_id = str(user_id) + "\x00"*(16-len(str(user_id)))
         self.record_id = record_id
         self.VLR_body = VLR_body
+        self.body_fmt = None
+
         try: 
             self.rec_len_after_header = len(self.VLR_body) 
         except(TypeError):
@@ -366,6 +383,8 @@ class VLR(ParseableVLR):
         ### LOGICAL CONTENT ###
         self.isVLR = True
         self.fmt = reader.vlr_formats
+        self.parse_data()
+
 
     def setup_extra_bytes_spec(self, VLR_body):
         self.type = 1
