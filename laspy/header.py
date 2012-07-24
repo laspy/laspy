@@ -21,6 +21,8 @@ class LaspyHeaderException(Exception):
 
 class ParseableVLR():
     def parse_data(self):
+        '''Attempt to read VLR or EVLR body into the parsed_body attribute.'''
+
         if "LASF_Projection" in self.user_id and self.record_id == 2111:
             # OGC Math Transform WKT Record
             self.body_fmt = util.Format(None)
@@ -99,6 +101,7 @@ class ParseableVLR():
             self.parsed_body = None
     
     def pack_data(self):
+        '''Pack data from parsed_body into VLR_body.'''
         if self.body_fmt == None:
             raise util.LaspyException("Not a known VLR/EVLR type, can't pack parsed_body")
         try:
@@ -108,6 +111,7 @@ class ParseableVLR():
             raise util.LaspyException(error)
 
     def body_summary(self):
+        '''Print a summary of parsed_body to the log.'''
         if self.body_fmt == None:
             return
         idx = 0
@@ -330,6 +334,8 @@ class EVLR(ParseableVLR):
     
     def to_byte_string(self):
         '''Pack the entire EVLR into a byte string.'''
+        if self.parsed_body != None:
+            self.pack_data()
         out = (self.pack("reserved", self.reserved) + 
                self.pack("user_id", self.user_id) + 
                self.pack("record_id", self.record_id) + 
@@ -426,6 +432,8 @@ class VLR(ParseableVLR):
     
     def to_byte_string(self):
         '''Pack the entire VLR into a byte string.'''
+        if self.parsed_body != None:
+            self.pack_data()
         out = (self.pack("reserved", self.reserved) + 
                self.pack("user_id", self.user_id) + 
                self.pack("record_id", self.record_id) + 
@@ -1244,6 +1252,7 @@ class HeaderManager(object):
     vlrs = property(get_vlrs, set_vlrs, None, doc)
 
     def save_vlrs(self):
+        '''Write any changes to the VLRs to the file.'''
         self.assertWriteMode()
         self.writer.save_vlrs()
 

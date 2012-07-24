@@ -425,10 +425,8 @@ The five possible point formats are detailed below:
 
 Each LAS file can also contain a number of variable length records, or VLRs. These can
 be used to store specific georeferencing information, or user/software specific 
-data. The LAS specifications linked above define several specific VLRs, however 
-laspy does not parse VLRs at this level of detail. Instead, laspy documents the 
-VLR header, which should always be in a common format, and stores the raw bytes of the
-remaining record. 
+data. When laspy recognizes a specific type of VLR, it attempts to parse the VLR_body data, and
+provides a simple API to interact with these fields. 
 
 The LAS 1.3 specification also adds the concept of an extended VLR. In 1.3, waveform
 data is stored at the end of the file in a variable length record which can contain
@@ -441,6 +439,39 @@ as well as the byte offset to the first EVLR record. These numbers may be the sa
 or different. 
 
 To summarize in tabular form, LAS files follow the following structure:
+
+:obj:`laspy.header.VLR` Attributes:
+
+======================  ===============  ======================
+ Name                    Format in File   Length
+======================  ===============  ======================
+reserved                Unsigned Short    2
+user_id                 Character         16
+record_id               Unsigned Short    2
+rec_len_after_header    Unsigned Short    2
+description             Character         32
+VLR_body                Raw Bytes         rec_len_after_header
+======================  ===============  ======================
+
+Additionally, when laspy is able to parse a VLR_body, it provides an attribute called parsed_body, which 
+gives a numpy array of the VLR_body members. Also, several methods comprise the VLR_body api:
+parse_data, pack_data, and body_summary. The first unpacks data to parsed_body from VLR_body, while
+the second packs data from parsed_body to VLR_body. The last prints a simple summary of the parsed VLR body. 
+
+
+
+:obj:`laspy.header.EVLR` Attributes:
+
+======================  ==================  ======================
+ Name                    Format in File      Length
+======================  ==================  ======================
+reserved                Unsigned Short       2
+user_id                 Character            16
+record_id               Unsigned Short       2
+rec_len_after_header    Unsigned LongLong    8
+description             Character            32
+VLR_body                Raw Bytes            rec_len_after_header
+======================  ==================  ======================
 
 
 == =========================
@@ -474,30 +505,3 @@ To summarize in tabular form, LAS files follow the following structure:
 == =============================================
 
 \
-
-:obj:`laspy.header.VLR` Attributes:
-
-======================  ===============  ======================
- Name                    Format in File   Length
-======================  ===============  ======================
-reserved                Unsigned Short    2
-user_id                 Character         16
-record_id               Unsigned Short    2
-rec_len_after_header    Unsigned Short    2
-description             Character         32
-VLR_body                Raw Bytes         rec_len_after_header
-======================  ===============  ======================
-
-:obj:`laspy.header.EVLR` Attributes:
-
-======================  ==================  ======================
- Name                    Format in File      Length
-======================  ==================  ======================
-reserved                Unsigned Short       2
-user_id                 Character            16
-record_id               Unsigned Short       2
-rec_len_after_header    Unsigned LongLong    8
-description             Character            32
-VLR_body                Raw Bytes            rec_len_after_header
-======================  ==================  ======================
-

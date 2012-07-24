@@ -20,15 +20,15 @@ for an example of this (the LAS specification is also a helpful reference.)
     :members: __init__, to_byte_string
 
 .. autoclass:: laspy.header.EVLR
-    :members: __init__, __len__, to_byte_string
+    :members: __init__, __len__, parse_data, pack_data,body_summary,to_byte_string
 
 .. autoclass:: laspy.header.Header
     :members: format
 
 .. autoclass:: laspy.header.HeaderManager 
     :members: __init__,data_format_id, data_offset,data_record_length, date, file_signature, file_source_id, global_encoding, guid, header_size, 
-              max, major_version,min, minor_version,offset, padding, project_id, point_return_count,scale, schema,software_id, system_id, 
+              max, major_version,min, minor_version,offset, padding, project_id, point_return_count, save_vlrs, scale, schema,software_id, system_id, 
               update_histogram, update_min_max, version, vlrs 
 
 .. autoclass:: laspy.header.VLR
-    :members: __init__, __len__, to_byte_string
+    :members: __init__, __len__, parse_data, pack_data, body_summary, to_byte_string

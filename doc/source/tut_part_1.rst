@@ -338,11 +338,31 @@ a las file in place, you can open it in read-write mode, as follows:
 
 **Variable Length Records**
 
+Variable length records, or VLRs, are available in laspy as file.header.vlrs. 
+This property wil return a list of :obj:`laspy.header.VLR` instances, each of which 
+has a header which defines the type and size of their record. There are two fields 
+which together determine the type of VLR: user_id and record_id. For a summary of
+what these fields might mean, refer to the "Defined Variable Length Records" section
+of the LAS specification. These fields are not required to be known values, however
+unless they are standard record types, laspy will simply treat the body of the VLR
+as dumb bytes. 
+
+
 To create a VLR, you really only need to know user_id, record_id, and the data
 you want to store in VLR_body (For a fuller discussion of what a VLR is, see the 
 background section). The rest of the attributes are filled with null bytes
 or calculated according to your input, but if you'd like to specify the reserved or 
-description fields you can do so with additional arguments:
+description fields you can do so with additional arguments. 
+
+
+.. note::
+
+    If you are creating a known type of VLR, you will still need to fill the VLR_body with enough bytes 
+    to fit the data you need before manipulating it in human readable form via parsed_body. 
+    This part of laspy is still very much under development, so feedback on how 
+    it should function would be greatly appreciated.
+
+\   
 
     .. code-block:: python
         
@@ -355,6 +375,7 @@ description fields you can do so with additional arguments:
         # Instantiate a new VLR.
         new_vlr = VLR(user_id = "The User ID", record_id = 1, 
                       VLR_body = "\x00" * 1000)
+        # The \x00 represents what's called a "null byte"
         # Do the same thing without keword args
         new_vlr = VLR("The User ID", 1, "\x00" * 1000)
         # Do the same thing, but add a description field. 
@@ -367,6 +388,7 @@ description fields you can do so with additional arguments:
         old_vlrs.append(new_vlr)
         inFile.header.vlrs = old_vlrs
         inFile.close()
+
 
 
 **Putting it all together.**
