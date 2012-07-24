@@ -20,31 +20,83 @@ class LaspyHeaderException(Exception):
 
 
 class ParseableVLR():
-    def parse_data():
+    def parse_data(self):
         if "LASF_Projection" in self.user_id and self.record_id == 2111:
-            pass
             # OGC Math Transform WKT Record
+            self.body_fmt = util.Format(None)
+            self.body_fmt.add("ogc_math_transform", "ctypes.c_char", self.rec_len_after_header)
+
         elif "LASF_Projection" in self.user_id and self.record_id == 2112:
             # OGC Coordinate System WKT
-            pass
+            self.body_fmt = util.Format(None)
+            self.body_fmt.add("coordinate_system_wkt", "ctypes.c_char", self.rec_len_after_header)
+
         elif "LASF_Projection" in self.user_id and self.record_id == 34735:
             # GeoKeyDictionaryTag Record
-            pass
+            self.body_fmt = util.Format(None)
+            self.body_fmt.add("wKeyDirectoryVersion", "ctypes.c_ushort", 1)
+            self.body_fmt.add("wKeyRevision", "ctypes.c_ushort", 1)
+            self.body_fmt.add("wMinorRevision", "ctypes.c_ushort", 1)
+            self.body_fmt.add("wNumberOfKeys", "ctypes.c_ushort", 1)   
+            # Rest is made up of arrays of 4 unsigned shorts. 
+            bytes_left = (self.rec_len_after_header - 4*2)
+            if bytes_left % (4*2) != 0:
+                print("WARNING: Invalid body length for GeoKeyDictionaryTag, Not parsing.")
+                self.body_fmt = None
+                return
+            for sKeyEntry in xrange(bytes_left/8):
+                self.body_fmt.add("wKeyId_%i" % sKeyEntry, "ctypes.c_ushort", 1)
+                self.body_fmt.add("wTIFFTagLocation_%i" % sKeyEntry, "ctypes.c_ushort", 1)
+                self.body_fmt.add("wCount_%i" % sKeyEntry, "ctypes.c_ushort", 1)
+                self.body_fmt.add("wValue_Offset_%i" % sKeyEntry, "ctypes.c_ushort", 1)
+
         elif "LASF_Projection" in self.user_id and self.record_id == 34736:
             # Geo Double Params Tag Record
-            pass
+            self.body_fmt = util.Format(None)
+            if self.rec_len_after_header % 8 != 0:
+                print("WARNING: Invalid body length for GeoDoubleParamsTag, not parsing.")
+                return
+            for i in xrange(self.rec_len_after_header/8):
+                self.body_fmt.add("param_%i" % i, "ctypes.c_double", 1)
+
         elif "LASF_Projection" in self.user_id and self.record_id == 34737:
             # GeoAsciiParamsTagRecord
-            pass
+            self.body_fmt = util.Format(None)
+            self.body_fmt.add("GeoASCIIParamsTag", "ctypes.c_char", self.rec_len_after_header)
+
         elif "LASF_Spec" in self.user_id and self.record_id == 0:            
             # Classification Lookup
-            pass
+            self.body_fmt = util.Format(None)
+            if self.rec_len_after_header % 16 != 0:
+                print("WARNING: Invalid body length for classification lookup, not parsing.")
+                return
+            for i in xrange(self.rec_len_after_header / 16):
+                self.body_fmt.add("ClassNumber_%i", "ctypes.c_uchar", 1)
+                self.body_fmt.add("Description_%i", "ctypes.c_char", 15)
+
+        elif "LASF_Spec" in self.user_id and self.record_id == 1:            
+            # Header Flight line lookup
+            self.body_fmt = util.Format(None)
+            if self.rec_len_after_header % 257 != 0:
+                print("WARNING: Invalid body length for header flight line lookup, not parsing.")
+                return
+            for i in xrange(self.rec_len_after_header / 257):
+                self.body_fmt.add("FileMarkerNumber_%i", "ctypes.c_uchar", 1)
+                self.body_fmt.add("Filename_%i", "ctypes.c_char", 256)
+
         elif "LASF_Spec" in self.user_id and self.record_id == 3:            
             #Text Area Description
-            pass
+            self.body_fmt = util.Format(None)
+            self.body_fmt.add("text_area_description", "ctypes.c_char", self.rec_len_after_header)
+
         elif "LASF_Spec" in self.user_id and self.record_id == 4:            
             # Extra Bytes
+            self.body_fmt = util.Format(None)
+            if self.rec_len_after_header% 192 != 0:
+                print("Invalid body length for extra bytes vlr, not parsing.")
+                return
             pass
+
 
 
 
@@ -286,6 +338,7 @@ class VLR():
         self.VLR_body = VLR_body
         self.type = 0
         self.reader = False
+        self.body_fmt = None
         try:
             self.rec_len_after_header = len(self.VLR_body)
         except(TypeError):
