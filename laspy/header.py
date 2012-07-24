@@ -90,15 +90,8 @@ class ParseableVLR():
             self.body_fmt.add("text_area_description", "ctypes.c_char", self.rec_len_after_header)
 
         elif "LASF_Spec" in self.user_id and self.record_id == 4:            
-            # Extra Bytes
-            self.body_fmt = util.Format(None)
-            if self.rec_len_after_header% 192 != 0:
-                print("Invalid body length for extra bytes vlr, not parsing.")
-                return
+            # Extra Bytes, currently handled by VLR constructor
             pass
-
-
-
 
 class ExtraBytesStruct(object):
     '''This class provides a frontend for the Extra Bytes Struct as defined
@@ -243,7 +236,7 @@ class ExtraBytesStruct(object):
     description = property(get_description, set_description, None, None)
 
         
-class EVLR():
+class EVLR(ParseableVLR):
     ''' An extended VLR as defined in LAS specification 1.4'''
     def __init__(self, user_id, record_id, VLR_body, **kwargs):
         '''Build the EVLR using the required arguments user_id, record_id, and
@@ -268,6 +261,7 @@ class EVLR():
         self.type = 0
         if self.user_id == "LASF_Spec" and self.record_id == 4:
             self.setup_extra_bytes_spec(self.VLR_body)
+        self.parse_data()
 
     def setup_extra_bytes_spec(self, VLR_body):
         self.type = 1
@@ -327,7 +321,7 @@ class EVLR():
         return(out)
 
 
-class VLR():
+class VLR(ParseableVLR):
     '''An object to create/read/store data from LAS Variable Length Records.
     Requires three arguments: (user_id, string[16]), (record_id, int2), (VLR_body, any data with len < ~65k)'''
     def __init__(self, user_id, record_id, VLR_body, **kwargs):
@@ -356,6 +350,7 @@ class VLR():
         self.fmt = util.Format("VLR")
         if self.user_id == "LASF_Spec" and self.record_id == 4:
             self.setup_extra_bytes_spec(self.VLR_body)
+        self.parse_data()
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''
