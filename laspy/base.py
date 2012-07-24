@@ -869,6 +869,9 @@ class Writer(FileManager):
                 "write mode, and must be performed before point information is provided." + 
                 "Try closing the file and opening it in rw mode. "))
  
+    def save_vlrs(self):
+        self.set_vlrs(self.vlrs)
+
     def set_vlrs(self, value): 
         if value == False or len(value) == 0:
             return

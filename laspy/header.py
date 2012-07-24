@@ -1243,6 +1243,10 @@ class HeaderManager(object):
         '''
     vlrs = property(get_vlrs, set_vlrs, None, doc)
 
+    def save_vlrs(self):
+        self.assertWriteMode()
+        self.writer.save_vlrs()
+
     def get_evlrs(self):
         return(self.reader.get_evlrs())
     def set_evlrs(self, value):
