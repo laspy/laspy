@@ -94,10 +94,18 @@ class ParseableVLR():
             pass
         
         if self.body_fmt != None:
-            self.parsed_body = unpack(self.body_fmt.pt_fmt_long, self.VLR_body)
+            self.parsed_body = np.array(unpack(self.body_fmt.pt_fmt_long, self.VLR_body))
         else:
             self.parsed_body = None
     
+    def pack_data(self):
+        if self.body_fmt == None:
+            raise util.LaspyException("Not a known VLR/EVLR type, can't pack parsed_body")
+        try:
+            packed = pack(self.body_fmt.pt_fmt_long, *self.parsed_body)
+            self.VLR_body = packed
+        except Exception, error:
+            raise util.LaspyException(error)
 
     def body_summary(self):
         if self.body_fmt == None:
