@@ -56,10 +56,18 @@ class DataProvider():
         if not self.manager.header.version in ("1.3", "1.4"): 
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
+            if self.manager.header.point_records_count != len(self._pmap):
+                if self.manager.mode == "r":
+                    raise LaspyException("""Invalid Point Records Count Information Encountered in Header. 
+                                        Please correct. Header.point_records_count = %i, and %i records actually detected."""%(self.manager.header.point_records_count, len(self._pmap)))
+                else:
+                    print("WARNING: laspy found invalid data in header.point_records_count. Header.point_records_count = %i, and %i records actually detected. Attempting to correct mismatch.")
+                    self.manager.header.point_records_count = len(self._pmap)
         else:  
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset,
                         count = self.manager.header.point_records_count)
+
     
     def close(self, flush = True):
         '''Close the data provider and flush changes if _mmap and _pmap exist.''' 
