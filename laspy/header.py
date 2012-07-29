@@ -952,9 +952,8 @@ class HeaderManager(object):
         return self.reader.get_pointrecordscount()
 
     def set_pointrecordscount(self, value):
-        if not self.file_mode in ("w", "w+"):
-            raise LaspyHeaderException("File must be open in write or append mode " + 
-                                        "to change the number of point records.")
+        if not self.file_mode in ("w", "w+","rw"):
+            raise LaspyHeaderException("File must be open in a write mode to modify point_records_count.")
         self.writer.set_header_property("point_records_count", value)
         
         '''Sets the number of point records expected in the file.

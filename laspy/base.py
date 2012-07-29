@@ -61,7 +61,9 @@ class DataProvider():
                     raise LaspyException("""Invalid Point Records Count Information Encountered in Header. 
                                         Please correct. Header.point_records_count = %i, and %i records actually detected."""%(self.manager.header.point_records_count, len(self._pmap)))
                 else:
-                    print("WARNING: laspy found invalid data in header.point_records_count. Header.point_records_count = %i, and %i records actually detected. Attempting to correct mismatch.")
+                    print("""WARNING: laspy found invalid data in header.point_records_count. 
+                            Header.point_records_count = %i, and %i records actually detected. 
+                            Attempting to correct mismatch.""")%(self.manager.header.point_records_count, len(self._pmap))
                     self.manager.header.point_records_count = len(self._pmap)
         else:  
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
