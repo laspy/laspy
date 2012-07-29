@@ -142,6 +142,21 @@ class File(object):
             self._writer = None
             self._header = None
 
+    def visualize(self, mode = "intensity"):
+        try:
+            _mode = {"intensity":2, "elevation":3, "rgb":4}
+        except KeyError:
+            print("Unrecognized mode: " + str(mode))
+            _mode = 2
+        try:
+            from laspy.glviewer import run_glviewer
+            run_glviewer(self, _mode)
+            return(0)
+        except Exception, err:
+            print("Something went wrong: ")
+            print(err)
+            return(1)
+
     def addProperty(self, name):
         def fget(self):
             return(self._reader.get_dimension(name))
