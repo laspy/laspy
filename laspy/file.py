@@ -144,7 +144,7 @@ class File(object):
 
     def visualize(self, mode = "intensity"):
         try:
-            _mode = {"intensity":2, "elevation":3, "rgb":4}
+            _mode = {"intensity":2, "elevation":3, "rgb":4}[mode]
         except KeyError:
             print("Unrecognized mode: " + str(mode))
             _mode = 2
