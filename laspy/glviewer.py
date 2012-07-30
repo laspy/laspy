@@ -258,9 +258,3 @@ class pcl_image():
         if all(self.focus == self.location):
             self.focus[{"x":1, "y":2, "z":0}[key]] += 1500
 
-
-#dataFile = File("./Serpent Mound Model LAS Data.las", mode = "r")
-#dataFile = File("./iowacity.las", mode = "r")
-dataFile = File("./autzen-colorized-1.2-3.las", mode = "r")
-
-pclimage = pcl_image(dataFile)
