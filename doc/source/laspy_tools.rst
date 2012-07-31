@@ -4,9 +4,10 @@ Laspy Tools
 Laspy comes with several command line utilities which use the library. When laspy 
 is installed with setup.py, these scripts are built and installed by setuptools, 
 and shold become available to the command line envionment you're using. The tools include
-lascopy, lasexplorer, lasverify, and lasvalidate. These are the four full utilites 
-provided by laspy at the moment, though other (less complete) code examples may 
-be found in the laspy/misc directory.
+lascopy, lasexplorer, lasverify, lasvalidate, and finally lasviewer. The first four
+are full command line utilities and should function out of the box after a successful laspy install.
+Lasviewer is an OpenGL point cloud viewer using laspy to provide LAS data, and requires OpenGL 3.0+, PyOpenGL, and
+GLUT. 
 
 **lascopy**
 
@@ -159,3 +160,61 @@ In general, lasverify is called as:
     of a format mismatch, which occurrs when comparing files of point format
     less than six with those greater than five. Specifying -b=True when no such
     mismatch exists has no effect. 
+
+**lasviewer**
+
+*overview*
+
+Lasviewer is an OpenGL point cloud visualizer for laspy. Upon successful OpenGL 
+initialization, the user is shown a resizable OpenGL window, which should depict the
+point cloud associated with the input file from a birds-eye view. The user can then 
+navigate around the point cloud using their keyboard. 
+
+*usage*
+
+Lasviewer is simple to call:
+    
+    .. code-block:: sh
+        
+        lasviewer ./path/to/las/file
+
+By default, lasviewer will display the point cloud in greyscale according to the
+intensity dimension. There are two other supported modes: elevation and rgb:
+
+    .. code-block:: sh
+            
+        lasviewer ./path/to/las/file --mode=elevation
+
+        lasviewer ./path/to/las/file --mode=rgb
+
+The elevation mode creates a three color heatmap (blue-green-red) for the Z dimension, 
+and colors the point cloud accordingly. The RGB mode uses color data present in the 
+LAS file to provide a true-color representation of the point cloud. If either of 
+these modes fails for whatever reason, lasviewer will attempt to fall back to 
+the intensity mode. 
+
+There are currently no menus or help options once the viewer is running, so the following 
+controls will prove useful:
+
+
+========== ======================================
+    Key        Function
+========== ======================================     
+ w          Look up
+ s          Look down
+ a          Look left
+ d          Look right
+ shift-w    Move forwards
+ shift-s    Move backwards
+ shift-a    Move left
+ shift-d    Move right
+ q          Roll counterclockwise
+ e          Roll clockwise
+ \+         Increase movement/look granularity
+ \-         Decrease movement/look granularity
+ x          Snap to x axis
+ y          Snap to y azis
+ z          Snap to z axis
+========== ======================================
+
+There is currently no mouse support, though the bindings are in place for future development.
