@@ -23,7 +23,7 @@ class lasview():
         print("Reading: " + self.args.in_file[0])
         self.mode = self.args.mode
         try:
-            inFile = File(self.args.in_file[0], mode = self.args.mode)
+            inFile = File(self.args.in_file[0], mode = "r")
             self.inFile = inFile
         except Exception, error:
             print("Error while reading file:")
