@@ -64,7 +64,6 @@ class pcl_image():
 
  
     def set_color_mode(self, mode):
-        import pdb;pdb.set_trace()
         if mode == 1:
             col = np.array([0,0,0,1,1,1], dtype = np.float32)
             self.data = self.data = np.sum([self.data, col], axis = 0)
