@@ -29,8 +29,9 @@ class pcl_image():
         self.mouse_drag = gl.GL_FALSE
 
         # Wire up GL
-        glut.glutInit(sys.argv)
         #gl.glPointSize(4)
+        glut.glutInit(sys.argv)
+
         glut.glutInitDisplayMode(glut.GLUT_RGB | glut.GLUT_DOUBLE | glut.GLUT_DEPTH)
         glut.glutInitWindowSize(500,500)
         glut.glutInitWindowPosition(10,10)
@@ -50,10 +51,10 @@ class pcl_image():
     def read_data(self, mode):
         data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z, 
                     np.zeros(len(self.file_object)),np.zeros(len(self.file_object)),
-                    np.zeros(len(self.file_object)))).T ,dtype=np.float32)
+                    np.zeros(len(self.file_object)))).T)
         #data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z)).T ,dtype=np.float32)
         means = np.mean(data, axis = 0)
-        self.data = data - means
+        self.data = np.array(data - means,dtype = np.float32)
         self.N = len(self.file_object)
         try:
             self.set_color_mode(mode)
