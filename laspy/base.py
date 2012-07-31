@@ -583,8 +583,6 @@ class FileManager():
             val = self._get_datum(0, spec)
             self.header_properties[name] = val
             return(val)
-
-    ### To Implement: Scale            
     
     def get_x(self, scale=False):
         if not scale:
@@ -704,86 +702,43 @@ class FileManager():
         return(self.get_dimension("pt_src_id"))
     
     def get_gps_time(self):
-        fmt = self.header.data_format_id
-        if fmt in (1,2,3,4,5):
-            return(self.get_dimension("gps_time"))
-        raise LaspyException("GPS Time is not defined on pt format: "
-                        + str(fmt))
-    
+        return(self.get_dimension("gps_time"))
 
     def get_red(self):
-        fmt = self.header.data_format_id
-        if fmt in (2,3,5):
-            return(self.get_dimension("red"))
-        raise LaspyException("Color is not available for point format: " + str(fmt))
+        return(self.get_dimension("red"))
     
     def get_green(self):
-        fmt = self.header.data_format_id
-        if fmt in (2,3,5):
-            return(self.get_dimension("green"))
-        raise LaspyException("Color is not available for point format: " + str(fmt))
-
-    
+        return(self.get_dimension("green"))
+ 
     def get_blue(self):
-        fmt = self.header.data_format_id
-        if fmt in (2,3,5):
-            return(self.get_dimension("blue"))
-        raise LaspyException("Color is not available for point format: " + str(fmt))
+        return(self.get_dimension("blue"))
+
 
     def get_nir(self):
-        fmt = self.header.data_format_id
-        if fmt in (8,10):
-            return(self.get_dimension("nir"))
-        raise LaspyException("NIR is not available for point format: "+str(fmt))
+        return(self.get_dimension("nir"))
+
 
     def get_wave_packet_desc_index(self):
-        fmt = self.header.data_format_id
-        if fmt in (4, 5):
-            return(self.get_dimension("wave_packet_desc_index"))
-        raise LaspyException("Wave Packet Description Index Not"
-                       + " Available for Pt Fmt: " + str(fmt))
+        return(self.get_dimension("wave_packet_desc_index"))
 
     def get_byte_offset_to_waveform_data(self):
-        fmt = self.header.data_format_id
-        if fmt in (4, 5):
-            return(self.get_dimension("byte_offset_to_waveform_data"))
-        raise LaspyException("Byte Offset to Waveform Data Not"
-                       + " Available for Pt Fmt: " + str(fmt))
+        return(self.get_dimension("byte_offset_to_waveform_data"))
 
     def get_waveform_packet_size(self):
-        fmt = self.header.data_format_id
-        if fmt in (4, 5):
-            return(self.get_dimension("waveform_packet_size"))
-        raise LaspyException("Wave Packet Description Index Not"
-                       + " Available for Pt Fmt: " + str(fmt))
+        return(self.get_dimension("waveform_packet_size"))
 
     def get_return_point_waveform_loc(self):
-        fmt = self.header.data_format_id
-        if fmt in (4, 5):
-            return(self.get_dimension("return_point_waveform_loc"))
-        raise LaspyException("Return Pointt Waveformm Loc Not"
-                       + " Available for Pt Fmt: " +str(fmt))
+        return(self.get_dimension("return_point_waveform_loc"))
 
     def get_x_t(self):
-        fmt = self.header.data_format_id
-        if fmt in (4, 5):
-            return(self.get_dimension("x_t"))
-        raise LaspyException("X(t) Not"
-                       + " Available for Pt Fmt: " +str(fmt))
+        return(self.get_dimension("x_t"))
 
     def get_y_t(self):
-        fmt = self.header.data_format_id
-        if fmt in (4, 5):
-            return(self.get_dimension("y_t"))
-        raise LaspyException("Y(t) Not"
-                       + " Available for Pt Fmt: " +str(fmt))
+        return(self.get_dimension("y_t"))
 
     def get_z_t(self):
-        fmt = self.header.data_format_id
-        if fmt in (4, 5):
-            return(self.get_dimension("z_t"))
-        raise LaspyException("z(t) Not"
-                       + " Available for Pt Fmt: " +str(fmt))
+        return(self.get_dimension("z_t"))
+
     def get_extra_bytes(self):
         if "extra_bytes" in self.point_format.lookup.keys():
             return(self.get_dimension("extra_bytes"))
@@ -1331,8 +1286,6 @@ class Writer(FileManager):
         
         return(outArr)
 
-    ########
-
     def set_return_num(self, num):
         '''Set the binary field return_num in the flag_byte''' 
         if self.header.data_format_id in (0,1,2,3,4,5):
@@ -1508,106 +1461,54 @@ class Writer(FileManager):
     
     def set_gps_time(self, data):
         '''Wrapper for set_dimension("gps_time")'''
-        vsn = self.header.data_format_id
-        if vsn in (1,2,3,4,5):    
-            self.set_dimension("gps_time", data)
-            return
-        raise LaspyException("GPS Time is not available for point format: " + str(vsn))
+        self.set_dimension("gps_time", data)
     
     def set_red(self, red):
         '''Wrapper for set_dimension("red")'''
-        vsn = self.header.data_format_id
-        if vsn in (2,3,5):
-            self.set_dimension("red", red)
-            return
-        raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
+        self.set_dimension("red", red)
 
     def set_green(self, green):
         '''Wrapper for set_dimension("green")'''
-        vsn = self.header.data_format_id
-        if vsn in (2,3,5):
-            self.set_dimension("green", green)
-            return
-        raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
-
-
+        self.set_dimension("green", green) 
     
     def set_blue(self, blue):
         '''Wrapper for set_dimension("blue")'''
-        vsn = self.header.data_format_id
-        if vsn in (2,3,5):
-            self.set_dimension("blue", blue)
-            return
-        raise LaspyException("Color Data Not Available for Point Format: " + str(vsn))
+        self.set_dimension("blue", blue)
 
     def set_nir(self, value):
-        fmt = self.header.data_format_id
-        if fmt in (8,10):
-            self.get_dimension("nir", value)
-        raise LaspyException("NIR is not available for point format: "+str(fmt))
+        self.get_dimension("nir", value)
 
     def set_wave_packet_desc_index(self, idx):
         '''Wrapper for set_dimension("wave_packet_desc_index") This is not currently functional, 
         since addition of waveform data broke the numpy point map.'''
-        vsn = self.header.data_format_id
-        if vsn in (4, 5):
-            self.set_dimension("wave_packet_desc_index", idx)
-            return
-        raise LaspyException("Waveform Packet Description Index Not Available for Point Format: " + str(vsn))
+        self.set_dimension("wave_packet_desc_index", idx)
 
     def set_byte_offset_to_waveform_data(self, idx):
         '''Wrapper for set_dimension("byte_offset_to_waveform_data"), not currently functional,
         because addition of waveform data broke the numpy point map.'''
-        vsn = self.header.data_format_id
-        if vsn in (4, 5):
-            self.set_dimension("byte_offset_to_waveform_data", idx)
-            return
-        raise LaspyException("Byte Offset To Waveform Data Not Available for Point Format: " + str(vsn))
-
-
+        self.set_dimension("byte_offset_to_waveform_data", idx)
     
     def set_waveform_packet_size(self, size):
         '''Wrapper for set_dimension("waveform_packet_size"), not currently functional, because
         addition of waveform data broke the numpy point map.'''
-        vsn = self.header.data_format_id
-        if vsn in (4, 5):
-            self.set_dimension("waveform_packet_size", size)
-            return
-        raise LaspyException("Waveform Packet Size Not Available for Point Format: " + str(vsn))
+        self.set_dimension("waveform_packet_size", size)
     
     def set_return_point_waveform_loc(self, loc):
         '''Wrapper for set_dimension("return_point_waveform_loc"), not currently functional,
         because addition of waveform data broke the numpy point map.'''
-        
-        vsn = self.header.data_format_id
-        if vsn in (4, 5):
-            self.set_dimension("return_point_waveform_loc", loc)
-            return
-        raise LaspyException("Return Point Waveform Loc Not Available for Point Format: " + str(vsn))
+        self.set_dimension("return_point_waveform_loc", loc)
     
     def set_x_t(self, x):
         '''Wrapper for set_dimension("x_t")'''
-        vsn = self.header.data_format_id
-        if vsn in (4, 5):
-            self.set_dimension("x_t", x)
-            return
-        raise LaspyException("x_t Not Available for Point Format: " + str(vsn))
+        self.set_dimension("x_t", x)
 
     def set_y_t(self, y):
         '''Wrapper for set_dimension("y_t")'''
-        vsn = self.header.data_format_id
-        if vsn in (4, 5):
-            self.set_dimension("y_t", y)
-            return
-        raise LaspyException("y_t Not Available for Point Format: " + str(vsn))
+        self.set_dimension("y_t", y)
     
     def set_z_t(self, z):
         '''Wrapper for set_dimension("z_t")'''
-        vsn = self.header.data_format_id
-        if vsn in (4, 5):
-            self.set_dimension("z_t", z)
-            return
-        raise LaspyException("z_t Not Available for Point Format: " + str(vsn))
+        self.set_dimension("z_t", z)
 
     def set_extra_bytes(self, extra_bytes):
         '''Wrapper for set_dimension("extra_bytes")'''

@@ -30,7 +30,7 @@ class pcl_image():
 
         # Wire up GL
         glut.glutInit(sys.argv)
-        gl.glPointSize(4)
+        #gl.glPointSize(4)
         glut.glutInitDisplayMode(glut.GLUT_RGB | glut.GLUT_DOUBLE | glut.GLUT_DEPTH)
         glut.glutInitWindowSize(500,500)
         glut.glutInitWindowPosition(10,10)
@@ -64,6 +64,7 @@ class pcl_image():
 
  
     def set_color_mode(self, mode):
+        import pdb;pdb.set_trace()
         if mode == 1:
             col = np.array([0,0,0,1,1,1], dtype = np.float32)
             self.data = self.data = np.sum([self.data, col], axis = 0)
