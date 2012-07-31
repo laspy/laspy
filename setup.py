@@ -46,7 +46,8 @@ setup(name          = 'laspy',
       entry_points = {'console_scripts':['lascopy = laspy.tools.lascopy:main',
                                          'lasexplorer = laspy.tools.lasexplorer:main',
                                          'lasverify = laspy.tools.lasverify:main',
-                                         'lasvalidate = laspy.tools.lasvalidate:main'
+                                         'lasvalidate = laspy.tools.lasvalidate:main',
+                                         'lasviewer = laspy.tools.lasviewer:main'
                                         ]},
 
       classifiers   = [
