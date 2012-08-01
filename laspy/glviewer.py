@@ -53,10 +53,12 @@ class pcl_image():
                     np.zeros(len(self.file_object)),np.zeros(len(self.file_object)),
                     np.zeros(len(self.file_object)))).T)
         #data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z)).T ,dtype=np.float32)
-        means = np.mean(data, axis = 0)
-        self.data = np.array(data - means,dtype = np.float32)
+        means = np.mean(data, axis = 0, dtype = np.float64)
+        tmp = data - means
+        self.data = np.array((tmp),dtype = np.float32)
         self.N = len(self.file_object)
         try:
+            print("Generating Color Matrix")
             self.set_color_mode(mode)
         except:
             print("Error using color mode: " +str(mode) + ", using mode 3.")
@@ -67,7 +69,7 @@ class pcl_image():
     def set_color_mode(self, mode):
         if mode == 1:
             col = np.array([0,0,0,1,1,1], dtype = np.float32)
-            self.data = self.data = np.sum([self.data, col], axis = 0)
+            self.data = self.data+ col 
         elif mode == 2:
             scaled = self.file_object.intensity/float(np.max(self.file_object.intensity))
             col = np.array(np.vstack((np.zeros(self.N), np.zeros(self.N), np.zeros(self.N), 
@@ -108,6 +110,7 @@ class pcl_image():
         gl.glViewport(0,0,w,h)
         gl.glLoadIdentity()
         glu.gluPerspective(90,float(ratio),1,2000);
+        #glu.gluPerspective(359,float(ratio),1,100000)
         gl.glMatrixMode(gl.GL_MODELVIEW)
         
     def timerEvent(self, arg):
