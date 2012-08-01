@@ -11,6 +11,45 @@ def run_glviewer(file_object, mode):
     glviewer = pcl_image(file_object, mode)
     return(0)
 
+class VBO_Provider():
+    def __init__(self, array, vbsize):
+        self.vbos = []
+        start_idx = 0
+        end_idx = vbsize
+        i = 1
+        while(start_idx < array.shape[0]):
+            print("Adding Data Buffer " + str(i))
+            i += 1
+            try:
+                st_index = start_idx
+                end_idx = min(array.shape[0], start_idx + vbsize) 
+                _vbo = vbo.VBO(data = array[start_idx:end_idx,:],
+                            usage = gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
+                self.vbos.append((_vbo, end_idx -start_idx))
+                start_idx += vbsize
+            except Exception, err:
+                print("Error initializing VBO:")
+                print(err)
+            print(self.vbos[-1][1])
+    def bind(self):
+        for _vbo in self.vbos:
+            _vbo[0].bind()
+
+    def unbind(self):
+        for _vbo in self.vbos:
+            _vbo[0].unbind()
+    def draw(self):
+        i =0
+        for _vbo in self.vbos:
+            gl.glVertexPointer(3, gl.GL_FLOAT, 24,_vbo[0])
+            gl.glColorPointer(3, gl.GL_FLOAT, 24, _vbo[0] + 12)
+            i += vbo[1]
+        gl.glDrawArrays(gl.GL_POINTS,0,_i)
+
+
+
+
+
 class pcl_image():
     def __init__(self, file_object, mode = 3):
         self.file_object = file_object
@@ -35,7 +74,7 @@ class pcl_image():
         glut.glutInitDisplayMode(glut.GLUT_RGB | glut.GLUT_DOUBLE | glut.GLUT_DEPTH)
         glut.glutInitWindowSize(500,500)
         glut.glutInitWindowPosition(10,10)
-        glut.glutCreateWindow("Experiment 1")
+        glut.glutCreateWindow("Laspy+OpenGL Pointcloud")
         glut.glutDisplayFunc(self.display)
         glut.glutReshapeFunc(self.reshape)
         glut.glutMouseFunc(self.mouse)
@@ -63,7 +102,8 @@ class pcl_image():
         except:
             print("Error using color mode: " +str(mode) + ", using mode 3.")
             self.set_color_mode(2)
-        self.data_buffer = vbo.VBO(data = self.data,usage= gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
+        self.data_buffer = VBO_Provider(self.data, 100000)
+        #self.data_buffer = vbo.VBO(data = self.data,usage= gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
 
  
     def set_color_mode(self, mode):
@@ -122,9 +162,8 @@ class pcl_image():
         self.data_buffer.bind()        
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
         gl.glEnableClientState(gl.GL_COLOR_ARRAY)
-        gl.glVertexPointer(3, gl.GL_FLOAT, 24,self.data_buffer)
-        gl.glColorPointer(3, gl.GL_FLOAT, 24, self.data_buffer + 12)
-        gl.glDrawArrays(gl.GL_POINTS,0,num)
+        self.data_buffer.draw()
+
         #gl.glDrawElementsui(0,num)
 
         self.data_buffer.unbind()
