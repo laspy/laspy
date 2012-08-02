@@ -12,25 +12,33 @@ def run_glviewer(file_object, mode):
     return(0)
 
 class VBO_Provider():
-    def __init__(self, array, vbsize):
+    def __init__(self, file_object, vbsize, means, mode):
         self.vbos = []
+        self.allcolor = False
         start_idx = 0
+        self.file_object = file_object
         end_idx = vbsize
         i = 1
-        while(start_idx < array.shape[0]):
-            print("Adding Data Buffer " + str(i))
+
+        while(start_idx < len((file_object))):
             i += 1
             try:
-                st_index = start_idx
-                end_idx = min(array.shape[0], start_idx + vbsize) 
-                _vbo = vbo.VBO(data = array[start_idx:end_idx,:],
+                end_idx = min(len(file_object), start_idx + vbsize) 
+                print("Buffering points" + str(start_idx) + " to " + str((end_idx)))
+                dat = self.slice_file(start_idx, end_idx, means)
+                self.set_color_mode(mode, start_idx, end_idx, dat)
+                _vbo = vbo.VBO(data = np.array(dat, dtype = np.float32),
                             usage = gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
                 self.vbos.append((_vbo, end_idx -start_idx))
                 start_idx += vbsize
             except Exception, err:
                 print("Error initializing VBO:")
                 print(err)
-            print(self.vbos[-1][1])
+
+
+    def slice_file(self,start_idx, end_idx, means):
+        return(np.array(np.vstack((self.file_object.x[start_idx:end_idx], self.file_object.y[start_idx:end_idx], self.file_object.z[start_idx:end_idx], 
+                                  np.zeros(end_idx - start_idx),np.zeros(end_idx - start_idx),np.zeros(end_idx - start_idx))).T) - means)
 
     def bind(self):
         for _vbo in self.vbos:
@@ -48,10 +56,44 @@ class VBO_Provider():
             gl.glDrawArrays(gl.GL_POINTS, 0, _vbo[1]) 
             _vbo[0].unbind()
         #gl.glMultiDrawArrays(gl.GL_POINTS, 0,100000, len(self.vbos))
+    
+    def set_color_mode(self, mode,start_idx, end_idx, data):
+        if mode == 1:
+            col = np.array([0,0,0,1,1,1], dtype = np.float32)
+            return(data+ col)
+        elif mode == 2:
+            if type(self.allcolor) == bool:
+                self.allcolor = self.file_object.intensity/float(np.max(self.file_object.intensity))
+            scaled = self.allcolor[start_idx:end_idx] + 0.1
+            col = np.array((np.vstack((scaled, scaled, scaled)).T), dtype = np.float32)
+            data[:,3:6] += col
+            return(data)
+        elif mode == 3:
+            if type(self.allcolor) == bool:
+                self.allcolor = self.heatmap(self.file_object.z)
+            col = self.allcolor[start_idx:end_idx]
+            data[:,3:6] += col
+            return(data)
+        elif mode == 4:
+            _max = max(np.max(self.file_object.red), np.max(self.file_object.green), np.max(self.file_object.blue))
+            _min = min(np.min(self.file_object.red), np.min(self.file_object.green), np.min(self.file_object.blue))
+            diff = _max - _min
+            col = np.array(np.vstack((self.file_object.red[start_idx:end_idx], self.file_object.green[start_idx:end_idx], self.file_object.blue[start_idx:end_idx])).T, dtype = np.float32)
+            col -= _min
+            col /= diff
+            data[:,3:6] += col
+            return(data)
 
-
-
-
+    def heatmap(self, vec, mode = 1):
+        _max = np.max(vec)
+        _min = np.min(vec)
+        diff = _max-_min
+        red = (vec-_min)/float(diff) 
+        if mode == 1:
+            col = np.array(np.vstack((red**4, np.sqrt(0.0625-(0.5-red)**4) , (1-red)**4)),dtype = np.float32).T 
+        else:
+            col = np.array(np.vstack((red**4, np.zeros(self.N) , (1-red)**4)),dtype = np.float32).T 
+        return(col)
 
 class pcl_image():
     def __init__(self, file_object, mode = 3):
@@ -91,59 +133,26 @@ class pcl_image():
         
 
     def read_data(self, mode):
-        data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z, 
-                    np.zeros(len(self.file_object)),np.zeros(len(self.file_object)),
-                    np.zeros(len(self.file_object)))).T)
+        #data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z, 
+        #            np.zeros(len(self.file_object), dtype=np.uint8),np.zeros(len(self.file_object), dtype=np.uint8),
+        #            np.zeros(len(self.file_object), dtype=np.uint8))).T)
         #data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z)).T ,dtype=np.float32)
-        means = np.mean(data, axis = 0, dtype = np.float64)
-        tmp = data - means
-        self.data = np.array((tmp),dtype = np.float32)
+        means = np.array([np.mean(self.file_object.x, dtype = np.float64), 
+                          np.mean(self.file_object.y, dtype = np.float64), 
+                          np.mean(self.file_object.z, dtype = np.float64),
+                          0,0,0])
+        #np.mean(data, axis = 0, dtype = np.float64)
+        
         self.N = len(self.file_object)
-        try:
-            print("Generating Color Matrix")
-            self.set_color_mode(mode)
-        except:
-            print("Error using color mode: " +str(mode) + ", using mode 3.")
-            self.set_color_mode(2)
-        self.data_buffer = VBO_Provider(self.data, 100000)
-        #self.data_buffer = vbo.VBO(data = self.data,usage= gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
+        #try:
+        #    print("Generating Color Matrix")
+        #    self.set_color_mode(mode)
+        #except:
+        #    print("Error using color mode: " +str(mode) + ", using mode 3.")
+        #    self.set_color_mode(2)
+        self.data_buffer = VBO_Provider(self.file_object, 1000000, means, mode)        
 
  
-    def set_color_mode(self, mode):
-        if mode == 1:
-            col = np.array([0,0,0,1,1,1], dtype = np.float32)
-            self.data = self.data+ col 
-        elif mode == 2:
-            scaled = self.file_object.intensity/float(np.max(self.file_object.intensity))
-            col = np.array(np.vstack((np.zeros(self.N), np.zeros(self.N), np.zeros(self.N), 
-                            scaled + 0.1, scaled + 0.1, scaled + 0.1)).T, dtype = np.float32)
-            self.data = np.sum([self.data, col], axis = 0)
-
-        elif mode == 3:
-            print("Mode3")
-            col = self.heatmap(self.data[:,2])
-            self.data[:,3:6] += col
-        elif mode == 4:
-            _max = max(np.max(self.file_object.red), np.max(self.file_object.green), np.max(self.file_object.blue))
-            _min = min(np.min(self.file_object.red), np.min(self.file_object.green), np.min(self.file_object.blue))
-            diff = _max - _min
-            col = np.array(np.vstack((self.file_object.red, self.file_object.green, self.file_object.blue)).T, dtype = np.float32)
-            col -= _min
-            col /= diff
-            self.data[:,3:6] += col
-
-    def heatmap(self, vec, mode = 1):
-        _max = np.max(vec)
-        _min = np.min(vec)
-        diff = _max-_min
-        red = (vec-_min)/float(diff) 
-        if mode == 1:
-            col = np.array(np.vstack((red**4, np.sqrt(0.0625-(0.5-red)**4) , (1-red)**4)),dtype = np.float32).T 
-        else:
-            col = np.array(np.vstack((red**4, np.zeros(self.N) , (1-red)**4)),dtype = np.float32).T 
-
-
-        return(col)
 
     def reshape(self, w, h):
         print("Reshape " + str(w) + ", " + str(h))
@@ -273,10 +282,10 @@ class pcl_image():
             self.camera_move(self.movement_granularity * -100.0, axis = 2)
         elif key == "+":
             self.movement_granularity *= 0.8
-            self.look_granularity = min(self.look_granularity + 1, 50)
+            self.look_granularity /= 0.8
         elif key == "-":
             self.movement_granularity /= 0.8
-            self.look_granularity = max(self.look_granularity - 1, 8)
+            self.look_granularity *= 0.8
         elif key in ("x", "y", "z"):
             self.set_up_axis(key)
         print(key)
