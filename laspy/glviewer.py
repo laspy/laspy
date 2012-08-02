@@ -31,6 +31,7 @@ class VBO_Provider():
                 print("Error initializing VBO:")
                 print(err)
             print(self.vbos[-1][1])
+
     def bind(self):
         for _vbo in self.vbos:
             _vbo[0].bind()
@@ -39,12 +40,14 @@ class VBO_Provider():
         for _vbo in self.vbos:
             _vbo[0].unbind()
     def draw(self):
-        i =0
+
         for _vbo in self.vbos:
+            _vbo[0].bind()
             gl.glVertexPointer(3, gl.GL_FLOAT, 24,_vbo[0])
             gl.glColorPointer(3, gl.GL_FLOAT, 24, _vbo[0] + 12)
-            i += _vbo[1]
-            gl.glDrawArrays(gl.GL_POINTS, 0,100000)
+            gl.glDrawArrays(gl.GL_POINTS, 0, _vbo[1]) 
+            _vbo[0].unbind()
+        #gl.glMultiDrawArrays(gl.GL_POINTS, 0,100000, len(self.vbos))
 
 
 
@@ -150,7 +153,7 @@ class pcl_image():
         gl.glViewport(0,0,w,h)
         gl.glLoadIdentity()
         glu.gluPerspective(90,float(ratio),1,2000);
-        #glu.gluPerspective(359,float(ratio),1,100000)
+
         gl.glMatrixMode(gl.GL_MODELVIEW)
         
     def timerEvent(self, arg):
@@ -159,23 +162,14 @@ class pcl_image():
         glut.glutTimerFunc(10,self.timerEvent,1)
 
     def draw_points(self, num):
-        self.data_buffer.bind()        
+
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
         gl.glEnableClientState(gl.GL_COLOR_ARRAY)
         self.data_buffer.draw()
 
-        #gl.glDrawElementsui(0,num)
-
-        self.data_buffer.unbind()
         gl.glDisableClientState(gl.GL_COLOR_ARRAY)
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
-        
-
-
-
-        
-        #buff.bind_vertexes(3, gl.GL_FLOAT)
-        #gl.glDrawElementsui(gl.GL_POINTS, range(num))
+         
         
             
     def rotate_vector(self, vec_rot, vec_about, theta):
