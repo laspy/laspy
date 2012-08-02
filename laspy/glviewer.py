@@ -24,7 +24,7 @@ class VBO_Provider():
             i += 1
             try:
                 end_idx = min(len(file_object), start_idx + vbsize) 
-                print("Buffering points" + str(start_idx) + " to " + str((end_idx)))
+                print("Buffering points " + str(start_idx) + " to " + str((end_idx)))
                 dat = self.slice_file(start_idx, end_idx, means)
                 self.set_color_mode(mode, start_idx, end_idx, dat)
                 _vbo = vbo.VBO(data = np.array(dat, dtype = np.float32),
