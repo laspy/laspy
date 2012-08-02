@@ -170,6 +170,7 @@ class FileManager():
             raise LaspyException("Append Mode Not Supported")
         
     def setup_read_write(self, vlrs, evlrs):
+        self._header_current = True
         self.data_provider.open("r+b")
         self.data_provider.map() 
         self.header_format = Format("h" + self.grab_file_version())
@@ -207,6 +208,7 @@ class FileManager():
         return
 
     def setup_write(self,header, vlrs, evlrs):
+        self._header_current = False
         if header == False:
             raise LaspyException("Write mode requires a valid header object.")
         ## No file to store data yet.
@@ -763,7 +765,8 @@ class Writer(FileManager):
     def close(self, ignore_header_changes = False, minmax_mode = "scaled"):
         '''Flush changes to mmap and close mmap and fileref''' 
         if (not ignore_header_changes) and (self.has_point_records):
-            self.header.update_histogram()
+            if not self._header_current:
+                self.header.update_histogram()
             self.header.update_min_max(minmax_mode) 
         self.data_provider.close()
    
@@ -1288,6 +1291,7 @@ class Writer(FileManager):
 
     def set_return_num(self, num):
         '''Set the binary field return_num in the flag_byte''' 
+        self._header_current = False
         if self.header.data_format_id in (0,1,2,3,4,5):
             flag_byte = self.binary_str_arr(self.get_flag_byte())
             newBits = self.binary_str_arr(num, 3)
@@ -1302,6 +1306,7 @@ class Writer(FileManager):
 
     def set_num_returns(self, num):
         '''Set the binary field num_returns in the flag_byte'''
+        self._header_current = False
         if self.header.data_format_id in (0,1,2,3,4,5):
             flag_byte = self.binary_str_arr(self.get_flag_byte())
             newBits = self.binary_str_arr(num, 3)
