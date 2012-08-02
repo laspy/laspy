@@ -43,8 +43,8 @@ class VBO_Provider():
         for _vbo in self.vbos:
             gl.glVertexPointer(3, gl.GL_FLOAT, 24,_vbo[0])
             gl.glColorPointer(3, gl.GL_FLOAT, 24, _vbo[0] + 12)
-            i += vbo[1]
-        gl.glDrawArrays(gl.GL_POINTS,0,_i)
+            i += _vbo[1]
+            gl.glDrawArrays(gl.GL_POINTS, 0,100000)
 
 
 
