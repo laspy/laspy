@@ -10,11 +10,11 @@ class lasview():
         parser =argparse.ArgumentParser(description = """Open a file in read mode and
                                         print a simple description.""")
         parser.add_argument("in_file", metavar = "in_file", 
-                            type=str,nargs="+",help = "LAS file to explore")
-        parser.add_argument("--mode",metavar="viewer_mode", type=str,default="intensity", 
-                help = "Mode, default is intensity. Acceptable values are elevation, intensity, and, rgb.")
-
-
+                            type=str,nargs="+",help = "LAS file to plot")
+        parser.add_argument("--mode",metavar="viewer_mode", type=str,default="greyscale", 
+                help = "Color Mode. Values to specify with a dimension: greyscale, heatmap.  Values which include a dimension: elevation, intensity, rgb")
+        parser.add_argument("--dimension", metavar = "dim", type=str, default="intensity",
+                help = "Color Dimension. Can be any single LAS dimension, default is intensity. Using color mode rgb, elevation, and intensity overrides this field.")
 
         self.args = parser.parse_args()
      
@@ -22,6 +22,7 @@ class lasview():
     # Check mode
         print("Reading: " + self.args.in_file[0])
         self.mode = self.args.mode
+        self.dim = self.args.dim
         try:
             inFile = File(self.args.in_file[0], mode = "r")
             self.inFile = inFile
@@ -31,7 +32,7 @@ class lasview():
             quit()
         
     def view(self):
-        self.inFile.visualize(self.mode)
+        self.inFile.visualize(self.mode, self.dim)
 
 def main():
     expl = lasview()

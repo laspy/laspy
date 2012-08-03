@@ -7,12 +7,12 @@ import numpy as np
 import random
 import sys
 
-def run_glviewer(file_object, mode):
-    glviewer = pcl_image(file_object, mode)
+def run_glviewer(file_object, mode, dim):
+    glviewer = pcl_image(file_object, mode, dim)
     return(0)
 
 class VBO_Provider():
-    def __init__(self, file_object, vbsize, means, mode):
+    def __init__(self, file_object, vbsize, means, mode, dim):
         self.vbos = []
         self.allcolor = False
         start_idx = 0
@@ -26,7 +26,7 @@ class VBO_Provider():
                 end_idx = min(len(file_object), start_idx + vbsize) 
                 print("Buffering points " + str(start_idx) + " to " + str((end_idx)))
                 dat = self.slice_file(start_idx, end_idx, means)
-                self.set_color_mode(mode, start_idx, end_idx, dat)
+                self.set_color_mode(mode,dim, start_idx, end_idx, dat)
                 _vbo = vbo.VBO(data = np.array(dat, dtype = np.float32),
                             usage = gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
                 self.vbos.append((_vbo, end_idx -start_idx))
@@ -57,24 +57,27 @@ class VBO_Provider():
             _vbo[0].unbind()
         #gl.glMultiDrawArrays(gl.GL_POINTS, 0,100000, len(self.vbos))
     
-    def set_color_mode(self, mode,start_idx, end_idx, data):
-        if mode == 1:
-            col = np.array([0,0,0,1,1,1], dtype = np.float32)
-            return(data+ col)
-        elif mode == 2:
+    def set_color_mode(self, mode, dim,start_idx, end_idx, data): 
+        if mode in ["grey", "greyscale", "intensity"]:
             if type(self.allcolor) == bool:
-                self.allcolor = self.file_object.intensity/float(np.max(self.file_object.intensity))
+                self.allcolor = self.file_object.reader.get_dimension(dim)/float(np.max(self.file_object.get_dimension(dim)))
             scaled = self.allcolor[start_idx:end_idx] + 0.1
             col = np.array((np.vstack((scaled, scaled, scaled)).T), dtype = np.float32)
             data[:,3:6] += col
             return(data)
-        elif mode == 3:
+        elif (mode == "elevation" or (mode == "heatmap" and dim == "z")):
             if type(self.allcolor) == bool:
                 self.allcolor = self.heatmap(self.file_object.z)
             col = self.allcolor[start_idx:end_idx]
             data[:,3:6] += col
             return(data)
-        elif mode == 4:
+        elif (mode == "heatmap" and dim != "z"):
+            if type(self.allcolor) == bool:
+                self.allcolor = self.heatmap(self.file_object.reader.get_dimension(dim))
+            col = self.allcolor[start_idx:end_idx]
+            data[:,3:6] += col
+            return(data)
+        elif mode == "rgb":
             _max = max(np.max(self.file_object.red), np.max(self.file_object.green), np.max(self.file_object.blue))
             _min = min(np.min(self.file_object.red), np.min(self.file_object.green), np.min(self.file_object.blue))
             diff = _max - _min
@@ -96,9 +99,9 @@ class VBO_Provider():
         return(col)
 
 class pcl_image():
-    def __init__(self, file_object, mode = 3):
+    def __init__(self, file_object, mode, dim):
         self.file_object = file_object
-        self.read_data(mode)
+        self.read_data(mode, dim)
         self.movement_granularity = 1.0
         self.look_granularity = 16.0
         self.main()
@@ -113,7 +116,6 @@ class pcl_image():
         self.mouse_drag = gl.GL_FALSE
 
         # Wire up GL
-        #gl.glPointSize(4)
         glut.glutInit(sys.argv)
 
         glut.glutInitDisplayMode(glut.GLUT_RGB | glut.GLUT_DOUBLE | glut.GLUT_DEPTH)
@@ -130,27 +132,15 @@ class pcl_image():
 
         glut.glutMainLoop()
         return 0
-        
-
-    def read_data(self, mode):
-        #data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z, 
-        #            np.zeros(len(self.file_object), dtype=np.uint8),np.zeros(len(self.file_object), dtype=np.uint8),
-        #            np.zeros(len(self.file_object), dtype=np.uint8))).T)
-        #data = np.array(np.vstack((self.file_object.x, self.file_object.y, self.file_object.z)).T ,dtype=np.float32)
+ 
+    def read_data(self, mode, dim):
         means = np.array([np.mean(self.file_object.x, dtype = np.float64), 
                           np.mean(self.file_object.y, dtype = np.float64), 
                           np.mean(self.file_object.z, dtype = np.float64),
                           0,0,0])
-        #np.mean(data, axis = 0, dtype = np.float64)
         
         self.N = len(self.file_object)
-        #try:
-        #    print("Generating Color Matrix")
-        #    self.set_color_mode(mode)
-        #except:
-        #    print("Error using color mode: " +str(mode) + ", using mode 3.")
-        #    self.set_color_mode(2)
-        self.data_buffer = VBO_Provider(self.file_object, 1000000, means, mode)        
+        self.data_buffer = VBO_Provider(self.file_object, 1000000, means, mode, dim) 
 
  
 
