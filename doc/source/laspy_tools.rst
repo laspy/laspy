@@ -186,9 +186,9 @@ intensity dimension. There are two other supported modes: elevation and rgb:
     .. code-block:: sh
             
         # Display a heatmap based on the z dimension.
-        lasviewer ./path/to/las/file --mode=elevation
+        lasviewer ./path/to/las/file -mode=elevation
         # Display the rgb data (if present in the file)
-        lasviewer ./path/to/las/file --mode=rgb
+        lasviewer ./path/to/las/file -mode=rgb
 
 The elevation mode creates a three color heatmap (blue-green-red) for the Z dimension, 
 and colors the point cloud accordingly. The RGB mode uses color data present in the 
@@ -205,9 +205,9 @@ recorded first:
 
     .. code-block:: sh 
 
-        lasviewer ./path/to/las/file --mode=heatmap --dim=gps_time
+        lasviewer ./path/to/las/file -mode=heatmap -dim=gps_time
 
-        lasviewer ./path/to/las/file --mode=greyscale --dim = gps_time
+        lasviewer ./path/to/las/file -mode=greyscale -dim = gps_time
 
 
 **A Cool Trick**

@@ -11,9 +11,9 @@ class lasview():
                                         print a simple description.""")
         parser.add_argument("in_file", metavar = "in_file", 
                             type=str,nargs="+",help = "LAS file to plot")
-        parser.add_argument("--mode",metavar="viewer_mode", type=str,default="greyscale", 
+        parser.add_argument("-mode",metavar="viewer_mode", type=str,default="greyscale", 
                 help = "Color Mode. Values to specify with a dimension: greyscale, heatmap.  Values which include a dimension: elevation, intensity, rgb")
-        parser.add_argument("--dimension", metavar = "dim", type=str, default="intensity",
+        parser.add_argument("-dimension", metavar = "dim", type=str, default="intensity",
                 help = "Color Dimension. Can be any single LAS dimension, default is intensity. Using color mode rgb, elevation, and intensity overrides this field.")
 
         self.args = parser.parse_args()
