@@ -22,7 +22,7 @@ class lasview():
     # Check mode
         print("Reading: " + self.args.in_file[0])
         self.mode = self.args.mode
-        self.dim = self.args.dim
+        self.dim = self.args.dimension
         try:
             inFile = File(self.args.in_file[0], mode = "r")
             self.inFile = inFile

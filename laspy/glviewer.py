@@ -60,7 +60,7 @@ class VBO_Provider():
     def set_color_mode(self, mode, dim,start_idx, end_idx, data): 
         if mode in ["grey", "greyscale", "intensity"]:
             if type(self.allcolor) == bool:
-                self.allcolor = self.file_object.reader.get_dimension(dim)/float(np.max(self.file_object.get_dimension(dim)))
+                self.allcolor = self.file_object.reader.get_dimension(dim)/float(np.max(self.file_object.reader.get_dimension(dim)))
             scaled = self.allcolor[start_idx:end_idx] + 0.1
             col = np.array((np.vstack((scaled, scaled, scaled)).T), dtype = np.float32)
             data[:,3:6] += col
