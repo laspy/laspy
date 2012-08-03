@@ -151,7 +151,7 @@ class pcl_image():
         gl.glLoadIdentity()
         gl.glViewport(0,0,w,h)
         gl.glLoadIdentity()
-        glu.gluPerspective(90,float(ratio),1,2000);
+        glu.gluPerspective(90,float(ratio),1,3000);
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
         
