@@ -181,10 +181,13 @@ Lasviewer is simple to call:
 By default, lasviewer will display the point cloud in greyscale according to the
 intensity dimension. There are two other supported modes: elevation and rgb:
 
+
+**Default Color Modes**
     .. code-block:: sh
             
+        # Display a heatmap based on the z dimension.
         lasviewer ./path/to/las/file --mode=elevation
-
+        # Display the rgb data (if present in the file)
         lasviewer ./path/to/las/file --mode=rgb
 
 The elevation mode creates a three color heatmap (blue-green-red) for the Z dimension, 
@@ -192,6 +195,46 @@ and colors the point cloud accordingly. The RGB mode uses color data present in 
 LAS file to provide a true-color representation of the point cloud. If either of 
 these modes fails for whatever reason, lasviewer will attempt to fall back to 
 the intensity mode. 
+
+**Custom Color Modes**
+
+You can use heatmap and greyscale color modes to display any numeric dimension 
+offered by a las file, and the syntax is no more complicated. For example, lets 
+say we're interested in gps_time in order to see which parts of a a LAS file were 
+recorded first:
+
+    .. code-block:: sh 
+
+        lasviewer ./path/to/las/file --mode=heatmap --dim=gps_time
+
+        lasviewer ./path/to/las/file --mode=greyscale --dim = gps_time
+
+
+**A Cool Trick**
+
+With laspy, you don't acutally need to use the lasviewer tool to visualize LAS files. 
+In fact, the lasviewer tool is really just a wrapper for the File.visualize method, 
+which accepts mode and dimension arguments. Thus, for example, if you wanted to 
+visualize a file with an exaggerated Z scale, you could use the lasexplorer tool, 
+rescale z, and then call .visualize()
+
+
+First open a file in read/write mode with lasexplorer:
+
+    .. code-block:: sh
+
+        lasexplorer ./path/to/las/file -mode=rw
+
+Now you can re-scale Z, and call visualize:
+
+    .. code-block:: python
+
+        inFile.z *= 2.5
+        inFile.visualize(mode="elevation")
+
+
+
+**Navigation/Controls**
 
 There are currently no menus or help options once the viewer is running, so the following 
 controls will prove useful:
