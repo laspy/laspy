@@ -12,7 +12,7 @@ def run_glviewer(file_object, mode, dim):
     return(0)
 
 class VBO_Provider():
-    def __init__(self, file_object, vbsize, means, mode, dim):
+    def __init__(self, file_object, vbsize, means, mode, dim, scaled = True):
         self.vbos = []
         self.allcolor = False
         start_idx = 0
@@ -25,7 +25,7 @@ class VBO_Provider():
             try:
                 end_idx = min(len(file_object), start_idx + vbsize) 
                 print("Buffering points " + str(start_idx) + " to " + str((end_idx)))
-                dat = self.slice_file(start_idx, end_idx, means)
+                dat = self.slice_file(start_idx, end_idx, means, scaled)
                 self.set_color_mode(mode,dim, start_idx, end_idx, dat)
                 _vbo = vbo.VBO(data = np.array(dat, dtype = np.float32),
                             usage = gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
@@ -36,9 +36,17 @@ class VBO_Provider():
                 print(err)
 
 
-    def slice_file(self,start_idx, end_idx, means):
-        return(np.array(np.vstack((self.file_object.x[start_idx:end_idx], self.file_object.y[start_idx:end_idx], self.file_object.z[start_idx:end_idx], 
+    def slice_file(self,start_idx, end_idx, means, scaled):
+        if scaled:
+            return(np.array(np.vstack((self.file_object.x[start_idx:end_idx], self.file_object.y[start_idx:end_idx], self.file_object.z[start_idx:end_idx], 
                                   np.zeros(end_idx - start_idx),np.zeros(end_idx - start_idx),np.zeros(end_idx - start_idx))).T) - means)
+        else:
+            scale = np.array(self.file_object.header.scale + [0,0,0], dtype = np.float64)
+            dat = (np.array(np.vstack((self.file_object.X[start_idx:end_idx], self.file_object.Y[start_idx:end_idx], self.file_object.Z[start_idx:end_idx], 
+                                  np.zeros(end_idx - start_idx),np.zeros(end_idx - start_idx),np.zeros(end_idx - start_idx))).T) - means)
+            dat *= (scale*100)
+            return(dat)
+
 
     def bind(self):
         for _vbo in self.vbos:
@@ -134,13 +142,21 @@ class pcl_image():
         return 0
  
     def read_data(self, mode, dim):
-        means = np.array([np.mean(self.file_object.x, dtype = np.float64), 
-                          np.mean(self.file_object.y, dtype = np.float64), 
-                          np.mean(self.file_object.z, dtype = np.float64),
+        if (np.max(self.file_object.x) - np.min(self.file_object.x)) < 1:
+            means = np.array([np.mean(self.file_object.X, dtype = np.float64), 
+                          np.mean(self.file_object.Y, dtype = np.float64), 
+                          np.mean(self.file_object.Z, dtype = np.float64),
                           0,0,0])
+            scaled = False
+        else:
+            means = np.array([np.mean(self.file_object.x, dtype = np.float64), 
+                    np.mean(self.file_object.y, dtype = np.float64), 
+                    np.mean(self.file_object.z, dtype = np.float64),
+                    0,0,0])
+            scaled = True
         
         self.N = len(self.file_object)
-        self.data_buffer = VBO_Provider(self.file_object, 1000000, means, mode, dim) 
+        self.data_buffer = VBO_Provider(self.file_object, 1000000, means, mode, dim, scaled) 
 
  
 
@@ -151,7 +167,7 @@ class pcl_image():
         gl.glLoadIdentity()
         gl.glViewport(0,0,w,h)
         gl.glLoadIdentity()
-        glu.gluPerspective(90,float(ratio),1,3000);
+        glu.gluPerspective(90,float(ratio),0.001,3000);
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
         
