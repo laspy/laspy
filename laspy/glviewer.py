@@ -213,6 +213,13 @@ class pcl_image():
         self.draw_points(self.N)
         glut.glutSwapBuffers()
 
+    def camera_reset(self):
+        self.location = np.array([0.0,0.0,1500.0])
+        self.focus = np.array([0.0,0.0,0.0])
+        self.up = np.array([1.0,0.0,0.0])
+
+
+
     def camera_move(self,ammount, axis = 1):
         if axis == 1:
             pointing = self.focus - self.location
@@ -286,6 +293,11 @@ class pcl_image():
             self.camera_move(self.movement_granularity * 100.0, axis = 2)
         elif key == "D":
             self.camera_move(self.movement_granularity * -100.0, axis = 2)
+
+        elif key in ("R", "r"):
+            self.camera_reset()
+
+
         elif key == "+":
             self.movement_granularity *= 0.8
             self.look_granularity /= 0.8
