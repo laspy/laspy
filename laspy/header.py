@@ -106,9 +106,11 @@ class ParseableVLR():
             raise util.LaspyException("Not a known VLR/EVLR type, can't pack parsed_body")
         try:
             packed = pack(self.body_fmt.pt_fmt_long, *self.parsed_body)
-            self.VLR_body = packed
-        except Exception, error:
-            raise util.LaspyException(error)
+        except Exception, error:    
+            print("Error packing VLR data, using current raw vlr body.")
+            print(error)
+            packed = self.VLR_body
+        self.VLR_body = packed
 
     def body_summary(self):
         '''Print a summary of parsed_body to the log.'''
