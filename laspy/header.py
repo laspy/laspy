@@ -22,7 +22,7 @@ class LaspyHeaderException(Exception):
 class ParseableVLR():
     def parse_data(self):
         '''Attempt to read VLR or EVLR body into the parsed_body attribute.'''
-
+ 
         if "LASF_Projection" in self.user_id and self.record_id == 2111:
             # OGC Math Transform WKT Record
             self.body_fmt = util.Format(None)
@@ -73,7 +73,7 @@ class ParseableVLR():
                 print("WARNING: Invalid body length for classification lookup, not parsing.")
                 return
             for i in xrange(self.rec_len_after_header / 16):
-                self.body_fmt.add("ClassNumber_%i", "ctypes.c_uchar", 1)
+                self.body_fmt.add("ClassNumber_%i", "ctypes.c_ubyte", 1)
                 self.body_fmt.add("Description_%i", "ctypes.c_char", 15)
 
         elif "LASF_Spec" in self.user_id and self.record_id == 1:            
@@ -83,7 +83,7 @@ class ParseableVLR():
                 print("WARNING: Invalid body length for header flight line lookup, not parsing.")
                 return
             for i in xrange(self.rec_len_after_header / 257):
-                self.body_fmt.add("FileMarkerNumber_%i", "ctypes.c_uchar", 1)
+                self.body_fmt.add("FileMarkerNumber_%i", "ctypes.c_ubyte", 1)
                 self.body_fmt.add("Filename_%i", "ctypes.c_char", 256)
 
         elif "LASF_Spec" in self.user_id and self.record_id == 3:            
@@ -290,7 +290,11 @@ class EVLR(ParseableVLR):
         self.type = 0
         if self.user_id == "LASF_Spec" and self.record_id == 4:
             self.setup_extra_bytes_spec(self.VLR_body)
-        self.parse_data()
+        try:
+            self.parse_data()
+        except Exception, err:
+            print("Error Parsing EVLR Body Data:")
+            print(err)
 
     def setup_extra_bytes_spec(self, VLR_body):
         self.type = 1
@@ -320,6 +324,13 @@ class EVLR(ParseableVLR):
         ### LOGICAL CONTENT ###
         self.isEVLR = True
         self.fmt = reader.evlr_formats
+        try:
+            self.parse_data()
+        except Exception, err:
+            print("Error Parsing EVLR Body Data:")
+            print(err)
+
+
 
     def __len__(self):
         '''Return the size of the evlr object in bytes'''
@@ -381,7 +392,13 @@ class VLR(ParseableVLR):
         self.fmt = util.Format("VLR")
         if self.user_id == "LASF_Spec" and self.record_id == 4:
             self.setup_extra_bytes_spec(self.VLR_body)
-        self.parse_data()
+        try:
+            self.parse_data()
+        except Exception, err:
+            print("Error Parsing VLR Body Data:")
+            print(err)
+
+
 
     def build_from_reader(self, reader):
         '''Build a vlr from a reader capable of reading in the data.'''
@@ -397,7 +414,13 @@ class VLR(ParseableVLR):
         ### LOGICAL CONTENT ###
         self.isVLR = True
         self.fmt = reader.vlr_formats
-        self.parse_data()
+        try:
+            self.parse_data()
+        except Exception, err:
+            print("Error Parsing EVLR Body Data:")
+            print(err)
+
+
 
 
     def setup_extra_bytes_spec(self, VLR_body):
