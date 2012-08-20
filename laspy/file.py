@@ -142,7 +142,7 @@ class File(object):
             self._writer = None
             self._header = None
 
-    def visualize(self, mode = "grey", dim = "intensity"):
+    def visualize(self, mode = "default", dim = "intensity"):
         try:
             from laspy.glviewer import run_glviewer
             run_glviewer(self, mode= mode, dim = dim)

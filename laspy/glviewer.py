@@ -66,6 +66,11 @@ class VBO_Provider():
         #gl.glMultiDrawArrays(gl.GL_POINTS, 0,100000, len(self.vbos))
     
     def set_color_mode(self, mode, dim,start_idx, end_idx, data): 
+        if (mode == "default"):
+            if (all([x in self.file_object.point_format.lookup for x in ("red", "green", "blue")])):
+                mode="rgb"
+            else:
+                mode = "intensity" 
         if mode in ["grey", "greyscale", "intensity"]:
             if type(self.allcolor) == bool:
                 self.allcolor = self.file_object.reader.get_dimension(dim)/float(np.max(self.file_object.reader.get_dimension(dim)))
