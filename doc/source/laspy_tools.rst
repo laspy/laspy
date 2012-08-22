@@ -91,7 +91,7 @@ the optional mode argument, and set it to read/write:
 
     .. code-block :: sh
 
-        lasexplorer ./path/to/las/file -mode=rw
+        lasexplorer ./path/to/las/file --mode=rw
 
 The shell doesn't provide the ability to open write mode files from the command
 line, because this action requires a valid header object. If you'd like to experiment
@@ -131,8 +131,8 @@ Lasvalidate is called as:
         
         lasvalidate ./path/to/las/file
 
-Optionally, the user can specify -log=/path/to/logfile and -tol=tolerance, where -log specifies
-where the log will be written, and -tol determines the tolerance for comparisons of actual and header
+Optionally, the user can specify --log=/path/to/logfile and --tol=tolerance, where --log specifies
+where the log will be written, and --tol determines the tolerance for comparisons of actual and header
 max/min data. By default, the logfile is written to ./lasvalidate.log, and the tolerance is set to 0.01
 
 
@@ -178,17 +178,20 @@ Lasviewer is simple to call:
         
         lasviewer ./path/to/las/file
 
-By default, lasviewer will display the point cloud in greyscale according to the
-intensity dimension. There are two other supported modes: elevation and rgb:
+By default, lasviewer will first attempt to display the point cloud in RGB color, though if
+color informaton is not present in the file, greyscale is used. In this case, the image is
+shaded according to the intensity dimension. One can also specify the mode explicitly: 
 
 
 **Default Color Modes**
     .. code-block:: sh
             
+        # Display the intensity shaded map
+        lasviewer ./path/to/las/file --mode=intensity
         # Display a heatmap based on the z dimension.
-        lasviewer ./path/to/las/file -mode=elevation
+        lasviewer ./path/to/las/file --mode=elevation
         # Display the rgb data (if present in the file)
-        lasviewer ./path/to/las/file -mode=rgb
+        lasviewer ./path/to/las/file --mode=rgb
 
 The elevation mode creates a three color heatmap (blue-green-red) for the Z dimension, 
 and colors the point cloud accordingly. The RGB mode uses color data present in the 
@@ -205,9 +208,9 @@ recorded first:
 
     .. code-block:: sh 
 
-        lasviewer ./path/to/las/file -mode=heatmap -dim=gps_time
+        lasviewer ./path/to/las/file --mode=heatmap --dim=gps_time
 
-        lasviewer ./path/to/las/file -mode=greyscale -dim = gps_time
+        lasviewer ./path/to/las/file --mode=greyscale --dim = gps_time
 
 
 **A Cool Trick**
@@ -223,7 +226,7 @@ First open a file in read/write mode with lasexplorer:
 
     .. code-block:: sh
 
-        lasexplorer ./path/to/las/file -mode=rw
+        lasexplorer ./path/to/las/file --mode=rw
 
 Now you can re-scale Z, and call visualize:
 
@@ -258,6 +261,7 @@ controls will prove useful:
  x          Snap to x axis
  y          Snap to y azis
  z          Snap to z axis
+ r          Reset the view location and angle
 ========== ======================================
 
 There is currently no mouse support, though the bindings are in place for future development.
