@@ -77,6 +77,9 @@ class VBO_Provider():
                     mode="rgb"
             else:
                 mode = "intensity" 
+        if mode == "rgb" and not "red" in self.file_object.point_format.lookup:
+            print("Color data not found in file, using intensity")
+            mode = "intensity"
         if mode in ["grey", "greyscale", "intensity"]:
             if type(self.allcolor) == bool:
                 self.allcolor = self.file_object.reader.get_dimension(dim)/float(np.max(self.file_object.reader.get_dimension(dim)))
