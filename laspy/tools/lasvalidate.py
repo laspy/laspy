@@ -16,8 +16,8 @@ class validate():
                                                     with invalid (X,Y,Z) information.""")
 
         parser.add_argument("in_file", metavar="Input File", type = str, nargs=1, help = "Path to input file")
-        parser.add_argument("-log", metavar="Log File", type = str, nargs=1, help ="Path to log file", default = "lasvalidate.log")
-        parser.add_argument("-tol", metavar="Tolerance", type = float, nargs = 1, help = "Tolerance for header max/min vs actual max/min comparisons.", default = 0.01)
+        parser.add_argument("--log", metavar="Log File", type = str, nargs=1, help ="Path to log file", default = "lasvalidate.log")
+        parser.add_argument("--tol", metavar="Tolerance", type = float, nargs = 1, help = "Tolerance for header max/min vs actual max/min comparisons.", default = 0.01)
         self.args = parser.parse_args()
 
     def clear_log(self):

@@ -13,7 +13,7 @@ class lasexplorer():
                                         print a simple description.""")
         parser.add_argument("in_file", metavar = "in_file", 
                             type=str,nargs="+",help = "LAS file to explore")
-        parser.add_argument("-mode",metavar="file mode", type=str,default="r", 
+        parser.add_argument("--mode",metavar="file mode", type=str,default="r", 
                 help = "Mode, default is r. Acceptable values: (r, rw)")
         parser.add_argument("-q", metavar="quiet", type=bool, default=False, 
                 help ="Skip summary? (default false)")
