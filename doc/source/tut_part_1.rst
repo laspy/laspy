@@ -33,6 +33,19 @@ Once you successfully build and install the library, run the test suite to make 
         $ python setup.py test
 
 
+**Importing laspy**
+
+All of the following examples use `relative imports`_.
+However, as outlined in `PEP 328`_, there is a growing consensus in the Python community that `absolute imports`_ are preferable to relative imports.
+If you wish to use absolute imports, you can:
+
+    .. code-block:: python
+
+        import laspy
+        infile = laspy.file.File("./laspytest/data/simple.las", mode="r")
+        # ...and so on
+
+
 **Opening .LAS Files**
 
 The first step for getting started with laspy is to open a :obj:`laspy.file.File`
@@ -520,3 +533,7 @@ Here is a collection of the code on this page, copypasta ready:
         inFile.header.vlrs = old_vlrs
         inFile.close()
 
+
+.. _relative imports: http://www.python.org/dev/peps/pep-0328/#rationale-for-relative-imports
+.. _absolute imports: http://www.python.org/dev/peps/pep-0328/#rationale-for-absolute-imports
+.. _PEP 328: http://www.python.org/dev/peps/pep-0328/
