@@ -20,7 +20,7 @@ Once you have that installed, navigate to the root laspy directory where setup.p
         $ python setup.py install
 
 If you encounter permissions errors at this point (and if you're using a unix environment)
-you may need to run the above comands as root, e.g. 
+you may need to run the above commands as root, e.g. 
     
     .. code-block:: sh 
     
@@ -62,7 +62,7 @@ The following short script does just this:
         from laspy.file import File
         inFile = File("./laspytest/data/simple.las", mode = "r")
 
-When a file is opened in read mode, laspy first reads the header, processess any
+When a file is opened in read mode, laspy first reads the header, processes any
 VLR and EVLR records, and then maps the point records with numpy. If no errors 
 are produced when calling the File constructor, you're ready to read data!
 
@@ -71,8 +71,8 @@ are produced when calling the File constructor, you're ready to read data!
 
 Now you're ready to read data from the file. This can be header information, 
 point data, or the contents of various VLR records. In general, point dimensions
-are accessable as properties of the main file object, and header attributes 
-are accessable via the header property of the main file object. Refer to the 
+are accessible as properties of the main file object, and header attributes 
+are accessible via the header property of the main file object. Refer to the 
 background section of the tutorial for a reference of laspy dimension and field names. 
 
     .. code-block:: python
@@ -146,7 +146,7 @@ file has accurate min and max values for the X, Y, and Z dimensions.
         #    in points where a XYZ value is less than the minimum, or greater than 
         #    the maximum. 
         # 3. np.where is another numpy method which returns an array containing
-        #    the indexes of the "True" elemets of an input array. 
+        #    the indexes of the "True" elements of an input array. 
 
         # Get arrays which indicate invalid X, Y, or Z values.
         X_invalid = np.logical_or((inFile.header.min[0] > inFile.x), 
@@ -352,7 +352,7 @@ a las file in place, you can open it in read-write mode, as follows:
 **Variable Length Records**
 
 Variable length records, or VLRs, are available in laspy as file.header.vlrs. 
-This property wil return a list of :obj:`laspy.header.VLR` instances, each of which 
+This property will return a list of :obj:`laspy.header.VLR` instances, each of which 
 has a header which defines the type and size of their record. There are two fields 
 which together determine the type of VLR: user_id and record_id. For a summary of
 what these fields might mean, refer to the "Defined Variable Length Records" section
@@ -389,11 +389,11 @@ description fields you can do so with additional arguments.
         new_vlr = VLR(user_id = "The User ID", record_id = 1, 
                       VLR_body = "\x00" * 1000)
         # The \x00 represents what's called a "null byte"
-        # Do the same thing without keword args
+        # Do the same thing without keyword args
         new_vlr = VLR("The User ID", 1, "\x00" * 1000)
         # Do the same thing, but add a description field. 
         new_vlr = VLR("The User ID",1, "\x00" * 1000, 
-                        description = "A decription goes here.")
+                        description = "A description goes here.")
         
         # Append our new vlr to the current list. As the above dataset is derived 
         # from simple.las which has no VLRS, this will be an empty list.
@@ -406,7 +406,7 @@ description fields you can do so with additional arguments.
 
 **Putting it all together.**
 
-Here is a collection of the code on this page, copypasta ready:
+Here is a collection of the code on this page, copypaste ready:
 
 
     .. code-block:: python 
@@ -520,11 +520,11 @@ Here is a collection of the code on this page, copypasta ready:
         # Instantiate a new VLR.
         new_vlr = VLR(user_id = "The User ID", record_id = 1, 
                       VLR_body = "\x00" * 1000)
-        # Do the same thing without keword args
+        # Do the same thing without keyword args
         new_vlr = VLR("The User ID", 1, "\x00" * 1000)
         # Do the same thing, but add a description field. 
         new_vlr = VLR("The User ID",1, "\x00" * 1000, 
-                        description = "A decription goes here.")
+                        description = "A description goes here.")
         
         # Append our new vlr to the current list. As the above dataset is derived 
         # from simple.las which has no VLRS, this will be an empty list.
