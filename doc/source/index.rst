@@ -8,6 +8,7 @@ Laspy: Documentation
 
 Laspy is a python library for reading, modifying, and creating .LAS LIDAR files. It is available
 at https://github.com/grantbrown/laspy
+Laspy was designed for python 2.7. 
 
 Contents:
 
