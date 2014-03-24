@@ -9,13 +9,12 @@ there is no automatic function to do this for you. Life becomes easier when we d
 into some of laspy's internal functionality:
 
     .. code-block:: python
-        
-        from laspy import file as File
-        from laspy import header
+
+        import laspy        
         import copy
 
         # Open an input file in read mode.
-        inFile = File.File("./laspytest/data/simple.las",mode= "r")
+        inFile = laspy.file.File("./laspytest/data/simple.las",mode= "r")
 
         # Call copy on the HeaderManager object to get a more portable Header instance.
         # This means we don't  have to modify the header on the read mode inFile. 
@@ -27,7 +26,7 @@ into some of laspy's internal functionality:
         # Now we can create a new output file with our modified header.
         # Note that we need to give the file the VLRs manually, because the low level
         # header doesn't know about them, while the header manager does. 
-        outFile = File.File("./laspytest/data/output.las",
+        outFile = laspy.file.File("./laspytest/data/output.las",
                             mode= "w",
                             vlrs = inFile.header.vlrs, 
                             header = new_header)
