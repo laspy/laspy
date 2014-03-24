@@ -35,8 +35,8 @@ Once you successfully build and install the library, run the test suite to make 
 
 **Importing laspy**
 
-All of the following examples use `relative imports`_.
-However, as outlined in `PEP 328`_, there is a growing consensus in the Python community that `absolute imports`_ are preferable to relative imports.
+Previously, laspy documentation exclusively used `relative imports`_.
+However, as outlined in `PEP 328`_, there is a growing consensus in the Python community that `absolute imports`_ are preferable to relative imports. Moving forward, this convention will be adopted by laspy.
 If you wish to use absolute imports, you can:
 
     .. code-block:: python
@@ -59,8 +59,8 @@ The following short script does just this:
     .. code-block:: python 
 
         import numpy as np
-        from laspy.file import File
-        inFile = File("./laspytest/data/simple.las", mode = "r")
+        import laspy
+        inFile = laspy.file.File("./laspytest/data/simple.las", mode = "r")
 
 When a file is opened in read mode, laspy first reads the header, processes any
 VLR and EVLR records, and then maps the point records with numpy. If no errors 
@@ -135,10 +135,10 @@ file has accurate min and max values for the X, Y, and Z dimensions.
 
     .. code-block:: python
         
-        from laspy.file import File
+        import laspy
         import numpy as np
 
-        inFile = File("/path/to/lasfile", mode = "r")
+        inFile = laspy.file.File("/path/to/lasfile", mode = "r")
         # Some notes on the code below:
         # 1. inFile.header.max returns a list: [max x, max y, max z]
         # 2. np.logical_or is a numpy method which performs an element-wise "or"
@@ -198,12 +198,12 @@ Here's an example doing just this:
 
     .. code-block:: python
     
-        from laspy.file import File
+        import laspy
         import pyflann as pf
         import numpy as np
 
         # Open a file in read mode:
-        inFile = File("./laspytest/data/simple.las")
+        inFile = laspy.file.File("./laspytest/data/simple.las")
         # Grab a numpy dataset of our clustering dimensions:
         dataset = np.vstack([inFile.X, inFile.Y, inFile.Z]).transpose()
         
@@ -221,16 +221,17 @@ nearest neighbor queries:
 
     .. code-block:: python
 
-        from laspy.file import File
-        from scipy.spatial.kdtree import KDTree
+        import laspy
+        import scipy
+        #from scipy.spatial.kdtree import KDTree
         import numpy as np
 
         # Open a file in read mode:
-        inFile = File("./laspytest/data/simple.las")
+        inFile = laspy.file.File("./laspytest/data/simple.las")
         # Grab a numpy dataset of our clustering dimensions:
         dataset = np.vstack([inFile.X, inFile.Y, inFile.Z]).transpose()
         # Build the KD Tree
-        tree = KDTree(data)
+        tree = scipy.spatial.kdtree(data)
         # This should do the same as the FLANN example above, though it might
         # be a little slower.
         tree.query(dataset[100,], k = 5)
@@ -303,11 +304,11 @@ a new file:
 
 
     .. code-block:: python
-        
-        from laspy.file import File
+
+        import laspy
         import numpy as np
 
-        inFile = File("/path/to/lasfile", mode = "r")
+        inFile = laspy.file.File("/path/to/lasfile", mode = "r")
         
         # Get arrays which indicate VALID X, Y, or Z values.
 
@@ -331,8 +332,9 @@ That covers the basics of read and write mode. If, however, you'd like to modify
 a las file in place, you can open it in read-write mode, as follows:
 
     .. code-block:: python
-        
-        inFile = File("./laspytest/data/close_points.las", mode = "rw")
+
+        import laspy 
+        inFile = laspy.file.File("./laspytest/data/close_points.las", mode = "rw")
         
         # Let's say the X offset is incorrect:
         old_location_offset = inFile.header.offset
@@ -381,18 +383,17 @@ description fields you can do so with additional arguments.
         
         # Import the :obj:`laspy.header.VLR` class.
         
-        from laspy.file import File
-        from laspy.header import VLR
+        import laspy
 
-        inFile = File("./laspytest/data/close_points.las", mode = "rw")
+        inFile = laspy.file.File("./laspytest/data/close_points.las", mode = "rw")
         # Instantiate a new VLR.
-        new_vlr = VLR(user_id = "The User ID", record_id = 1, 
+        new_vlr = laspy.header.VLR(user_id = "The User ID", record_id = 1, 
                       VLR_body = "\x00" * 1000)
         # The \x00 represents what's called a "null byte"
         # Do the same thing without keyword args
-        new_vlr = VLR("The User ID", 1, "\x00" * 1000)
+        new_vlr = laspy.header.VLR("The User ID", 1, "\x00" * 1000)
         # Do the same thing, but add a description field. 
-        new_vlr = VLR("The User ID",1, "\x00" * 1000, 
+        new_vlr = laspy.header.VLR("The User ID",1, "\x00" * 1000, 
                         description = "A description goes here.")
         
         # Append our new vlr to the current list. As the above dataset is derived 
@@ -412,8 +413,8 @@ Here is a collection of the code on this page, copypaste ready:
     .. code-block:: python 
 
         import numpy as np
-        from laspy.file import File
-        inFile = File("./laspytest/data/simple.las", mode = "r")
+        import laspy
+        inFile = laspy.file.File("./laspytest/data/simple.las", mode = "r")
         # Grab all of the points from the file.
         point_records = inFile.points
 
@@ -511,19 +512,15 @@ Here is a collection of the code on this page, copypaste ready:
 
         
         print("Trying out VLRs...")
-        # Import the :obj:`laspy.header.VLR` class.
         
-        from laspy.file import File
-        from laspy.header import VLR
-
         inFile = File("./laspytest/data/close_points.las", mode = "rw")
         # Instantiate a new VLR.
-        new_vlr = VLR(user_id = "The User ID", record_id = 1, 
-                      VLR_body = "\x00" * 1000)
+        new_vlr = laspy.header.VLR(user_id = "The User ID", record_id = 1, 
+                      laspy.header.VLR_body = "\x00" * 1000)
         # Do the same thing without keyword args
-        new_vlr = VLR("The User ID", 1, "\x00" * 1000)
+        new_vlr = laspy.header.VLR("The User ID", 1, "\x00" * 1000)
         # Do the same thing, but add a description field. 
-        new_vlr = VLR("The User ID",1, "\x00" * 1000, 
+        new_vlr = laspy.header.VLR("The User ID",1, "\x00" * 1000, 
                         description = "A description goes here.")
         
         # Append our new vlr to the current list. As the above dataset is derived 
