@@ -1,5 +1,6 @@
 import ctypes
-from struct import pack, unpack, Struct
+import struct
+
 
 try: import elementtree.ElementTree as etree
 except ImportError:
@@ -178,7 +179,7 @@ class Format():
         self.lookup = {}
         for spec in self.specs:
             self.lookup[spec.name] = spec
-        self.packer = Struct(self.pt_fmt_long)
+        self.packer = struct.Struct(self.pt_fmt_long)
 
     def build_header(self, fmt):
         self.format_type = "header version = " + fmt[1:]
