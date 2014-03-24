@@ -7,6 +7,15 @@ import numpy as np
 import random
 import sys
 
+
+
+# Skip debugging for speedup
+#OpenGL.ERROR_CHECKING = False
+
+# Skip logging for speedup 
+#OpenGL.ERROR_LOGGING = False
+
+
 def run_glviewer(file_object, mode, dim):
     glviewer = pcl_image(file_object, mode, dim)
     return(0)
