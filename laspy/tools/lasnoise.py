@@ -1,7 +1,7 @@
 import argparse
-from laspy.file import File
+import laspy
 import numpy as np
-from math import floor
+import math
 
 def main():
     parser =argparse.ArgumentParser(description = """Open a file in rw mode and add random noise to X Y and Z.""")
@@ -19,11 +19,11 @@ def main():
 
 
 
-    inFile = File(args.in_file[0], mode = "rw")
+    inFile = laspy.file.File(args.in_file[0], mode = "rw")
 
     def gen_noise(pct, length, amt):
         out = np.zeros(length)
-        indices = np.random.random_integers(0,length-1, floor(float(pct)/100*length))
+        indices = np.random.random_integers(0,length-1, math.floor(float(pct)/100*length))
         vals = np.random.random_integers(-amt,amt, len(indices))
         out[indices] += vals
         return(out)

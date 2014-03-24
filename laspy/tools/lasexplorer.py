@@ -1,5 +1,5 @@
 import argparse
-from laspy.file import File
+import laspy
 import code
 
 
@@ -30,7 +30,7 @@ class lasexplorer():
     # Try to read in file
         print("Reading: " + self.args.in_file[0])
         try:
-            inFile = File(self.args.in_file[0], mode = self.args.mode)
+            inFile = laspy.file.File(self.args.in_file[0], mode = self.args.mode)
             self.inFile = inFile
             READ_SUCCESS = True
             print("Read successful, file object is called inFile")

@@ -1,5 +1,5 @@
 import argparse
-from laspy.file import File
+import laspy
 
 class lasview():
     def __init__(self):
@@ -24,7 +24,7 @@ class lasview():
         self.mode = self.args.mode
         self.dim = self.args.dimension
         try:
-            inFile = File(self.args.in_file[0], mode = "r")
+            inFile = laspy.file.File(self.args.in_file[0], mode = "r")
             self.inFile = inFile
         except Exception, error:
             print("Error while reading file:")

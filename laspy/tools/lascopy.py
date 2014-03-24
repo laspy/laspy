@@ -1,5 +1,4 @@
-from laspy.file import File
-from laspy.util import Format
+import laspy
 import argparse
 
 
@@ -39,7 +38,7 @@ class lascopy():
         file_version = self.args.file_version[0]
         point_format = self.args.point_format[0]
         try:
-            inFile = File(self.args.in_file[0], mode = "r")
+            inFile = laspy.file.File(self.args.in_file[0], mode = "r")
         except Exception, error:
             print("There was an error reading in the input file: ")
             print(error)
@@ -91,12 +90,12 @@ class lascopy():
             new_header.data_format_id = point_format
 
             old_data_rec_len = new_header.data_record_length
-            old_std_rec_len = Format(old_point_format).rec_len
+            old_std_rec_len = laspy.util.Format(old_point_format).rec_len
             diff =   old_data_rec_len - old_std_rec_len
             if (diff > 0):
                 print("Extra Bytes Detected.")
 
-            new_header.data_record_length = Format(point_format).rec_len + ((diff > 0)*diff)
+            new_header.data_record_length = laspy.util.Format(point_format).rec_len + ((diff > 0)*diff)
             evlrs = inFile.header.evlrs
             if file_version != "1.4" and old_file_version == "1.4":
                 print("Warning: input file has version 1.4, and output file does not. This may cause trunctation of header data.")
@@ -108,7 +107,7 @@ class lascopy():
             if (file_version == "1.3" and len(inFile.header.evlrs) > 1):
                 print("Too many EVLRs for format 1.3, keeping the first one.")
                 evlrs = inFile.header.evlrs[0]
-            outFile = File(self.args.out_file[0], header = new_header, mode = "w", vlrs = inFile.header.vlrs, evlrs = evlrs)
+            outFile = laspy.file.File(self.args.out_file[0], header = new_header, mode = "w", vlrs = inFile.header.vlrs, evlrs = evlrs)
             if outFile.point_format.rec_len != outFile.header.data_record_length:
                 pass
         except Exception, error:

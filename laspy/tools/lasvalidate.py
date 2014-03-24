@@ -1,4 +1,4 @@
-from laspy.file import File
+import laspy
 import numpy as np
 import argparse
 import logging
@@ -111,7 +111,7 @@ class validate():
 
     def validate(self):
         print("Reading in file: " + self.args.in_file[0])
-        inFile = File(self.args.in_file[0], mode = "r")
+        inFile = laspy.file.File(self.args.in_file[0], mode = "r")
         self.test1(inFile)
         self.test2(inFile)
         self.test3(inFile)

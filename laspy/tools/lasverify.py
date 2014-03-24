@@ -1,4 +1,4 @@
-from laspy import file as File
+import laspy
 import argparse
 
 class lasverify():
@@ -28,8 +28,8 @@ class lasverify():
 
     ## Try to open both files in read mode.
         try:
-            inFile1 = File.File(file_1,mode= "r")
-            inFile2 = File.File(file_2,mode= "r")
+            inFile1 = laspy.file.File.File(file_1,mode= "r")
+            inFile2 = laspy.file.File.File(file_2,mode= "r")
         except Exception, error:
             print("Error reading in files:")
             print(error)
