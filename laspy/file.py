@@ -39,8 +39,8 @@ class File(object):
             If a file is open for write, it cannot be opened for read and vice
             versa.
 
-        >>> from laspy import file
-        >>> f = file.File('file.las', mode='r')
+        >>> import laspy 
+        >>> f = laspy.file.File('file.las', mode='r')
         >>> for p in f:
         ...     print 'X,Y,Z: ', p.x, p.y, p.z
 
@@ -144,8 +144,7 @@ class File(object):
 
     def visualize(self, mode = "default", dim = "intensity"):
         try:
-            from laspy.glviewer import run_glviewer
-            run_glviewer(self, mode= mode, dim = dim)
+            laspy.glviewer.run_glviewer(self, mode= mode, dim = dim)
             return(0)
         except Exception, err:
             print("Something went wrong: ")
