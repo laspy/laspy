@@ -1,3 +1,4 @@
+import laspy
 from laspy.base import *
 import laspy.file as File
 import laspy.header as header
@@ -396,7 +397,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         """Testing Versions"""
         v1 = self.FileObject.header.major_version
         self.assertEqual(v1, 1)
-        with self.assertRaises(LaspyException):
+        with self.assertRaises(laspy.util.LaspyException):
             self.FileObject.header.major_version = 2
     def test_system_id(self):
         """Testing System ID"""
@@ -412,9 +413,9 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         self.FileObject.header.software_id = s1
         s2 = self.FileObject.header.get_softwareid()
         self.assertEqual(s1, s2)
-        with self.assertRaises(LaspyException):
+        with self.assertRaises(laspy.util.LaspyException):
             self.FileObject.header.software_id = "123"
-        with self.assertRaises(LaspyException):
+        with self.assertRaises(laspy.util.LaspyException):
             self.FileObject.header.software_id = "1" * 100
     def test_padding(self):
         """Testing Padding"""
