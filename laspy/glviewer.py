@@ -1,11 +1,13 @@
+import laspy
+import numpy as np
+import random
+import sys
+
+# OpenGL library doesn't support absolute import for gl, glu, glut, or arrays
 import OpenGL.GL as gl 
 import OpenGL.GLU as glu 
 import OpenGL.GLUT as glut 
 from OpenGL.arrays import vbo
-from laspy.file import File
-import numpy as np
-import random
-import sys
 
 
 

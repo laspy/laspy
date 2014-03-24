@@ -144,7 +144,8 @@ class File(object):
 
     def visualize(self, mode = "default", dim = "intensity"):
         try:
-            laspy.glviewer.run_glviewer(self, mode= mode, dim = dim)
+            import glviewer
+            glviewer.run_glviewer(self, mode= mode, dim = dim)
             return(0)
         except Exception, err:
             print("Something went wrong: ")
