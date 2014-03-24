@@ -1,7 +1,7 @@
 import datetime
-from uuid import UUID
+import uuid
 import util
-from struct import unpack, pack, Struct
+import struct
 import copy
 import numpy as np
 def leap_year(year):
@@ -96,7 +96,7 @@ class ParseableVLR():
             pass
         
         if self.body_fmt != None:
-            self.parsed_body = np.array(unpack(self.body_fmt.pt_fmt_long, self.VLR_body))
+            self.parsed_body = np.array(struct.unpack(self.body_fmt.pt_fmt_long, self.VLR_body))
         else:
             self.parsed_body = None
     
@@ -105,7 +105,7 @@ class ParseableVLR():
         if self.body_fmt == None:
             raise util.LaspyException("Not a known VLR/EVLR type, can't pack parsed_body")
         try:
-            packed = pack(self.body_fmt.pt_fmt_long, *self.parsed_body)
+            packed = struct.pack(self.body_fmt.pt_fmt_long, *self.parsed_body)
         except Exception, error:    
             print("Error packing VLR data, using current raw vlr body.")
             print(error)
@@ -134,7 +134,7 @@ class ExtraBytesStruct(object):
                  max = [0.0]*3, scale = [0.0]*3, offset = [0.0]*3, 
                  description = "\x00"*32):
         self.fmt = util.Format("extra_bytes_struct")
-        self.packer = Struct(self.fmt.pt_fmt_long)
+        self.packer = struct.Struct(self.fmt.pt_fmt_long)
         self.writeable = True
         self.vlr_parent = False
         self.names = [x.name for x in self.fmt.specs]
@@ -175,7 +175,7 @@ class ExtraBytesStruct(object):
 
     def get_property(self, name):
         fmt = self.fmt.specs[self.get_property_idx(name)]
-        unpacked = unpack(fmt.full_fmt, 
+        unpacked = struct.unpack(fmt.full_fmt, 
                    self.data[fmt.offs:(fmt.offs + fmt.length*fmt.num)])
         if len(unpacked) == 1:
             return(unpacked[0])
@@ -190,10 +190,10 @@ class ExtraBytesStruct(object):
         self.assertWriteable()
         fmt = self.fmt.specs[self.get_property_idx(name)]
         if isinstance(value, int) or isinstance(value, str):
-            packed = pack(fmt.full_fmt, value)
+            packed = struct.pack(fmt.full_fmt, value)
             self.data = self.data[0:fmt.offs] + packed + self.data[fmt.offs + len(packed):len(self.data)]  
         else: 
-            packed = pack(fmt.full_fmt, *value)
+            packed = struct.pack(fmt.full_fmt, *value)
             self.data = self.data[0:fmt.offs] + packed + self.data[fmt.offs + len(packed):len(self.data)]  
 
         if self.vlr_parent != False:
@@ -342,8 +342,8 @@ class EVLR(ParseableVLR):
         '''Pack an EVLR field into bytes.'''
         spec = self.fmt.lookup[name]
         if spec.num == 1:
-            return(pack(spec.full_fmt, val))
-        return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
+            return(struct.pack(spec.full_fmt, val))
+        return(struct.pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
     
     def to_byte_string(self):
         '''Pack the entire EVLR into a byte string.'''
@@ -452,8 +452,8 @@ class VLR(ParseableVLR):
         '''Pack a VLR field into bytes.'''
         spec = self.fmt.lookup[name]
         if spec.num == 1:
-            return(pack(spec.fmt, val))
-        return(pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
+            return(struct.pack(spec.fmt, val))
+        return(struct.pack(spec.fmt[0]+spec.fmt[1]*len(val), *val))
     
     def to_byte_string(self):
         '''Pack the entire VLR into a byte string.'''
@@ -692,7 +692,7 @@ class HeaderManager(object):
         p2 = self.reader.get_raw_header_property("proj_id_2")
         p3 = self.reader.get_raw_header_property("proj_id_3")
         p4 = self.reader.get_raw_header_property("proj_id_4") 
-        return(UUID(bytes =p1+p2+p3+p4))
+        return(uuid.UUID(bytes =p1+p2+p3+p4))
  
     doc = '''ProjectID for the file.  \
         laspy does not currently support setting this value from Python, as
@@ -717,7 +717,7 @@ class HeaderManager(object):
         return self.get_projectid() 
 
     def set_guid(self, value):
-        raw_bytes = UUID.get_bytes_le(value)
+        raw_bytes = uuid.UUID.get_bytes_le(value)
         p1 = raw_bytes[0:4]
         p2 = raw_bytes[4:6]
         p3 = raw_bytes[6:8]
