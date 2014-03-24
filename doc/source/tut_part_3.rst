@@ -36,10 +36,10 @@ Opening 1.3 and 1.4 files works exactly the same:
     .. code-block:: python
 
         import numpy as np
-        from laspy.file import File
+        import laspy
         
-        inFile_v13 = File("./laspytest/data/simple1_3.las", mode = "r")
-        inFile_v14 = File("./laspytest/data/simple1_4.las", mode = "r")
+        inFile_v13 = laspy.file.File("./laspytest/data/simple1_3.las", mode = "r")
+        inFile_v14 = laspy.file.File("./laspytest/data/simple1_4.las", mode = "r")
 
 **Reading Data - New Dimensions**
     
@@ -71,10 +71,10 @@ a different part of the file.
 
     .. code-block:: python
 
-        from laspy.header import EVLR
-        outFile_14 = File("./laspytest/data/output_14.las", mode = "w",
+        import laspy
+        outFile_14 = laspy.file.File("./laspytest/data/output_14.las", mode = "w",
                         header = inFile_v14.header)
-        new_evlr = EVLR(user_id = 10, record_id = 2, 
+        new_evlr = laspy.header.EVLR(user_id = 10, record_id = 2, 
                         VLR_body = "Lots of data can go here.")
         #outFile_14 has the same, single EVLR as inFile
         old_evlrs = outFile_14.header.evlrs 
@@ -171,11 +171,11 @@ be able to treat the extra dimensions as extra bytes. Here's the easy way to spe
 
     .. code-block:: python
         
-        from laspy.file import File
+        import laspy
 
         # Set up our input and output files.
-        inFile = File("./laspytest/data/simple.las", mode = "r")
-        outFile = File("./laspytest/data/output.las", mode = "w", 
+        inFile = laspy.file.File("./laspytest/data/simple.las", mode = "r")
+        outFile = laspy.file.File("./laspytest/data/output.las", mode = "w", 
                     header = inFile.header)
         # Define our new dimension. Note, this must be done before giving 
         # the output file point records.
@@ -200,32 +200,31 @@ If you want to see what's happening when you create new dimensions at a level
 much closer to the raw specification, laspy lets you create the requisite components manually. 
 
     .. code-block:: python
-        
-        from laspy.file import File 
-        from laspy.header import VLR, ExtraBytesStruct
+
+        import laspy  
         import copy
 
-        inFile = File("./laspytest/data/simple.las", mode = "r")
+        inFile = laspy.file.File("./laspytest/data/simple.las", mode = "r")
         
         # We need to build the body of our dimension VLRs, and to do this we 
         # will use a class called ExtraBytesStruct. All we really need to tell
         # it at this point is the name of our dimension and the data type. 
 
-        extra_dimension_spec_1 = ExtraBytesStruct(name = "My Super Special Dimension",
-                                                data_type = 5)
-        extra_dimension_spec_2 = ExtraBytesStruct(name = "Another Special Dimension",
-                                                data_type = 5)
+        extra_dimension_spec_1 = laspy.header.ExtraBytesStruct(name = "My Super Special Dimension",
+                                                               data_type = 5)
+        extra_dimension_spec_2 = laspy.header.ExtraBytesStruct(name = "Another Special Dimension",
+                                                               data_type = 5)
         vlr_body = (extra_dimension_spec_1.to_byte_string() + 
                    extra_dimension_spec_2.to_byte_string())
 
         # Now we can create the VLR. Note the user_id and record_id choices. 
         # These values are how the LAS specification determines that this is an 
         # extra bytes record. The description is just good practice. 
-        extra_dim_vlr = VLR(user_id = "LASF_Spec",
-                            record_id = 4, 
-                            description = "Testing Extra Bytes.", 
-                            VLR_body = vlr_body)
- 
+        extra_dim_vlr = laspy.header.VLR(user_id = "LASF_Spec",
+                                         record_id = 4, 
+                                         description = "Testing Extra Bytes.", 
+                                         VLR_body = vlr_body)
+             
 
         # Now let's put together the header for our new file. We need to increase
         # data_record_length to fit our new dimensions. See the data_type table 
@@ -235,7 +234,7 @@ much closer to the raw specification, laspy lets you create the requisite compon
         new_header.format = 1.4
 
         # Now we can create the file and give it our VLR.
-        new_file = File("./laspytest/data/new_14_file.las", mode = "w", 
+        new_file = laspy.file.File("./laspytest/data/new_14_file.las", mode = "w", 
                         header = new_header, vlrs = [extra_dim_vlr])
         
         # Let's copy the existing data:
