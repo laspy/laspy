@@ -32,6 +32,17 @@ class validate():
         bad_indices = np.where(np.logical_or(X_invalid, Y_invalid, Z_invalid))
         return(bad_indices)
 
+    def test0(self, inFile):
+        print("Test 0: Does this look like a LAS file?")
+        if inFile.header.file_signature != "LASF":
+            logging.info("Incorrect File Signature")
+            print("... failed")
+            self.errors += 1
+        if self.errors == 0:
+            print("...passed")
+        self.tests += 1
+
+
     def test1(self, inFile):
         print("Test 1: Checking that all points fall inside header bounding box: ")
         bb = zip(["X", "Y", "Z"], inFile.header.min, inFile.header.max)
@@ -112,6 +123,7 @@ class validate():
     def validate(self):
         print("Reading in file: " + self.args.in_file[0])
         inFile = laspy.file.File(self.args.in_file[0], mode = "r")
+        self.test0(inFile)
         self.test1(inFile)
         self.test2(inFile)
         self.test3(inFile)
