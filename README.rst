@@ -6,6 +6,7 @@ It was designed for python 2.7
 
 API Documentation and tutorials are available at http://www.laspy.org/
 Installation is standard:
+
     >>> python setup.py build
     >>> python setup.py install 
 

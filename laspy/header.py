@@ -490,6 +490,7 @@ class Header(object):
                 self.__dict__[dim.name] = kwargs[dim.name]
             else:
                 self.__dict__[dim.name] = dim.default
+        self.file_sig = "LASF"
 
     def reformat(self, file_version):
         if file_version == self._format.fmt[1:4]:
