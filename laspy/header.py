@@ -575,7 +575,7 @@ class HeaderManager(object):
     def get_filesignature(self):
         '''Returns the file signature for the file. It should always be
         LASF'''
-        return self.reader.get_header_propery("file_sig")
+        return self.reader.get_header_property("file_sig")
 
     doc = '''The file signature for the file. Should always be LASF'''
     file_signature = property(get_filesignature, None, None, doc)
