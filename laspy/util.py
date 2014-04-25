@@ -129,6 +129,19 @@ class Format():
         self.specs = []
         self.rec_len = 0
         self.pt_fmt_long = "<"
+        
+        self.compressed = False
+        try:
+            fmt = int(fmt)
+            compression_bit_7 = (fmt & 0x80) >> 7
+            compression_bit_6 = (fmt & 0x40) >> 6
+            if (not compression_bit_6 and compression_bit_7):
+                self.compressed = True
+                fmt &= 0x3f;
+            fmt = str(fmt)
+        except ValueError:
+            pass
+            
         if not (fmt in ("0", "1", "2", "3", "4", "5","6","7","8","9","10", "VLR", 
                         "EVLR", "h1.0", "h1.1", "h1.2", "h1.3", "h1.4", 
                         "extra_bytes_struct", "None")):
