@@ -954,12 +954,12 @@ class HeaderManager(object):
     schema = property(get_schema, set_schema, None, doc) 
     header_format = schema
     def get_compressed(self):
-        raise NotImplementedError
-        #return bool(core.las.LASHeader_Compressed(self.handle)) 
+        return(self.reader.point_format.compressed)
+
 
     def set_compressed(self, value):
-        raise NotImplementedError
-        #return core.las.LASHeader_SetCompressed(self.handle, value)
+        self.reader.point_format.compressed = value
+        self.reader.compressed = value
         return
     doc = '''Controls compression for this file.
 
