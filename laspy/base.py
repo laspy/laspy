@@ -49,6 +49,9 @@ class DataProvider():
 
     def point_map(self):
         '''Create the numpy point map based on the point format.'''   
+        if self.manager.compressed:
+            raise laspy.util.LaspyException("""File appears to contain compressed data. 
+            Laspy can not currently decode laz, though the header, VLRs, and EVLRs are available.""")
         if type(self._mmap) == bool:
             self.map() 
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
@@ -147,6 +150,7 @@ class FileManager():
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding.'''
+        self.compressed = False
         self.vlr_formats = laspy.util.Format("VLR")
         self.evlr_formats = laspy.util.Format("EVLR")
         self.mode = mode
@@ -182,7 +186,12 @@ class FileManager():
         
         self.correct_rec_len()
 
-        self.data_provider.point_map()
+        if self.point_format.compressed:
+            self.compressed = True
+            print("Warning: Compressed data was detected and will not be read.")
+        else:
+            self.compressed = False        
+            self.data_provider.point_map()
         if self.header.version in ("1.3", "1.4"):
             self.populate_evlrs()
         else:

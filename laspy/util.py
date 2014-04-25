@@ -131,6 +131,10 @@ class Format():
         self.pt_fmt_long = "<"
         
         self.compressed = False
+        # Try to detect compression. The only values which get passed to 
+        # this method which are coercible to integers are point formats. 
+        # Try to detect point formats which are equivalent to a valid format
+        # plus 128, which signifies a potential laz file. 
         try:
             fmt = int(fmt)
             compression_bit_7 = (fmt & 0x80) >> 7
