@@ -208,7 +208,7 @@ Here's an example doing just this:
         dataset = np.vstack([inFile.X, inFile.Y, inFile.Z]).transpose()
         
         # Find the nearest 5 neighbors of point 100. 
-        
+        flann = FLANN()
         neighbors = flann.nn(dataset, dataset[100,], num_neighbors = 5)
         print("Five nearest neighbors of point 100: ")
         print(neighbors[0])
