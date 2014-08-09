@@ -199,21 +199,22 @@ Here's an example doing just this:
     .. code-block:: python
     
         import laspy
-        import pyflann as pf
         import numpy as np
-
+        from pyflann import *
+        
         # Open a file in read mode:
-        inFile = laspy.file.File("./laspytest/data/simple.las")
+        inFile = laspy.file.File("simple.las")
         # Grab a numpy dataset of our clustering dimensions:
         dataset = np.vstack([inFile.X, inFile.Y, inFile.Z]).transpose()
         
-        # Find the nearest 5 neighbors of point 100. 
-        
+        # Find the nearest 5 neighbors of point 100.
+        flann = FLANN()
         neighbors = flann.nn(dataset, dataset[100,], num_neighbors = 5)
         print("Five nearest neighbors of point 100: ")
         print(neighbors[0])
         print("Distances: ")
         print(neighbors[1])
+
 
 
 Alternatively, one could use the built in KD-Tree functionality of scipy to do
