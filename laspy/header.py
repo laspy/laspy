@@ -94,7 +94,17 @@ class ParseableVLR():
         elif "LASF_Spec" in self.user_id and self.record_id == 4:            
             # Extra Bytes, currently handled by VLR constructor
             pass
-        
+
+        elif "LASF_Spec" in self.user_id and self.record_id > 99 and self.record_id < 355:
+            # WAVEFORM PACKET DESCRIPTOR
+            self.body_fmt = util.Format(None)
+            self.body_fmt.add("bits_per_sample", "ctypes.c_ubyte",1)
+            self.body_fmt.add("waveform_compression_type", "ctypes.c_ubyte",1)
+            self.body_fmt.add("number_of_samples", "ctypes.c_ulong",1)
+            self.body_fmt.add("temporal_time_spacing", "ctypes.c_ulong",1)
+            self.body_fmt.add("digitizer_gain", "ctypes.c_double",1)
+            self.body_fmt.add("digitizer_offset", "ctypes.c_double",1)
+
         if self.body_fmt != None:
             self.parsed_body = np.array(struct.unpack(self.body_fmt.pt_fmt_long, self.VLR_body))
         else:
