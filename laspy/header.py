@@ -141,7 +141,7 @@ class ExtraBytesStruct(object):
     describes an additional dimension present at the end of each point record. ''' 
     def __init__(self, data_type = 0, options = 0, name = "\x00"*32, 
                  unused = [0]*4, no_data = [0.0]*3, min = [0.0]*3, 
-                 max = [0.0]*3, scale = [0.0]*3, offset = [0.0]*3, 
+                 max = [0.0]*3, scale = [1.0]*3, offset = [0.0]*3,
                  description = "\x00"*32):
         self.fmt = util.Format("extra_bytes_struct")
         self.packer = struct.Struct(self.fmt.pt_fmt_long)
