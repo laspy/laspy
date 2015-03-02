@@ -4,14 +4,15 @@ import util
 import struct
 import copy
 import numpy as np
+
 def leap_year(year):
-    if (year % 400) == 0:
-        return True
-    elif (year % 100) == 0:
-        return True
-    elif (year % 4) == 0:
+    if ((year % 4) != 0):
         return False
-    return False
+    elif ((year % 100) != 0):
+        return True
+    elif ((year % 400) != 0):
+        return False
+    return True
 
 ## NOTE: set_attr methods are currently not implemented. These methods need
 ## to update the file using reader/mmap. 
@@ -828,20 +829,14 @@ class HeaderManager(object):
 
         if year == 0 and day == 0:
             return None
-        if not leap_year(year):
-            return datetime.datetime(year, 1, 1) + datetime.timedelta(day)
-        else:
-            return datetime.datetime(year, 1, 1) + datetime.timedelta(day - 1)
+        return datetime.datetime(year,1,1) + datetime.timedelta(day - 1)
 
     def set_date(self, value=datetime.datetime.now()):
         '''Set the header's date from a :obj:`datetime.datetime` instance.
         '''
         self.assertWriteMode()
         delta = value - datetime.datetime(value.year, 1, 1)
-        if not leap_year(value.year):
-            self.writer.set_header_property("created_day", delta.days)
-        else: 
-            self.writer.set_header_property("created_day", delta.days + 1)
+        self.writer.set_header_property("created_day", delta.days + 1)
         self.writer.set_header_property("created_year", value.year)
         return
 
