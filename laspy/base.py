@@ -8,10 +8,33 @@ import numpy as np
 import copy
 
 
+class FakeMmap(object):
+    def __init__(self,data,pos=0):
+        self.view=memoryview(data)
+        self.pos=pos
+        #numpy needs this, unfortunaltely
+        self.__buffer__=buffer(data) 
+    def __getitem__(self,i):
+        return self.view[i]
+    def close(self):
+        self.view=None
+    def flush(self):
+        pass
+    def seek(self,bytes,pos):
+        if pos>0:
+            self.pos+=bytes
+        else:
+            self.pos=bytes
+    def read(self,bytes):
+        return self.view[self.pos:self.pos+bytes]
+    def tell(self):
+        return self.pos
+  
+
 
 class DataProvider():
     '''Provides access to the file object, the memory map, and the numpy point map.'''
-    def __init__(self, filename, manager):
+    def __init__(self, filename, manager, buf_obj=None):
         '''Construct the data provider. _mmap refers to the memory map, and _pmap 
         refers to the numpy point map.'''
         self.filename = filename
@@ -21,13 +44,17 @@ class DataProvider():
         self._evlrmap = False
         self.manager = manager
         self.mode = manager.mode
-    
+        self._buf_obj=buf_obj
+
     def open(self, mode):
         '''Open the file, catch simple problems.'''
-        try:
-            self.fileref = open(self.filename, mode)
-        except(Exception):
-            raise laspy.util.LaspyException("Error opening file")
+        if self._buf_obj is not None:
+            self.fileref=  False
+        else:
+            try:
+                self.fileref = open(self.filename, mode)
+            except(Exception):
+                raise laspy.util.LaspyException("Error opening file")
     def get_point_map(self, informat):
         '''Get point map is used to build and return a numpy frombuffer view of the mmapped data, 
         using a valid laspy.util.Format instance for the desired point format. This method is used 
@@ -72,6 +99,7 @@ class DataProvider():
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset,
                         count = self.manager.header.point_records_count)
+      
 
     
     def close(self, flush = True):
@@ -95,17 +123,21 @@ class DataProvider():
 
     def map(self):
         '''Memory map the file'''
-        if self.fileref == False:
+        if self.fileref == False and self._buf_obj is None:
             raise laspy.util.LaspyException("File not opened.")
         try:
             if self.mode == "r":
-                self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
+                if self._buf_obj is not None:
+                    self._mmap=FakeMmap(self._buf_obj)
+                else:
+                    self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
             elif self.mode in ("w", "rw"):
                 self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_WRITE)
             else:
                 raise laspy.util.LaspyException("Invalid Mode: " + str(self.mode))
-        except(Exception): 
-            raise laspy.util.LaspyException("Error mapping file.")
+        except Exception as e: 
+            raise laspy.util.LaspyException("Error mapping file. "+str(e))
+            
 
     def remap(self,flush = True, point_map = False):
         '''Re-map the file. Flush changes, close, open, and map. Optionally point map.'''
@@ -146,17 +178,18 @@ class DataProvider():
 
 class FileManager():
     '''Superclass of Reader and Writer, provides most of the data manipulation functionality in laspy.''' 
-    def __init__(self,filename, mode, header = False, vlrs = False, evlrs = False): 
+    def __init__(self,filename, mode, header = False, vlrs = False, evlrs = False, buf_obj=None): 
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding.'''
         self.compressed = False
+        self.is_buffer=buf_obj is not None
         self.vlr_formats = laspy.util.Format("VLR")
         self.evlr_formats = laspy.util.Format("EVLR")
         self.mode = mode
-        self.data_provider = DataProvider(filename, self) 
+        self.data_provider = DataProvider(filename, self,buf_obj) 
         self.setup_memoizing()
-
+        
         self.calc_point_recs = False
 
         self.point_refs = False
@@ -192,7 +225,8 @@ class FileManager():
         else:
             self.compressed = False        
             self.data_provider.point_map()
-        if self.header.version in ("1.3", "1.4"):
+        if self.header.version in ("1.3", "1.4") and not self.is_buffer:
+            #gives key error if called with buffer hack for some reason...
             self.populate_evlrs()
         else:
             self.evlrs = []
@@ -394,10 +428,11 @@ class FileManager():
     def populate_evlrs(self): 
         '''Catalogue the extended variable length records'''
         self.evlrs = []
+      
         if not self.header.version in ("1.3", "1.4"):
             return
         
-    
+       
         if self.header.version == "1.3":
             if self.header.start_wavefm_data_rec != 0:
                 self.seek(self.header.start_wavefm_data_rec, rel = False)
@@ -579,8 +614,7 @@ class FileManager():
     
     def get_header_property(self, name):
         '''Wrapper for grabbing unpacked header data with _get_datum''' 
-        spec = self.header_format.lookup[name]
-
+        #print name
         if name in self.header_changes:
             spec = self.header_format.lookup[name]
             new_val = self._get_datum(0, spec)

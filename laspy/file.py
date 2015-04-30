@@ -50,15 +50,16 @@ class File(object):
         >>> f2.points = points
         >>> f2.close()
         '''
-
-        self.filename = os.path.abspath(filename)
+        if filename is not None:
+            self.filename = os.path.abspath(filename)
+        else:
+            self.filename = None
         self._header = header
         self._vlrs = vlrs
         self._evlrs = evlrs
         self._mode = mode.lower()
         self.in_srs = in_srs
         self.out_srs = out_srs
-
         self.open()
 
     def open(self):
@@ -709,9 +710,40 @@ class File(object):
     doc = '''The point format of the file, stored as a laspy.util.Format instance. Supports .xml and .etree methods.'''
     point_format = property(get_point_format, None, None, doc)
 
+class FromBuffer(File):
+     
+    def __init__(self, buf_obj,header=None,vlrs=False,mode='r',in_srs=None,out_srs=None,evlrs = False):
+        if mode!='r':
+            raise ValueError("Mode "+mode+" not supported at the moment.")
+        self._buf_obj=buf_obj
+        File.__init__(self,None,header,vlrs,mode,in_srs,out_srs,evlrs)
+            
+    def open(self):
+        if self._header is None:
+            self._reader = base.Reader(self.filename,mode= self._mode,buf_obj=self._buf_obj)            
+            self._header = self._reader.get_header() 
+        else: 
+            raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
+            self._reader = base.Reader(self.filename, mode = self._mode, header=self._header)
+
+        if self.in_srs:
+            self._reader.SetInputSRS(self.in_srs)
+        if self.out_srs:
+            self._reader.SetOutputSRS(self.out_srs)
+        ## Wire up API for extra dimensions
+        if self._reader.extra_dimensions != []:
+            for dimension in self._reader.extra_dimensions:
+                dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                self.addProperty(dimname)
+
+
+def laz_hack(filename):
+    import subprocess
+    prc=subprocess.Popen(["laszip","-olas","-stdout","-i",filename],stdout=subprocess.PIPE,bufsize=-1)
+    data,stderr=prc.communicate()
+    lasf=FromBuffer(data)
+    return lasf
     
-
-
 #    def get_xmlsummary(self):
 #        '''Returns an XML string summarizing all of the points in the reader
 #        
