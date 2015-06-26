@@ -106,7 +106,7 @@ class DataProvider():
             else:
                 raise laspy.util.LaspyException("Invalid Mode: " + str(self.mode))
         except(Exception): 
-            raise laspy.util.LaspyException("Error mapping file.")
+            raise laspy.util.LaspyException("Error mapping file. This is often caused by an incorrect file.")
 
     def remap(self,flush = True, point_map = False):
         '''Re-map the file. Flush changes, close, open, and map. Optionally point map.'''
