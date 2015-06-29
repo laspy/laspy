@@ -105,8 +105,8 @@ class DataProvider():
                 self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_WRITE)
             else:
                 raise laspy.util.LaspyException("Invalid Mode: " + str(self.mode))
-        except(Exception): 
-            raise laspy.util.LaspyException("Error mapping file.")
+        except Exception as e: 
+            raise laspy.util.LaspyException("Error mapping file: " + str(e))
 
     def remap(self,flush = True, point_map = False):
         '''Re-map the file. Flush changes, close, open, and map. Optionally point map.'''
