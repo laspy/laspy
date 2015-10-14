@@ -731,12 +731,14 @@ class File(object):
 
 def read_compressed(filename):
     import subprocess
-    prc=subprocess.Popen(["laszip", "-olas", "-stdout", "-i",filename],stdout=subprocess.PIPE,bufsize=-1)
+    prc=subprocess.Popen(["laszip", "-olas", "-stdout", "-i", filename],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
     data, stderr=prc.communicate()
     if prc.returncode != 0:
-        sys.stderr.write("Unusual return code from laszip: %d, is laszip installed?\n" %prc.returncode)
-        if stderr and len(stderr)<512:
-            sys.stderr.write(stderr+"\n")
+        # What about using the logging module instead of prints?
+        print("Unusual return code from laszip: %d" %prc.returncode)
+        if stderr and len(stderr)<2048:
+            print(stderr)
         raise ValueError("Unable to read compressed file!")
     return data
     
