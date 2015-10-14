@@ -14,7 +14,8 @@ class File(object):
                        mode='r',
                        in_srs=None,
                        out_srs=None,
-                       evlrs = False):
+                       evlrs = False,
+                       read_compressed=True):
         '''Instantiate a file object to represent an LAS file.
 
         :arg filename: The filename to open
@@ -27,6 +28,7 @@ class File(object):
         :keyword out_srs: Output SRS to reproject points on-the-fly to as \
         they are read/written. (not implemented)
         :type out_srs: a :obj:`laspy.SRS` instance (not implemented)
+        :keyword read_compressed: if True, read compressed data via a call to laszip. Else only metadata will be available.
 
         .. note::
             To open a file in write mode, you must provide a
@@ -60,6 +62,9 @@ class File(object):
         self._mode = mode.lower()
         self.in_srs = in_srs
         self.out_srs = out_srs
+        # A reference to a buffer object (a bag of bytes)
+        self._buf_obj = None
+        self._read_compressed = bool(read_compressed)
         self.open()
 
     def open(self):
@@ -70,9 +75,14 @@ class File(object):
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
             ## Make sure we have a header
-            if self._header == None:
-                self._reader = base.Reader(self.filename,mode= self._mode)            
-                self._header = self._reader.get_header() 
+            if self._header is None:
+                self._reader = base.Reader(self.filename, mode=self._mode)
+                if self._reader.compressed and self._read_compressed:
+                    self._reader.close()
+                    self._buf_obj = read_compressed(self.filename)
+                    self._reader = base.Reader(self.filename, mode=self._mode, buf_obj=self._buf_obj)
+                    # Perhaps store a from_compressed = True somewhere
+                self._header = self._reader.get_header()
             else: 
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
                 self._reader = base.Reader(self.filename, mode = self._mode, header=self._header)
@@ -89,7 +99,7 @@ class File(object):
 
 
         if self._mode == 'rw':
-            if self._header == None:
+            if self._header is None:
                 self._writer = base.Writer(self.filename,mode = self._mode)
                 self._reader = self._writer
                 self._header = self._reader.get_header()
@@ -102,7 +112,7 @@ class File(object):
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
     
         if self._mode == 'w': 
-            if self._header == None:
+            if self._header is None:
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
             if isinstance(self._header,  header.HeaderManager):
                 vlrs = self._header.vlrs
@@ -129,6 +139,14 @@ class File(object):
 
         if self._mode == 'w+':
             raise NotImplementedError
+        
+        if self._buf_obj is not None:
+            if self._mode != "r":
+                raise NotImplementedError("Compressed files / buffer objects can only be opened in mode 'r' for now")
+            
+            
+            
+            
 
     def close(self, ignore_header_changes = False, minmax_mode="scaled"):
         '''Closes the LAS file
@@ -710,39 +728,18 @@ class File(object):
     doc = '''The point format of the file, stored as a laspy.util.Format instance. Supports .xml and .etree methods.'''
     point_format = property(get_point_format, None, None, doc)
 
-class FromBuffer(File):
-     
-    def __init__(self, buf_obj,header=None,vlrs=False,mode='r',in_srs=None,out_srs=None,evlrs = False):
-        if mode!='r':
-            raise ValueError("Mode "+mode+" not supported at the moment.")
-        self._buf_obj=buf_obj
-        File.__init__(self,None,header,vlrs,mode,in_srs,out_srs,evlrs)
-            
-    def open(self):
-        if self._header is None:
-            self._reader = base.Reader(self.filename,mode= self._mode,buf_obj=self._buf_obj)            
-            self._header = self._reader.get_header() 
-        else: 
-            raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
-            self._reader = base.Reader(self.filename, mode = self._mode, header=self._header)
 
-        if self.in_srs:
-            self._reader.SetInputSRS(self.in_srs)
-        if self.out_srs:
-            self._reader.SetOutputSRS(self.out_srs)
-        ## Wire up API for extra dimensions
-        if self._reader.extra_dimensions != []:
-            for dimension in self._reader.extra_dimensions:
-                dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
-                self.addProperty(dimname)
-
-
-def laz_hack(filename):
+def read_compressed(filename):
     import subprocess
-    prc=subprocess.Popen(["laszip","-olas","-stdout","-i",filename],stdout=subprocess.PIPE,bufsize=-1)
-    data,stderr=prc.communicate()
-    lasf=FromBuffer(data)
-    return lasf
+    prc=subprocess.Popen(["laszip", "-olas", "-stdout", "-i",filename],stdout=subprocess.PIPE,bufsize=-1)
+    data, stderr=prc.communicate()
+    if prc.returncode != 0:
+        sys.stderr.write("Unusual return code from laszip: %d, is laszip installed?\n" %prc.returncode)
+        if stderr and len(stderr)<512:
+            sys.stderr.write(stderr+"\n")
+        raise ValueError("Unable to read compressed file!")
+    return data
+    
     
 #    def get_xmlsummary(self):
 #        '''Returns an XML string summarizing all of the points in the reader

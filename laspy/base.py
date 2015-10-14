@@ -9,24 +9,34 @@ import copy
 
 
 class FakeMmap(object):
-    def __init__(self,data,pos=0):
-        self.view=memoryview(data)
-        self.pos=pos
-        #numpy needs this, unfortunaltely
-        self.__buffer__=buffer(data) 
-    def __getitem__(self,i):
+    '''
+    An object imitating a memory mapped file,
+    constructed from 'buffer like' data.
+    '''
+    def __init__(self, data, pos=0):
+        self.view = memoryview(data)
+        self.pos = pos
+        # numpy needs this, unfortunately
+        self.__buffer__ = buffer(data)
+    
+    def __getitem__(self, i):
         return self.view[i]
+    
     def close(self):
-        self.view=None
+        self.view = None
+    
     def flush(self):
         pass
-    def seek(self,bytes,pos):
-        if pos>0:
-            self.pos+=bytes
+    
+    def seek(self, nbytes, pos):
+        if pos > 0:
+            self.pos += nbytes
         else:
-            self.pos=bytes
-    def read(self,bytes):
-        return self.view[self.pos:self.pos+bytes]
+            self.pos = nbytes
+            
+    def read(self, nbytes):
+        return self.view[self.pos:self.pos+nbytes]
+        
     def tell(self):
         return self.pos
   
@@ -221,7 +231,7 @@ class FileManager():
 
         if self.point_format.compressed:
             self.compressed = True
-            print("Warning: Compressed data was detected and will not be read.")
+            print("Warning: Compressed data was detected.")
         else:
             self.compressed = False        
             self.data_provider.point_map()
