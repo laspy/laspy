@@ -54,17 +54,18 @@ class DataProvider():
         self._evlrmap = False
         self.manager = manager
         self.mode = manager.mode
-        self._buf_obj=buf_obj
+        self._buf_obj = buf_obj
 
     def open(self, mode):
         '''Open the file, catch simple problems.'''
         if self._buf_obj is not None:
-            self.fileref=  False
+            self.fileref = False
         else:
             try:
                 self.fileref = open(self.filename, mode)
             except(Exception):
                 raise laspy.util.LaspyException("Error opening file")
+
     def get_point_map(self, informat):
         '''Get point map is used to build and return a numpy frombuffer view of the mmapped data, 
         using a valid laspy.util.Format instance for the desired point format. This method is used 
@@ -146,8 +147,7 @@ class DataProvider():
             else:
                 raise laspy.util.LaspyException("Invalid Mode: " + str(self.mode))
         except Exception as e: 
-            raise laspy.util.LaspyException("Error mapping file. "+str(e))
-            
+            raise laspy.util.LaspyException("Error mapping file: " + str(e))
 
     def remap(self,flush = True, point_map = False):
         '''Re-map the file. Flush changes, close, open, and map. Optionally point map.'''
@@ -206,19 +206,26 @@ class FileManager():
         self._current = 0 
         
         self.padded = False
-        if self.mode in ("r", "rw"):
-            self.setup_read_write(vlrs, evlrs)
+        if self.mode == "r":
+            self.setup_read_write(vlrs,evlrs, read_only=True)
             return
-
+        elif self.mode == "rw":
+            self.setup_read_write(vlrs, evlrs, read_only=False)
+            return
         elif self.mode == "w":
             self.setup_write(header, vlrs, evlrs)
             return
         else:
             raise laspy.util.LaspyException("Append Mode Not Supported")
         
-    def setup_read_write(self, vlrs, evlrs):
+    def setup_read_write(self, vlrs, evlrs, read_only=True):
+        # Check if read only mode, if not open for updating.
+        if read_only:
+            open_mode = "rb"
+        else:
+            open_mode = "r+b"
         self._header_current = True
-        self.data_provider.open("r+b")
+        self.data_provider.open(open_mode)
         self.data_provider.map() 
         self.header_format = laspy.util.Format("h" + self.grab_file_version())
         self.get_header(self.grab_file_version())

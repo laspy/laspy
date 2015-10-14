@@ -14,14 +14,14 @@ class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
     pass
 
-fmtLen = {"<l":4, "<L":4, "<h":2, "<H":2, "<B":1, "<f":4, "<s":1, "<d":8, "<Q":8}
-LEfmt = {"ctypes.c_long":"<l","ctypes.c_ulong":"<L", "ctypes.c_ushort":"<H", "ctypes.c_ubyte":"<B"
-        ,"ctypes.c_float":"<f", "ctypes.c_char":"<s", "ctypes.c_double":"<d", "ctypes.c_ulonglong":"<Q",
-        "ctypes.c_short":"<h"}
-npFmt = {"<l":"i4", "<L":"u4", "<h":"i2","<H":"u2", "<B":"u1", "<f":"f4", "<s":"S1", "<d":"f8", "<Q":"u8"}
+fmtLen = {"<l":4, "<L":4, "<h":2, "<H":2, "<B":1, "<b":1,"<f":4, "<s":1, "<d":8, "<Q":8}
+LEfmt = {"ctypes.c_long":"<l","ctypes.c_ulong":"<L", "ctypes.c_ushort":"<H", "ctypes.c_ubyte":"<B", 
+        "ctypes.c_byte":"<b","ctypes.c_float":"<f", "ctypes.c_char":"<s", 
+        "ctypes.c_double":"<d", "ctypes.c_ulonglong":"<Q","ctypes.c_short":"<h"}
+npFmt = {"<l":"i4", "<L":"u4", "<h":"i2","<H":"u2", "<B":"u1", "<f":"f4", "<s":"S1", "<d":"f8", "<Q":"u8", "<b":"i1"}
 
 
-defaults = {"<L":0,"<l":0, "<H":0, "<h":0, "<B": "0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
+defaults = {"<L":0,"<l":0, "<H":0, "<h":0, "<B": "0", "<b":"0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0}
 
 edim_fmt_dict = {
     1:("ctypes.c_ubyte",1), 
@@ -268,7 +268,7 @@ class Format():
             self.add("intensity",  "ctypes.c_ushort", 1)
             self.add("flag_byte", "ctypes.c_ubyte", 1)
             self.add("raw_classification", "ctypes.c_ubyte", 1)
-            self.add("scan_angle_rank", "ctypes.c_ubyte", 1)
+            self.add("scan_angle_rank", "ctypes.c_byte", 1)
             self.add("user_data",  "ctypes.c_ubyte", 1)
             self.add("pt_src_id",  "ctypes.c_ushort", 1)
             if fmt in ("1", "3", "4", "5"):
