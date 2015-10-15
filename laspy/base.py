@@ -81,20 +81,23 @@ class DataProvider():
         self.manager = manager
         self.mode = manager.mode
         # Figure out if this file is compressed
-        try:
-            tmpref = open(filename, "rb")
-            tmpref.seek(104)
-            fmt = int(struct.unpack("<B", tmpref.read(1))[0])
-            compression_bit_7 = (fmt & 0x80) >> 7
-            compression_bit_6 = (fmt & 0x40) >> 6
-            if (not compression_bit_6 and compression_bit_7):
-                self.compressed = True
-            else:
-                self.compressed = False
-            tmpref.close()
-        except Exception as e: 
-            raise laspy.util.LaspyException("Error determining compression: " 
-                    + str(e))
+        if self.mode in ("w"):
+            self.compressed = False
+        else:
+            try:
+                tmpref = open(filename, "rb")
+                tmpref.seek(104)
+                fmt = int(struct.unpack("<B", tmpref.read(1))[0])
+                compression_bit_7 = (fmt & 0x80) >> 7
+                compression_bit_6 = (fmt & 0x40) >> 6
+                if (not compression_bit_6 and compression_bit_7):
+                    self.compressed = True
+                else:
+                    self.compressed = False
+                tmpref.close()
+            except Exception as e: 
+                raise laspy.util.LaspyException("Error determining compression: " 
+                        + str(e))
 
     def open(self, mode):
         '''Open the file, catch simple problems.'''
