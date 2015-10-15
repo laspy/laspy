@@ -769,6 +769,21 @@ class LasV_14TestCase(unittest.TestCase):
         os.remove(self.tempfile)
 
 
+class LasLazReaderTestCase(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_read_data(self):
+        """Testing ability to read laz files."""
+        simple = './laspytest/data/simple.laz'
+        File1 = File.File(simple, mode = "r")
+        self.assertTrue(len(File1.X) == 1065)
+        File1.close()    
+
+    def tearDown(self):
+        pass 
+
+
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
@@ -777,6 +792,8 @@ def test_laspy():
     write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
     las13 = unittest.TestLoader().loadTestsFromTestCase(LasV_13TestCase)
     las14 = unittest.TestLoader().loadTestsFromTestCase(LasV_14TestCase)
+    laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
 
-    return unittest.TestSuite([reader, writer, header_writer, write_mode, las13, las14])
+    return unittest.TestSuite([reader, writer, header_writer, write_mode, 
+        las13, las14,laz])
 
