@@ -19,10 +19,14 @@ try:
     tmpFile.close()
     tmpFile = open("simple1_4.las")
     tmpFile.close()
+    tmpFile = open("simple.laz")
+    tmpFile.close()
 except:
     shutil.copyfile("laspytest/data/simple.las", "simple.las")
     shutil.copyfile("laspytest/data/simple1_3.las", "simple1_3.las")
     shutil.copyfile("laspytest/data/simple1_4.las", "simple1_4.las")
+    shutil.copyfile("laspytest/data/simple.laz", "simple.laz")
+
     
 setup(name          = 'laspy',
       version       = laspy.__version__,
