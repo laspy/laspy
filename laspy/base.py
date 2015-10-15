@@ -1,5 +1,6 @@
 import mmap
 import laspy
+import os
 import datetime
 import struct
 import util
@@ -10,6 +11,13 @@ import copy
 
 def read_compressed(filename):
     import subprocess
+    pathvar1 = any([os.path.isfile(x + "/laszip") 
+            for x in os.environ["PATH"].split(os.pathsep)])
+    pathvar2 = any([os.path.isfile(x + "/laszip.exe") 
+            for x in os.environ["PATH"].split(os.pathsep)])
+    if (not pathvar1 and not pathvar2):
+        raise(laspy.util.LaspyException("Laszip was not found on the system"))
+
     prc=subprocess.Popen(["laszip", "-olas", "-stdout", "-i", filename],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
     data, stderr=prc.communicate()
