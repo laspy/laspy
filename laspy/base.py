@@ -8,16 +8,34 @@ import numpy as np
 import copy
 
 
+def read_compressed(filename):
+    import subprocess
+    prc=subprocess.Popen(["laszip", "-olas", "-stdout", "-i", filename],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
+    data, stderr=prc.communicate()
+    if prc.returncode != 0:
+        # What about using the logging module instead of prints?
+        print("Unusual return code from laszip: %d" %prc.returncode)
+        if stderr and len(stderr)<2048:
+            print(stderr)
+        raise ValueError("Unable to read compressed file!")
+    return data
+ 
+
 class FakeMmap(object):
     '''
     An object imitating a memory mapped file,
     constructed from 'buffer like' data.
     '''
-    def __init__(self, data, pos=0):
+    def __init__(self, filename, pos=0):
+        data = read_compressed(filename)
         self.view = memoryview(data)
         self.pos = pos
         # numpy needs this, unfortunately
         self.__buffer__ = buffer(data)
+
+    def __len__(self):
+        return len(self.view)
     
     def __getitem__(self, i):
         return self.view[i]
@@ -44,7 +62,7 @@ class FakeMmap(object):
 
 class DataProvider():
     '''Provides access to the file object, the memory map, and the numpy point map.'''
-    def __init__(self, filename, manager, buf_obj=None):
+    def __init__(self, filename, manager):
         '''Construct the data provider. _mmap refers to the memory map, and _pmap 
         refers to the numpy point map.'''
         self.filename = filename
@@ -54,13 +72,25 @@ class DataProvider():
         self._evlrmap = False
         self.manager = manager
         self.mode = manager.mode
-        self._buf_obj = buf_obj
+        # Figure out if this file is compressed
+        try:
+            tmpref = open(filename, "rb")
+            tmpref.seek(104)
+            fmt = int(struct.unpack("<B", tmpref.read(1))[0])
+            compression_bit_7 = (fmt & 0x80) >> 7
+            compression_bit_6 = (fmt & 0x40) >> 6
+            if (not compression_bit_6 and compression_bit_7):
+                self.compressed = True
+            else:
+                self.compressed = False
+            tmpref.close()
+        except Exception as e: 
+            raise laspy.util.LaspyException("Error determining compression: " 
+                    + str(e))
 
     def open(self, mode):
         '''Open the file, catch simple problems.'''
-        if self._buf_obj is not None:
-            self.fileref = False
-        else:
+        if not self.compressed:
             try:
                 self.fileref = open(self.filename, mode)
             except(Exception):
@@ -87,9 +117,6 @@ class DataProvider():
 
     def point_map(self):
         '''Create the numpy point map based on the point format.'''   
-        if self.manager.compressed:
-            raise laspy.util.LaspyException("""File appears to contain compressed data. 
-            Laspy can not currently decode laz, though the header, VLRs, and EVLRs are available.""")
         if type(self._mmap) == bool:
             self.map() 
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
@@ -134,12 +161,12 @@ class DataProvider():
 
     def map(self):
         '''Memory map the file'''
-        if self.fileref == False and self._buf_obj is None:
+        if self.fileref == False and not self.compressed:
             raise laspy.util.LaspyException("File not opened.")
         try:
             if self.mode == "r":
-                if self._buf_obj is not None:
-                    self._mmap=FakeMmap(self._buf_obj)
+                if self.compressed:
+                    self._mmap=FakeMmap(self.filename)
                 else:
                     self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
             elif self.mode in ("w", "rw"):
@@ -188,16 +215,15 @@ class DataProvider():
 
 class FileManager():
     '''Superclass of Reader and Writer, provides most of the data manipulation functionality in laspy.''' 
-    def __init__(self,filename, mode, header = False, vlrs = False, evlrs = False, buf_obj=None): 
+    def __init__(self,filename, mode, header = False, vlrs = False, evlrs = False): 
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding.'''
         self.compressed = False
-        self.is_buffer=buf_obj is not None
         self.vlr_formats = laspy.util.Format("VLR")
         self.evlr_formats = laspy.util.Format("EVLR")
         self.mode = mode
-        self.data_provider = DataProvider(filename, self,buf_obj) 
+        self.data_provider = DataProvider(filename, self) 
         self.setup_memoizing()
         
         self.calc_point_recs = False
@@ -232,17 +258,17 @@ class FileManager():
         self.populate_vlrs()
         self.point_refs = False
         self.has_point_records = True
-        self._current = 0
-        
+        self._current = 0        
         self.correct_rec_len()
 
         if self.point_format.compressed:
             self.compressed = True
-            print("Warning: Compressed data was detected.")
+            self.data_provider.remap()
         else:
             self.compressed = False        
-            self.data_provider.point_map()
-        if self.header.version in ("1.3", "1.4") and not self.is_buffer:
+
+        self.data_provider.point_map()
+        if self.header.version in ("1.3", "1.4"):
             #gives key error if called with buffer hack for some reason...
             self.populate_evlrs()
         else:
@@ -430,7 +456,7 @@ class FileManager():
         self.seek(24, rel = False)
         v1 = self._read_words("<B", 1, 1)
         v2 = self._read_words("<B", 1, 1)
-        self.seek(0, rel = True)
+        self.seek(0, rel = False)
         return(str(v1) +"." +  str(v2))
 
     def get_header(self, file_version = 1.2):
