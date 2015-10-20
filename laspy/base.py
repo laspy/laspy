@@ -54,14 +54,17 @@ class FakeMmap(object):
     def flush(self):
         pass
     
-    def seek(self, nbytes, pos):
-        if pos > 0:
-            self.pos += nbytes
-        else:
+    def seek(self, nbytes, whence=0):
+        if whence == 0:
             self.pos = nbytes
+        else:
+            self.pos += nbytes
+
             
     def read(self, nbytes):
-        return self.view[self.pos:self.pos+nbytes]
+        out = self.view[self.pos:self.pos+nbytes]
+        self.pos += nbytes
+        return(out)
         
     def tell(self):
         return self.pos
