@@ -1,2 +1,2 @@
-recursive-include laspytest *.las
+recursive-include laspytest *.las *.laz
 
