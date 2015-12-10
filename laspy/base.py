@@ -737,7 +737,7 @@ class FileManager():
             return self.bit_transform(rawDim, 4, 8)
 
     def get_scanner_channel(self):
-        raw_dim = self.get_raw_classification_flags()
+        rawDim = self.get_raw_classification_flags()
         if not self.header.data_format_id in (6,7,8,9,10):
             raise laspy.util.LaspyException("Scanner Channel not present for point format: " + str(self.header.data_format_id))
         return self.bit_transform(rawDim, 4, 6)
