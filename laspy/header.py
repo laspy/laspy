@@ -358,7 +358,7 @@ class EVLR(ParseableVLR):
     
     def to_byte_string(self):
         '''Pack the entire EVLR into a byte string.'''
-        if self.parsed_body != None:
+        if type(self.parsed_body) != type(None):
             self.pack_data()
         out = (self.pack("reserved", self.reserved) + 
                self.pack("user_id", self.user_id) + 
@@ -468,7 +468,7 @@ class VLR(ParseableVLR):
     
     def to_byte_string(self):
         '''Pack the entire VLR into a byte string.'''
-        if self.parsed_body != None:
+        if type(self.parsed_body) != type(None):
             self.pack_data()
         out = (self.pack("reserved", self.reserved) + 
                self.pack("user_id", self.user_id) + 
