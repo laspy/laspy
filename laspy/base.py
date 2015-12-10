@@ -412,6 +412,9 @@ class FileManager():
             raise laspy.util.LaspyException("Invalid Data: Packed Length is Greater than allowed.")
         return(raw_bin + '0'*(zerolen-len(raw_bin)))
 
+    def bit_transform(self, x, low, high):
+        return np.right_shift(np.bitwise_and(x, 2**high - 1), low)
+
     def read(self, bytes):
         '''Wrapper for mmap.mmap read function'''
         return(self.data_provider._mmap.read(bytes))
@@ -714,7 +717,7 @@ class FileManager():
         if not self.header.data_format_id in (6,7,8,9,10):
             return(self.get_classification())
         rawDim = self.get_raw_classification_flags()
-        return(np.array([self.packed_str(self.binary_str(x)[0:4]) for x in rawDim]))
+        return self.bit_transform(rawDim, 0, 4)
 
     def get_classification_byte(self):
         return(self.get_dimension("classification_byte"))
@@ -722,75 +725,67 @@ class FileManager():
     def get_return_num(self):
         rawDim = self.get_flag_byte()
         if self.header.data_format_id in (0,1,2,3,4,5):
-            return(np.array([self.packed_str(self.binary_str(x)[0:3]) for x in rawDim])) 
+            return self.bit_transform(rawDim, 0, 3)
         elif self.header.data_format_id in (6,7,8,9,10):
-            return(np.array([self.packed_str(self.binary_str(x)[0:4]) for x in rawDim]))
+            return self.bit_transform(rawDim, 0, 4)
 
     def get_num_returns(self):
         rawDim = self.get_flag_byte()
         if self.header.data_format_id in (0,1,2,3,4,5):
-            return(np.array([self.packed_str(self.binary_str(x)[3:6]) for x in rawDim]))  
+            return self.bit_transform(rawDim, 3, 6)
         elif self.header.data_format_id in (6,7,8,9,10):
-            return(np.array([self.packed_str(self.binary_str(x)[4:8]) for x in rawDim]))  
+            return self.bit_transform(rawDim, 4, 8)
 
     def get_scanner_channel(self):
         raw_dim = self.get_raw_classification_flags()
         if not self.header.data_format_id in (6,7,8,9,10):
             raise laspy.util.LaspyException("Scanner Channel not present for point format: " + str(self.header.data_format_id))
-        return(np.array([self.packed_str(self.binary_str(x)[4:6]) for x in raw_dim]))
+        return self.bit_transform(rawDim, 4, 6)
 
     def get_scan_dir_flag(self):
         if self.header.data_format_id in (0,1,2,3,4,5):
             rawDim = self.get_flag_byte()
         elif self.header.data_format_id in (6,7,8,9,10):
             rawDim = self.get_raw_classification_flags()
-        return(np.array([self.packed_str(self.binary_str(x)[6]) for x in rawDim])) 
+        return self.bit_transform(rawDim, 6, 7)
 
     def get_edge_flight_line(self): 
         if self.header.data_format_id in (0,1,2,3,4,5):
             rawDim = self.get_flag_byte() 
         elif self.header.data_format_id in (6,7,8,9,10):
             rawDim = self.get_raw_classification_flags() 
-        return(np.array(([self.packed_str(self.binary_str(x)[7]) for x in rawDim])))
+        return self.bit_transform(rawDim, 7, 8)
     
     def get_raw_classification(self):
         return(self.get_dimension("raw_classification"))
     
     def get_classification(self): 
         if self.header.data_format_id in (0,1,2,3,4,5):
-            return(np.array([self.packed_str(self.binary_str(x)[0:5]) 
-                for x in self.get_raw_classification()])) 
+            return self.bit_transform(self.get_raw_classification(), 0, 5)
         elif self.header.data_format_id in (6,7,8,9,10):
             return(self.get_dimension("classification_byte"))
 
     def get_synthetic(self):
         if self.header.data_format_id in (6,7,8,9,10):
-            rawDim = self.get_raw_classification_flags()
-            return(np.array([self.packed_str(self.binary_str(x)[0]) for x in rawDim])) 
+            return self.bit_transform(self.get_raw_classification_flags(), 0, 1)
 
-        return(np.array([self.packed_str(self.binary_str(x)[5]) 
-                for x in self.get_raw_classification()])) 
+        return self.bit_transform(self.get_raw_classification(), 5, 6)
 
     def get_key_point(self):
         if self.header.data_format_id in (6,7,8,9,10):
-            rawDim = self.get_raw_classification_flags()
-            return(np.array([self.packed_str(self.binary_str(x)[1]) for x in rawDim])) 
+            return self.bit_transform(self.get_raw_classification_flags(), 1, 2)
 
-        return(np.array([self.packed_str(self.binary_str(x)[6]) 
-                for x in self.get_raw_classification()])) 
+        return self.bit_transform(self.get_raw_classification(), 6, 7)
 
     def get_withheld(self):
         if self.header.data_format_id in (6,7,8,9,10):
-            rawDim = self.get_raw_classification_flags()
-            return(np.array([self.packed_str(self.binary_str(x)[2]) for x in rawDim])) 
+            return self.bit_transform(self.get_raw_classification_flags(), 2, 3)
 
-        return(np.array([self.packed_str(self.binary_str(x)[7]) 
-                for x in self.get_raw_classification()])) 
+        return self.bit_transform(self.get_raw_classification(), 7, 8)
     
     def get_overlap(self):
         if self.header.data_format_id in (6,7,8,9,10):
-            rawDim = self.get_raw_classification_flags()
-            return(np.array([self.packed_str(self.binary_str(x)[3]) for x in rawDim])) 
+            return self.bit_transform(self.get_raw_classification_flags(), 3, 4)
         else:
             raise laspy.util.LaspyException("Overlap only present in point formats > 5.")
 
