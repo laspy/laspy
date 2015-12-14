@@ -399,19 +399,19 @@ class FileManager():
         for spec in self.point_format.specs:
             self.c_packers[spec.name] = struct.Struct(spec.fmt)
             self.c_packers[spec.fmt] = self.c_packers[spec.name]
-    
+
     def packed_str(self, string):
         '''Take a little endian binary string, and convert it to a python int.'''
         return(sum([int(string[idx])*(2**idx) for idx in xrange(len(string))]))
 
-    def binary_str(self,N, zerolen = 8):
+    def binary_str(self, N, zerolen = 8):
         '''Take a python integer and create a binary string padded to len zerolen.'''
         raw_bin = bin(N)[2:][::-1]
         padding = zerolen-len(raw_bin)
         if padding < 0:
             raise laspy.util.LaspyException("Invalid Data: Packed Length is Greater than allowed.")
         return(raw_bin + '0'*(zerolen-len(raw_bin)))
-
+    
     def bit_transform(self, x, low, high):
         return np.right_shift(np.bitwise_and(x, 2**high - 1), low)
 
@@ -448,7 +448,6 @@ class FileManager():
         except KeyError:
             raise laspy.util.LaspyException("Dimension " + name + " not found.")       
         return(self._read_words(dim.fmt, dim.num, dim.length))
-       
 
     def _read_words(self, fmt, num, bytes):
         '''Read a consecutive sequence of packed binary data, return a single
@@ -1353,49 +1352,54 @@ class Writer(FileManager):
     
     # Utility Functions, refactor
     
-    def binary_str_arr(self, arr, length = 8):
-        '''Convert an array of numeric data to an array of binary strings'''
-        return([self.binary_str(x, length) for x in arr])
-
-    def bitpack(self,arrs,idx, pack = True):
-        '''Pack an array of binary strings into a byte based on idx
-        for example bitpack((str1, str2), (0,3), (3,8)) packs the length-8
-        binary strings str1 and str2 into a byte, using the first three bits
-        of str1, and the last five bits of str2. 
-        
-        There is probably a more efficient way of doing this.
+    def bitpack(self, arrs, indices):
+        '''Pack an array of integers into a byte based on idx
+        for example bitpack((arr1, arr2), (0,3), (3,8)) packs the integers
+        arr1 and arr2 into a byte, using the first three bits
+        of arr1, and the last five bits of arr2. 
         '''
-        if pack:
-            outArr = ([1]*len(arrs[0]))
-        else:
-            outArr = (["0"*8]*len(arrs[0]))
-       
-        for i in xrange(len(arrs[0])):
-            tmp = ""
-            tmp = []
-            j = 0
-            for arr in arrs:
-                tmp.append(arr[i][idx[j][0]:idx[j][1]])
-                j += 1
-            tmp = "".join(tmp)
-            if pack:
-                tmp = self.packed_str(tmp)
-            outArr[i] = tmp 
-        
-        return(outArr)
+        def keep_bits(arr, low, high):
+            """ Keep only the bits on the interval [low, high) """
+            return np.bitwise_and(np.bitwise_and(arr, 2**high - 1),
+                                  ~(2**low - 1)).astype(np.uint8)
+
+        first_bit_idx = 0 # Stack the bits from the beginning
+
+        packed = np.zeros_like(arrs[0])
+        for arr, (low, high) in zip(arrs, indices):
+            if low > first_bit_idx:
+                packed += np.right_shift(keep_bits(arr, low, high), 
+                                         low - first_bit_idx)
+            else:
+                packed += np.left_shift(keep_bits(arr, low, high), 
+                                        first_bit_idx - low)
+
+            # First bit index should never be > 8 if we are 
+            # packing values to a byte
+            first_bit_idx += high - low
+
+            if first_bit_idx > 8:
+                raise laspy.util.LaspyException("Invalid Data: Packed Length is Greater than allowed.")
+
+        return list(packed)
+
+    def raise_if_overflow(self, arr, maximum_packed_length):
+        if np.any(np.array(arr) >= 2**maximum_packed_length):
+            raise laspy.util.LaspyException("Invalid Data: Packed Length is Greater than allowed.")
+
 
     def set_return_num(self, num):
         '''Set the binary field return_num in the flag_byte''' 
         self._header_current = False
         if self.header.data_format_id in (0,1,2,3,4,5):
-            flag_byte = self.binary_str_arr(self.get_flag_byte())
-            newBits = self.binary_str_arr(num, 3)
-            outByte = self.bitpack((newBits,flag_byte), ((0,3), (3,8)))
+            flag_byte = self.get_flag_byte()
+            self.raise_if_overflow(num, 3)
+            outByte = self.bitpack((num,flag_byte), ((0,3), (3,8)))
             self.set_dimension("flag_byte", outByte)
         elif self.header.data_format_id in (6,7,8,9,10):
-            flag_byte = self.binary_str_arr(self.get_flag_byte())
-            newBits = self.binary_str_arr(num, 4)
-            outByte = self.bitpack((newBits,flag_byte), ((0,4), (4,8)))
+            flag_byte = self.get_flag_byte()
+            self.raise_if_overflow(num, 4)
+            outByte = self.bitpack((num,flag_byte), ((0,4), (4,8)))
             self.set_dimension("flag_byte", outByte)
         return
 
@@ -1403,37 +1407,37 @@ class Writer(FileManager):
         '''Set the binary field num_returns in the flag_byte'''
         self._header_current = False
         if self.header.data_format_id in (0,1,2,3,4,5):
-            flag_byte = self.binary_str_arr(self.get_flag_byte())
-            newBits = self.binary_str_arr(num, 3)
-            outByte = self.bitpack((flag_byte, newBits,flag_byte), ((0,3),(0,3),(6,8)))
+            flag_byte = self.get_flag_byte()
+            self.raise_if_overflow(num, 3)
+            outByte = self.bitpack((flag_byte, num,flag_byte), ((0,3),(0,3),(6,8)))
             self.set_dimension("flag_byte", outByte)
         elif self.header.data_format_id in (6,7,8,9,10):
-            flag_byte = self.binary_str_arr(self.get_flag_byte())
-            newBits = self.binary_str_arr(num, 4)
-            outByte = self.bitpack((flag_byte, newBits,flag_byte), ((0,4), (0,4), (4,8)))
+            flag_byte = self.get_flag_byte()
+            self.raise_if_overflow(num, 4)
+            outByte = self.bitpack((flag_byte, num,flag_byte), ((0,4), (4,8)))
             self.set_dimension("flag_byte", outByte)
         return
 
     def set_scanner_channel(self, value): 
         if not self.header.data_format_id in (6,7,8,9,10):
             raise laspy.util.LaspyException("Scanner Channel not present for point format: " + str(self.header.data_format_id))
-        raw_dim = self.binary_str_arr(self.get_raw_classification_flags())
-        new_bits = self.binary_str_arr(value, 2)
-        outByte = self.bitpack((raw_dim, new_bits, raw_dim), ((0,4), (0,2), (6,8)))
+        raw_dim = self.get_raw_classification_flags()
+        self.raise_if_overflow(value, 2)
+        outByte = self.bitpack((raw_dim, value, raw_dim), ((0,4), (0,2), (6,8)))
         self.set_raw_classification_flags(outByte) 
 
     def set_scan_dir_flag(self, flag): 
         '''Set the binary field scan_dir_flag in the flag_byte'''
         if self.header.data_format_id in (0,1,2,3,4,5):
-            flag_byte = self.binary_str_arr(self.get_flag_byte())
-            newBits = self.binary_str_arr(flag, 1)
-            outByte = self.bitpack((flag_byte,newBits,flag_byte), 
+            flag_byte = self.get_flag_byte()
+            self.raise_if_overflow(flag, 1)
+            outByte = self.bitpack((flag_byte,flag,flag_byte), 
                 ((0,6),(0,1), (7,8)))
             self.set_dimension("flag_byte", outByte)
         elif self.header.data_format_id in (6,7,8,9,10):
-            flag_byte = self.binary_str_arr(self.get_raw_classification_flags())
-            newBits = self.binary_str_arr(flag, 1)
-            outByte = self.bitpack((flag_byte,newBits,flag_byte), 
+            flag_byte = self.get_raw_classification_flags()
+            self.raise_if_overflow(flag, 1)
+            outByte = self.bitpack((flag_byte,flag,flag_byte), 
                 ((0,6),(0,1), (7,8)))
             self.set_dimension("classification_flags", outByte)
         return
@@ -1441,14 +1445,14 @@ class Writer(FileManager):
     def set_edge_flight_line(self, line):
         '''Set the binary field edge_flight_line in the flag_byte'''
         if self.header.data_format_id in (0,1,2,3,4,5):
-            raw_dim = self.binary_str_arr(self.get_flag_byte())
-            newBits = self.binary_str_arr(line, 1)
-            outByte = self.bitpack((raw_dim, newBits), ((0,7), (0,1)))
+            raw_dim = self.get_flag_byte()
+            self.raise_if_overflow(line, 1)
+            outByte = self.bitpack((raw_dim, line), ((0,7), (0,1)))
             self.set_dimension("flag_byte", outByte)
         elif self.header.data_format_id in (6,7,8,9,10):
-            raw_dim = self.binary_str_arr(self.get_raw_classification_flags()) 
-            newBits = self.binary_str_arr(line, 1)
-            outByte = self.bitpack((raw_dim, newBits), ((0,7), (0,1)))
+            raw_dim = self.get_raw_classification_flags()
+            self.raise_if_overflow(line, 1)
+            outByte = self.bitpack((raw_dim, line), ((0,7), (0,1)))
             self.set_dimension("classification_flags", outByte)
         return
 
@@ -1462,9 +1466,9 @@ class Writer(FileManager):
         if not self.header.data_format_id in (6,7,8,9,10):
             self.set_classification(value)
             return
-        rawDim = self.binary_str_arr(self.get_raw_classification_flags()) 
-        new_bits = self.binary_str_arr(value, 4) 
-        outbyte = self.bitpack((new_bits, rawDim), ((0,4), (4,8)))
+        rawDim = self.get_raw_classification_flags()
+        self.raise_if_overflow(value, 4)
+        outbyte = self.bitpack((value, rawDim), ((0,4), (4,8)))
         self.set_raw_classification_flags(outbyte)
         return
 
@@ -1478,9 +1482,9 @@ class Writer(FileManager):
            Point Formats >5: Set the classification byte.
         '''
         if self.header.data_format_id in (0,1,2,3,4,5):
-            class_byte = self.binary_str_arr(self.get_raw_classification())
-            new_bits = self.binary_str_arr(classification, 4)
-            out_byte = self.bitpack((new_bits, class_byte), ((0,5), (5,8)))
+            class_byte = self.get_raw_classification()
+            self.raise_if_overflow(classification, 5)
+            out_byte = self.bitpack((classification, class_byte), ((0,5), (5,8)))
             self.set_raw_classification(out_byte)
         elif self.header.data_format_id in (6,7,8,9,10):
             self.set_dimension("classification_byte", classification)
@@ -1489,15 +1493,15 @@ class Writer(FileManager):
     def set_synthetic(self, synthetic):
         '''Set the binary field synthetic inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
-            new_bits = self.binary_str_arr(synthetic, 1)
-            out_byte = self.bitpack((new_bits, class_byte), 
+            class_byte = self.get_raw_classification_flags()
+            self.raise_if_overflow(synthetic, 1)
+            out_byte = self.bitpack((synthetic, class_byte), 
                                     ((0,1), (1,8)))
             self.set_raw_classification_flags(out_byte)
         else:
-            class_byte = self.binary_str_arr(self.get_raw_classification())
-            new_bits = self.binary_str_arr(synthetic, 1)
-            out_byte = self.bitpack((class_byte, new_bits, class_byte),
+            class_byte = self.get_raw_classification()
+            self.raise_if_overflow(synthetic, 1)
+            out_byte = self.bitpack((class_byte, synthetic, class_byte),
                                    ((0,5), (0,1), (6,8)))
             self.set_dimension("raw_classification", out_byte)
         return
@@ -1505,14 +1509,14 @@ class Writer(FileManager):
     def set_key_point(self, pt):
         '''Set the binary key_point field inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
-            new_bits = self.binary_str_arr(pt, 1)
-            outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,1),(0,1), (2,8)))
+            class_byte = self.get_raw_classification_flags()
+            self.raise_if_overflow(pt, 1)
+            outbyte = self.bitpack((class_byte, pt, class_byte), ((0,1),(0,1), (2,8)))
             self.set_raw_classification_flags(outbyte)
         else:
-            class_byte = self.binary_str_arr(self.get_raw_classification())
-            new_bits = self.binary_str_arr(pt, 1)
-            out_byte = self.bitpack((class_byte, new_bits, class_byte), 
+            class_byte = self.get_raw_classification()
+            self.raise_if_overflow(pt, 1)
+            out_byte = self.bitpack((class_byte, pt, class_byte), 
                                 ((0,6),(0,1),(7,8)))
             self.set_dimension("raw_classification", out_byte)
         return
@@ -1520,14 +1524,14 @@ class Writer(FileManager):
     def set_withheld(self, withheld):
         '''Set the binary field withheld inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
-            new_bits = self.binary_str_arr(withheld, 1)
-            outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,2),(0,1), (3,8)))
+            class_byte = self.get_raw_classification_flags()
+            self.raise_if_overflow(withheld, 1)
+            outbyte = self.bitpack((class_byte, withheld, class_byte), ((0,2),(0,1), (3,8)))
             self.set_raw_classification_flags(outbyte)
         else:
-            class_byte = self.binary_str_arr(self.get_raw_classification())
-            new_bits = self.binary_str_arr(withheld, 1)
-            out_byte = self.bitpack((class_byte, new_bits),
+            class_byte = self.get_raw_classification()
+            self.raise_if_overflow(withheld, 1)
+            out_byte = self.bitpack((class_byte, withheld),
                                  ((0,7), (0,1)))
             self.set_dimension("raw_classification", out_byte)
         return
@@ -1535,9 +1539,9 @@ class Writer(FileManager):
     def set_overlap(self, overlap):
         '''Set the binary field withheld inside the raw classification byte'''
         if self.header.data_format_id in (6,7,8,9,10):
-            class_byte = self.binary_str_arr(self.get_raw_classification_flags())
-            new_bits = self.binary_str_arr(overlap, 1)
-            outbyte = self.bitpack((class_byte, new_bits, class_byte), ((0,3),(0,1), (4,8)))
+            class_byte = self.get_raw_classification_flags()
+            self.raise_if_overflow(overlap, 1)
+            outbyte = self.bitpack((class_byte, overlap, class_byte), ((0,3),(0,1), (4,8)))
             self.set_raw_classification_flags(outbyte)
         else:
             raise laspy.util.LaspyException("Overlap only present in point formats > 5.")
