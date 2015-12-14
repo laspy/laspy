@@ -1414,7 +1414,7 @@ class Writer(FileManager):
         elif self.header.data_format_id in (6,7,8,9,10):
             flag_byte = self.get_flag_byte()
             self.raise_if_overflow(num, 4)
-            outByte = self.bitpack((flag_byte, num,flag_byte), ((0,4), (0,4), (4,8)))
+            outByte = self.bitpack((flag_byte, num,flag_byte), ((0,4), (4,8)))
             self.set_dimension("flag_byte", outByte)
         return
 
