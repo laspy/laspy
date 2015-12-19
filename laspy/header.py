@@ -503,6 +503,10 @@ class Header(object):
                 self.__dict__[dim.name] = dim.default
         self.file_sig = "LASF"
 
+    def __del__(self):
+        del(self._format)
+        self._format = None
+
     def reformat(self, file_version):
         if file_version == self._format.fmt[1:4]:
             return
@@ -544,6 +548,12 @@ class HeaderManager(object):
         self.file_mode = reader.mode
         if self.file_mode == "w":
             self.allow_all_overwritables()
+
+    def __del__(self):
+        self.reader = None
+        self.writer = None
+        del(self._header)
+        self._header = None
 
     def copy(self):
         return(self.__copy__())

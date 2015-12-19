@@ -139,13 +139,16 @@ class File(object):
         '''
         if self._mode == "r":
             self._reader.close()
+            self._reader.delete()
             self._reader = None
             self._header = None
         else: 
             self._writer.close(ignore_header_changes, minmax_mode)    
+            self._writer.delete()
             self._reader = None
             self._writer = None
             self._header = None
+
 
     def visualize(self, mode = "default", dim = "intensity"):
         try:

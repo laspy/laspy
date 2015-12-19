@@ -171,6 +171,13 @@ class Format():
         ## Shared 
         self.build_extra_bytes(extra_bytes)
         self.setup_lookup()
+
+    def __del__(self):
+        self.fmt = None
+        self.specs = None
+        self.pt_fmt_long = None
+        self._etree = None
+        
         
     def build_extra_bytes_struct(self):
         self.add("reserved", "ctypes.c_ubyte", 2)
