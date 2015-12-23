@@ -850,12 +850,6 @@ class Reader(FileManager):
         '''Close the file.'''
         self.data_provider.close() 
     
-    def delete(self):
-        self.data_provider = None
-        del(self.header)
-        self.header = None
-
-
 class Writer(FileManager):
 
     def close(self, ignore_header_changes = False, minmax_mode = "scaled"):
@@ -866,12 +860,6 @@ class Writer(FileManager):
             self.header.update_min_max(minmax_mode) 
         self.data_provider.close()
    
-    def delete(self): 
-        self.data_provider = None
-        del(self.header)
-        self.header = None
-
-
     def set_evlrs(self, value):
         if value == False or len(value) == 0:
             return
