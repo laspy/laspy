@@ -133,8 +133,8 @@ class DataProvider():
         '''Create the numpy point map based on the point format.'''   
         if type(self._mmap) == bool:
             self.map() 
-        self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
-                                [x.np_fmt for x in self.manager.point_format.specs]))]) 
+        self.pointfmt = np.dtype([("point", list(zip([x.name for x in self.manager.point_format.specs],
+                                [x.np_fmt for x in self.manager.point_format.specs])))])
         if not self.manager.header.version in ("1.3", "1.4"): 
             self._pmap = np.frombuffer(self._mmap, self.pointfmt, 
                         offset = self.manager.header.data_offset)
