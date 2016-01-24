@@ -1039,7 +1039,7 @@ class Writer(FileManager):
             self.data_provider.close() 
             self.data_provider.open("w+b") 
             self.data_provider.fileref.write(dat_part_1) 
-            self.data_provider.fileref.write("\x00"*value)
+            self.data_provider.fileref.write(b"\x00"*value)
             self.data_provider.fileref.write(dat_part_2)
             self.data_provider.close()
             self.__init__(self.data_provider.filename, self.mode) 
