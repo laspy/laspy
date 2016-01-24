@@ -417,10 +417,10 @@ class VLR(ParseableVLR):
         '''Build a vlr from a reader capable of reading in the data.'''
         self.reader = reader
         self.reserved = reader.read_words("reserved")
-        self.user_id = "".join(reader.read_words("user_id"))
+        self.user_id = "".join(reader.read_words("user_id").decode('ascii'))
         self.record_id = reader.read_words("record_id")
         self.rec_len_after_header = reader.read_words("rec_len_after_header")
-        self.description = "".join(reader.read_words("description"))
+        self.description = "".join(reader.read_words("description").decode('ascii'))
         self.VLR_body = reader.read(self.rec_len_after_header)
         if "LASF_Spec" in self.user_id and self.record_id == 4:
             self.setup_extra_bytes_spec(self.VLR_body)
