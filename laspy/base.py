@@ -8,6 +8,11 @@ from types import GeneratorType
 import numpy as np
 import copy
 
+try:
+    xrange
+except NameError:
+    def xrange(*args):
+        return range(*args)
 
 def read_compressed(filename):
     import subprocess
