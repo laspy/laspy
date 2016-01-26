@@ -12,7 +12,7 @@ def flip_bit(x):
 
 
 class LasReaderTestCase(unittest.TestCase):
-    simple = "./laspytest/data/simple.las"
+    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
     tempfile = "junk.las"
     def setUp(self): 
         shutil.copyfile(self.simple, self.tempfile)
@@ -177,7 +177,7 @@ class LasReaderTestCase(unittest.TestCase):
         
 
 class LasWriterTestCase(unittest.TestCase):
-    simple = './laspytest/data/simple.las'
+    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
     tempfile = 'writer.las'
     output_tempfile = 'writer_output.las'
     def setUp(self):
@@ -363,8 +363,8 @@ class LasWriterTestCase(unittest.TestCase):
         os.remove(self.tempfile)
 
 class LasHeaderWriterTestCase(unittest.TestCase):
-    simple = os.path.abspath('./laspytest/data/simple.las')
-    simple14 = os.path.abspath('./laspytest/data/simple1_4.las')
+    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
+    simple14 = os.path.join(os.path.dirname(__file__), 'data', 'simple1_4.las')
     tempfile = os.path.abspath('headerwriter.las')
     tempfile2 = os.path.abspath('headerwriter2.las')
 
@@ -501,7 +501,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         os.remove(self.tempfile)
 
 class LasWriteModeTestCase(unittest.TestCase):
-    simple = './laspytest/data/simple.las'
+    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
     tempfile = 'write-mode.las'
     output_tempfile = 'write-mode-output.las'
     def setUp(self):
@@ -567,7 +567,7 @@ class LasWriteModeTestCase(unittest.TestCase):
         os.remove(self.tempfile)
 
 class LasV_13TestCase(unittest.TestCase):
-    simple = './laspytest/data/simple1_3.las'
+    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple1_3.las')
     tempfile = 'v13.las'
     output_tempfile = 'v13-output.las'
     def setUp(self):
@@ -664,7 +664,7 @@ class LasV_13TestCase(unittest.TestCase):
         os.remove(self.tempfile)
 
 class LasV_14TestCase(unittest.TestCase):
-    simple = './laspytest/data/simple1_4.las'
+    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple1_4.las')
     tempfile = 'v14.las'
     output_tempfile = 'v14-output.las'
     def setUp(self):
@@ -775,7 +775,7 @@ class LasLazReaderTestCase(unittest.TestCase):
 
     def test_read_data(self):
         """Testing ability to read laz files."""
-        simple = './laspytest/data/simple.laz'
+        simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.laz')
         File1 = File.File(simple, mode = "r")
         self.assertTrue(len(File1.X) == 1065)
         File1.close()    
