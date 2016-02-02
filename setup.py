@@ -1,8 +1,6 @@
 from setuptools import setup
 import shutil
 
-import laspy
-
 # Get text from README.txt
 try:
     readme_text = file('README.rst', 'rb').read()
