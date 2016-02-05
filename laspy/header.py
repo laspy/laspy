@@ -117,7 +117,7 @@ class ParseableVLR():
             raise util.LaspyException("Not a known VLR/EVLR type, can't pack parsed_body")
         try:
             packed = struct.pack(self.body_fmt.pt_fmt_long, *self.parsed_body)
-        except Exception, error:    
+        except Exception as error:
             print("Error packing VLR data, using current raw vlr body.")
             print(error)
             packed = self.VLR_body
@@ -305,7 +305,7 @@ class EVLR(ParseableVLR):
             self.setup_extra_bytes_spec(self.VLR_body)
         try:
             self.parse_data()
-        except Exception, err:
+        except Exception as err:
             print("Error Parsing EVLR Body Data:")
             print(err)
 
@@ -339,7 +339,7 @@ class EVLR(ParseableVLR):
         self.fmt = reader.evlr_formats
         try:
             self.parse_data()
-        except Exception, err:
+        except Exception as err:
             print("Error Parsing EVLR Body Data:")
             print(err)
 
@@ -407,7 +407,7 @@ class VLR(ParseableVLR):
             self.setup_extra_bytes_spec(self.VLR_body)
         try:
             self.parse_data()
-        except Exception, err:
+        except Exception as err:
             print("Error Parsing VLR Body Data:")
             print(err)
 
