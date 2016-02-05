@@ -383,7 +383,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         guid = self.FileObject.header.guid
         guid2 = self.FileObject.header.project_id
         self.assertEqual(guid, guid2)
-        newGuid = UUID(bytes="1"*16)
+        newGuid = UUID(bytes=b"1"*16)
         self.FileObject.header.guid = newGuid
         newGuid2 = self.FileObject.header.get_guid()
         self.assertEqual(newGuid, newGuid2)
