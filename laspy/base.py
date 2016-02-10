@@ -3,7 +3,6 @@ import laspy
 import os
 import datetime
 import struct
-import util
 from types import GeneratorType
 import numpy as np
 import copy
@@ -11,15 +10,21 @@ import copy
 try:
     xrange
 except NameError:
-    def xrange(*args):
-        return range(*args)
+    xrange = range
+
+try:
+    buffer
+except NameError:
+    buffer = memoryview
 
 def read_compressed(filename):
     import subprocess
-    pathvar1 = any([os.path.isfile(x + "/laszip") 
-            for x in os.environ["PATH"].split(os.pathsep)])
-    pathvar2 = any([os.path.isfile(x + "/laszip.exe") 
-            for x in os.environ["PATH"].split(os.pathsep)])
+    pathvar1 = any([os.path.isfile(os.path.join(x, "laszip"))
+                    for x in os.environ["PATH"].split(os.pathsep)])
+
+    pathvar2 = any([os.path.isfile(os.path.join(x, "laszip.exe"))
+                    for x in os.environ["PATH"].split(os.pathsep)])
+
     if (not pathvar1 and not pathvar2):
         raise(laspy.util.LaspyException("Laszip was not found on the system"))
 
@@ -45,6 +50,7 @@ class FakeMmap(object):
         self.view = memoryview(data)
         self.pos = pos
         # numpy needs this, unfortunately
+        # Note: this is a memoryview in python3. Does numpy still "need" this?
         self.__buffer__ = buffer(data)
 
     def __len__(self):
@@ -390,7 +396,7 @@ class FileManager():
         if self._header.data_offset != 0:
             filesize = max(self._header.data_offset, filesize)
         self._header.data_offset = filesize 
-        self.data_provider.fileref.write("\x00"*filesize)
+        self.data_provider.fileref.write(b"\x00"*filesize)
         return
 
     def setup_memoizing(self):
@@ -456,11 +462,19 @@ class FileManager():
 
     def _read_words(self, fmt, num, bytes):
         '''Read a consecutive sequence of packed binary data, return a single
-        element or list''' 
+        element or list'''
         outData = []
         for i in xrange(num):
             dat = self.read(bytes)
-            outData.append(struct.unpack(fmt, dat)[0])
+            unpacked = struct.unpack(fmt, dat)[0]
+            if fmt == '<s':
+                try:
+                    unpacked = unpacked.decode('ascii')
+                except UnicodeDecodeError:
+                    # this is often NULs and random data that occurs after the
+                    # ending NUL. Just ignore it.
+                    unpacked = ''
+            outData.append(unpacked)
         if len(outData) > 1:
             return(outData)
         return(outData[0])
@@ -667,8 +681,15 @@ class FileManager():
         unpacked = map(lambda x: struct.unpack(spec.fmt, 
             data[x*spec.length:(x+1)*spec.length])[0], xrange(spec.num))
         if spec.pack:
-            return("".join([str(x[0]) for x in unpacked]))
-        return(unpacked) 
+            # return("".join([str(x[0]) for x in unpacked]))
+            if spec.fmt == '<s':
+                s = ''.join(x.decode('ascii') for x in unpacked)
+                return s
+            else:
+                return("".join([str(x[0]) for x in unpacked]))
+        else:
+            unpacked = list(unpacked) # evaluate the map in python3
+        return(unpacked)
 
     def get_raw_header_property(self, name):
         '''Wrapper for grabbing raw header bytes with _get_raw_datum'''
@@ -1067,7 +1088,7 @@ class Writer(FileManager):
             old_size = self.header.data_offset     
             self.data_provider._mmap.flush()
             self.data_provider.fileref.seek(old_size, 0)
-            self.data_provider.fileref.write("\x00" * (bytes_to_pad))
+            self.data_provider.fileref.write(b"\x00" * (bytes_to_pad))
             self.data_provider.fileref.flush()
             self.data_provider.remap(flush = False, point_map = True) 
             # Write Phase complete, enter rw mode?
@@ -1079,7 +1100,7 @@ class Writer(FileManager):
             self.data_provider.close()
             self.data_provider.open("w+b")
             self.data_provider.fileref.write(d1)
-            self.data_provider.fileref.write("\x00"*(bytes_to_pad))
+            self.data_provider.fileref.write(b"\x00"*(bytes_to_pad))
             self.data_provider.fileref.write(d2)
             self.data_provider.close()
             self.data_provider.remap(point_map = True)
@@ -1273,13 +1294,18 @@ class Writer(FileManager):
                                 str(dim.num) +", received " + str(dimlen) ))
         def f(x):
             try:
-                outbyte = struct.pack(dim.fmt, val[x])
+                # because val is a bytes() object, val[x] yields an integer.
+                # q converts val[x] BACK to a string, then encodes it as ascii
+                # to get a bytes() object of length 1. Really, we should be '
+                # writing the entire string at once.
+                q = chr(val[x]).encode('ascii')
+                outbyte = struct.pack(dim.fmt, q)
             except:
                 outbyte = struct.pack(dim.fmt, int(val[x]))
             self.data_provider._mmap[(x*dim.length + rec_offs + 
                     dim.offs):((x+1)*dim.length + rec_offs 
                     + dim.offs)]=outbyte
-        map(f, xrange(dim.num))
+        list(map(f, xrange(dim.num)))
         return
 
     def set_raw_header_property(self, name, value):
@@ -1299,7 +1325,9 @@ class Writer(FileManager):
             raise laspy.util.LaspyException("Header Dimension: " + str(name) + " not found.")
         if not dim.overwritable:
             raise(laspy.util.LaspyException("Field " + dim.name + " is not overwritable."))
-        
+
+        if dim.fmt == '<s':
+            value = value.encode('ascii')
         self._set_datum(0, dim, value)
         self.header_changes.add(name)
         return

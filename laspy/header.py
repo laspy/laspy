@@ -1,9 +1,14 @@
 import datetime
 import uuid
-import util
+from laspy import util
 import struct
 import copy
 import numpy as np
+
+try:
+    xrange
+except NameError:
+    xrange = range
 
 def leap_year(year):
     if ((year % 4) != 0):
@@ -417,10 +422,10 @@ class VLR(ParseableVLR):
         '''Build a vlr from a reader capable of reading in the data.'''
         self.reader = reader
         self.reserved = reader.read_words("reserved")
-        self.user_id = "".join(reader.read_words("user_id").decode('ascii'))
+        self.user_id = "".join(w for w in reader.read_words("user_id"))
         self.record_id = reader.read_words("record_id")
         self.rec_len_after_header = reader.read_words("rec_len_after_header")
-        self.description = "".join(reader.read_words("description").decode('ascii'))
+        self.description = "".join(w for w in reader.read_words("description"))
         self.VLR_body = reader.read(self.rec_len_after_header)
         if "LASF_Spec" in self.user_id and self.record_id == 4:
             self.setup_extra_bytes_spec(self.VLR_body)
@@ -429,7 +434,7 @@ class VLR(ParseableVLR):
         self.fmt = reader.vlr_formats
         try:
             self.parse_data()
-        except Exception, err:
+        except Exception as err:
             print("Error Parsing EVLR Body Data:")
             print(err)
 
@@ -729,7 +734,7 @@ class HeaderManager(object):
         return self.get_projectid() 
 
     def set_guid(self, value):
-        raw_bytes = uuid.UUID.get_bytes_le(value)
+        raw_bytes = value.bytes_le
         p1 = raw_bytes[0:4]
         p2 = raw_bytes[4:6]
         p3 = raw_bytes[6:8]
@@ -1042,10 +1047,10 @@ class HeaderManager(object):
         #raw_hist = histDict.values()
         #if self.data_format_id in (range(6)):
         if self.version != "1.4":
-            raw_hist = np.histogram(rawdata, bins = range(1,7))
+            raw_hist = np.histogram(list(rawdata), bins = range(1,7))
             
         else:
-            raw_hist = np.histogram(rawdata, bins = range(1,17)) 
+            raw_hist = np.histogram(list(rawdata), bins = range(1,17))
         #print("Raw Hist: " + str(raw_hist))
         #t = raw_hist[0][4]
         #for ret in [3,2,1,0]:
