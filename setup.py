@@ -1,8 +1,6 @@
 from setuptools import setup
 import shutil
 
-import laspy
-
 # Get text from README.txt
 try:
     readme_text = file('README.rst', 'rb').read()
@@ -29,7 +27,7 @@ except:
 
     
 setup(name          = 'laspy',
-      version       = laspy.__version__,
+      version       = '1.4.1',
       description   = 'Native Python ASPRS LAS read/write library',
       license       = 'BSD',
       keywords      = 'gis lidar las',
