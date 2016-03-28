@@ -141,7 +141,7 @@ in the same way as full size dimensions:
 ======================  ====================  ==============================
  Field Name              Laspy Abbreviation    Length(in bits)
 ======================  ====================  ==============================
- Classification          classification        4
+ Classification          classification        5
  Synthetic               synthetic             1
  Key Point               key_point             1
  Withheld                withheld              1
