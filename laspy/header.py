@@ -663,7 +663,7 @@ class HeaderManager(object):
     def set_waveform_data_packets_external(self, value):
         self.assertWriteMode()
         raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
-        self.set_global_encoding(self.reader.packed_str(raw_encoding[0:2], + str(value) + raw_encoding[3:]))
+        self.set_global_encoding(self.reader.packed_str(raw_encoding[0:2] + str(value) + raw_encoding[3:]))
         return
 
     waveform_data_packets_external = property(get_waveform_data_packets_external,
@@ -676,7 +676,7 @@ class HeaderManager(object):
     def set_synthetic_return_num(self, value):
         self.assertWriteMode()
         raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
-        self.set_global_encoding(self.reader.packed_str(raw_encoding[0:3], + str(value) + raw_encoding[4:]))
+        self.set_global_encoding(self.reader.packed_str(raw_encoding[0:3] + str(value) + raw_encoding[4:]))
         return
 
     synthetic_return_num = property(get_synthetic_return_num, set_synthetic_return_num, 
@@ -693,7 +693,7 @@ class HeaderManager(object):
         self.assertWriteMode()
         if self.data_format_id > 5:
             raw_encoding = self.reader.binary_str(self.get_global_encoding(), 16)
-            self.set_global_encoding(self.reader.packed_str(raw_encoding[1:4] + str(value) + raw_encoding[5:16]))
+            self.set_global_encoding(self.reader.packed_str(raw_encoding[0:4] + str(value) + raw_encoding[5:]))
         else:
             raise util.LaspyException("WKT not present in data_format_id " + str(self.data_format_id))
 

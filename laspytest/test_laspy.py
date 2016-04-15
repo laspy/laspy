@@ -589,6 +589,7 @@ class LasV_13TestCase(unittest.TestCase):
         self.assertEqual(self.File1.header.synthetic_return_num, 
                         File2.header.synthetic_return_num)
         File2.close(ignore_header_changes = True)    
+
     def test_evlr(self):
         """Testing v1.3 EVLR support."""
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
@@ -686,6 +687,32 @@ class LasV_14TestCase(unittest.TestCase):
         self.assertEqual(self.File1.header.synthetic_return_num, 
                         File2.header.synthetic_return_num)
         File2.close(ignore_header_changes = True)    
+
+    def test_glob_encode_bits(self):
+        b1 = self.File1.header.gps_time_type
+        b2 = self.File1.header.waveform_data_packets_internal
+        b3 = self.File1.header.waveform_data_packets_external
+        b4 = self.File1.header.synthetic_return_num
+        b5 = self.File1.header.wkt
+
+        bf1 = 1 - int(b1)
+        bf2 = 1 - int(b2)
+        bf3 = 1 - int(b3)
+        bf4 = 1 - int(b4)
+        bf5 = 1 - int(b5)
+
+        self.File1.header.gps_time_type = bf1
+        self.File1.header.waveform_data_packets_internal = bf2
+        self.File1.header.waveform_data_packets_external = bf3
+        self.File1.header.synthetic_return_num = bf4
+        self.File1.header.wkt = bf5
+
+        self.assertEqual(self.File1.header.gps_time_type, str(bf1))
+        self.assertEqual(self.File1.header.waveform_data_packets_internal, str(bf2))
+        self.assertEqual(self.File1.header.waveform_data_packets_external, str(bf3))
+        self.assertEqual(self.File1.header.synthetic_return_num, str(bf4))
+        self.assertEqual(self.File1.header.wkt, str(bf5))
+
     def test_evlr(self):
         """ Testing v1.4 EVLR support"""
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
