@@ -227,7 +227,7 @@ class DataProvider():
             raise laspy.util.LaspyException("File not mapped")
         return(self._mmap.size())
 
-class FileManager():
+class FileManager(object):
     '''Superclass of Reader and Writer, provides most of the data manipulation functionality in laspy.''' 
     def __init__(self,filename, mode, header = False, vlrs = False, evlrs = False): 
         '''Build the FileManager object. This is done when opening the file
@@ -257,6 +257,13 @@ class FileManager():
             return
         else:
             raise laspy.util.LaspyException("Append Mode Not Supported")
+    
+    def close(self):
+        '''Help the garbage collector by deleting some of the circular references'''
+        self.data_provider.close()
+        self.data_provider = None
+        self.header = None
+        self._header = None
         
     def setup_read_write(self, vlrs, evlrs, read_only=True):
         # Check if read only mode, if not open for updating.
@@ -565,8 +572,9 @@ class FileManager():
         '''Return a numpy array of all point data in a file.'''
         if not self.has_point_records:
             return None
-        if type(self.point_refs) == bool:
-            self.build_point_refs()
+        # We don't need to build point_refs here (perhaps not anymore, at all)
+        # if type(self.point_refs) == bool:
+        #    self.build_point_refs()
         #single_fmt = self.point_format.pt_fmt_long[1:]
         #fmtlen = len(single_fmt)
         #big_fmt_string = "".join(["<", single_fmt*self.header.point_records_count])
@@ -605,6 +613,7 @@ class FileManager():
 
     def build_point_refs(self):
         '''Build array of point offsets '''
+        # Is this really needed?
         pts = int(self.get_pointrecordscount())
         length = int(self.header.data_record_length)
         offs = int(self.header.data_offset)
@@ -633,7 +642,9 @@ class FileManager():
         return(self.data_provider._pmap["point"][spec.name])
 
     def _get_dimension_by_specs(self,offs, fmt, length):
-        '''Return point dimension of specified offset format and length''' 
+        '''Return point dimension of specified offset format and length'''
+        if type(self.point_refs) == bool:
+            self.build_point_refs() 
         _mmap = self.data_provider._mmap  
         prefs = (offs + x for x in self.point_refs) 
         packer = self.c_packers[fmt]
@@ -673,7 +684,6 @@ class FileManager():
     
     def get_header_property(self, name):
         '''Wrapper for grabbing unpacked header data with _get_datum''' 
-        #print name
         if name in self.header_changes:
             spec = self.header_format.lookup[name]
             new_val = self._get_datum(0, spec)
@@ -846,9 +856,8 @@ class FileManager():
 
 
 class Reader(FileManager):
-    def close(self):
-        '''Close the file.'''
-        self.data_provider.close() 
+    '''Just a subclass of FileManager'''
+    pass
     
 class Writer(FileManager):
 
@@ -858,7 +867,7 @@ class Writer(FileManager):
             if not self._header_current:
                 self.header.update_histogram()
             self.header.update_min_max(minmax_mode) 
-        self.data_provider.close()
+        super(Writer, self).close()
    
     def set_evlrs(self, value):
         if value == False or len(value) == 0:
@@ -1227,7 +1236,8 @@ class Writer(FileManager):
         '''Set a point dimension of appropriate name to new_dim'''
         ptrecs = self.get_pointrecordscount()
         if len(new_raw_points) != ptrecs:
-            raise laspy.util.LaspyException("Error, new dimension length (%s) does not match"%str(len(new_raw_points)) + " the number of points (%s)" % str(ptrecs)) 
+            raise laspy.util.LaspyException("Error, new dimension length (%s) does not match"% str(len(new_raw_points)) 
+                                            + " the number of points (%s)" % str(ptrecs)) 
         if type(self.point_refs) == bool:
             self.build_point_refs()
         idx = (xrange(len(self.point_refs)))
