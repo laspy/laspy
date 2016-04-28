@@ -14,7 +14,8 @@ class File(object):
                        mode='r',
                        in_srs=None,
                        out_srs=None,
-                       evlrs = False):
+                       evlrs = False,
+                       read_compressed=True):
         '''Instantiate a file object to represent an LAS file.
 
         :arg filename: The filename to open
@@ -60,6 +61,7 @@ class File(object):
         self._mode = mode.lower()
         self.in_srs = in_srs
         self.out_srs = out_srs
+        self.read_compressed = read_compressed
         self.open()
 
     def open(self):
@@ -71,7 +73,7 @@ class File(object):
                 raise OSError("No such file or directory: '%s'" % self.filename)
             ## Make sure we have a header
             if self._header is None:
-                self._reader = base.Reader(self.filename, mode=self._mode)
+                self._reader = base.Reader(self.filename, mode=self._mode, read_compressed=self.read_compressed)
                 self._header = self._reader.get_header()
             else: 
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))

@@ -9,7 +9,7 @@ import numpy as np
 import copy
 
 
-def read_compressed(filename):
+def read_laz(filename):
     import subprocess
     pathvar1 = any([os.path.isfile(x + "/laszip") 
             for x in os.environ["PATH"].split(os.pathsep)])
@@ -23,7 +23,7 @@ def read_compressed(filename):
     data, stderr=prc.communicate()
     if prc.returncode != 0:
         # What about using the logging module instead of prints?
-        print("Unusual return code from laszip: %d" %prc.returncode)
+        print("Unusual return code from laszip: %d" % prc.returncode)
         if stderr and len(stderr)<2048:
             print(stderr)
         raise ValueError("Unable to read compressed file!")
@@ -36,7 +36,7 @@ class FakeMmap(object):
     constructed from 'buffer like' data.
     '''
     def __init__(self, filename, pos=0):
-        data = read_compressed(filename)
+        data = read_laz(filename)
         self.view = memoryview(data)
         self.pos = pos
         # numpy needs this, unfortunately
@@ -73,7 +73,7 @@ class FakeMmap(object):
 
 class DataProvider():
     '''Provides access to the file object, the memory map, and the numpy point map.'''
-    def __init__(self, filename, manager):
+    def __init__(self, filename, manager, read_compressed=True):
         '''Construct the data provider. _mmap refers to the memory map, and _pmap 
         refers to the numpy point map.'''
         self.filename = filename
@@ -83,6 +83,9 @@ class DataProvider():
         self._evlrmap = False
         self.manager = manager
         self.mode = manager.mode
+        # This attribute will determine whether we read a compressed file completely into memory
+        # Will just read header, if False
+        self.read_compressed = read_compressed
         # Figure out if this file is compressed
         if self.mode in ("w"):
             self.compressed = False
@@ -104,7 +107,7 @@ class DataProvider():
 
     def open(self, mode):
         '''Open the file, catch simple problems.'''
-        if not self.compressed:
+        if not (self.compressed and self.read_compressed):
             try:
                 self.fileref = open(self.filename, mode)
             except(Exception):
@@ -132,7 +135,10 @@ class DataProvider():
     def point_map(self):
         '''Create the numpy point map based on the point format.'''   
         if type(self._mmap) == bool:
-            self.map() 
+            self.map()
+        if self.compressed and (not self.read_compressed):
+            # Do not construct the point map in case read_compressed is False
+            return
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))]) 
         if not self.manager.header.version in ("1.3", "1.4"): 
@@ -179,7 +185,7 @@ class DataProvider():
             raise laspy.util.LaspyException("File not opened.")
         try:
             if self.mode == "r":
-                if self.compressed:
+                if self.compressed and self.read_compressed:
                     self._mmap=FakeMmap(self.filename)
                 else:
                     self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
@@ -229,7 +235,7 @@ class DataProvider():
 
 class FileManager(object):
     '''Superclass of Reader and Writer, provides most of the data manipulation functionality in laspy.''' 
-    def __init__(self,filename, mode, header = False, vlrs = False, evlrs = False): 
+    def __init__(self,filename, mode, header=False, vlrs=False, evlrs=False, read_compressed=False): 
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding.'''
@@ -237,7 +243,7 @@ class FileManager(object):
         self.vlr_formats = laspy.util.Format("VLR")
         self.evlr_formats = laspy.util.Format("EVLR")
         self.mode = mode
-        self.data_provider = DataProvider(filename, self) 
+        self.data_provider = DataProvider(filename, self, read_compressed) 
         self.setup_memoizing()
         
         self.calc_point_recs = False
