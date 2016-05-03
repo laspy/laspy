@@ -8,8 +8,9 @@ from types import GeneratorType
 import numpy as np
 import copy
 
+FILE_MODES = ["r-", "r", "r+", "rw", "w"]
 
-def read_laz(filename):
+def read_compressed(filename):
     import subprocess
     pathvar1 = any([os.path.isfile(x + "/laszip") 
             for x in os.environ["PATH"].split(os.pathsep)])
@@ -36,7 +37,7 @@ class FakeMmap(object):
     constructed from 'buffer like' data.
     '''
     def __init__(self, filename, pos=0):
-        data = read_laz(filename)
+        data = read_compressed(filename)
         self.view = memoryview(data)
         self.pos = pos
         # numpy needs this, unfortunately
@@ -73,7 +74,7 @@ class FakeMmap(object):
 
 class DataProvider():
     '''Provides access to the file object, the memory map, and the numpy point map.'''
-    def __init__(self, filename, manager, read_compressed=True):
+    def __init__(self, filename, manager):
         '''Construct the data provider. _mmap refers to the memory map, and _pmap 
         refers to the numpy point map.'''
         self.filename = filename
@@ -83,9 +84,6 @@ class DataProvider():
         self._evlrmap = False
         self.manager = manager
         self.mode = manager.mode
-        # This attribute will determine whether we read a compressed file completely into memory
-        # Will just read header, if False
-        self.read_compressed = read_compressed
         # Figure out if this file is compressed
         if self.mode in ("w"):
             self.compressed = False
@@ -107,7 +105,7 @@ class DataProvider():
 
     def open(self, mode):
         '''Open the file, catch simple problems.'''
-        if not (self.compressed and self.read_compressed):
+        if (not self.compressed) or self.mode == "r-":
             try:
                 self.fileref = open(self.filename, mode)
             except(Exception):
@@ -136,8 +134,8 @@ class DataProvider():
         '''Create the numpy point map based on the point format.'''   
         if type(self._mmap) == bool:
             self.map()
-        if self.compressed and (not self.read_compressed):
-            # Do not construct the point map in case read_compressed is False
+        if self.mode == "r-":
+            # Do not construct the point map in case 
             return
         self.pointfmt = np.dtype([("point", zip([x.name for x in self.manager.point_format.specs],
                                 [x.np_fmt for x in self.manager.point_format.specs]))]) 
@@ -184,8 +182,8 @@ class DataProvider():
         if self.fileref == False and not self.compressed:
             raise laspy.util.LaspyException("File not opened.")
         try:
-            if self.mode == "r":
-                if self.compressed and self.read_compressed:
+            if self.mode in ("r", "r-"):
+                if self.compressed and self.mode != "r-":
                     self._mmap=FakeMmap(self.filename)
                 else:
                     self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
@@ -235,15 +233,17 @@ class DataProvider():
 
 class FileManager(object):
     '''Superclass of Reader and Writer, provides most of the data manipulation functionality in laspy.''' 
-    def __init__(self,filename, mode, header=False, vlrs=False, evlrs=False, read_compressed=False): 
+    def __init__(self,filename, mode, header=False, vlrs=False, evlrs=False): 
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding.'''
+        if not mode in FILE_MODES:
+            raise laspy.util.LaspyException("Mode %s not supported" % mode)
         self.compressed = False
         self.vlr_formats = laspy.util.Format("VLR")
         self.evlr_formats = laspy.util.Format("EVLR")
-        self.mode = mode
-        self.data_provider = DataProvider(filename, self, read_compressed) 
+        self.mode = mode.replace("+", "w")
+        self.data_provider = DataProvider(filename, self) 
         self.setup_memoizing()
         
         self.calc_point_recs = False
@@ -252,7 +252,7 @@ class FileManager(object):
         self._current = 0 
         
         self.padded = False
-        if self.mode == "r":
+        if "w" not in self.mode:
             self.setup_read_write(vlrs,evlrs, read_only=True)
             return
         elif self.mode == "rw":
@@ -262,7 +262,8 @@ class FileManager(object):
             self.setup_write(header, vlrs, evlrs)
             return
         else:
-            raise laspy.util.LaspyException("Append Mode Not Supported")
+            # Shouldn't happen
+            raise laspy.util.LaspyException("Mode %s not supported" % mode)
     
     def close(self):
         '''Help the garbage collector by deleting some of the circular references'''
