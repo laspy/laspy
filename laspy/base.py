@@ -8,7 +8,8 @@ from types import GeneratorType
 import numpy as np
 import copy
 
-FILE_MODES = ["r-", "r", "r+", "rw", "w"]
+# Not used right now - but could be a handy place to centralize file modes
+FILE_MODES = ["r-", "r", "rw", "w"]
 
 def read_compressed(filename):
     import subprocess
@@ -61,7 +62,6 @@ class FakeMmap(object):
         else:
             self.pos += nbytes
 
-            
     def read(self, nbytes):
         out = self.view[self.pos:self.pos+nbytes]
         self.pos += nbytes
@@ -69,6 +69,9 @@ class FakeMmap(object):
         
     def tell(self):
         return self.pos
+    
+    def size(self):
+        return len(self.view)
   
 
 
@@ -237,22 +240,17 @@ class FileManager(object):
         '''Build the FileManager object. This is done when opening the file
         as well as upon completion of file modification actions like changing the 
         header padding.'''
-        if not mode in FILE_MODES:
-            raise laspy.util.LaspyException("Mode %s not supported" % mode)
         self.compressed = False
         self.vlr_formats = laspy.util.Format("VLR")
         self.evlr_formats = laspy.util.Format("EVLR")
-        self.mode = mode.replace("+", "w")
+        self.mode = mode
         self.data_provider = DataProvider(filename, self) 
         self.setup_memoizing()
-        
         self.calc_point_recs = False
-
         self.point_refs = False
         self._current = 0 
-        
         self.padded = False
-        if "w" not in self.mode:
+        if self.mode in ("r", "r-"):
             self.setup_read_write(vlrs,evlrs, read_only=True)
             return
         elif self.mode == "rw":
@@ -262,8 +260,7 @@ class FileManager(object):
             self.setup_write(header, vlrs, evlrs)
             return
         else:
-            # Shouldn't happen
-            raise laspy.util.LaspyException("Mode %s not supported" % mode)
+            raise laspy.util.LaspyException("Mode %s not supported / implemented" % mode)
     
     def close(self):
         '''Help the garbage collector by deleting some of the circular references'''
@@ -271,6 +268,8 @@ class FileManager(object):
         self.data_provider = None
         self.header = None
         self._header = None
+        self.vlrs = None
+        self.evlrs = None
         
     def setup_read_write(self, vlrs, evlrs, read_only=True):
         # Check if read only mode, if not open for updating.
@@ -288,13 +287,18 @@ class FileManager(object):
         self.has_point_records = True
         self._current = 0        
         self.correct_rec_len()
+        self.compressed = self.point_format.compressed
 
-        if self.point_format.compressed:
-            self.compressed = True
-            self.data_provider.remap()
-        else:
-            self.compressed = False        
-
+        #if self.point_format.compressed:
+        #    self.compressed = True
+        #    self.data_provider.remap()
+        #else:
+        #    self.compressed = False        
+        if self.mode == "r-":
+            self.extra_dimensions = []
+            self.vlrs = []
+            self.evlrs = []
+            return
         self.data_provider.point_map()
         if self.header.version in ("1.3", "1.4"):
             #gives key error if called with buffer hack for some reason...

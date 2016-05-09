@@ -5,8 +5,8 @@ import laspy.header as header
 from uuid import UUID
 import unittest
 import os
-
 import shutil
+
 def flip_bit(x):
     return(1*(x==0))
 
@@ -811,6 +811,20 @@ class LasLazReaderTestCase(unittest.TestCase):
         pass 
 
 
+class LazNoPointMapTestCase(unittest.TestCase):
+    
+    def test_open_header_only(self):
+        """Test opening in mode r- (do not uncompress)"""
+        simple = os.path.join(os.path.dirname(__file__), "data", "simple.laz")
+        plas = File.File(simple, mode = "r-")
+        self.assertTrue(plas.header.records_count == 1065)
+        plas.close()
+    
+    def test_open_invalid(self):
+        simple = os.path.join(os.path.dirname(__file__), "data", "simple.laz")
+        with self.assertRaises(Exception):
+            plas = File.File(simple, mode="rr")
+
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
@@ -820,7 +834,8 @@ def test_laspy():
     las13 = unittest.TestLoader().loadTestsFromTestCase(LasV_13TestCase)
     las14 = unittest.TestLoader().loadTestsFromTestCase(LasV_14TestCase)
     laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
+    open_modes = unittest.TestLoader().loadTestsFromTestCase(LazNoPointMapTestCase)
 
     return unittest.TestSuite([reader, writer, header_writer, write_mode, 
-        las13, las14,laz])
+        las13, las14,laz, open_modes])
 
