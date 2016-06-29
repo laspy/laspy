@@ -1029,8 +1029,9 @@ class HeaderManager(object):
 
     def update_histogram(self):
         '''Update the histogram of returns by number'''
-        rawdata = map(lambda x: (x==0)*1 + (x!=0)*x, 
-                     self.writer.get_return_num())
+        rawdata = self.writer.get_return_num()
+        rawdata[rawdata == 0] = 1#
+
         #if self.version == "1.3":
         #    histDict = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0}
         #elif self.version in ["1.0", "1.1", "1.2"]:
