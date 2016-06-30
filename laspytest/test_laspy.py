@@ -822,5 +822,5 @@ def test_laspy():
     #laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
 
     return unittest.TestSuite([reader, writer, header_writer, write_mode, 
-        las13, las14,laz])
+        las13, las14])
 
