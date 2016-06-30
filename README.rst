@@ -12,3 +12,4 @@ Installation is standard:
 
 You may need to run these commands as root/administrator. 
 
+<img src="https://travis-ci.org/grantbrown/laspy.svg?branch=master"/>
