@@ -1065,9 +1065,9 @@ class HeaderManager(object):
             scale=True
         elif minmax_mode != "scaled":
             scale=False
-        x = list(self.writer.get_x(scale))
-        y = list(self.writer.get_y(scale))
-        z = list(self.writer.get_z(scale)) 
+        x = self.writer.get_x(scale)
+        y = self.writer.get_y(scale)
+        z = self.writer.get_z(scale)
         self.writer.set_header_property("x_max", np.max(x))
         self.writer.set_header_property("x_min", np.min(x))
         self.writer.set_header_property("y_max", np.max(y))
