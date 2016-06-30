@@ -819,7 +819,7 @@ def test_laspy():
     write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
     las13 = unittest.TestLoader().loadTestsFromTestCase(LasV_13TestCase)
     las14 = unittest.TestLoader().loadTestsFromTestCase(LasV_14TestCase)
-    laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
+    #laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
 
     return unittest.TestSuite([reader, writer, header_writer, write_mode, 
         las13, las14,laz])
