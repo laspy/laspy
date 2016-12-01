@@ -27,7 +27,7 @@ except:
 
     
 setup(name          = 'laspy',
-      version       = '1.4.1',
+      version       = '1.4.2',
       description   = 'Native Python ASPRS LAS read/write library',
       license       = 'BSD',
       keywords      = 'gis lidar las',
