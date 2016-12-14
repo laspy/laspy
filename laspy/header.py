@@ -495,6 +495,7 @@ class Header(object):
         fmt = util.Format("h" + str(file_version))
         kwargs["version_major"] = str(file_version)[0]
         kwargs["version_minor"] = str(file_version)[2]
+        kwargs["data_format_id"] = point_format
         self._format = fmt
         for dim in self._format.specs:
             if dim.name in kwargs.keys():
