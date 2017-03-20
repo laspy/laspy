@@ -1,6 +1,7 @@
-import base
-import util
-import header
+from __future__ import absolute_import
+from laspy import base
+from laspy import util
+from laspy import header
 import copy
 import os
 
@@ -153,7 +154,7 @@ class File(object):
             import glviewer
             glviewer.run_glviewer(self, mode= mode, dim = dim)
             return(0)
-        except Exception, err:
+        except Exception as err:
             print("Something went wrong: ")
             print(err)
             return(1)
