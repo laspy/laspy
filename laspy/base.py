@@ -472,8 +472,8 @@ class FileManager():
                     unpacked = unpacked.decode('ascii')
                 except UnicodeDecodeError:
                     # this is often NULs and random data that occurs after the
-                    # ending NUL. Just ignore it.
-                    unpacked = ''
+                    # ending NUL.
+                    unpacked = '\x00'
             outData.append(unpacked)
         if len(outData) > 1:
             return(outData)
@@ -932,7 +932,7 @@ class Writer(FileManager):
             self.data_provider.open("w+b")
             self.data_provider.fileref.write(dat_part_1)
             total_evlrs = sum([len(x) for x in value])
-            self.data_provider.fileref.write("\x00"*total_evlrs) 
+            self.data_provider.fileref.write(b"\x00"*total_evlrs)
             self.data_provider.fileref.close()
             self.data_provider.open("r+b")
             self.data_provider.map()
@@ -979,7 +979,7 @@ class Writer(FileManager):
             for vlr in value:
                 byte_string = vlr.to_byte_string()
                 self.data_provider.fileref.write(byte_string)
-            self.data_provider.fileref.write("\x00"*current_padding)
+            self.data_provider.fileref.write(b"\x00"*current_padding)
             self.data_provider.fileref.write(dat_part_2)
             self.data_provider.fileref.close()
             self.data_provider.open("r+b")

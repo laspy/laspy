@@ -3,7 +3,7 @@ import shutil
 
 # Get text from README.txt
 try:
-    readme_text = file('README.rst', 'rb').read()
+    readme_text = open('README.rst', 'rb').read()
 except:
     readme_text = "See documentation at www.laspy.org"
 
@@ -20,7 +20,7 @@ try:
     tmpFile = open("simple.laz")
     tmpFile.close()
 except:
-    shutil.copyfile("laspytest/data/simple.las", "simple.las")
+    shutil.copyfile("laspytest/data/simple.las", "ysimple.las")
     shutil.copyfile("laspytest/data/simple1_3.las", "simple1_3.las")
     shutil.copyfile("laspytest/data/simple1_4.las", "simple1_4.las")
     shutil.copyfile("laspytest/data/simple.laz", "simple.laz")
