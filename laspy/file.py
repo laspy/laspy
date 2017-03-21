@@ -85,7 +85,7 @@ class File(object):
             ## Wire up API for extra dimensions
             if self._reader.extra_dimensions != []:
                 for dimension in self._reader.extra_dimensions:
-                    dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                    dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname)
 
 
@@ -97,7 +97,7 @@ class File(object):
                 ## Wire up API for any extra Dimensions
                 if self._writer.extra_dimensions != []:
                     for dimension in self._writer.extra_dimensions:
-                        dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                        dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                         self.addProperty(dimname) 
             else:
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
@@ -125,7 +125,7 @@ class File(object):
             ## Wire up API for any extra Dimensions
             if self._writer.extra_dimensions != []:
                 for dimension in self._writer.extra_dimensions:
-                    dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                    dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname) 
 
         if self._mode == 'w+':
