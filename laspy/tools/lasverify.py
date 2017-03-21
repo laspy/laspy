@@ -1,6 +1,11 @@
 import laspy
 import argparse
 
+try:
+    xrange
+except NameError:
+    xrange = range
+
 class lasverify():
     def __init__(self):
         self.parse_args()
@@ -30,7 +35,7 @@ class lasverify():
         try:
             inFile1 = laspy.file.File.File(file_1,mode= "r")
             inFile2 = laspy.file.File.File(file_2,mode= "r")
-        except Exception, error:
+        except Exception as error:
             print("Error reading in files:")
             print(error)
             quit()
