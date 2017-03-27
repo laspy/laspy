@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import laspy
 from laspy.base import *
 import laspy.file as File
@@ -16,7 +17,7 @@ class LasReaderTestCase(unittest.TestCase):
     simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
     tempfile = "junk.las"
     def setUp(self):
-        shutil.copyfile(self.simple, self.tempfile)
+        really_copyfile(self.simple, self.tempfile)
         self.FileObject = File.File(self.tempfile)
         LasFile = self.FileObject
         self.X = list(LasFile.X)
@@ -182,7 +183,7 @@ class LasWriterTestCase(unittest.TestCase):
     tempfile = 'writer.las'
     output_tempfile = 'writer_output.las'
     def setUp(self):
-        shutil.copyfile(self.simple, self.tempfile)
+        really_copyfile(self.simple, self.tempfile)
         self.FileObject = File.File(self.tempfile, mode = "rw")
 
     def test_x(self):
@@ -371,7 +372,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
     tempfile2 = os.path.abspath('headerwriter2.las')
 
     def setUp(self):
-        shutil.copyfile(self.simple, self.tempfile)
+        really_copyfile(self.simple, self.tempfile)
         self.FileObject = File.File(self.tempfile, mode = "rw")
 
     def test_file_src(self):
@@ -486,7 +487,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
 
     def test_vlr_parsing_api(self):
         """Testing VLR body parsing api"""
-        shutil.copyfile(self.simple14, self.tempfile2)
+        really_copyfile(self.simple14, self.tempfile2)
         VLRFile = File.File(self.tempfile2, mode = "rw")
         vlr0 = VLRFile.header.vlrs[0]
         pb = vlr0.parsed_body
@@ -510,7 +511,7 @@ class LasWriteModeTestCase(unittest.TestCase):
     tempfile = 'write-mode.las'
     output_tempfile = 'write-mode-output.las'
     def setUp(self):
-        shutil.copyfile(self.simple, self.tempfile)
+        really_copyfile(self.simple, self.tempfile)
         self.File1 = File.File(self.tempfile, mode = "r")
 
     def test_using_barebones_header(self):
@@ -576,7 +577,7 @@ class LasV_13TestCase(unittest.TestCase):
     tempfile = 'v13.las'
     output_tempfile = 'v13-output.las'
     def setUp(self):
-        shutil.copyfile(self.simple, self.tempfile)
+        really_copyfile(self.simple, self.tempfile)
         self.File1 = File.File(self.tempfile, mode = "rw")
 
     def test_glob_encode(self):
@@ -677,7 +678,7 @@ class LasV_14TestCase(unittest.TestCase):
     tempfile = 'v14.las'
     output_tempfile = 'v14-output.las'
     def setUp(self):
-        shutil.copyfile(self.simple, self.tempfile)
+        really_copyfile(self.simple, self.tempfile)
         self.File1 = File.File(self.tempfile, mode = "rw")
 
     def test_glob_encode(self):
@@ -834,15 +835,38 @@ def test_laspy():
         las13, las14])
 
 
-def really_remove(path):
+def really_copyfile(src, dst, max_=1):
+    """
+        Hack for Windows when quickly creating and deleting files.
+        :param src: passed to really_copyfile
+        :param dst: passed to really_copyfile
+        :param max_: max seconds to wait
+        """
+    wait = 0.01
+    while not os.path.exists(dst):
+        try:
+            shutil.copyfile(src, dst)
+        except IOError:
+            time.sleep(wait)
+            max_ -= wait
+            if max_ <= 0:
+                break
+
+
+def really_remove(path, max_=1):
     """
     Hack for Windows when quickly creating and deleting files.
     os.remove can return when Windows still thinks the file exists.
     When trying to re-create the file with the same name, a PermissionError occurs.
-    :param path:
+    :param path: path to remove
+    :param max_: max seconds to wait
     """
+    wait = 0.01
     while os.path.exists(path):
         try:
             os.remove(path)
         except WindowsError:
-            time.sleep(0.01)
+            time.sleep(wait)
+            max_ -= wait
+            if max_ <= 0:
+                break
