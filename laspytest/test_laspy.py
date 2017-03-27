@@ -838,8 +838,8 @@ def test_laspy():
 def really_copyfile(src, dst, max_=1):
     """
         Hack for Windows when quickly creating and deleting files.
-        :param src: passed to really_copyfile
-        :param dst: passed to really_copyfile
+        :param src: passed to shutil.copyfile
+        :param dst: passed to shutil.copyfile
         :param max_: max seconds to wait
         """
     wait = 0.01
