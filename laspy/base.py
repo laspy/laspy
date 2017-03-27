@@ -1031,7 +1031,7 @@ class Writer(FileManager):
             for vlr in value:
                 byte_string = vlr.to_byte_string()
                 self.data_provider.fileref.write(byte_string)
-            self.data_provider.fileref.write("\x00"*current_padding)
+            self.data_provider.fileref.write(b"\x00"*current_padding)
             self.data_provider.fileref.write(dat_part_2)
             self.data_provider.fileref.close()
             self.data_provider.open("r+b")
@@ -1047,7 +1047,7 @@ class Writer(FileManager):
         if self.mode == "w":
             if not self.has_point_records:
                 self.data_provider.fileref.seek(self.vlr_stop, 0)
-                self.data_provider.fileref.write("\x00"*value)
+                self.data_provider.fileref.write(b"\x00"*value)
                 self.data_provider.remap()
                 return
             else:
