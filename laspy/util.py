@@ -350,14 +350,14 @@ class Format():
         
     
     def translate_extra_spec(self, extra_dim):
+        name = extra_dim.name.decode().replace("\x00", "").replace(" ", "_").lower()
         if extra_dim.data_type == 0:
-            name = extra_dim.name.decode().replace("\x00", "").replace(" ", "_").lower()
             fmt = "ctypes.c_ubyte"
             num = extra_dim.options
             return((name, fmt, num))
         else:
             spec = edim_fmt_dict[extra_dim.data_type]
-            return(extra_dim.name.decode().replace("\x00", "").replace(" ", "_").lower(), spec[0], spec[1])
+            return(name, spec[0], spec[1])
 
     def __getitem__(self, index):
         '''Provide slicing functionality: return specs[index]'''
