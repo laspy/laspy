@@ -1,3 +1,5 @@
+# noinspection PyCompatibility
+from builtins import str
 import datetime
 import uuid
 from laspy import util

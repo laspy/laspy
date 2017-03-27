@@ -1294,11 +1294,9 @@ class Writer(FileManager):
                                 str(dim.num) +", received " + str(dimlen) ))
         def f(x):
             try:
-                # because val is a bytes() object, val[x] yields an integer.
-                # q converts val[x] BACK to a string, then encodes it as ascii
-                # to get a bytes() object of length 1. Really, we should be '
-                # writing the entire string at once.
-                q = chr(val[x]).encode('ascii')
+                # because val is a bytes() object, val[x] yields an integer in python 3,
+                # while val[x:x+1] returns bytes in both python 2 and 3
+                q = val[x:x+1]
                 outbyte = struct.pack(dim.fmt, q)
             except:
                 outbyte = struct.pack(dim.fmt, int(val[x]))
