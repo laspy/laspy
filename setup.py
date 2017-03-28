@@ -40,7 +40,7 @@ setup(name          = 'laspy',
                         www.laspy.org, and the source is available at 
                         www.github.com/grantbrown/laspy''',
       packages      = ['laspy', 'laspytest','laspy.tools'],
-      install_requires = ['numpy', 'future'],
+      install_requires = ['numpy'],
       test_suite = 'laspytest.test_laspy',
       data_files = [("laspytest/data", ["simple.las", "simple1_3.las", "simple1_4.las", "simple.laz"])], 
       include_package_data = True,

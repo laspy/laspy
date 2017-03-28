@@ -1,5 +1,4 @@
 # noinspection PyCompatibility
-from builtins import str
 import datetime
 import uuid
 from laspy import util
@@ -11,6 +10,11 @@ try:
     xrange
 except NameError:
     xrange = range
+
+try:
+    string_type = basestring
+except NameError:
+    string_type = str
 
 def leap_year(year):
     if ((year % 4) != 0):
@@ -211,7 +215,7 @@ class ExtraBytesStruct(object):
             packed = struct.pack(fmt.full_fmt, value)
         elif isinstance(value, bytes):
             packed = value
-        elif isinstance(value, str):
+        elif isinstance(value, string_type):
             packed = value.encode()
         else:
             packed = struct.pack(fmt.full_fmt, *value)
@@ -364,7 +368,7 @@ class EVLR(ParseableVLR):
         spec = self.fmt.lookup[name]
         if isinstance(val, bytes):
             return val
-        elif isinstance(val, str):
+        elif isinstance(val, string_type):
             return val.encode()
         elif spec.num == 1:
             return(struct.pack(spec.full_fmt, val))
@@ -477,7 +481,7 @@ class VLR(ParseableVLR):
         spec = self.fmt.lookup[name]
         if isinstance(val, bytes):
             return val
-        elif isinstance(val, str):
+        elif isinstance(val, string_type):
             return val.encode()
         elif spec.num == 1:
             return(struct.pack(spec.fmt, val))
