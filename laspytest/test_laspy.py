@@ -821,7 +821,6 @@ class LasLazReaderTestCase(unittest.TestCase):
         pass
 
 
-
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
     writer = unittest.TestLoader().loadTestsFromTestCase(LasWriterTestCase)
