@@ -369,6 +369,7 @@ class File(object):
     def set_return_num(self, num):
         self.assertWriteMode()
         self._writer.set_return_num(num)
+        return
 
     return_num = property(get_return_num, set_return_num, None, None)
 
@@ -486,6 +487,15 @@ class File(object):
 
     scan_angle_rank = property(get_scan_angle_rank, set_scan_angle_rank,None,None)
 
+    def get_scan_angle(self):
+        return(self._reader.get_scan_angle())
+    def set_scan_angle(self, rank):
+        self.assertWriteMode()
+        self._writer.set_scan_angle(rank)
+        return
+
+    scan_angle = property(get_scan_angle, set_scan_angle, None, None)
+
     def get_user_data(self):
         return(self._reader.get_user_data())
     def set_user_data(self, data):
@@ -553,6 +563,7 @@ class File(object):
     def set_nir(self, value):
         self.assertWriteMode()
         self._writer.set_nir(value)
+        return
 
     nir = property(get_nir, set_nir, None, None)
 
@@ -615,6 +626,7 @@ class File(object):
     def set_z_t(self, z):
         self.assertWriteMode()
         self._writer.set_z_t(z)
+        return
 
     z_t = property(get_z_t, set_z_t, None, None)
 

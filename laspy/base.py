@@ -816,6 +816,9 @@ class FileManager():
     def get_scan_angle_rank(self):
         return(self.get_dimension("scan_angle_rank"))
     
+    def get_scan_angle(self):
+        return(self.get_dimension("scan_angle"))
+    
     def get_user_data(self):
         return(self.get_dimension("user_data"))
     
@@ -1437,7 +1440,7 @@ class Writer(FileManager):
         elif self.header.data_format_id in (6,7,8,9,10):
             flag_byte = self.get_flag_byte()
             self.raise_if_overflow(num, 4)
-            outByte = self.bitpack((flag_byte, num), ((0,4), (4,8)))
+            outByte = self.bitpack((flag_byte, num), ((0,4), (0,4)))
             self.set_dimension("flag_byte", outByte)
         return
 
@@ -1574,6 +1577,11 @@ class Writer(FileManager):
     def set_scan_angle_rank(self, rank):
         '''Wrapper for set_dimension("scan_angle_rank")'''
         self.set_dimension("scan_angle_rank", rank)
+        return
+
+    def set_scan_angle(self, rank):
+        '''Wrapper for set_dimension("scan_angle")'''
+        self.set_dimension("scan_angle", rank)
         return
 
     def set_user_data(self, data):
