@@ -3,7 +3,7 @@ import shutil
 
 # Get text from README.txt
 try:
-    readme_text = file('README.rst', 'rb').read()
+    readme_text = open('README.rst', 'rb').read()
 except:
     readme_text = "See documentation at www.laspy.org"
 

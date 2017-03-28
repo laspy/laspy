@@ -34,7 +34,7 @@ class lasexplorer():
             self.inFile = inFile
             READ_SUCCESS = True
             print("Read successful, file object is called inFile")
-        except Exception, error:
+        except Exception as error:
             print("Error while reading file:")
             print(error)
             READ_SUCCESS = False
@@ -55,7 +55,7 @@ class lasexplorer():
         interp = code.InteractiveConsole(locals={"inFile":inFile}) 
         try:
             interp.interact()
-        except KeyboardInterrupt, SystemExit:
+        except (KeyboardInterrupt, SystemExit):
             quit()
 
 def main():

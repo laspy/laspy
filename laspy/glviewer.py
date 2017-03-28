@@ -42,7 +42,7 @@ class VBO_Provider():
                             usage = gl.GL_DYNAMIC_DRAW, target = gl.GL_ARRAY_BUFFER)
                 self.vbos.append((_vbo, end_idx -start_idx))
                 start_idx += vbsize
-            except Exception, err:
+            except Exception as err:
                 print("Error initializing VBO:")
                 print(err)
 

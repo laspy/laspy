@@ -26,7 +26,7 @@ class lasview():
         try:
             inFile = laspy.file.File(self.args.in_file[0], mode = "r")
             self.inFile = inFile
-        except Exception, error:
+        except Exception as error:
             print("Error while reading file:")
             print(error)
             quit()

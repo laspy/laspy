@@ -39,7 +39,7 @@ class lascopy():
         point_format = self.args.point_format[0]
         try:
             inFile = laspy.file.File(self.args.in_file[0], mode = "r")
-        except Exception, error:
+        except Exception as error:
             print("There was an error reading in the input file: ")
             print(error)
             quit()
@@ -110,7 +110,7 @@ class lascopy():
             outFile = laspy.file.File(self.args.out_file[0], header = new_header, mode = "w", vlrs = inFile.header.vlrs, evlrs = evlrs)
             if outFile.point_format.rec_len != outFile.header.data_record_length:
                 pass
-        except Exception, error:
+        except Exception as error:
             print("There was an error instantiating the output file.")
             print(error)
             quit()
@@ -142,12 +142,12 @@ class lascopy():
                 else:
                     try:
                         outFile.classification = inFile.classification
-                    except Exception, error:
+                    except Exception as error:
                         print("Error, couldnt set classification.")
                         print(error)
                     try:
                         outFile.return_num = inFile.return_num
-                    except Exception, error:
+                    except Exception as error:
                         print("Error, coun't set return number.")
                         print(error)
                     try:
@@ -161,7 +161,7 @@ class lascopy():
                     outFile.withheld = inFile.withheld
 
 
-        except Exception, error:
+        except Exception as error:
             print("Error copying data.")
             print(error)
             quit()
