@@ -67,7 +67,7 @@ class File(object):
         '''Open the file for processing, called by __init__
         '''
        
-        if self._mode == 'r':
+        if self._mode in ("r", "r-"):
             if not os.path.exists(self.filename):
                 raise OSError("No such file or directory: '%s'" % self.filename)
             ## Make sure we have a header
@@ -89,7 +89,7 @@ class File(object):
                     self.addProperty(dimname)
 
 
-        if self._mode == 'rw':
+        elif self._mode == 'rw':
             if self._header is None:
                 self._writer = base.Writer(self.filename,mode = self._mode)
                 self._reader = self._writer
@@ -102,7 +102,7 @@ class File(object):
             else:
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
     
-        if self._mode == 'w': 
+        elif self._mode == 'w': 
             if self._header is None:
                 raise util.LaspyException("Creation of a file in write mode requires a header object.")  
             if isinstance(self._header,  header.HeaderManager):
@@ -128,17 +128,19 @@ class File(object):
                     dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname) 
 
-        if self._mode == 'w+':
+        elif self._mode == 'w+':
             raise NotImplementedError
+        else:
+            raise laspy.util.LaspyException("Mode %s not supported" % mode)
 
-        if self._reader.compressed and self._mode != "r":
+        if self._reader.compressed and self._mode not in ("r", "r-"):
             raise NotImplementedError("Compressed files / buffer objects can only be opened in mode 'r' for now")            
             
 
     def close(self, ignore_header_changes = False, minmax_mode="scaled"):
         '''Closes the LAS file
         '''
-        if self._mode == "r":
+        if self._mode in ("r", "r-"):
             self._reader.close()
             self._reader = None
             self._header = None
@@ -147,7 +149,12 @@ class File(object):
             self._reader = None
             self._writer = None
             self._header = None
-
+    
+    def reopen(self, mode):
+        '''Reopen file in (possibly) another mode'''
+        self.close()
+        self._mode = mode
+        self.open()
 
     def visualize(self, mode = "default", dim = "intensity"):
         try:
@@ -214,7 +221,7 @@ class File(object):
 
     def get_header(self):
         '''Returns the laspy.header.Header for the file''' 
-        if self._mode == "r":
+        if self._mode in ("r", "r-"):
             return self._reader.get_header()
         else:
             return self._writer.get_header()

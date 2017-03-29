@@ -1,21 +1,23 @@
 from __future__ import absolute_import
-import laspy
-from laspy.base import *
-import laspy.file as File
-import laspy.header as header
 from uuid import UUID
 import unittest
 import os
 import time
-
 import shutil
+import laspy
+from laspy.base import *
+import laspy.file as File
+import laspy.header as header
+
+
 def flip_bit(x):
-    return(1*(x==0))
+    return(1 * (x == 0))
 
 
 class LasReaderTestCase(unittest.TestCase):
     simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
     tempfile = "junk.las"
+
     def setUp(self):
         really_copyfile(self.simple, self.tempfile)
         self.FileObject = File.File(self.tempfile)
@@ -821,6 +823,21 @@ class LasLazReaderTestCase(unittest.TestCase):
         pass
 
 
+class LazNoPointMapTestCase(unittest.TestCase):
+
+    def test_open_header_only(self):
+        """Test opening in mode r- (do not uncompress)"""
+        simple = os.path.join(os.path.dirname(__file__), "data", "simple.laz")
+        plas = File.File(simple, mode="r-")
+        self.assertTrue(plas.header.records_count == 1065)
+        plas.close()
+
+    def test_open_invalid(self):
+        simple = os.path.join(os.path.dirname(__file__), "data", "simple.laz")
+        with self.assertRaises(Exception):
+            plas = File.File(simple, mode="rr")
+
+
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
     writer = unittest.TestLoader().loadTestsFromTestCase(LasWriterTestCase)
@@ -828,10 +845,11 @@ def test_laspy():
     write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
     las13 = unittest.TestLoader().loadTestsFromTestCase(LasV_13TestCase)
     las14 = unittest.TestLoader().loadTestsFromTestCase(LasV_14TestCase)
-    #laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
+    # laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
+    open_modes = unittest.TestLoader().loadTestsFromTestCase(LazNoPointMapTestCase)
 
     return unittest.TestSuite([reader, writer, header_writer, write_mode,
-        las13, las14])
+                               las13, las14, open_modes])
 
 
 def really_copyfile(src, dst, max_=1):
