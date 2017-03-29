@@ -1,6 +1,8 @@
-__version__ = '1.4.1'
+from __future__ import absolute_import
 
-import base
-import file
-import header
-import util
+__version__ = '1.4.2'
+
+from laspy import base
+from laspy import file
+from laspy import header
+from laspy import util

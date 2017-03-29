@@ -1,6 +1,7 @@
-import base
-import util
-import header
+from __future__ import absolute_import
+from laspy import base
+from laspy import util
+from laspy import header
 import copy
 import os
 
@@ -84,7 +85,7 @@ class File(object):
             ## Wire up API for extra dimensions
             if self._reader.extra_dimensions != []:
                 for dimension in self._reader.extra_dimensions:
-                    dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                    dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname)
 
 
@@ -96,7 +97,7 @@ class File(object):
                 ## Wire up API for any extra Dimensions
                 if self._writer.extra_dimensions != []:
                     for dimension in self._writer.extra_dimensions:
-                        dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                        dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                         self.addProperty(dimname) 
             else:
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
@@ -124,7 +125,7 @@ class File(object):
             ## Wire up API for any extra Dimensions
             if self._writer.extra_dimensions != []:
                 for dimension in self._writer.extra_dimensions:
-                    dimname = dimension.name.replace("\x00", "").replace(" ", "_").lower()
+                    dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname) 
 
         elif self._mode == 'w+':
@@ -160,7 +161,7 @@ class File(object):
             import glviewer
             glviewer.run_glviewer(self, mode= mode, dim = dim)
             return(0)
-        except Exception, err:
+        except Exception as err:
             print("Something went wrong: ")
             print(err)
             return(1)
@@ -375,6 +376,7 @@ class File(object):
     def set_return_num(self, num):
         self.assertWriteMode()
         self._writer.set_return_num(num)
+        return
 
     return_num = property(get_return_num, set_return_num, None, None)
 
@@ -492,6 +494,15 @@ class File(object):
 
     scan_angle_rank = property(get_scan_angle_rank, set_scan_angle_rank,None,None)
 
+    def get_scan_angle(self):
+        return(self._reader.get_scan_angle())
+    def set_scan_angle(self, rank):
+        self.assertWriteMode()
+        self._writer.set_scan_angle(rank)
+        return
+
+    scan_angle = property(get_scan_angle, set_scan_angle, None, None)
+
     def get_user_data(self):
         return(self._reader.get_user_data())
     def set_user_data(self, data):
@@ -559,6 +570,7 @@ class File(object):
     def set_nir(self, value):
         self.assertWriteMode()
         self._writer.set_nir(value)
+        return
 
     nir = property(get_nir, set_nir, None, None)
 
@@ -621,6 +633,7 @@ class File(object):
     def set_z_t(self, z):
         self.assertWriteMode()
         self._writer.set_z_t(z)
+        return
 
     z_t = property(get_z_t, set_z_t, None, None)
 
