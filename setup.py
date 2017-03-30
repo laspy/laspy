@@ -1,14 +1,10 @@
-from setuptools import setup
 import shutil
+from setuptools import setup
 
-# Get text from README.txt
-try:
-    readme_text = open('README.rst', 'rb').read()
-except:
-    readme_text = "See documentation at www.laspy.org"
+import laspy
 
-# Make sure test data files are in the right place. There's probably a better 
-# way to do this, but it should work. 
+# Make sure test data files are in the right place. There's probably a better
+# way to do this, but it should work.
 
 try:
     tmpFile = open("simple.las")
@@ -25,24 +21,22 @@ except:
     shutil.copyfile("laspytest/data/simple1_4.las", "simple1_4.las")
     shutil.copyfile("laspytest/data/simple.laz", "simple.laz")
 
-    
+with open('README.rst') as f:
+    readme = f.read()
+
 setup(name          = 'laspy',
-      version       = '1.4.2',
+      version       = laspy.__version__,
       description   = 'Native Python ASPRS LAS read/write library',
       license       = 'BSD',
       keywords      = 'gis lidar las',
       author        = 'Grant Brown',
       author_email  = 'grant.brown73@gmail.com',
-      url   = 'https://github.com/grantbrown/laspy',
-      long_description = '''Laspy is a python library for reading, writing, and 
-                        modifying .LAS LIDAR files. It provides both a dimension 
-                        and point focused API. Documentation is available at 
-                        www.laspy.org, and the source is available at 
-                        www.github.com/grantbrown/laspy''',
+      url   = 'https://github.com/laspy/laspy',
+      long_description = readme,
       packages      = ['laspy', 'laspytest','laspy.tools'],
       install_requires = ['numpy'],
       test_suite = 'laspytest.test_laspy',
-      data_files = [("laspytest/data", ["simple.las", "simple1_3.las", "simple1_4.las", "simple.laz"])], 
+      data_files = [("laspytest/data", ["simple.las", "simple1_3.las", "simple1_4.las", "simple.laz"])],
       include_package_data = True,
       zip_safe = False,
       entry_points = {'console_scripts':['lascopy = laspy.tools.lascopy:main',
@@ -54,7 +48,7 @@ setup(name          = 'laspy',
                                         ]},
 
       classifiers   = [
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: BSD License',
