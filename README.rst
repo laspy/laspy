@@ -60,5 +60,16 @@ You may need to run these commands as root/administrator.
 Laspy is only dependent on numpy and should therefore work on Linux, OS
 X and Windows as long as a working installation of numpy is available.
 
+Changelog
+---------
+
+Version 1.5.0
+=============
+- Improved memory handling in base.FileManager (`#48 <https://github.com/laspy/laspy/pull/48>`_)
+- Introduced ``r-`` file mode, that only reads the header of as LAS file (`#48 <https://github.com/laspy/laspy/pull/48>`_)
+- LAS v. 1.4 bug fixes (`#55 <https://github.com/laspy/laspy/pull/55>`_)
+- Python 3 support (`#62 <https://github.com/laspy/laspy/pull/62>`_)
+
+
 .. |Build Status| image:: https://travis-ci.org/laspy/laspy.svg?branch=master
    :target: https://travis-ci.org/laspy/laspy
