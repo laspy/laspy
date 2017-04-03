@@ -894,6 +894,19 @@ class FileManager(object):
         else:
             raise laspy.util.LaspyException("Extra bytes not present in record")
 
+    def get_named_extra_bytes(self, name, eb_struct, scale = False, offset = False):
+        if not scale and not offset:
+            return(self.get_dimension(name))
+        elif scale and offset:
+            print "WARNING: Extra bytes with multiple dimensions not completely implemented! Using scale[0] and offset[0]"
+            return(self.get_dimension(name)*eb_struct.scale[0] + eb_struct.offset[0])
+        elif scale and not offset:
+            print "WARNING: Extra bytes with multiple dimensions not completely implemented! Using scale[0]"
+            return(self.get_dimension(name)*eb_struct.scale[0])
+        else: # not scale and offset:
+            print "WARNING: Extra bytes with multiple dimensions not completely implemented! Using offset[0]"
+            return(self.get_dimension(name) + eb_struct.offset[0])
+
 
 class Reader(FileManager):
     '''Just a subclass of FileManager'''
@@ -1371,6 +1384,23 @@ class Writer(FileManager):
             return
         self.set_dimension("X", np.round((X - self.header.offset[0])/self.header.scale[0]))
         return
+
+    def set_named_extra_bytes(self, name, eb_struct, value, scale = False, offset = False):
+        if not scale and not offset:
+            self.set_dimension(name, value)
+            return
+        if scale and offset:
+            print "WARNING: Extra bytes with multiple dimensions not completely implemented! Using scale[0] and offset[0]"
+            self.set_dimension(name, np.round((value - eb_struct.offset[0])/eb_struct.scale[0]))
+            return
+        if scale and not offset:
+            print "WARNING: Extra bytes with multiple dimensions not completely implemented! Using scale[0]"
+            self.set_dimension(name, np.round(value/eb_struct.scale[0]))
+            return
+        if not scale and offset:
+            print "WARNING: Extra bytes with multiple dimensions not completely implemented! Using offset[0]"
+            self.set_dimension(name, np.round(value - eb_struct.offset[0]))
+            return
 
     def set_y(self,Y, scale = False):
         '''Wrapper for set_dimension("Y", new_dimension)'''

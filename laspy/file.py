@@ -86,9 +86,7 @@ class File(object):
             if self._reader.extra_dimensions != []:
                 for dimension in self._reader.extra_dimensions:
                     dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
-                    self.addProperty(dimname.capitalize())
-                    if dimension.is_scale_relevant() or dimension.is_offset_relevant():
-                        self.addProperty(dimname)
+                    self.addExtraBytesProperty(dimname, dimension)
 
 
         elif self._mode == 'rw':
@@ -100,9 +98,7 @@ class File(object):
                 if self._writer.extra_dimensions != []:
                     for dimension in self._writer.extra_dimensions:
                         dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
-                        self.addProperty(dimname.capitalize())
-                        if dimension.is_scale_relevant() or dimension.is_offset_relevant():
-                            self.addProperty(dimname)
+                        self.addExtraBytesProperty(dimname, dimension)
             else:
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
     
@@ -130,9 +126,7 @@ class File(object):
             if self._writer.extra_dimensions != []:
                 for dimension in self._writer.extra_dimensions:
                     dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
-                    self.addProperty(dimname.capitalize())
-                    if dimension.is_scale_relevant() or dimension.is_offset_relevant():
-                        self.addProperty(dimname)
+                    self.addExtraBytesProperty(dimname, dimension)
 
         elif self._mode == 'w+':
             raise NotImplementedError
@@ -179,6 +173,27 @@ class File(object):
             self.assertWriteMode()
             self._reader.set_dimension(name, value)
         setattr(self.__class__, name, property(fget, fset, None, None))
+
+    def addExtraBytesProperty(self, name, eb_struct):
+        # Define property using capitalized_name to get raw extra bytes
+        capitalized_name = name.capitalize()
+        def fget1(self):
+            return(self._reader.get_named_extra_bytes(capitalized_name, eb_struct, scale = False, offset=False))
+        def fset1(self, value):
+            self.assertWriteMode()
+            self._writer.set_named_extra_bytes(capitalized_name, eb_struct, value, scale = False, offset=False)
+        setattr(self.__class__, capitalized_name, property(fget1, fset1, None, None))
+
+        # Define property using name to get processed extra bytes (with scale and offset)
+        # NOTE: capitalized_name is used in the get/set methods, and name is used in setattr
+        def fget2(self):
+            return(self._reader.get_named_extra_bytes(capitalized_name, eb_struct,
+                scale = eb_struct.is_scale_relevant(), offset = eb_struct.is_offset_relevant()))
+        def fset2(self, value):
+            self.assertWriteMode()
+            self._writer.set_named_extra_bytes(capitalized_name, eb_struct, value,
+                scale = eb_struct.is_scale_relevant(), offset = eb_struct.is_offset_relevant())
+        setattr(self.__class__, name, property(fget2, fset2, None, None))
 
     def define_new_dimension(self, name, data_type, description):
         self.assertWriteMode()
