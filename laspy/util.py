@@ -350,7 +350,8 @@ class Format():
         
     
     def translate_extra_spec(self, extra_dim):
-        name = extra_dim.name.decode().replace("\x00", "").replace(" ", "_").lower()
+        # Name is capitalized because it represents raw data
+        name = extra_dim.name.decode().replace("\x00", "").replace(" ", "_").lower().capitalize()
         if extra_dim.data_type == 0:
             fmt = "ctypes.c_ubyte"
             num = extra_dim.options
