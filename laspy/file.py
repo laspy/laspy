@@ -87,6 +87,8 @@ class File(object):
                 for dimension in self._reader.extra_dimensions:
                     dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname.capitalize())
+                    if dimension.is_scale_relevant() or dimension.is_offset_relevant():
+                        self.addProperty(dimname)
 
 
         elif self._mode == 'rw':
@@ -99,6 +101,8 @@ class File(object):
                     for dimension in self._writer.extra_dimensions:
                         dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                         self.addProperty(dimname.capitalize())
+                        if dimension.is_scale_relevant() or dimension.is_offset_relevant():
+                            self.addProperty(dimname)
             else:
                 raise util.LaspyException("Headers must currently be stored in the file, you provided: " + str(self._header))
     
@@ -127,6 +131,8 @@ class File(object):
                 for dimension in self._writer.extra_dimensions:
                     dimname = dimension.name.decode().replace("\x00", "").replace(" ", "_").lower()
                     self.addProperty(dimname.capitalize())
+                    if dimension.is_scale_relevant() or dimension.is_offset_relevant():
+                        self.addProperty(dimname)
 
         elif self._mode == 'w+':
             raise NotImplementedError
