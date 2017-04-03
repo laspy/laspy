@@ -289,6 +289,19 @@ class ExtraBytesStruct(object):
         self.set_property(self, "description")
     description = property(get_description, set_description, None, None)
 
+    # The following methods return information from the options field
+    # See Table 25 of the LAS specification 1.4
+    def is_no_data_relevant(self):
+        return bool(self.get_property("options") & 1)
+    def is_min_relevant(self):
+        return bool((self.get_property("options") >> 1) & 1)
+    def is_max_relevant(self):
+        return bool((self.get_property("options") >> 2) & 1)
+    def is_scale_relevant(self):
+        return bool((self.get_property("options") >> 3) & 1)
+    def is_offset_relevant(self):
+        return bool((self.get_property("options") >> 4) & 1)
+
         
 class EVLR(ParseableVLR):
     ''' An extended VLR as defined in LAS specification 1.4'''
