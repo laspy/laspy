@@ -125,7 +125,7 @@ class DataProvider():
             try:
                 self.fileref = open(self.filename, mode)
             except(Exception):
-                raise laspy.util.LaspyException("Error opening file")
+                raise laspy.util.LaspyException("Error opening file. Do you have the right permissions?")
 
     def get_point_map(self, informat):
         '''Get point map is used to build and return a numpy frombuffer view of the mmapped data, 
@@ -213,7 +213,12 @@ class DataProvider():
         if flush and type(self._mmap) != bool: 
             self._mmap.flush() 
         self.close(flush=False)
-        self.open("r+b")
+        if self.mode in ("r", "r-"):
+            self.open("rb")
+        elif self.mode in ("w", "rw"):
+            self.open("r+b")
+        else:
+            raise laspy.util.LaspyException("Invalid Mode: " + str(self.mode))
         self.map()
         if point_map: 
             self.point_map()
