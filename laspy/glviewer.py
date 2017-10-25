@@ -297,51 +297,51 @@ class pcl_image():
 
     def keyboard(self,key, x, y):
         ## Looking
-        if key == "a":
+        if key == b"a":
             self.camera_yaw(np.pi/(self.look_granularity))
-        elif key == "d":
+        elif key == b"d":
             self.camera_yaw(-np.pi/self.look_granularity)
-        elif key == "w":
+        elif key == b"w":
             self.camera_pitch(-np.pi/self.look_granularity)
-        elif key == "s":
+        elif key == b"s":
             self.camera_pitch(np.pi/self.look_granularity)
-        elif key == "e":
+        elif key == b"e":
             self.camera_roll(np.pi/self.look_granularity)
-        elif key == "q":
+        elif key == b"q":
             self.camera_roll(-np.pi/self.look_granularity)
         ## Moving
-        elif key == "W":
+        elif key == b"W":
             self.camera_move(self.movement_granularity * 100.0)
-        elif key == "S":
+        elif key == b"S":
             self.camera_move(self.movement_granularity *-100.0)
-        elif key == "A":
+        elif key == b"A":
             self.camera_move(self.movement_granularity * 100.0, axis = 2)
-        elif key == "D":
+        elif key == b"D":
             self.camera_move(self.movement_granularity * -100.0, axis = 2)
 
-        elif key in ("R", "r"):
+        elif key in (b"R", b"r"):
             self.camera_reset()
 
 
-        elif key == "+":
+        elif key == b"+":
             self.movement_granularity *= 0.8
             self.look_granularity /= 0.8
-        elif key == "-":
+        elif key == b"-":
             self.movement_granularity /= 0.8
             self.look_granularity *= 0.8
-        elif key in ("x", "y", "z"):
+        elif key in (b"x", b"y", b"z"):
             self.set_up_axis(key)
         print(key)
         pass
 
     def set_up_axis(self, key):
-        if key == "x":
+        if key == b"x":
             self.up = np.array([1.0, 0.0001, 0.0001])
             self.focus[0] = self.location[0]
-        elif key == "y":
+        elif key == b"y":
             self.up = np.array([0.0001, 1.0, 0.0001])
             self.focus[1] = self.location[1]
-        elif key == "z":
+        elif key == b"z":
             self.up = np.array([0.0001, 0.0001, 1.0])
             self.focus[2] = self.location[2]
         if all(self.focus == self.location):
