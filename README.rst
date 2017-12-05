@@ -63,8 +63,13 @@ X and Windows as long as a working installation of numpy is available.
 Changelog
 ---------
 
+Version 1.5.1
+.............
+- Bug fixes (`#67 <https://github.com/laspy/laspy/pull/67>`_, `#75 <https://github.com/laspy/laspy/pull/75>`_, `b02b40900b5 <https://github.com/laspy/laspy/commit/b02b40900b5620972930cd0c201b4db1a6a69754>`_)
+- Allow usage of `laszip-cli` when working with LAZ files (`#77 <https://github.com/laspy/laspy/pull/77>`_)
+
 Version 1.5.0
-=============
+.............
 - Improved memory handling in base.FileManager (`#48 <https://github.com/laspy/laspy/pull/48>`_)
 - Introduced ``r-`` file mode, that only reads the header of as LAS file (`#48 <https://github.com/laspy/laspy/pull/48>`_)
 - LAS v. 1.4 bug fixes (`#55 <https://github.com/laspy/laspy/pull/55>`_)
