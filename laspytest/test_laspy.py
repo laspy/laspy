@@ -766,8 +766,9 @@ class LasV_14TestCase(unittest.TestCase):
         self.assertTrue(all(scanner_channel == File2.get_scanner_channel()))
         File2.close(ignore_header_changes = True)
 
+
     def test_vlr_defined_dimensions(self):
-        """Testing v1.4 VLR defined dimensions (LL API)"""
+        """Testingi multiple v1.4 VLR defined dimensions (LL API)"""
         new_header = self.File1.header.copy()
         # Test basic numeric dimension
         new_dim_record1 = header.ExtraBytesStruct(name = "Test Dimension 1234", data_type = 5)
@@ -776,9 +777,10 @@ class LasV_14TestCase(unittest.TestCase):
         # Test integer array dimension (len 3)
         new_dim_record3 = header.ExtraBytesStruct(name = "Test Dimension 9", data_type =  26)
         new_VLR_rec = header.VLR(user_id = "LASF_Spec", record_id = 4,
-                VLR_body = (new_dim_record1.to_byte_string() + new_dim_record2.to_byte_string() + new_dim_record3.to_byte_string()))
+            VLR_body = (new_dim_record1.to_byte_string() + new_dim_record2.to_byte_string() + new_dim_record3.to_byte_string()))
         new_header.data_record_length += (19)
-        File2 = File.File(self.output_tempfile, mode = "w", header = new_header, vlrs = [new_VLR_rec], evlrs = self.File1.header.evlrs)
+        File2 = File.File(self.output_tempfile, mode = "w", header = new_header, 
+                vlrs = [new_VLR_rec], evlrs = self.File1.header.evlrs)
 
         File2.X = self.File1.X
 
@@ -791,6 +793,61 @@ class LasV_14TestCase(unittest.TestCase):
         File2.close(ignore_header_changes = True)
 
 
+    def test_vlr_defined_dimension_dtypes(self):
+        """Testing v1.4 VLR defined dimension data types (LL API)"""
+        from laspy.util import edim_fmt_dict, fmtLen, LEfmt,defaults,defaults_test
+
+        for dfList in [defaults, defaults_test]:
+
+            for i in range(1,31):
+                print(i)
+                # Create a new header
+                new_header = self.File1.header.copy()
+                # Create new dimension
+                dimname = "test_dimension_" + str(i)
+                new_dimension = header.ExtraBytesStruct(
+                    name = dimname, data_type = i) 
+                # Collect bytes for new dimension specification 
+                new_dim_raw = new_dimension.to_byte_string() 
+                # Create a VLR defining our new dim
+                new_VLR_rec = header.VLR(user_id = "LASF_Spec", record_id = 4,
+                    description = "Testing Extra Bytes.",
+                    VLR_body = (new_dim_raw))
+
+                # Figure out how much we need to pad the point records
+                new_dim_fmt = edim_fmt_dict[i]
+                new_dim_num = new_dim_fmt[1]
+                new_dim_bytelen = fmtLen[LEfmt[new_dim_fmt[0]]]
+                new_total_bytes = new_dim_bytelen*new_dim_num 
+
+                new_header.data_record_length += (new_total_bytes)
+
+                File2 = File.File(self.output_tempfile, mode = "w", header = new_header, 
+                    vlrs = [new_VLR_rec], evlrs = self.File1.header.evlrs)
+    
+                File2.X = self.File1.X
+    
+                dim_default = dfList[LEfmt[edim_fmt_dict[i][0]]]
+#
+                if new_dim_num == 1:
+                    new_dim_val = [dim_default]*len(self.File1)
+                elif type(dim_default) == type(" "):
+                    new_dim_val = [dim_default*new_dim_num]*len(self.File1)
+                else: 
+                    new_dim_val = [[dim_default]*new_dim_num]*len(self.File1)
+
+                File2._writer.set_dimension(dimname, new_dim_val)
+                current_dim_val = File2._writer.get_dimension(dimname)
+
+                self.assertEqual(current_dim_val.tolist(), new_dim_val,
+                    msg = "Problem with data format " + str(i))
+
+                #self.assertTrue(([new_dim_val[j] == current_dim_val[j] for j in 
+                #    range(len(new_dim_val))].all()), msg = "Problem with data format " + str(i))
+                
+                File2.close(ignore_header_changes = True)
+    
+    
     def test_vlr_defined_dimensions2(self):
         """Testing VLR defined dimensions (HL API)"""
         File2 = File.File(self.output_tempfile, mode = "w", header = self.File1.header)
