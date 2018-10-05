@@ -798,9 +798,8 @@ class LasV_14TestCase(unittest.TestCase):
         from laspy.util import edim_fmt_dict, fmtLen, LEfmt,defaults,defaults_test
 
         for dfList in [defaults, defaults_test]:
-
             for i in range(1,31):
-                print(i)
+                print("...data format: "+ str(i))
                 # Create a new header
                 new_header = self.File1.header.copy()
                 # Create new dimension
