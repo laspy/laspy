@@ -798,6 +798,7 @@ class LasV_14TestCase(unittest.TestCase):
         from laspy.util import edim_fmt_dict, fmtLen, LEfmt,defaults,defaults_test
 
         for dfList in [defaults, defaults_test]:
+
             for i in range(1,31):
                 print("...data format: "+ str(i))
                 # Create a new header
@@ -827,10 +828,10 @@ class LasV_14TestCase(unittest.TestCase):
                 File2.X = self.File1.X
     
                 dim_default = dfList[LEfmt[edim_fmt_dict[i][0]]]
-#
+                is_str = type(dim_default) == type(" ")
                 if new_dim_num == 1:
                     new_dim_val = [dim_default]*len(self.File1)
-                elif type(dim_default) == type(" "):
+                elif is_str:
                     new_dim_val = [dim_default*new_dim_num]*len(self.File1)
                 else: 
                     new_dim_val = [[dim_default]*new_dim_num]*len(self.File1)
@@ -838,11 +839,12 @@ class LasV_14TestCase(unittest.TestCase):
                 File2._writer.set_dimension(dimname, new_dim_val)
                 current_dim_val = File2._writer.get_dimension(dimname)
 
-                self.assertEqual(current_dim_val.tolist(), new_dim_val,
-                    msg = "Problem with data format " + str(i))
-
-                #self.assertTrue(([new_dim_val[j] == current_dim_val[j] for j in 
-                #    range(len(new_dim_val))].all()), msg = "Problem with data format " + str(i))
+                if (is_str):
+                    self.assertEqual([x.encode() for x in new_dim_val],
+                            current_dim_val.tolist())
+                else:
+                    self.assertEqual(current_dim_val.tolist(), new_dim_val,
+                        msg = "Problem with data format " + str(i))
                 
                 File2.close(ignore_header_changes = True)
     
