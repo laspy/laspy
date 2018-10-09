@@ -841,7 +841,7 @@ class LasV_14TestCase(unittest.TestCase):
 
                 if (is_str):
                     self.assertEqual([x.encode() for x in new_dim_val],
-                            current_dim_val.tolist())
+                            current_dim_val.tolist(), msg = "Problem with data format " + str(i))
                 else:
                     self.assertEqual(current_dim_val.tolist(), new_dim_val,
                         msg = "Problem with data format " + str(i))
