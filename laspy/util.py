@@ -14,14 +14,20 @@ class LaspyException(Exception):
     """LaspyException: indicates a laspy related error."""
     pass
 
-fmtLen = {"<l":4, "<L":4, "<h":2, "<H":2, "<B":1, "<b":1,"<f":4, "<s":1, "<d":8, "<Q":8}
+fmtLen = {"<l":4, "<L":4, "<h":2, "<H":2, "<B":1, "<b":1,"<f":4, "<s":1, "<d":8, "<Q":8, "<q":8}
 LEfmt = {"ctypes.c_long":"<l","ctypes.c_ulong":"<L", "ctypes.c_ushort":"<H", "ctypes.c_ubyte":"<B", 
         "ctypes.c_byte":"<b","ctypes.c_float":"<f", "ctypes.c_char":"<s", 
         "ctypes.c_double":"<d", "ctypes.c_longlong":"<q", "ctypes.c_ulonglong":"<Q","ctypes.c_short":"<h"}
 npFmt = {"<l":"i4", "<L":"u4", "<h":"i2","<H":"u2", "<B":"u1", "<f":"f4", "<s":"S1", "<d":"f8", "<q":"i8", "<Q":"u8", "<b":"i1"}
 
 
-defaults = {"<L":0,"<l":0, "<H":0, "<h":0, "<B": "0", "<b":"0", "<f":0.0, "<s":" ", "<d":0.0, "<Q":0, "<q":0}
+# Default values for new data
+defaults = {"<L":0,"<l":0, "<H":0, "<h":0, "<B":0, "<b":0, "<f":0.0, "<s":" ", 
+            "<d":0.0, "<Q":0, "<q":0}
+# Non-null defaults for testing
+defaults_test = {"<L":7,"<l":-3, "<H":12, "<h":-17, "<B":22, "<b":-12, "<f":2.0, 
+                 "<s":"z", "<d":-4.0, "<Q":123, "<q":-718}
+
 
 edim_fmt_dict = {
     1:("ctypes.c_ubyte",1), 
@@ -73,11 +79,9 @@ class Spec():
             self.np_fmt = npFmt[self.fmt]
             # Check if we need to do anything special to the numpy format
             if self.num > 1:
+                self.np_fmt = str(self.num) + npFmt[self.fmt]            
                 if self.fmt == "<s":
                     self.np_fmt = "S"+str(self.num)
-                elif self.fmt == "<B":
-                    self.np_fmt = "V" + str(num)
-
                 else:
                     ## We need a sub-array
                     self.np_fmt = str(self.num) + npFmt[self.fmt]            
@@ -190,7 +194,7 @@ class Format():
 
     def build_extra_bytes(self, extra_bytes):
         if not extra_bytes in (0, False): 
-            self.add("extra_bytes", "ctypes.c_ubyte", extra_bytes) 
+            self.add("extra_bytes", "ctypes.c_char", extra_bytes) 
 
     def setup_lookup(self):
         self.lookup = {}
