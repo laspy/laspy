@@ -52,16 +52,20 @@ or by running the setup script included in the source distribution:
 
 ::
 
-    python setup.py build
-    python setup.py install
-
-You may need to run these commands as root/administrator.
+    python setup.py build --user
+    python setup.py install --user
 
 Laspy is only dependent on numpy and should therefore work on Linux, OS
 X and Windows as long as a working installation of numpy is available.
 
 Changelog
 ---------
+
+Version 1.6.0
+---------------------
+- Bug fix  (`#92 <https://github.com/laspy/laspy/issues/92>`_)
+- Test creation of all valid custom dimension data types
+- Modify handling of extra bytes to be char data instead of numeric byte data
 
 Version 1.5.1
 .............
