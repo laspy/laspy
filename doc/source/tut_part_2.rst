@@ -51,3 +51,33 @@ into some of laspy's internal functionality:
         # Close the file
 
         outFile.close()
+
+**How to make your own LAS file from scratch**
+
+If you're making your own data from scratch (not from an existing LAS file), you will need to make your own header to write a new LAS file. Here is a simple example of writing some programmatically generated data to a new LAS file.
+
+Note: this example requires Numpy (any version).
+
+    .. code-block:: python
+
+        import laspy
+        import numpy as np
+
+        my_data_xx, my_data_yy = np.meshgrid(np.linspace(-20, 20, 15), np.linspace(-20, 20, 15))
+        my_data_zz = my_data_xx ** 2 + 0.25 * my_data_yy ** 2
+
+        my_data = np.hstack((my_data_xx.reshape((-1, 1)), my_data_yy.reshape((-1, 1)), my_data_zz.reshape((-1, 1))))
+
+        h = laspy.header.Header()
+
+        output_file = laspy.file.File(r'output1.las', mode="w", header=h)
+
+        output_file.header.offset = np.min(my_data, axis=0)
+        output_file.header.scale = [0.1, 0.1, 0.1]
+
+        output_file.x = my_data[:, 0]
+        output_file.y = my_data[:, 1]
+        output_file.z = my_data[:, 2]
+
+        output_file.close()
+
