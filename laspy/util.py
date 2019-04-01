@@ -315,8 +315,8 @@ class Format():
             self.add("gps_time", "ctypes.c_double", 1)
         if fmt in ("7", "8", "10"):
             self.add("red", "ctypes.c_ushort", 1)
-            self.add("blue", "ctypes.c_ushort", 1)
             self.add("green", "ctypes.c_ushort", 1)
+            self.add("blue", "ctypes.c_ushort", 1)
         if fmt in ("8", "10"):
             self.add("nir", "ctypes.c_ushort", 1)
         if fmt in ("9", "10"):

@@ -1641,7 +1641,7 @@ class Writer(FileManager):
         self.set_dimension("blue", blue)
 
     def set_nir(self, value):
-        self.get_dimension("nir", value)
+        self.set_dimension("nir", value)
 
     def set_wave_packet_desc_index(self, idx):
         '''Wrapper for set_dimension("wave_packet_desc_index") This is not currently functional,
