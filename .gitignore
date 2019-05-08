@@ -2,3 +2,4 @@ laspy.egg-info/
 *.pyc
 docs/build
 build/
+.vscode/settings.json

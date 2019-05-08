@@ -895,6 +895,29 @@ class LazNoPointMapTestCase(unittest.TestCase):
         with self.assertRaises(Exception):
             plas = File.File(simple, mode="rr")
 
+class LazReaderTestCase(unittest.TestCase):
+    simple_z = os.path.join(os.path.dirname(__file__), 'data', 'simple.laz')
+    simple_s = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
+
+    def test_open(self):
+        """Test opening LAZ file with lazperf"""
+        plas = File.File(self.simple_z, mode="r")
+        self.assertTrue(plas.header.records_count == 1065)
+        plas.close()
+
+    def test_x(self):
+        """Fetch and test X, Y, Z dimensions"""
+        compressed = File.File(self.simple_z, mode="r")
+        uncompressed = File.File(self.simple_s, mode="r")
+        X_z = list(compressed.X)
+        Y_z = list(compressed.Y)
+        Z_z = list(compressed.Z)
+        X_s = list(uncompressed.X)
+        Y_s = list(uncompressed.Y)
+        Z_s = list(uncompressed.Z)
+        self.assertTrue((list(X_z) == list(X_s)))
+        self.assertTrue((list(Y_z) == list(Y_s)))
+        self.assertTrue((list(Z_z) == list(Z_s)))
 
 def test_laspy():
     reader = unittest.TestLoader().loadTestsFromTestCase(LasReaderTestCase)
@@ -903,11 +926,11 @@ def test_laspy():
     write_mode = unittest.TestLoader().loadTestsFromTestCase(LasWriteModeTestCase)
     las13 = unittest.TestLoader().loadTestsFromTestCase(LasV_13TestCase)
     las14 = unittest.TestLoader().loadTestsFromTestCase(LasV_14TestCase)
-    # laz = unittest.TestLoader().loadTestsFromTestCase(LasLazReaderTestCase)
+    laz = unittest.TestLoader().loadTestsFromTestCase(LazReaderTestCase)
     open_modes = unittest.TestLoader().loadTestsFromTestCase(LazNoPointMapTestCase)
 
     return unittest.TestSuite([reader, writer, header_writer, write_mode,
-                               las13, las14, open_modes])
+                               las13, las14, open_modes, laz])
 
 
 def really_copyfile(src, dst, max_=1):
