@@ -80,6 +80,10 @@ class FakeMmap(object):
             self.pos += nbytes
 
     def read(self, nbytes):
+        try:
+            nbytes = int(nbytes)
+        except ValueError:
+            nbytes = 0
         out = self.view[self.pos:self.pos+nbytes]
         self.pos += nbytes
         return(out)
@@ -492,14 +496,15 @@ class FileManager(object):
         outData = []
         for i in xrange(num):
             dat = self.read(bytes)
-            unpacked = struct.unpack(fmt, dat)[0]
-            if fmt == '<s':
-                try:
+            try:
+                unpacked = struct.unpack(fmt, dat)[0]
+                if fmt == '<s':
+                    struct.unpack(fmt, dat)[0]
                     unpacked = unpacked.decode('ascii')
-                except UnicodeDecodeError:
-                    # this is often NULs and random data that occurs after the
-                    # ending NUL.
-                    unpacked = '\x00'
+            except (struct.error, UnicodeDecodeError):
+                # this is often NULs and random data that occurs after the
+                # ending NUL.
+                unpacked = '\x00'
             outData.append(unpacked)
         if len(outData) > 1:
             return(outData)
