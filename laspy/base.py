@@ -160,7 +160,7 @@ class DataProvider():
         self.pointfmt = np.dtype([("point", [(str(x.name), x.np_fmt) for x in self.manager.point_format.specs])])
 
         if self.manager.header.version not in ("1.3", "1.4"):
-            if self.compressed:
+            if self.compressed and HAVE_LAZPERF:
                 import lazperf
                 from lazperf import VLRDecompressor
                 vlr = self.findLASzipVLR(self.manager.header.vlrs)
