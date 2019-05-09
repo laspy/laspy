@@ -22,7 +22,8 @@ environment:
 install:
   - SET PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
   - python --version
-  - pip install lazperf numpy
+  - pip install numpy
+  - pip install lazperf
 
 
 build_script:
@@ -30,4 +31,3 @@ build_script:
 
 test_script:
  - python setup.py test
- -
