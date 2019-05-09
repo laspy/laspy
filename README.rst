@@ -80,5 +80,8 @@ Version 1.5.0
 - Python 3 support (`#62 <https://github.com/laspy/laspy/pull/62>`_)
 
 
-.. |Build Status| image:: https://travis-ci.org/laspy/laspy.svg?branch=master
+.. |Travis Build Status | image:: https://travis-ci.org/laspy/laspy.svg?branch=master
    :target: https://travis-ci.org/laspy/laspy
+
+.. |AppVeyor Build Status| image::https://ci.appveyor.com/api/projects/status/e8kfta1gk7orm8rx?svg=true
+   :target: https://ci.appveyor.com/project/hobu/laspy
