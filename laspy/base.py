@@ -7,6 +7,11 @@ from types import GeneratorType
 import numpy as np
 import copy
 
+try:
+    import lazperf
+    HAVE_LAZPERF = True
+except ImportError:
+    HAVE_LAZPERF = False
 
 # Not used right now - but could be a handy place to centralize file modes
 FILE_MODES = ["r-", "r", "rw", "w"]
@@ -128,11 +133,7 @@ class DataProvider():
 
     def open(self, mode):
         '''Open the file, catch simple problems.'''
-        if (not self.compressed) or self.mode == "r-":
-            try:
-                self.fileref = open(self.filename, mode)
-            except(Exception):
-                raise laspy.util.LaspyException("Error opening file. Do you have the right permissions?")
+        self.fileref = open(self.filename, mode)
 
     def get_point_map(self, informat):
         '''Get point map is used to build and return a numpy frombuffer view of the mmapped data,
@@ -163,6 +164,42 @@ class DataProvider():
         self.pointfmt = np.dtype([("point", [(str(x.name), x.np_fmt) for x in self.manager.point_format.specs])])
 
         if self.manager.header.version not in ("1.3", "1.4"):
+            if self.compressed and HAVE_LAZPERF:
+                import lazperf
+                from lazperf import VLRDecompressor
+                vlr = self.findLASzipVLR(self.manager.header.vlrs)
+                if not vlr:
+                    raise laspy.util.LaspyException("""Unable to find LASzip VLR!""")
+
+                vlr_data = np.frombuffer(vlr.VLR_body, 
+                                         np.uint8, 
+                                         count = vlr.rec_len_after_header) 
+
+                # first 8 bytes after VLRs are laszip, then is start of data
+                laszip_offset = self.manager.header.data_offset + 8
+
+                points_compressed = np.frombuffer(self._mmap, 
+                                                  np.uint8, 
+                                                  offset = laszip_offset, 
+                                                  count = self._mmap.size() - laszip_offset)
+
+                record_length = self.manager.header.data_record_length
+                decompressor = lazperf.VLRDecompressor( points_compressed, 
+                                                        record_length,
+                                                        vlr_data)
+
+                uncompressed = decompressor.decompress_points(self.manager.header.point_records_count)
+
+                # we've decompressed the points, now stick the header on the 
+                # front and make a new mmap
+                header = np.frombuffer(self._mmap, np.uint8, count = self.manager.header.data_offset)
+                full = np.zeros(len(header) + len(uncompressed), dtype=np.uint8)
+                full[0:len(header)] = header
+                full[len(header):len(uncompressed)+len(header)] = uncompressed
+
+                self._mmap = full
+
+            
             self._pmap = np.frombuffer(self._mmap, self.pointfmt,
                                        offset=self.manager.header.data_offset)
             if self.manager.header.point_records_count != len(self._pmap):
@@ -182,14 +219,12 @@ class DataProvider():
     def close(self, flush=True):
         '''Close the data provider and flush changes if _mmap and _pmap exist.'''
         if flush and self.manager.has_point_records:
-            if type(self._mmap) != bool:
-                try:
-                    self._mmap.flush()
-                    self._mmap.close()
-                    self._mmap = False
-                    self._pmap = False
-                except(Exception):
-                    raise laspy.util.LaspyException("Error closing mmap")
+            try:
+                self._mmap.flush()
+                self._mmap.close()
+            except(Exception):
+                self._mmap = False
+                self._pmap = False
         self._mmap = False
         self._pmap = False
         if self.fileref != False:
@@ -198,22 +233,28 @@ class DataProvider():
             except(Exception):
                 raise laspy.util.LaspyException("Error closing file.")
 
+    def findLASzipVLR(self, vlrs):
+        for vlr in vlrs:
+            if vlr.user_id.rstrip(' \t\r\n\0') == 'laszip encoded':
+                if vlr.record_id == 22204:
+                    return vlr
+        return None
+
+
     def map(self):
         '''Memory map the file'''
         if self.fileref == False and not self.compressed:
             raise laspy.util.LaspyException("File not opened.")
-        try:
-            if self.mode in ("r", "r-"):
-                if self.compressed and self.mode != "r-":
-                    self._mmap=FakeMmap(self.filename)
-                else:
-                    self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
-            elif self.mode in ("w", "rw"):
-                self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_WRITE)
+        if self.mode in ("r", "r-"):
+
+            if self.compressed and self.mode != "r-" and not HAVE_LAZPERF:
+                 self._mmap = FakeMmap(self.filename)
             else:
-                raise laspy.util.LaspyException("Invalid Mode: " + str(self.mode))
-        except Exception as e:
-            raise laspy.util.LaspyException("Error mapping file: " + str(e))
+                self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_READ)
+        elif self.mode in ("w", "rw"):
+            self._mmap = mmap.mmap(self.fileref.fileno(), 0, access = mmap.ACCESS_WRITE)
+        else:
+            raise laspy.util.LaspyException("Invalid Mode: " + str(self.mode))
 
     def remap(self,flush = True, point_map = False):
         '''Re-map the file. Flush changes, close, open, and map. Optionally point map.'''
