@@ -79,9 +79,10 @@ class VBO_Provider():
     def set_color_mode(self, mode, dim,start_idx, end_idx, data): 
         if (mode == "default"):
             if (all([x in self.file_object.point_format.lookup for x in ("red", "green", "blue")])):
-                if ((all(self.file_object.red[0:len(self.file_object):(len(self.file_object)/1000)] == 0)) and
-                    (all(self.file_object.green[0:len(self.file_object):(len(self.file_object)/1000)] == 0)) and
-                    (all(self.file_object.blue[0:len(self.file_object):(len(self.file_object)/1000)] == 0))):
+                idx_step = max(int((len(self.file_object)/1000)), 1)
+                if ((all(self.file_object.red[0:len(self.file_object):idx_step] == 0)) and
+                    (all(self.file_object.green[0:len(self.file_object):idx_step] == 0)) and
+                    (all(self.file_object.blue[0:len(self.file_object):idx_step] == 0))):
                     print("Warning: Color data appears empty, using intensity mode. Specify -mode=rgb to override")
                     mode = "intensity"
                 else:
