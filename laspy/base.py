@@ -39,7 +39,7 @@ def read_compressed(filename):
             laszip_binary = binary
             break
     else:
-        raise(laspy.util.LaspyException("Laszip was not found on the system"))
+        raise(laspy.util.LaspyException("laszip executable (%s) was not found in PATH" % ", ".join(laszip_names)))
 
     prc=subprocess.Popen([laszip_binary, "-olas", "-stdout", "-i", filename],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=-1)
