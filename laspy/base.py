@@ -720,7 +720,7 @@ class FileManager(object):
             return(self._get_dimension(spec))
         except KeyError:
             raise laspy.util.LaspyException("Dimension: " + str(name) +
-                            " not found.")
+                            " not found. Existing dimensions: " + ", ".join(self.point_format.lookup.keys()))
 
     def _get_dimension(self, spec):
         return(self.data_provider._pmap["point"][spec.name])
@@ -1268,7 +1268,7 @@ class Writer(FileManager):
             return(self._set_dimension(spec, new_dim))
         except KeyError:
             raise laspy.util.LaspyException("Dimension: " + str(name) +
-                            "not found.")
+                            " not found. Existing dimensions: " + ", ".join(self.point_format.lookup.keys()))
 
     def _set_dimension(self, spec, value):
         self.data_provider._pmap["point"][spec.name] = value
