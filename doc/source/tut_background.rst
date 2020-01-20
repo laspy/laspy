@@ -15,11 +15,11 @@ laspy 1.0 supports LAS formats 1.0 to 1.2, and provides preliminary support for 
 
 === ================================================================================
 
-1.0  http://www.asprs.org/a/society/committees/standards/asprs_las_format_v10.pdf 
-1.1  http://www.asprs.org/a/society/committees/standards/asprs_las_format_v11.pdf 
-1.2  http://www.asprs.org/a/society/committees/standards/asprs_las_format_v12.pdf 
-1.3  http://www.asprs.org/a/society/committees/standards/LAS_1_3_r11.pdf
-1.4  http://www.asprs.org/a/society/committees/standards/LAS_1_4_r11.pdf
+1.0  https://www.asprs.org/wp-content/uploads/2010/12/asprs_las_format_v10.pdf
+1.1  https://www.asprs.org/wp-content/uploads/2010/12/asprs_las_format_v11.pdf
+1.2  https://www.asprs.org/wp-content/uploads/2010/12/asprs_las_format_v12.pdf
+1.3  https://www.asprs.org/wp-content/uploads/2010/12/LAS_1_3_r11.pdf
+1.4  https://www.asprs.org/wp-content/uploads/2019/07/LAS_1_4_r15.pdf
 
 === ================================================================================
    
