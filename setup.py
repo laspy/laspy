@@ -21,7 +21,7 @@ except:
     shutil.copyfile("laspytest/data/simple1_4.las", "simple1_4.las")
     shutil.copyfile("laspytest/data/simple.laz", "simple.laz")
 
-with open('README.rst') as f:
+with open('README.md') as f:
     readme = f.read()
 
 setup(name          = 'laspy',
@@ -33,6 +33,7 @@ setup(name          = 'laspy',
       author_email  = 'grant.brown73@gmail.com',
       url   = 'https://github.com/laspy/laspy',
       long_description = readme,
+      long_description_content_type = 'text/markdown',
       packages      = ['laspy', 'laspytest','laspy.tools'],
       install_requires = ['numpy'],
       test_suite = 'laspytest.test_laspy',
