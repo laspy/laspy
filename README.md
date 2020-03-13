@@ -57,27 +57,27 @@ X and Windows as long as a working installation of numpy is available.
 
 ### Version 1.7.0
 
-- Fixed bug in point record format 5, 9 and 10 (`#105 <https://github.com/laspy/laspy/issues/105>`_)
-- Return explicit msg if laszip executable was not found (`#110 <https://github.com/laspy/laspy/issues/110>`_)
-- Supprt numpy 1.17 (`#122 <https://github.com/laspy/laspy/issues/122>`_)
+- Fixed bug in point record format 5, 9 and 10 [#105](https://github.com/laspy/laspy/issues/105)
+- Return explicit msg if laszip executable was not found [#110](https://github.com/laspy/laspy/issues/110)
+- Supprt numpy 1.17 [#122](https://github.com/laspy/laspy/issues/122)
 
 
 
 ### Version 1.6.0
 
-- Bug fix  (`#92 <https://github.com/laspy/laspy/issues/92>`_)
+- Bug fix  [#92](https://github.com/laspy/laspy/issues/92)
 - Test creation of all valid custom dimension data types
 - Modify handling of extra bytes to be char data instead of numeric byte data
 
 ### Version 1.5.1
 
-- Bug fixes (`#67 <https://github.com/laspy/laspy/pull/67>`_, `#75 <https://github.com/laspy/laspy/pull/75>`_, `b02b40900b5 <https://github.com/laspy/laspy/commit/b02b40900b5620972930cd0c201b4db1a6a69754>`_)
-- Allow usage of `laszip-cli` when working with LAZ files (`#77 <https://github.com/laspy/laspy/pull/77>`_)
+- Bug fixes [#67](https://github.com/laspy/laspy/pull/67), [#75](https://github.com/laspy/laspy/pull/75), [b02b40900b5](https://github.com/laspy/laspy/commit/b02b40900b5620972930cd0c201b4db1a6a69754)
+- Allow usage of `laszip-cli` when working with LAZ files [#77](https://github.com/laspy/laspy/pull/77)
 
 ### Version 1.5.0
 
-- Improved memory handling in base.FileManager (`#48 <https://github.com/laspy/laspy/pull/48>`_)
-- Introduced ``r-`` file mode, that only reads the header of as LAS file (`#48 <https://github.com/laspy/laspy/pull/48>`_)
-- LAS v. 1.4 bug fixes (`#55 <https://github.com/laspy/laspy/pull/55>`_)
-- Python 3 support (`#62 <https://github.com/laspy/laspy/pull/62>`_)
+- Improved memory handling in base.FileManager [#48](https://github.com/laspy/laspy/pull/48)
+- Introduced `r-` file mode, that only reads the header of as LAS file [#48](https://github.com/laspy/laspy/pull/48)
+- LAS v. 1.4 bug fixes [#55](https://github.com/laspy/laspy/pull/55)
+- Python 3 support [#62](https://github.com/laspy/laspy/pull/62)
 
