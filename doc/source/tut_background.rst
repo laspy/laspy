@@ -86,7 +86,7 @@ which match the specification of their original counterparts.
 
 Therefore broadly speaking, with the exception of the 1.4 legacy fields and format changes, these 
 specifications are cumulative - each adds more potential configurations to the last, 
-while (mostly) avoiding backwards incompatability. 
+while (mostly) avoiding backwards incompatibility.
 
 **Point Formats**
 
@@ -101,7 +101,7 @@ while (mostly) avoiding backwards incompatability.
 ======================  ==================================
 
     .. note::
-        Where there exist discrepencies between the use of point fields between
+        Where there exist discrepancies between the use of point fields between
         LAS versions, we will assume that the more recent version is used. For example,
         the original 1.0 specification used a point field called *"File Marker"*, which was
         generally neglected. We will therefore use the more recent *"User Data"* nomenclature.
@@ -169,7 +169,7 @@ around a bit.
 
 LAS 1.4 introduces a byte sized classification field, and this is interpreted 
 as an integer. For information on the interpretation of the Classification Byte
-field, see the LAS specification. This dimension is accessable in laspy as simply
+field, see the LAS specification. This dimension is accessible in laspy as simply
 :obj:`laspy.file.File`.classification for files which make the field available. 
 In files without the full byte classification, this property provides the 4 bit 
 classification field which becomes "classification_flags" in 1.4. 

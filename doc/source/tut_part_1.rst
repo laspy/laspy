@@ -96,7 +96,7 @@ background section of the tutorial for a reference of laspy dimension and field 
         (*las_file.X, las_file.Y, las_file.Z*) give the raw integer dimensions, 
         while lower case dimensions (*las_file.x, las_file.y, las_file.z*) give 
         the scaled value. Both methods support assignment as well, although due to
-        rounding error assignment using the scaled dimensions is not reccomended.
+        rounding error assignment using the scaled dimensions is not recommended.
 
 Again, the :obj:`laspy.file.File` object *inFile* has a reference
 to the :obj:`laspy.header.Header` object, which handles the getting and setting

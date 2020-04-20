@@ -2,7 +2,7 @@ New Format Features: LAS Versions 1.3 and 1.4
 =============================================
 
 There is not a great deal of LAS version 1.3 and 1.4 test data around, so laspy's
-implementation of these formats is neccesarily preliminary. Nevertheless, based
+implementation of these formats is necessarily preliminary. Nevertheless, based
 on the test data we've been able to find, all the basic features should work. 
 
 The dimensions which are newly available from point formats 4-10 are accessed 
@@ -12,7 +12,7 @@ provide some quick examples. More examples can be found by looking at the
 ./test/test_laspy.py file included in the source. 
 
 Additionally, LAS version 1.4 provides the ability to specify an "extra bytes"
-variable length record (or EVLR) which can dynamically add additional dimensins. 
+variable length record (or EVLR) which can dynamically add additional dimensions. 
 Laspy now parses such records, and provides the specified dimensions accordingly. 
 
 The names of these new dimensions are constructed by using the name field specified
@@ -24,7 +24,7 @@ underscores, and upper case letters with lower case letters. For example, the fi
 
 would become simply: "pulse_width"
 
-In order to maintain backwards compatability, laspy also provides access to these 
+In order to maintain backwards compatibility, laspy also provides access to these 
 dimensions via :obj:`laspy.file.extra_bytes`, which provides raw access to the 
 extra bytes in point records (present when data_record_length is greater than 
 the default for a given point format).
@@ -163,7 +163,7 @@ specification goes in the body of the VLR, and has the following structure:
 **Adding Extra Dimensions - The laspy way.** 
 
 One can easily create new dimensions using the above data type table
-and a laspy file object. In fact, it is not even neccesary to use a 1.4 file 
+and a laspy file object. In fact, it is not even necessary to use a 1.4 file 
 in this process, however other software will likely not know to use the new
 1.4 features in a previous file version. Most readers should, however, 
 be able to treat the extra dimensions as extra bytes. Here's the easy way to specify new dimensions:
@@ -242,7 +242,7 @@ much closer to the raw specification, laspy lets you create the requisite compon
             dim = inFile._reader.get_dimension(dimension.name)
             new_file._writer.set_dimension(dimension.name, dim)
 
-        # We should be able to acces our new dimensions based on the 
+        # We should be able to access our new dimensions based on the 
         # Naming convention described above. Let's put some dummy data in them.
         new_file.my_super_special_dimension = [0]*len(new_file)
         new_file.another_special_dimension = [10]*len(new_file)

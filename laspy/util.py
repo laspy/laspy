@@ -113,8 +113,8 @@ class Format():
     '''A Format instance consists of a set of 
     :obj:`laspy.util.Spec` objects, as well as some calculated attributes 
     and summary methods. For example, Format builds the *pt_fmt_long* 
-    attribute, which provides a :obj:`struct` compatable format string to 
-    pack and unpack an entire formatted object (:obj:`laspy.util.Point` in particular) in its entireity. Format additionally
+    attribute, which provides a :obj:`struct` compatible format string to 
+    pack and unpack an entire formatted object (:obj:`laspy.util.Point` in particular) in its entirety. Format additionally
     supports the :obj:`laspy.util.Format.xml` and :obj:`laspy.util.Format.etree`
     methods for interrogating the members of a format. This can be useful in finding out
     what dimensions are available from a given point format, among other things.''' 
@@ -383,7 +383,7 @@ class Format():
 
 
 class Point():
-    '''A data structure for reading and storing point data. The lastest version 
+    '''A data structure for reading and storing point data. The latest version 
     of laspy's api does not use the Point class' reading capabilities, and it is important
     to note that reading and writing points does not require a list of point instances. 
     See :obj:`laspy.file.points` for more details'''
