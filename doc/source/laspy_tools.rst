@@ -3,7 +3,7 @@ Laspy Tools
 
 Laspy comes with several command line utilities which use the library. When laspy 
 is installed with setup.py, these scripts are built and installed by setuptools, 
-and shold become available to the command line envionment you're using. The tools include
+and should become available to the command line environment you're using. The tools include
 lascopy, lasexplorer, lasverify, lasvalidate, and finally lasviewer. The first four
 are full command line utilities and should function out of the box after a successful laspy install.
 Lasviewer is an OpenGL point cloud viewer using laspy to provide LAS data, and requires OpenGL 3.0+, PyOpenGL, and
@@ -34,12 +34,12 @@ the output file will not include them.
     lascopy also accepts the optional logical arguments, -b and -u. 
     
     Specifying -b=True will cause lascopy to attempt to copy sub-byte field 
-    data to the output file in the event that there is a discrepency in how 
+    data to the output file in the event that there is a discrepancy in how 
     this data is stored between the two point formats (i.e., if you need to 
     convert between point formats 5 and below and  those greater than 5).
 
     Specifying -u=True indicates that lascopy should update the point return
-    count histogram before closing the output file. This is usually not neccesary, 
+    count histogram before closing the output file. This is usually not necessary, 
     but when downscaling from point formats greater than 5 to point formats below
     5, there is excess point return data which can not fit into the header. 
 
@@ -106,7 +106,7 @@ the shell is active:
 This is fine for learning how to use the API, but any substantial work is better
 done with a dedicated script (see tutorial for details on scripting with laspy).
 
-If you'd like to supress the printed summary, simply specify -q=True:
+If you'd like to suppress the printed summary, simply specify -q=True:
     
     .. code block :: sh
         
@@ -120,7 +120,7 @@ Lasvalidate is a simple validation tool for las files. Currently, it runs three 
 First, it checks if all points fall inside the bounding box specified by file.header.max
 and file.header.min. Second, it checks that the bounding box is precise, that is, 
 that the max and min values specified by the header are equal to the max and min values
-prensent in the point data within a given tolerance. Finally, it checks that the X
+present in the point data within a given tolerance. Finally, it checks that the X
 and Y range data makes sense. Lasvalidate produces a log file to indicate problems. 
 
 *usage*
@@ -143,8 +143,8 @@ max/min data. By default, the logfile is written to ./lasvalidate.log, and the t
 *overview*
 
 Lasverify is a LAS file diff tool; that is, it compares two LAS files based on
-header fields, point dimensons, and VLR/EVLR records. Header discrepencies are 
-displayed, while differences in VLRs, EVLRs and point dimensons are simply indicated.
+header fields, point dimensions, and VLR/EVLR records. Header discrepancies are 
+displayed, while differences in VLRs, EVLRs and point dimensions are simply indicated.
 
 *usage*
 
@@ -157,7 +157,7 @@ In general, lasverify is called as:
     There is one additional argument,-b, which is similar in function to its 
     counterpart in lascopy. Specifying -b=True will cause lasverify to dig into
     the sub-byte fields of both files to compare them individually in the case
-    of a format mismatch, which occurrs when comparing files of point format
+    of a format mismatch, which occurs when comparing files of point format
     less than six with those greater than five. Specifying -b=True when no such
     mismatch exists has no effect. 
 
@@ -179,7 +179,7 @@ Lasviewer is simple to call:
         lasviewer ./path/to/las/file
 
 By default, lasviewer will first attempt to display the point cloud in RGB color, though if
-color informaton is not present in the file, greyscale is used. In this case, the image is
+color information is not present in the file, greyscale is used. In this case, the image is
 shaded according to the intensity dimension. One can also specify the mode explicitly: 
 
 
@@ -203,7 +203,7 @@ the intensity mode.
 
 You can use heatmap and greyscale color modes to display any numeric dimension 
 offered by a las file, and the syntax is no more complicated. For example, lets 
-say we're interested in gps_time in order to see which parts of a a LAS file were 
+say we're interested in gps_time in order to see which parts of a LAS file were 
 recorded first:
 
     .. code-block:: sh 
@@ -215,7 +215,7 @@ recorded first:
 
 **A Cool Trick**
 
-With laspy, you don't acutally need to use the lasviewer tool to visualize LAS files. 
+With laspy, you don't actually need to use the lasviewer tool to visualize LAS files. 
 In fact, the lasviewer tool is really just a wrapper for the File.visualize method, 
 which accepts mode and dimension arguments. Thus, for example, if you wanted to 
 visualize a file with an exaggerated Z scale, you could use the lasexplorer tool, 

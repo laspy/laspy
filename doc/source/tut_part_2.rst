@@ -3,7 +3,7 @@ The more complicated stuff
 
 
 Using laspy's public api from :obj:`laspy.file.File` and :obj:`laspy.header.HeaderManager`
-objects will get you a long way, but sometimes it's neccesary to dig a little deeper. 
+objects will get you a long way, but sometimes it's necessary to dig a little deeper. 
 For example, if you would like to build a 1.1 version file from a 1.2 version file, 
 there is no automatic function to do this for you. Life becomes easier when we dig
 into some of laspy's internal functionality:
@@ -31,7 +31,7 @@ into some of laspy's internal functionality:
                             vlrs = inFile.header.vlrs, 
                             header = new_header)
 
-        # Iterate over all of the available point format specifications, attepmt to 
+        # Iterate over all of the available point format specifications, attempt to 
         # copy them to the new file. If we fail, print a message. 
         
         # Take note of the get_dimension and set_dimension functions. These are

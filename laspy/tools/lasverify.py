@@ -20,7 +20,7 @@ class lasverify():
         parser.add_argument('file_2', metavar='file_2', type=str, nargs='+',
                             help='LAS file 2 path.')
 
-        parser.add_argument('-b', type=bool,help='''Attempt to compare incompatable 
+        parser.add_argument('-b', type=bool,help='''Attempt to compare incompatible
                 sub-byte sized data fields if present? (slow)''', default=False)
 
         self.args = parser.parse_args()
@@ -40,13 +40,13 @@ class lasverify():
             print(error)
             quit()
 
-    ## Set global flag to indicate whether we need to look at incompatable 
+    ## Set global flag to indicate whether we need to look at incompatible
     ## bit field bytes. 
-        SUB_BYTE_COMPATABLE = ((inFile1.header.data_format_id <= 5) == 
+        SUB_BYTE_COMPATIBLE = ((inFile1.header.data_format_id <= 5) == 
                             (inFile2.header.data_format_id <= 5)) 
 
-    ## Warn the user if they chose not to check incompatable point formats.
-        if (not SUB_BYTE_COMPATABLE) and (not PRESERVE):
+    ## Warn the user if they chose not to check incompatible point formats.
+        if (not SUB_BYTE_COMPATIBLE) and (not PRESERVE):
             print("""WARNING: Point formats %i and %i have mismatched sub-byte fields. 
                     The default behavior in this case is to ignore these fields during 
                     the file_verify procedure. If you want laspy to attempt to match up
@@ -162,7 +162,7 @@ class lasverify():
         passed = 0
         failed = 0
         for dim in dims:
-            if not SUB_BYTE_COMPATABLE and dim in ("raw_classification","classification_flags", "classification_byte", "flag_byte"):
+            if not SUB_BYTE_COMPATIBLE and dim in ("raw_classification","classification_flags", "classification_byte", "flag_byte"):
                 continue
             outstr = "Dimension: %s" % dim 
             outstr += " "*(50-len(outstr))
@@ -186,7 +186,7 @@ class lasverify():
 
     ## If we need to, compare valid sub-byte fields
         sb_total = 0
-        if not SUB_BYTE_COMPATABLE and PRESERVE:
+        if not SUB_BYTE_COMPATIBLE and PRESERVE:
             print("Comparing sub-byte fields (this might take awhile)")
             sb_total += print_sb("classification", all(inFile1.classification == inFile2.classification)) 
             sb_total += print_sb("return_num", all(inFile1.return_num == inFile2.return_num))
@@ -200,7 +200,7 @@ class lasverify():
 
     ## Print summary
         print(str(passed) + " identical dimensions out of " + str(passed + failed))
-        if not SUB_BYTE_COMPATABLE and PRESERVE:
+        if not SUB_BYTE_COMPATIBLE and PRESERVE:
             print("%i identical sub-byte fields out of %i" %(sb_total, 8))
 
         inFile1.close()
