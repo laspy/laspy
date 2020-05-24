@@ -6,7 +6,7 @@ import struct
 from types import GeneratorType
 import numpy as np
 import copy
-from distutils.version import StrictVersion
+from distutils.version import LooseVersion
 
 try:
     import lazperf
@@ -31,7 +31,7 @@ def _prepare_np_frombuffer_data(data):
     # convert data according to `numpy` changes:
     # https://github.com/numpy/numpy/blob/a9bb517554004cf2ce7a4be93bcbfb63ee149844/doc/source/release/1.17.0-notes.rst#do-not-lookup-__buffer__-attribute-in-numpyfrombuffer
     change_data = isinstance(data, FakeMmap) and \
-        StrictVersion(np.version.version) >= StrictVersion('1.17.0')
+        LooseVersion(np.version.version) >= LooseVersion('1.17.0')
     return data.view if change_data else data
 
 
