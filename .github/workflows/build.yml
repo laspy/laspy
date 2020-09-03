@@ -12,7 +12,7 @@ on:
       - published
 jobs:
   build:
-    name: Conda ${{ matrix.python-version }} - ${{ matrix.os }}
+    name: Python ${{ matrix.python-version }} - ${{ matrix.os }}
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -23,6 +23,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Python setup ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
     - name: Setup
       shell: bash -l {0}
       run: |
