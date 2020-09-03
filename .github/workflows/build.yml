@@ -39,7 +39,7 @@ jobs:
     - name: Lint with flake8
       shell: bash -l {0}
       run: |
-        flake8 --statistics laspy
+        flake8 --statistics laspy  --exit-zero
     - name: Test with pytest
       shell: bash -l {0}
       run: |
