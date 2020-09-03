@@ -1,31 +1,18 @@
 import shutil
 from setuptools import setup
 
-import laspy
-
-# Make sure test data files are in the right place. There's probably a better
-# way to do this, but it should work.
-
-try:
-    tmpFile = open("simple.las")
-    tmpFile.close()
-    tmpFile = open("simple1_3.las")
-    tmpFile.close()
-    tmpFile = open("simple1_4.las")
-    tmpFile.close()
-    tmpFile = open("simple.laz")
-    tmpFile.close()
-except:
-    shutil.copyfile("laspytest/data/simple.las", "simple.las")
-    shutil.copyfile("laspytest/data/simple1_3.las", "simple1_3.las")
-    shutil.copyfile("laspytest/data/simple1_4.las", "simple1_4.las")
-    shutil.copyfile("laspytest/data/simple.laz", "simple.laz")
 
 with open('README.md') as f:
     readme = f.read()
 
+# Get __version without importing
+with open('laspy/__init__.py', 'r') as fp:
+    # get and exec just the line which looks like "__version__ = '0.9.4'"
+    exec(next(line for line in fp if '__version__' in line))
+
+
 setup(name          = 'laspy',
-      version       = laspy.__version__,
+      version       = __version__,
       description   = 'Native Python ASPRS LAS read/write library',
       license       = 'BSD',
       keywords      = 'gis lidar las',
@@ -34,10 +21,10 @@ setup(name          = 'laspy',
       url   = 'https://github.com/laspy/laspy',
       long_description = readme,
       long_description_content_type = 'text/markdown',
-      packages      = ['laspy', 'laspytest','laspy.tools'],
+      packages      = ['laspy', 'test','laspy.tools'],
       install_requires = ['numpy'],
-      test_suite = 'laspytest.test_laspy',
-      data_files = [("laspytest/data", ["simple.las", "simple1_3.las", "simple1_4.las", "simple.laz"])],
+      test_suite = 'test.test_laspy',
+      data_files = [("test/data", ["simple.las", "simple1_3.las", "simple1_4.las", "simple.laz"])],
       include_package_data = True,
       zip_safe = False,
       entry_points = {'console_scripts':['lascopy = laspy.tools.lascopy:main',
