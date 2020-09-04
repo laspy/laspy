@@ -181,27 +181,27 @@ class DataProvider():
                 if not vlr:
                     raise laspy.util.LaspyException("""Unable to find LASzip VLR!""")
 
-                vlr_data = np.frombuffer(vlr.VLR_body, 
-                                         np.uint8, 
-                                         count = vlr.rec_len_after_header) 
+                vlr_data = np.frombuffer(vlr.VLR_body,
+                                         np.uint8,
+                                         count = vlr.rec_len_after_header)
 
                 # first 8 bytes after VLRs are laszip, then is start of data
                 laszip_offset = self.manager.header.data_offset + 8
 
                 np_frombuffer_data = _prepare_np_frombuffer_data(self._mmap)
-                points_compressed = np.frombuffer(np_frombuffer_data, 
-                                                  np.uint8, 
-                                                  offset = laszip_offset, 
+                points_compressed = np.frombuffer(np_frombuffer_data,
+                                                  np.uint8,
+                                                  offset = laszip_offset,
                                                   count = self._mmap.size() - laszip_offset)
 
                 record_length = self.manager.header.data_record_length
-                decompressor = lazperf.VLRDecompressor( points_compressed, 
+                decompressor = lazperf.VLRDecompressor( points_compressed,
                                                         record_length,
                                                         vlr_data)
 
                 uncompressed = decompressor.decompress_points(self.manager.header.point_records_count)
 
-                # we've decompressed the points, now stick the header on the 
+                # we've decompressed the points, now stick the header on the
                 # front and make a new mmap
                 np_frombuffer_data = _prepare_np_frombuffer_data(self._mmap)
                 header = np.frombuffer(np_frombuffer_data, np.uint8, count = self.manager.header.data_offset)
@@ -688,7 +688,7 @@ class FileManager(object):
         #    index * self.header.data_record_length)
         #return(self.data_provider._mmap[start : start +
         #     self.header.data_record_length])
-        return(self.data_provider._pmap[index][0].tostring())
+        return(self.data_provider._pmap[index][0].tobytes())
 
 
 #self, reader, startIdx ,version
@@ -756,7 +756,7 @@ class FileManager(object):
         #_mmap = self.data_provider._mmap
         #prefs = (offs + x for x in self.point_refs)
         #return((_mmap[start + offs : start+offs+length] for start in prefs))
-        return(self.data_provider._pmap["point"][spec.name].tostring())
+        return(self.data_provider._pmap["point"][spec.name].tobytes())
 
     def _get_raw_datum(self, rec_offs, spec):
         '''return raw bytes associated with non dimension field (VLR/Header)'''

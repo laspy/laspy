@@ -1,0 +1,3 @@
+[build-system]
+requires = [ "wheel", "setuptools", "lazperf; platform_system != 'Windows'", "numpy" ]
+build-backend = "setuptools.build_meta"
