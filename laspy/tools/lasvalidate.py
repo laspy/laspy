@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 import logging
 
-# flake8: noqa
+# flake8: noqa E501
 
 class validate(object):
     def __init__(self):
