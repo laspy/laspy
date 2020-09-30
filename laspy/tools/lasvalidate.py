@@ -3,21 +3,38 @@ import numpy as np
 import argparse
 import logging
 
-class validate():
+# flake8: noqa
+
+class validate(object):
     def __init__(self):
         self.parse_args()
         self.clear_log()
         self.errors = 0
         self.tests = 0
 
-    def parse_args(self):        
-        parser = argparse.ArgumentParser(description="""Accept the path to a .LAS file, 
-                                                    and print a list of point records 
-                                                    with invalid (X,Y,Z) information.""")
+    def parse_args(self):
+        description = """Accept the path to a .LAS file,
+and print a list of point records
+with invalid (X,Y,Z) information."""
+        parser = argparse.ArgumentParser(description=description)
 
-        parser.add_argument("in_file", metavar="Input File", type = str, nargs=1, help = "Path to input file")
-        parser.add_argument("--log", metavar="Log File", type = str, nargs=1, help ="Path to log file", default = "lasvalidate.log")
-        parser.add_argument("--tol", metavar="Tolerance", type = float, nargs = 1, help = "Tolerance for header max/min vs actual max/min comparisons.", default = 0.01)
+        parser.add_argument("in_file",
+                            metavar="Input File",
+                            type=str,
+                            nargs=1,
+                            help="Path to input file")
+        parser.add_argument("--log",
+                            metavar="Log File",
+                            type=str,
+                            nargs=1,
+                            help="Path to log file",
+                            default="lasvalidate.log")
+        parser.add_argument("--tol",
+                            metavar="Tolerance",
+                            type=float,
+                            nargs=1,
+                            help="Tolerance for header max/min vs actual max/min comparisons.",
+                            default=0.01)
         self.args = parser.parse_args()
 
     def clear_log(self):
@@ -42,7 +59,6 @@ class validate():
             print("...passed")
         self.tests += 1
 
-
     def test1(self, inFile):
         print("Test 1: Checking that all points fall inside header bounding box: ")
         bb = zip(["X", "Y", "Z"], inFile.header.min, inFile.header.max)
@@ -62,7 +78,7 @@ class validate():
                 else:
                     print("... Bounding box appears to be invalid.")
                     logging.info("Bounding box appears to be invalid.")
-                    
+
             else:
                 print("... printing bad indices to log: " + self.args.log)
                 for i in bad_indices[0]:
@@ -76,7 +92,7 @@ class validate():
         print("Test 2: Checking that header bounding box is precise.")
         actual_max = [np.max(vec) for vec in [inFile.x, inFile.y, inFile.z]]
         actual_min = [np.min(vec) for vec in [inFile.x, inFile.y, inFile.z]]
-        header_max = inFile.header.max 
+        header_max = inFile.header.max
         header_min = inFile.header.min
         max_diffs = [actual_max[i] - header_max[i] for i in range(3)]
         min_diffs = [actual_min[i] - header_min[i] for i in range(3)]
@@ -131,7 +147,7 @@ class validate():
 
 
 def main():
-    validator = validate()  
+    validator = validate()
     logging.basicConfig(filename=validator.args.log,level=logging.DEBUG)
     validator.validate()
 
