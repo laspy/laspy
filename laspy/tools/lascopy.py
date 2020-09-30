@@ -21,7 +21,7 @@ class lascopy():
     def parse_args(self):
         '''Set up the argparser to accept command line arguments.'''
         parser = argparse.ArgumentParser(
-                description="""Accept in_file and out_file .LAS files, and
+            description="""Accept in_file and out_file .LAS files, and
                 convert from in_file to out_file according to point_format
                 and file_version.""")
         parser.add_argument('in_file', metavar='in_file', type=str,

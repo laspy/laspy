@@ -16,7 +16,7 @@ class lasverify(object):
     def parse_args(self):
         # Setup argparse to accept command line arguments
         parser = argparse.ArgumentParser(
-                description='''Compare LAS files file_1 and file_2 by dimension, header
+            description='''Compare LAS files file_1 and file_2 by dimension, header
                        field, vlr and evlr.''')
         parser.add_argument('file_1', metavar='file_1', type=str, nargs='+',
                             help='LAS file 1 path.')
@@ -88,7 +88,8 @@ class lasverify(object):
                 elif not (x in inFile2.header.header_format.lookup) and (x in inFile1.header.header_format.lookup):
                     print(outstr + "not present in file_2.")
                 else:
-                    print("There was an error while comparing header property: %s" + str(x))
+                    print(
+                        "There was an error while comparing header property: %s" + str(x))
                 return(2)
 
         # Build union fo header fields, then check them.
@@ -110,8 +111,10 @@ class lasverify(object):
                     passed += 1
                 elif not result == 2:
                     print(outstr + "different")
-                    print("   File 1: " + str(inFile1.reader.get_header_property(item)))
-                    print("   File 2: " + str(inFile2.reader.get_header_property(item)))
+                    print("   File 1: " +
+                          str(inFile1.reader.get_header_property(item)))
+                    print("   File 2: " +
+                          str(inFile2.reader.get_header_property(item)))
                     failed += 1
             print("%i of %i header fields match." % (passed, passed + failed))
         except:
@@ -194,14 +197,22 @@ class lasverify(object):
         sb_total = 0
         if not SUB_BYTE_COMPATIBLE and PRESERVE:
             print("Comparing sub-byte fields (this might take awhile)")
-            sb_total += print_sb("classification", all(inFile1.classification == inFile2.classification))
-            sb_total += print_sb("return_num", all(inFile1.return_num == inFile2.return_num))
-            sb_total += print_sb("num_returns", all(inFile1.num_returns == inFile2.num_returns))
-            sb_total += print_sb("scan_dir_flag", all(inFile1.scan_dir_flag == inFile2.scan_dir_flag))
-            sb_total += print_sb("edge_flight_line", all(inFile1.edge_flight_line == inFile2.edge_flight_line))
-            sb_total += print_sb("synthetic", all(inFile1.synthetic == inFile2.synthetic))
-            sb_total += print_sb("withheld", all(inFile1.withheld == inFile2.withheld))
-            sb_total += print_sb("key_point", all(inFile1.key_point == inFile2.key_point))
+            sb_total += print_sb("classification",
+                                 all(inFile1.classification == inFile2.classification))
+            sb_total += print_sb("return_num",
+                                 all(inFile1.return_num == inFile2.return_num))
+            sb_total += print_sb("num_returns",
+                                 all(inFile1.num_returns == inFile2.num_returns))
+            sb_total += print_sb("scan_dir_flag",
+                                 all(inFile1.scan_dir_flag == inFile2.scan_dir_flag))
+            sb_total += print_sb("edge_flight_line",
+                                 all(inFile1.edge_flight_line == inFile2.edge_flight_line))
+            sb_total += print_sb("synthetic",
+                                 all(inFile1.synthetic == inFile2.synthetic))
+            sb_total += print_sb("withheld",
+                                 all(inFile1.withheld == inFile2.withheld))
+            sb_total += print_sb("key_point",
+                                 all(inFile1.key_point == inFile2.key_point))
 
         # Print summary
         print(str(passed) + " identical dimensions out of " + str(passed + failed))
