@@ -82,8 +82,7 @@ class lascopy():
         SUB_BYTE_COMPATIBLE = (old_point_format <= 5) == (point_format <= 5)
 
         # Tell the user what we're doing.
-        logger.debug("Input File: " + self.args.in_file[0]
-                     + ", %i point records." % len(inFile))
+        logger.debug("Input File: " + self.args.in_file[0] + ", %i point records." % len(inFile))
         logger.debug("Output File: " + self.args.out_file[0])
         logger.debug("Converting from file version %s to version %s."
                      % (old_file_version, file_version))
@@ -117,7 +116,7 @@ class lascopy():
             if (diff > 0):
                 print("Extra Bytes Detected.")
 
-            rl = laspy.util.Format(point_format).rec_len + ((diff > 0)*diff)
+            rl = laspy.util.Format(point_format).rec_len + ((diff > 0) * diff)
             logger.debug(f"Record length: {rl}")
             new_header.data_record_length = rl
             evlrs = inFile.header.evlrs

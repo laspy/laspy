@@ -39,7 +39,7 @@ jobs:
         python -m pip install -e .
     - name: Lint with flake8
       run: |
-        flake8 --statistics laspy  --ignore=E722,E501  --exit-zero
+        flake8 --statistics laspy  --ignore=E722,E501,W504,W503
     - name: Test with pytest
       run: |
         python -m pip install pytest

@@ -45,8 +45,7 @@ class lasverify(object):
 
         # Set global flag to indicate whether we need to look at incompatible
         # bit field bytes.
-        SUB_BYTE_COMPATIBLE = ((inFile1.header.data_format_id <= 5) ==
-                               (inFile2.header.data_format_id <= 5))
+        SUB_BYTE_COMPATIBLE = ((inFile1.header.data_format_id <= 5) == (inFile2.header.data_format_id <= 5))
 
         # Warn the user if they chose not to check incompatible point formats.
         if (not SUB_BYTE_COMPATIBLE) and (not PRESERVE):
@@ -57,17 +56,17 @@ class lasverify(object):
                     (this might take some time depending on the size of the file)""")
 
         def print_title(string):
-            print("#"*65)
-            print("#  " + string + " "*(65 - (len(string) + 4)) + "#")
-            print("#"*65)
+            print("#" * 65)
+            print("#  " + string + " " * (65 - (len(string) + 4)) + "#")
+            print("#" * 65)
 
         # Define convenience function to try to compare point dimensions.
         def f(x):
             try:
-                return(1*(list(inFile1.reader.get_dimension(x)) == list(inFile2.reader.get_dimension(x))))
+                return(1 * (list(inFile1.reader.get_dimension(x)) == list(inFile2.reader.get_dimension(x))))
             except:
                 outstr = "Dimension: %s" % x
-                outstr += " "*(50-len(outstr))
+                outstr += " " * (50 - len(outstr))
                 if not (x in inFile1.point_format.lookup) and (x in inFile2.point_format.lookup):
                     print(outstr + "not present in file_1.")
                 elif not (x in inFile2.point_format.lookup) and (x in inFile1.point_format.lookup):
@@ -79,10 +78,10 @@ class lasverify(object):
         # Define convenience function to try to compare header fields.
         def g(x):
             try:
-                return((1*(inFile1.reader.get_header_property(x) == inFile2.reader.get_header_property(x))))
+                return((1 * (inFile1.reader.get_header_property(x) == inFile2.reader.get_header_property(x))))
             except:
                 outstr = "Header Property: %s" % x
-                outstr += (" "*(50-len(outstr)))
+                outstr += (" " * (50 - len(outstr)))
                 if not (x in inFile1.header.header_format.lookup) and (x in inFile2.header.header_format.lookup):
                     print(outstr + "not present in file_1.")
                 elif not (x in inFile2.header.header_format.lookup) and (x in inFile1.header.header_format.lookup):
@@ -104,17 +103,15 @@ class lasverify(object):
                 header_props.add(item.name)
             for item in header_props:
                 outstr = "Header Property: %s" % item
-                outstr += " "*(50-len(outstr))
+                outstr += " " * (50 - len(outstr))
                 result = g(item)
                 if result == 1:
                     print(outstr + "identical")
                     passed += 1
                 elif not result == 2:
                     print(outstr + "different")
-                    print("   File 1: " +
-                          str(inFile1.reader.get_header_property(item)))
-                    print("   File 2: " +
-                          str(inFile2.reader.get_header_property(item)))
+                    print("   File 1: " + str(inFile1.reader.get_header_property(item)))
+                    print("   File 2: " + str(inFile2.reader.get_header_property(item)))
                     failed += 1
             print("%i of %i header fields match." % (passed, passed + failed))
         except:
@@ -129,7 +126,7 @@ class lasverify(object):
                       % (len(inFile1.header.vlrs), len(inFile2.header.vlrs)))
             for i in xrange(min(len(inFile1.header.vlrs), len(inFile2.header.vlrs))):
                 outstr = "VLR Record: %i" % i
-                outstr += " "*(50 - len(outstr))
+                outstr += " " * (50 - len(outstr))
                 vlr1 = inFile1.header.vlrs[i].to_byte_string()
                 vlr2 = inFile2.header.vlrs[i].to_byte_string()
                 if vlr1 == vlr2:
@@ -148,7 +145,7 @@ class lasverify(object):
 
             for i in xrange(min(len(inFile1.header.evlrs), len(inFile2.header.evlrs))):
                 outstr = "EVLR Record: %i" % i
-                outstr += " "*(50 - len(outstr))
+                outstr += " " * (50 - len(outstr))
                 vlr1 = inFile1.header.evlrs[i].to_byte_string()
                 vlr2 = inFile1.header.evlrs[i].to_byte_string()
                 if vlr1 == vlr2:
@@ -174,7 +171,7 @@ class lasverify(object):
                                                    "flag_byte"):
                 continue
             outstr = "Dimension: %s" % dim
-            outstr += " "*(50-len(outstr))
+            outstr += " " * (50 - len(outstr))
             result = f(dim)
             if result == 1:
                 passed += 1
@@ -185,7 +182,7 @@ class lasverify(object):
 
         def print_sb(string, result):
             outstr = "Sub-byte field: " + string
-            outstr += " "*(50-len(outstr))
+            outstr += " " * (50 - len(outstr))
             if result:
                 print(outstr + "identical")
                 return(1)

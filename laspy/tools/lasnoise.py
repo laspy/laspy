@@ -36,7 +36,7 @@ def main():
         out = np.zeros(length)
         indices = np.random.random_integers(0,
                                             length - 1,
-                                            math.floor(float(pct)/100*length))
+                                            math.floor(float(pct) / 100 * length))
         vals = np.random.random_integers(-amt, amt, len(indices))
         out[indices] += vals
         return(out)
