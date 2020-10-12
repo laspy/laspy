@@ -6,7 +6,7 @@ files.
 ## Introduction
 
 Laspy is a pythonic library for reading, modifying and writing LAS
-files. Support for LAZ is limited to reading LAS version 1.0-1.3 files.
+files. Support for LAZ files rely on the external libraries LASzip and LAStools and is limited to reading LAS version 1.0-1.3 files.
 Laspy is compatible with Python 2.6+ and 3.5+.
 
 Laspy includes a set of command line tools which can be used to do basic
@@ -52,6 +52,25 @@ python setup.py install --user
 
 Laspy is only dependent on numpy and should therefore work on Linux, OS
 X and Windows as long as a working installation of numpy is available.
+
+To install LASzip and LAStools for LAZ support on Unix systems:
+```
+git clone https://github.com/LASzip/LASzip.git
+cd LASzip
+git checkout 3.4.3
+cmake .
+make
+sudo make install
+```
+and
+```
+wget http://lastools.org/download/LAStools.zip
+unzip LAStools.zip
+cd LAStools
+make
+sudo cp bin/laszip /usr/local/bin
+sudo ln -s /usr/local/bin/laszip /usr/local/bin laszip-cli
+```
 
 ## Changelog
 
