@@ -13,34 +13,69 @@ Laspy includes a set of command line tools which can be used to do basic
 file operations like format translation and validation as well as
 comparing LAS files.
 
-## Example
+Examples
+--------
 
-A simple example to show the basics of Laspy. Here we create an output
-file that only consists of terrain points from the input file:
+Directly read and write las
+```Python
+import laspy
 
-```python
-
-from laspy.file import File
-import numpy as np
-
-inFile = File('/path/to/file.las', mode='r')
-
-I = inFile.Classification == 2
-
-outFile = File('/path/to/output.las', mode='w', header=inFile.header)
-outFile.points = inFile.points[I]
-outFile.close()
+las = laspy.read('filename.las')
+las.points = las.points[las.classification == 2]
+las.write('ground.laz')
 ```
+
+
+Open data to inspect header (opening only reads the header and vlrs)
+
+```Python
+import laspy
+
+with laspy.open('filename.las') as f:
+    print(f"Point format:       {f.header.point_format}")
+    print(f"Number of points:   {f.header.point_count}")
+    print(f"Number of vlrs:     {len(f.header.vlrs)}")
+```
+Use the 'chunked' reading & writing features
+
+```Python
+import laspy
+
+with laspy.open('big.laz') as input_las:
+    with laspy.open('ground.laz', mode="w", header=input_las.header) as ground_las:
+        for points in input_las.chunk_iterator(2_000_000):
+            ground_las.write_points(points[points.classification == 2])
+
+```
+
+Appending points to existing file
+
+```Python
+import laspy
+
+with laspy.open('big.laz') as input_las:
+    with laspy.open('ground.laz', mode="a") as ground_las:
+        for points in input_las.chunk_iterator(2_000_000):
+            ground_las.append_points(points[points.classification == 2])
+```
+
+
 
 API Documentation and tutorials are available at
 [PythonHosted](http://pythonhosted.org/laspy).
 
 ## Installation
+Laspy is only dependent on numpy and should therefore work on Linux, OS
+X and Windows as long as a working installation of numpy is available.
 
 Laspy can be installed either with `pip`:
 
 ```
-pip install laspy
+pip install laspy # without LAZ support
+# Or
+pip install laspy[laszip] # with LAZ support via LASzip
+# Or
+pip install laspy[lazrs] # with LAZ support via lazrs
 ```
 
 or by running the setup script included in the source distribution:
@@ -50,29 +85,9 @@ python setup.py build --user
 python setup.py install --user
 ```
 
-Laspy is only dependent on numpy and should therefore work on Linux, OS
-X and Windows as long as a working installation of numpy is available.
-
-To install LASzip and LAStools for LAZ support on Unix systems:
-```
-git clone https://github.com/LASzip/LASzip.git
-cd LASzip
-git checkout 3.4.3
-cmake .
-make
-sudo make install
-```
-and
-```
-wget http://lastools.org/download/LAStools.zip
-unzip LAStools.zip
-cd LAStools
-make
-sudo cp bin/laszip /usr/local/bin
-sudo ln -s /usr/local/bin/laszip /usr/local/bin laszip-cli
-```
-
 ## Changelog
+
+### Version 2.0.0
 
 ### Version 1.7.0
 
