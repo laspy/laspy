@@ -227,8 +227,7 @@ class DataProvider():
         else:
             np_frombuffer_data = _prepare_np_frombuffer_data(self._mmap)
             self._pmap = np.frombuffer(np_frombuffer_data, self.pointfmt,
-                                       offset=self.manager.header.data_offset,
-                                       count=self.manager.header.point_records_count)
+                                       offset=self.manager.header.data_offset)
 
     def close(self, flush=True):
         '''Close the data provider and flush changes if _mmap and _pmap exist.'''
