@@ -22,8 +22,8 @@ setup(name='laspy',
       packages=['laspy', 'laspy.tools'],
       test_suite='test.test_laspy',
       data_files=[("test/data",
-                  ["simple.las", "simple1_3.las",
-                   "simple1_4.las", "simple.laz"])],
+                  ["test/data/simple.las", "test/data/simple1_3.las",
+                   "test/data/simple1_4.las", "test/data/simple.laz"])],
       install_requires=['numpy'],
       extras_require={
           "laz": 'lazperf ; platform_system!="Windows"'
