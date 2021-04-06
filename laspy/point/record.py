@@ -4,6 +4,7 @@ The PointRecord classes provide a few extra things to manage these arrays
 in the context of Las point data
 """
 import logging
+from copy import deepcopy
 from typing import NoReturn
 
 import numpy as np
@@ -138,6 +139,9 @@ class PackedPointRecord:
                 self[dim_name] = np.array(other_record[dim_name])
             except ValueError:
                 pass
+
+    def copy(self) -> 'PackedPointRecord':
+        return PackedPointRecord(self.array.copy(), deepcopy(self.point_format))
 
     def memoryview(self) -> memoryview:
         return memoryview(self.array)

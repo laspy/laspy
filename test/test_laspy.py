@@ -580,37 +580,37 @@ class LasV_13TestCase(unittest.TestCase):
         """Testing return_point_waveform_loc"""
         test1 = self.File1.return_point_waveform_loc
         File2 = laspy.LasData(self.File1.header)
-        File2.points = self.File1.points
-        self.assertTrue(all(test1 == File2.return_point_waveform_loc))
+        File2.points = self.File1.points.copy()
+        assert np.all(test1 == File2.return_point_waveform_loc)
         File2.return_point_waveform_loc += 1
-        self.assertTrue(all(test1 != File2.return_point_waveform_loc))
+        assert np.all(test1 != File2.return_point_waveform_loc)
 
     def test_x_t(self):
         """Testing x_t"""
         test1 = self.File1.x_t
         File2 = laspy.LasData(self.File1.header)
-        File2.points = self.File1.points
-        self.assertTrue(all(test1 == File2.x_t))
+        File2.points = self.File1.points.copy()
+        assert np.all(test1 == File2.x_t)
         File2.x_t += 1
-        self.assertTrue(all(test1 != File2.x_t))
+        assert np.all(test1 != File2.x_t)
 
     def test_y_t(self):
         """Testing y_t"""
         test1 = self.File1.y_t
         File2 = laspy.LasData(self.File1.header)
-        File2.points = self.File1.points
-        self.assertTrue(all(test1 == File2.y_t))
+        File2.points = self.File1.points.copy()
+        np.all(test1 == File2.y_t)
         File2.y_t += 1
-        self.assertTrue(all(test1 != File2.y_t))
+        assert np.all(test1 != File2.y_t)
 
     def test_z_t(self):
         """Testing z_t"""
         test1 = self.File1.z_t
         File2 = laspy.LasData(self.File1.header)
-        File2.points = self.File1.points
-        self.assertTrue(all(test1 == File2.z_t))
+        File2.points = self.File1.points.copy()
+        np.all(test1 == File2.z_t)
         File2.z_t += 1
-        self.assertTrue(all(test1 != File2.z_t))
+        np.all(test1 != File2.z_t)
 
 
 class LasV_14TestCase(unittest.TestCase):
@@ -691,7 +691,6 @@ class LasV_14TestCase(unittest.TestCase):
         assert np.all(classification_flags == File2.classification_flags)
         assert np.all(classification == File2.classification)
         assert np.all(scanner_channel == File2.scanner_channel)
-        File2.close(ignore_header_changes=True)
 
 
 def really_remove(path, max_=1):
