@@ -9,7 +9,6 @@ from typing import NoReturn
 import numpy as np
 
 from . import dims
-from .dims import ScaledArrayView
 from .dims import ScaledArrayView, OLD_LASPY_NAMES
 from .. import errors
 from ..point import PointFormat
@@ -175,21 +174,8 @@ class PackedPointRecord:
         if isinstance(item, (int, slice, np.ndarray)):
             return PackedPointRecord(self.array[item], self.point_format)
 
-        old_laspy_names = {
-            "flag_byte": "bit_fields",
-            "return_num": "return_number",
-            "num_returns": "number_of_returns",
-            "scan_dir_flag": "scan_direction_flag",
-            "edge_flight_line": "edge_of_flight_line",
-            "pt_src_id": "point_source_id",
-            "wave_packet_desc_index": "wavepacket_index",
-            "byte_offset_to_waveform_data": "wavepacket_offset",
-            "waveform_packet_size": "wavepacket_size",
-            "return_point_waveform_loc": "return_point_wave_location"
-        }
-
         try:
-            item = old_laspy_names[item]
+            item = OLD_LASPY_NAMES[item]
         except KeyError:
             pass
 

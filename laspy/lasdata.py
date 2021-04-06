@@ -9,7 +9,7 @@ from .compression import LazBackend
 from .header import LasHeader
 from .laswriter import LasWriter
 from .point import record, dims, ExtraBytesParams, PointFormat
-from .point.dims import ScaledArrayView
+from .point.dims import ScaledArrayView, OLD_LASPY_NAMES
 from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)
@@ -283,25 +283,12 @@ class LasData:
         an error is raised
         """
 
-        old_laspy_names = {
-            "flag_byte": "bit_fields",
-            "return_num": "return_number",
-            "num_returns": "number_of_returns",
-            "scan_dir_flag": "scan_direction_flag",
-            "edge_flight_line": "edge_of_flight_line",
-            "pt_src_id": "point_source_id",
-            "wave_packet_desc_index": "wavepacket_index",
-            "byte_offset_to_waveform": "wavepacket_offset",
-            "waveform_packet_size": "wavepacket_size",
-            "return_point_waveform_loc": "return_point_wave_location"
-        }
-
         try:
-            key = old_laspy_names[key]
+            key = OLD_LASPY_NAMES[key]
         except KeyError:
             pass
 
-        if key in self.point_format.dimension_names:
+        if key in self.point_format.dimension_names or key in self.points.array.dtype.names:
             self.points[key] = value
         elif key in dims.DIMENSIONS_TO_TYPE:
             raise ValueError(

@@ -85,6 +85,19 @@ def _build_point_formats_dtypes(
     }
 
 
+OLD_LASPY_NAMES = {
+    "flag_byte": "bit_fields",
+    "return_num": "return_number",
+    "num_returns": "number_of_returns",
+    "scan_dir_flag": "scan_direction_flag",
+    "edge_flight_line": "edge_of_flight_line",
+    "pt_src_id": "point_source_id",
+    "wave_packet_desc_index": "wavepacket_index",
+    "byte_offset_to_waveform_data": "wavepacket_offset",
+    "waveform_packet_size": "wavepacket_size",
+    "return_point_waveform_loc": "return_point_wave_location"
+}
+
 # Definition of the points dimensions and formats
 # LAS version [1.0, 1.1, 1.2, 1.3, 1.4]
 DIMENSIONS_TO_TYPE: Dict[str, str] = {
