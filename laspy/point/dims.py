@@ -507,7 +507,7 @@ class SubFieldView:
         inpts = SubFieldView._convert_sub_views_to_arrays(inputs)
         ret = getattr(ufunc, method)(*inpts, **kwargs)
         if ret is not None and isinstance(ret, np.ndarray):
-            if ret.dtype == np.bool:
+            if ret.dtype == bool:
                 return ret
             return self.__class__(ret, int(self.bit_mask))
         return ret
