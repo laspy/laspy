@@ -694,6 +694,7 @@ class LasHeader:
 
 
 LAS_HEADERS_SIZE = {
+    "1.1": 227,
     "1.2": 227,
     "1.3": 235,
     "1.4": 375,

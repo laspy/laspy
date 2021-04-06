@@ -10,6 +10,7 @@ import numpy as np
 
 from . import dims
 from .dims import ScaledArrayView
+from .dims import ScaledArrayView, OLD_LASPY_NAMES
 from .. import errors
 from ..point import PointFormat
 
