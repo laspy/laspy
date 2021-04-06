@@ -204,3 +204,8 @@ def test_point_record_setitem_scaled_view():
     las.lol = new_values
 
     assert np.allclose(las.lol, new_values)
+
+
+def test_laspy_file_raises():
+    with pytest.raises(laspy.errors.LaspyError):
+        laspy.File("some path")
