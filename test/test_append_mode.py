@@ -40,7 +40,7 @@ def test_append_las_with_evlrs():
 def test_append_laz_with_evlrs():
     las = append_self_and_check(os.path.dirname(__file__) + "/1_4_w_evlr.laz")
 
-    expected_evlr = laspy.VLR(user_id="test", record_id=42, description="just a test evlr")
+    expected_evlr = laspy.VLR(user_id="pylastest", record_id=42, description="just a test evlr")
     expected_evlr.record_data = b"Test 1 2 ... 1 2"
 
     assert len(las.evlrs) == 1
