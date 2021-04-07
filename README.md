@@ -3,15 +3,7 @@
 Laspy is a python library for reading, modifying and creating LAS LiDAR
 files.
 
-## Introduction
-
-Laspy is a pythonic library for reading, modifying and writing LAS
-files. Support for LAZ files rely on the external libraries LASzip and LAStools and is limited to reading LAS version 1.0-1.3 files.
-Laspy is compatible with Python 2.6+ and 3.5+.
-
-Laspy includes a set of command line tools which can be used to do basic
-file operations like format translation and validation as well as
-comparing LAS files.
+Laspy is compatible with Python  3.6+.
 
 Examples
 --------
@@ -59,14 +51,10 @@ with laspy.open('big.laz') as input_las:
             ground_las.append_points(points[points.classification == 2])
 ```
 
-
-
 API Documentation and tutorials are available at
 [PythonHosted](http://pythonhosted.org/laspy).
 
 ## Installation
-Laspy is only dependent on numpy and should therefore work on Linux, OS
-X and Windows as long as a working installation of numpy is available.
 
 Laspy can be installed either with `pip`:
 
@@ -78,13 +66,6 @@ pip install laspy[laszip] # with LAZ support via LASzip
 pip install laspy[lazrs] # with LAZ support via lazrs
 ```
 
-or by running the setup script included in the source distribution:
-
-```
-python setup.py build --user
-python setup.py install --user
-```
-
 ## Changelog
 
 ### Version 2.0.0
@@ -94,8 +75,6 @@ python setup.py install --user
 - Fixed bug in point record format 5, 9 and 10 [#105](https://github.com/laspy/laspy/issues/105)
 - Return explicit msg if laszip executable was not found [#110](https://github.com/laspy/laspy/issues/110)
 - Supprt numpy 1.17 [#122](https://github.com/laspy/laspy/issues/122)
-
-
 
 ### Version 1.6.0
 

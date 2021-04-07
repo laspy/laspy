@@ -2,6 +2,7 @@ laspy License
 ==============================================================================
 Copyright (c) 2012, Grant Brown, grant.brown73 at gmail.com
 Copyright (c) 2012, Howard Butler, hobu.inc at gmail.com
+Copyright (c) 2020, Thomas Montaigu, thomas.montaigu@laposte.net
 
 All rights reserved.
 
