@@ -5,7 +5,7 @@ What is a LAS file ?
 LAS is a public file format meant to exchange 3D point data, mostly used to exchange lidar point clouds.
 LAZ is a **lossless** compression of the LAS format.
 
-The latest LAS specification is the `LAS 1.4`_. pylas supports LAS files from Version 1.2 to 1.4.
+The latest LAS specification is the `LAS 1.4`_. laspy supports LAS files from Version 1.2 to 1.4.
 
 .. _LAS 1.4: https://www.asprs.org/wp-content/uploads/2010/12/LAS_1_4_r13.pdf
 

@@ -1,11 +1,11 @@
-pylas.header module
+laspy.header module
 ======================
 
 
 LasHeader
 ---------
 
-.. autoclass:: pylas.header.LasHeader
+.. autoclass:: laspy.header.LasHeader
     :members:
     :undoc-members:
     :show-inheritance:

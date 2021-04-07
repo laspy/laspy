@@ -1,7 +1,7 @@
-pylas.vlrs.known module
+laspy.vlrs.known module
 =======================
 
-.. automodule:: pylas.vlrs.known
+.. automodule:: laspy.vlrs.known
     :members:
     :undoc-members:
     :show-inheritance:

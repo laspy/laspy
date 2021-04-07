@@ -1,10 +1,10 @@
-pylas.compression module
+laspy.compression module
 ========================
 
 LazBackend
 ----------
 
-.. autoclass:: pylas.compression.LazBackend
+.. autoclass:: laspy.compression.LazBackend
     :members:
     :undoc-members:
     :show-inheritance:

@@ -7,13 +7,13 @@ Installing from PyPi
 
 .. code:: shell
 
-    pip install pylas
+    pip install laspy
 
 
 Optional dependencies for LAZ support
 =====================================
 
-pylas does not support LAZ (.laz) file by itself but can use one of several optional dependencies
+laspy does not support LAZ (.laz) file by itself but can use one of several optional dependencies
 to support compressed LAZ files.
 
 The 2 supported options are:
@@ -22,8 +22,8 @@ The 2 supported options are:
 
 2) `laszip-python`_ (bindings to `laszip`_)
 
-When encountering LAZ data, pylas will try to use one of the backend in the order described above.
-(Example: if lazrs is not installed or if it fails during, the process, pylas will try laszip)
+When encountering LAZ data, laspy will try to use one of the backend in the order described above.
+(Example: if lazrs is not installed or if it fails during, the process, laspy will try laszip)
 
 `lazrs`_ is a Rust port of the laszip compression and decompression.
 Its main advantage is that it is able to compress/decompress using multiple threads which can
@@ -36,18 +36,18 @@ but does not offer multi-threaded compression/decompression.
 
 Both the laszip bindings and lazrs are available on pip.
 
-To install pylas with one of its supported backend use one of the following commands
+To install laspy with one of its supported backend use one of the following commands
 
 .. code-block:: shell
 
     # To install with lazrs only
-    pip install pylas[lazrs]
+    pip install laspy[lazrs]
 
     # To install with laszip only
-    pip install pylas[laszip]
+    pip install laspy[laszip]
 
     # To install with both
-    pip install pylas[lazrs,laszip]
+    pip install laspy[lazrs,laszip]
 
 
 .. _lazrs: https://github.com/tmontaigu/laz-rs

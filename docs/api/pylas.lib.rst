@@ -1,7 +1,7 @@
-pylas.lib module
+laspy.lib module
 ================
 
-.. automodule:: pylas.lib
+.. automodule:: laspy.lib
     :members:
     :undoc-members:
     :show-inheritance:

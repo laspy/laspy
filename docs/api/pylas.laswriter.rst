@@ -1,11 +1,11 @@
-pylas.laswriter module
+laspy.laswriter module
 ======================
 
 
 LasWriter
 ---------
 
-.. autoclass:: pylas.laswriter.LasWriter
+.. autoclass:: laspy.laswriter.LasWriter
     :members:
     :undoc-members:
     :show-inheritance:

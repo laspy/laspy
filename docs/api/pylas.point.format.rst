@@ -1,7 +1,7 @@
-pylas.point.format module
+laspy.point.format module
 =========================
 
-.. automodule:: pylas.point.format
+.. automodule:: laspy.point.format
     :members:
     :undoc-members:
     :show-inheritance:

@@ -1,7 +1,7 @@
-pylas.point.record module
+laspy.point.record module
 =========================
 
-.. automodule:: pylas.point.record
+.. automodule:: laspy.point.record
         :members:
         :undoc-members:
         :show-inheritance:

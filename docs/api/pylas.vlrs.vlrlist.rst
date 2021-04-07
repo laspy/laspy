@@ -1,7 +1,7 @@
-pylas.vlrs.vlrlist module
+laspy.vlrs.vlrlist module
 =========================
 
-.. automodule:: pylas.vlrs.vlrlist
+.. automodule:: laspy.vlrs.vlrlist
         :members:
         :undoc-members:
         :show-inheritance:

@@ -36,7 +36,7 @@ class VLRList(list):
 
         >>> import laspy
         >>> from laspy.vlrs.known import ExtraBytesVlr, WktCoordinateSystemVlr
-        >>> las = laspy.read("laspytests/extrabytes.las")
+        >>> las = laspy.read("tests/extrabytes.las")
         >>> las.vlrs
         [<ExtraBytesVlr(extra bytes structs: 5)>]
         >>> las.vlrs.get(WktCoordinateSystemVlr.official_user_id())
@@ -80,7 +80,7 @@ class VLRList(list):
         Always returns a list even if there is only one VLR of type vlr_type.
 
         >>> import laspy
-        >>> las = laspy.read("laspytests/extrabytes.las")
+        >>> las = laspy.read("tests/extrabytes.las")
         >>> las.vlrs
         [<ExtraBytesVlr(extra bytes structs: 5)>]
         >>> las.vlrs.get("WktCoordinateSystemVlr")

@@ -9,13 +9,13 @@ Extra Dimensions
 The LAS Specification version 1.4 defines a standard way to add extra dimensions to
 a LAS file.
 
-In pylas you can add extra dimensions using the :meth:`.LasData.add_extra_dim` function
+In laspy you can add extra dimensions using the :meth:`.LasData.add_extra_dim` function
 
 
 The Allowed base types for an extra dimensions are:
 
 +-------------------------+-------------+-------------+
-|       pylas name        | size (bits) |     type    |
+|       laspy name        | size (bits) |     type    |
 +=========================+=============+=============+
 |     u1 or uint8         |     8       |  unsigned   |
 +-------------------------+-------------+-------------+
@@ -49,22 +49,22 @@ and an array field of 3 doubles for each points.
 
 .. code-block:: python
 
-    import pylas
-    las = pylas.read("somefile.las")
+    import laspy
+    las = laspy.read("somefile.las")
 
-    las.add_extra_dim(pylas.ExtraBytesParams(
+    las.add_extra_dim(laspy.ExtraBytesParams(
         name="codification",
         type="uint64",
         description="More classes available"
     ))
 
-    las.add_extra_dim(pylas.ExtraBytesParams(name="mysterious", type="3f8"))
+    las.add_extra_dim(laspy.ExtraBytesParams(name="mysterious", type="3f8"))
 
 
 
 .. note::
 
-    Although the specification of the ExtraBytesVlr appeared in the 1.4 LAS Spec, pylas allows to
+    Although the specification of the ExtraBytesVlr appeared in the 1.4 LAS Spec, laspy allows to
     add new dimensions to file with version < 1.4
 
 .. note::
@@ -87,14 +87,14 @@ The fastest and easiest way to add your custom VLR to a file is to create a :cla
 set its record_data (which must be bytes) and add it to the VLR list.
 
 
->>> import pylas
->>> vlr = pylas.vlrs.VLR(user_id='A UserId', record_id=1, description='Example VLR')
+>>> import laspy
+>>> vlr = laspy.vlrs.VLR(user_id='A UserId', record_id=1, description='Example VLR')
 >>> vlr
 <VLR(user_id: 'A UserId', record_id: '1', data len: 0)>
 >>> vlr.record_data = b'somebytes'
 >>> vlr
 <VLR(user_id: 'A UserId', record_id: '1', data len: 9)>
->>> las = pylas.create()
+>>> las = laspy.create()
 >>> las.vlrs
 []
 >>> las.vlrs.append(vlr)
@@ -106,15 +106,15 @@ Complete & Harder way
 ---------------------
 
 While the way shown above is quick & easy it might not be perfect for complex VLRs.
-Also when reading a file that has custom VLR, pylas won't be able to automatically parse its data
+Also when reading a file that has custom VLR, laspy won't be able to automatically parse its data
 into a better structure, so you will have to find the VLR in the vlrs list and parse it yourself
-one pylas is done.
+one laspy is done.
 
 One way to automate this task is to create your own Custom VLR Class that extends
-:class:`.BaseKnownVLR` by implementing the missing methods pylas
+:class:`.BaseKnownVLR` by implementing the missing methods laspy
 will be able to automatically parse the VLR when reading the file & write it when saving the file.
 
->>> class CustomVLR(pylas.vlrs.BaseKnownVLR):
+>>> class CustomVLR(laspy.vlrs.BaseKnownVLR):
 ...     def __init__(self):
 ...         super().__init__()
 ...         self.numbers = []
@@ -141,12 +141,12 @@ will be able to automatically parse the VLR when reading the file & write it whe
 >>> cvlr.numbers
 []
 >>> cvlr.numbers = [1,2, 3]
->>> las = pylas.create()
+>>> las = laspy.create()
 >>> las.vlrs.append(cvlr)
 >>> las.vlrs
 [<MyCustomVLR>]
 >>> las.x = np.array([1.0, 2.0])
->>> las = pylas.lib.write_then_read_again(las)
+>>> las = laspy.lib.write_then_read_again(las)
 >>> las.vlrs
 [<MyCustomVLR>]
 >>> las.vlrs[0].numbers

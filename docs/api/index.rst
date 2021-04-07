@@ -1,7 +1,7 @@
-pylas package
+laspy package
 =============
 
-.. module:: pylas
+.. module:: laspy
 
 Re-exported functions
 ---------------------
@@ -30,18 +30,18 @@ Submodules
 
 .. toctree::
 
-   pylas.lib
-   pylas.header
-   pylas.lasreader
-   pylas.lasdata
-   pylas.vlrs.vlrlist
-   pylas.vlrs.known
-   pylas.vlrs.vlr
-   pylas.point.record
-   pylas.errors
-   pylas.compression
-   pylas.point.format
-   pylas.lasmmap
-   pylas.lasappender
-   pylas.laswriter
+   laspy.lib
+   laspy.header
+   laspy.lasreader
+   laspy.lasdata
+   laspy.vlrs.vlrlist
+   laspy.vlrs.known
+   laspy.vlrs.vlr
+   laspy.point.record
+   laspy.errors
+   laspy.compression
+   laspy.point.format
+   laspy.lasmmap
+   laspy.lasappender
+   laspy.laswriter
 

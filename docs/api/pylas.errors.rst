@@ -1,7 +1,7 @@
-pylas.errors module
+laspy.errors module
 ===================
 
-.. automodule:: pylas.errors
+.. automodule:: laspy.errors
     :members:
     :undoc-members:
     :show-inheritance:

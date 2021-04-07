@@ -1,7 +1,7 @@
-pylas.lasmmap module
+laspy.lasmmap module
 ======================
 
-.. automodule:: pylas.lasmmap
+.. automodule:: laspy.lasmmap
     :members:
     :undoc-members:
     :show-inheritance:

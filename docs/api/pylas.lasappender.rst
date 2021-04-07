@@ -1,9 +1,9 @@
-pylas.lasappender
+laspy.lasappender
 =================
 
 
 LasAppender
 -----------
 
-.. autoclass:: pylas.lasappender.LasAppender
+.. autoclass:: laspy.lasappender.LasAppender
     :members:

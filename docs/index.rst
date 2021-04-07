@@ -1,14 +1,14 @@
-.. pylas documentation master file, created by
+.. laspy documentation master file, created by
    sphinx-quickstart on Wed Mar 28 09:00:58 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 ===========================================
-pylas: Python library for lidar LAS/LAZ IO.
+laspy: Python library for lidar LAS/LAZ IO.
 ===========================================
 
 `LAS`_ (and it's compressed counterpart LAZ), is a popular format for lidar pointcloud and full waveform,
-pylas reads and writes these formats and provides a Python API via Numpy Arrays.
+laspy reads and writes these formats and provides a Python API via Numpy Arrays.
 
 .. _LAS: https://www.asprs.org/committee-general/laser-las-file-format-exchange-activities.html
 
@@ -17,9 +17,9 @@ Here is an example of reading in LAZ data and getting some simple summaries of t
 .. testcode::
 
     import numpy as np
-    import pylas
+    import laspy
 
-    with pylas.open('pylastests/simple.laz') as fh:
+    with laspy.open('laspytests/simple.laz') as fh:
         print('Points from Header:', fh.header.point_count)
         las = fh.read()
         print(las)

@@ -1,7 +1,7 @@
-pylas.vlrs.vlr
+laspy.vlrs.vlr
 --------------
 
-.. autoclass:: pylas.VLR
+.. autoclass:: laspy.VLR
     :members:
     :inherited-members:
     :undoc-members:

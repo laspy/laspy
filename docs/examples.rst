@@ -11,11 +11,11 @@ We use the classification field to filter points, but this can work with the oth
 
 .. code-block:: python
 
-    import pylas
+    import laspy
 
-    las = pylas.read('pylastests/simple.las')
+    las = laspy.read('laspytests/simple.las')
 
-    new_file = pylas.create(point_format=las.header.point_format_id, file_version=las.header.version)
+    new_file = laspy.create(point_format=las.header.point_format_id, file_version=las.header.version)
     new_file.points = las.points[las.classification == 1]
 
     new_file.write('extracted_points.las')
@@ -29,10 +29,10 @@ This example shows how you can create a new LAS file from scratch.
 
 .. code-block:: python
 
-    import pylas
+    import laspy
     import numpy as np
 
-    las = pylas.create()
+    las = laspy.create()
 
     array = np.linspace(0.0, 15.0, 10000)
     las.x = array

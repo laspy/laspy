@@ -7,7 +7,7 @@ From 0.4.x to 1.0.0
 Changes in LAZ backend
 ______________________
 
-With pylas 1.0.0, the lazperf backend
+With laspy 1.0.0, the lazperf backend
 support was dropped, and the laszip backend
 changed from using the laszip executable
 to using laszip python bindings.
@@ -22,9 +22,9 @@ _____________________
 
 Some fields in LAS are 'bit fields'.
 
-with pylas 0.4.x, there was a inconsistency between
+with laspy 0.4.x, there was a inconsistency between
 'normal' fields and 'bit' fields, when getting a bit field,
-pylas returned a copy of the values in a new numpy array whereas
+laspy returned a copy of the values in a new numpy array whereas
 when getting a normal field, the array you got acted as a 'view'
 on the real array where the values where stored.
 
@@ -33,10 +33,10 @@ a bit field would no propagate to the real array.
 
 .. code-block:: python
 
-    import pylas
+    import laspy
     import numpy as np
 
-    las = pylas.read("pylastests/simple.las")
+    las = laspy.read("laspytests/simple.las")
 
     # return number is a bit field
     print(las.return_number)
@@ -65,16 +65,16 @@ a bit field would no propagate to the real array.
     # array([7, 4, 4, ..., 1, 1, 1], dtype=uint8)
 
 
-In order to try to solve this inconsistency, pylas >= 0.5.0
+In order to try to solve this inconsistency, laspy >= 0.5.0
 introduced the :class:`.SubFieldView` class that is meant to propagate
 modifications to the real array, and tries to act like a real numpy array.
 
 .. code-block:: python
 
-    import pylas
+    import laspy
     import numpy as np
 
-    las = pylas.read("pylastests/simple.las")
+    las = laspy.read("laspytests/simple.las")
 
     print(las.return_number)
     # <SubFieldView([1 1 1 ... 1 1 1])>
@@ -93,10 +93,10 @@ it is easy to copy them to numpy arrays:
 .. code-block:: python
 
 
-    import pylas
+    import laspy
     import numpy as np
 
-    las = pylas.read("pylastests/simple.las")
+    las = laspy.read("laspytests/simple.las")
     print(las.return_number)
     # <SubFieldView([1 1 1 ... 1 1 1])>
 
@@ -109,10 +109,10 @@ where a ScaledArrayView class has been introduced
 
 .. code-block:: python
 
-    import pylas
+    import laspy
     import numpy as np
 
-    las = pylas.read("pylastests/simple.las")
+    las = laspy.read("laspytests/simple.las")
     print(las.x)
     # <ScaledArrayView([637012.24 636896.33 636784.74 ... 637501.67 637433.27 637342.85])>>
 
@@ -142,11 +142,11 @@ use the `array` property of the point record.
 
 .. code-block:: python
 
-    # pylas <= 0.4.3
-    las = pylas.read("somefile.las")
+    # laspy <= 0.4.3
+    las = laspy.read("somefile.las")
     array = las.points
 
-    # pylas 1.0.0
-    las = pylas.read("somefile.las")
+    # laspy 1.0.0
+    las = laspy.read("somefile.las")
     array = las.points.array
  

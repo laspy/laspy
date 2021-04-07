@@ -171,7 +171,7 @@ class LasHeader:
             point_format = PointFormat(dims.min_point_format_for_version(str(version)))
         elif version is None and point_format is not None:
             version = Version.from_str(
-                dims.min_file_version_for_point_format(point_format.id)
+                dims.preferred_file_version_for_point_format(point_format.id)
             )
         dims.raise_if_version_not_compatible_with_fmt(point_format.id, str(version))
 

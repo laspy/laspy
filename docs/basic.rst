@@ -8,46 +8,46 @@ Opening & Reading
 Reading
 -------
 
-Reading is done using :func:`pylas.read` function.
+Reading is done using :func:`laspy.read` function.
 This function will read everything in the file (Header, vlrs, point records, ...) and return an object
 that you can use to access to the data.
 
 .. code:: python
 
-    import pylas
+    import laspy
 
-    las = pylas.read('somefile.las')
+    las = laspy.read('somefile.las')
     print(np.unique(las.classification))
 
 Opening
 -------
 
-pylas can also :func:`pylas.open` files reading just the header and vlrs but not the points, this is useful
+laspy can also :func:`laspy.open` files reading just the header and vlrs but not the points, this is useful
 if you are interested in metadata that are contained in the header and do not need to read the points.
 
 .. code:: python
 
     import s3fs
-    import pylas
+    import laspy
 
     fs = s3fs.S3FileSystem()
     with fs.open('my-bucket/some_file.las', 'rb') as f:
          if f.header.point_count < 100_000_000:
-             las = pylas.read(f)
+             las = laspy.read(f)
 
 Chunked reading
 ---------------
 
 Sometimes files are big, too big to be read entirely and fit into your RAM.
-The object returned by the :func:`pylas.open` function, :class:`.LasReader`
+The object returned by the :func:`laspy.open` function, :class:`.LasReader`
 can also be used to read points chunk by chunk by using :meth:`.LasReader.chunk_iterator`, which will allow you to do some
 processing on large files (splitting, filtering, etc)
 
 .. code:: python
 
-    import pylas
+    import laspy
 
-    with pylas.open("some_big_file.laz") as f:
+    with laspy.open("some_big_file.laz") as f:
         for points in f.chunk_iterator(1_000_000):
             do_something_with(points)
 
@@ -68,10 +68,10 @@ chunk by chunk.
 
 .. code:: python
 
-    import pylas
+    import laspy
 
-    with pylas.open("some_big_file.laz") as f:
-        with pylas.open("grounds.laz", mode="w", header=f.header) as writer:
+    with laspy.open("some_big_file.laz") as f:
+        with laspy.open("grounds.laz", mode="w", header=f.header) as writer:
             for points in f.chunk_iterator(1_234_567):
                 writer.write_points(points[points.classification == 2]
 
@@ -81,31 +81,31 @@ Creating
 ========
 
 Creating a new Las from scratch is simple.
-Use :func:`pylas.create`.
+Use :func:`laspy.create`.
 
 
 Converting
 ==========
 
-pylas also offers the ability to convert a file between the different version and point format available
+laspy also offers the ability to convert a file between the different version and point format available
 (as long as they are compatible).
 
-To convert, use the :func:`pylas.convert`
+To convert, use the :func:`laspy.convert`
 
 Accessing the file header
 =========================
 
 You can access the header of a las file you read or opened by retrieving the 'header' attribute:
 
->>> import pylas
->>> las = pylas.read('pylastests/simple.las')
+>>> import laspy
+>>> las = laspy.read('tests/simple.las')
 >>> las.header
 <LasHeader(1.2, <PointFormat(3, 0 bytes of extra dims)>)>
 >>> las.header.point_count
 1065
 
 
->>> with pylas.open('pylastests/simple.las') as f:
+>>> with laspy.open('tests/simple.las') as f:
 ...     f.header.point_count
 1065
 
@@ -123,7 +123,7 @@ To access point records using the dimension name, you have 2 options:
 2) dict-like attribute access `las[dimension_name]`.
 
 >>> import numpy as np
->>> las = pylas.read('pylastests/simple.las')
+>>> las = laspy.read('tests/simple.las')
 >>> np.all(las.user_data == las['user_data'])
 True
 
@@ -154,7 +154,7 @@ If you wish to get only the extra dimension names the point format can give them
 ['X', 'Y', 'Z', 'intensity', 'return_number', 'number_of_returns', 'scan_direction_flag', 'edge_of_flight_line', 'classification', 'synthetic', 'key_point', 'withheld', 'scan_angle_rank', 'user_data', 'point_source_id', 'gps_time', 'red', 'green', 'blue']
 >>> list(point_format.extra_dimension_names)
 []
->>> las = pylas.read('pylastests/extrabytes.las')
+>>> las = laspy.read('tests/extrabytes.las')
 >>> list(las.point_format.extra_dimension_names)
 ['Colors', 'Reserved', 'Flags', 'Intensity', 'Time']
 
@@ -180,11 +180,11 @@ Manipulating VLRs
 
 To access the VLRs stored in a file, simply access the `vlr` member of the las object.
 
->>> las = pylas.read('pylastests/extrabytes.las')
+>>> las = laspy.read('tests/extrabytes.las')
 >>> las.vlrs
 [<ExtraBytesVlr(extra bytes structs: 5)>]
 
->>> with pylas.open('pylastests/extrabytes.las') as f:
+>>> with laspy.open('tests/extrabytes.las') as f:
 ...     f.header.vlrs
 [<ExtraBytesVlr(extra bytes structs: 5)>]
 

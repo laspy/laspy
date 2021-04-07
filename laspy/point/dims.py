@@ -437,12 +437,18 @@ def size_of_point_format_id(point_format_id: int) -> int:
     return ALL_POINT_FORMATS_DTYPE[point_format_id].itemsize
 
 
-def min_file_version_for_point_format(point_format_id: int) -> str:
-    """Returns the minimum file version that supports the given point_format_id"""
-    for version, point_formats in sorted(VERSION_TO_POINT_FMT.items()):
-        if point_format_id in point_formats:
-            return version
-    raise errors.PointFormatNotSupported(point_format_id)
+def preferred_file_version_for_point_format(point_format_id: int) -> str:
+    def inclusive_range(start: int, stop: int):
+        return range(start, stop + 1)
+
+    if point_format_id in inclusive_range(0, 3):
+        return "1.2"
+    elif point_format_id in inclusive_range(4, 5):
+        return "1.3"
+    elif point_format_id in inclusive_range(6, 10):
+        return "1.4"
+    else:
+        raise errors.PointFormatNotSupported(point_format_id)
 
 
 def min_point_format_for_version(version: str) -> int:
