@@ -21,6 +21,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("test",)),
+    install_requires=["numpy"],
     extras_require={
         "dev": ["pytest", "sphinx", "sphinx-rtd-theme", "nox", "black"],
         "lazrs": ["lazrs>=0.2.3, < 0.3.0"],
