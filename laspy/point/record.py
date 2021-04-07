@@ -26,7 +26,7 @@ def unscale_dimension(array_dim, scale, offset):
 
 
 def raise_not_enough_bytes_error(
-        expected_bytes_len, missing_bytes_len, point_data_buffer_len, points_dtype
+    expected_bytes_len, missing_bytes_len, point_data_buffer_len, points_dtype
 ) -> NoReturn:
     raise errors.LaspyError(
         "The file does not contain enough bytes to store the expected number of points\n"
@@ -115,7 +115,7 @@ class PackedPointRecord:
 
     @classmethod
     def from_point_record(
-            cls, other_point_record: "PackedPointRecord", new_point_format: PointFormat
+        cls, other_point_record: "PackedPointRecord", new_point_format: PointFormat
     ) -> "PackedPointRecord":
         """Construct a new PackedPointRecord from an existing one with the ability to change
         to point format while doing so
@@ -140,7 +140,7 @@ class PackedPointRecord:
             except ValueError:
                 pass
 
-    def copy(self) -> 'PackedPointRecord':
+    def copy(self) -> "PackedPointRecord":
         return PackedPointRecord(self.array.copy(), deepcopy(self.point_format))
 
     def memoryview(self) -> memoryview:

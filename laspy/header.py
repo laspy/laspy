@@ -79,7 +79,7 @@ class GlobalEncoding:
     @gps_time_type.setter
     def gps_time_type(self, value: GpsTimeType):
         self.value ^= self.GPS_TIME_TYPE_MASK
-        self.value |= (int(value) & self.GPS_TIME_TYPE_MASK)
+        self.value |= int(value) & self.GPS_TIME_TYPE_MASK
 
     @property
     def waveform_data_packets_internal(self) -> bool:
@@ -154,10 +154,10 @@ class LasHeader:
     DEFAULT_POINT_FORMAT = PointFormat(3)
 
     def __init__(
-            self,
-            *,
-            version: Optional[Union[Version, str]] = None,
-            point_format: Optional[Union[PointFormat, int]] = None,
+        self,
+        *,
+        version: Optional[Union[Version, str]] = None,
+        point_format: Optional[Union[PointFormat, int]] = None,
     ) -> None:
         if isinstance(point_format, int):
             point_format = PointFormat(point_format)
@@ -363,7 +363,7 @@ class LasHeader:
         self.add_extra_dims([params])
 
     def set_version_and_point_format(
-            self, version: Version, point_format: PointFormat
+        self, version: Version, point_format: PointFormat
     ) -> None:
         dims.raise_if_version_not_compatible_with_fmt(point_format.id, str(version))
         self._version = version
@@ -407,7 +407,7 @@ class LasHeader:
         )
 
         for return_number, count in zip(
-                *np.unique(points.return_number, return_counts=True)
+            *np.unique(points.return_number, return_counts=True)
         ):
             if return_number == 0:
                 continue

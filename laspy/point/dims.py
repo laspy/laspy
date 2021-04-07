@@ -95,7 +95,7 @@ OLD_LASPY_NAMES = {
     "wave_packet_desc_index": "wavepacket_index",
     "byte_offset_to_waveform_data": "wavepacket_offset",
     "waveform_packet_size": "wavepacket_size",
-    "return_point_waveform_loc": "return_point_wave_location"
+    "return_point_waveform_loc": "return_point_wave_location",
 }
 
 # Definition of the points dimensions and formats

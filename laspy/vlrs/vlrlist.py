@@ -172,7 +172,7 @@ class VLRList(list):
                 record_data_len = int.from_bytes(
                     data_stream.read(2), byteorder="little", signed=False
                 )
-            description = data_stream.read(DESCRIPTION_LEN).split(b'\0')[0].decode()
+            description = data_stream.read(DESCRIPTION_LEN).split(b"\0")[0].decode()
             record_data_bytes = data_stream.read(record_data_len)
 
             vlr = VLR(user_id, record_id, description, record_data_bytes)

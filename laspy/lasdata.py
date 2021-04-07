@@ -288,7 +288,10 @@ class LasData:
         except KeyError:
             pass
 
-        if key in self.point_format.dimension_names or key in self.points.array.dtype.names:
+        if (
+            key in self.point_format.dimension_names
+            or key in self.points.array.dtype.names
+        ):
             self.points[key] = value
         elif key in dims.DIMENSIONS_TO_TYPE:
             raise ValueError(
