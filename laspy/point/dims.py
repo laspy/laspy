@@ -530,7 +530,10 @@ class SubFieldView:
         return self.array.ndim
 
     def __array__(self, **kwargs):
-        return self.masked_array()
+        ret = self.masked_array()
+        if not isinstance(ret, np.ndarray):
+            ret = np.array(ret)
+        return ret
 
     def max(self, **unused_kwargs):
         return self.masked_array().max()
@@ -702,16 +705,16 @@ class ScaledArrayView:
         return np.array(self) // other
 
     def __lt__(self, other):
-        return np.array(self.array) < other
+        return np.array(self) < other
 
     def __gt__(self, other):
-        return np.array(self.array) > other
+        return np.array(self) > other
 
     def __ge__(self, other):
-        return np.array(self.array) >= other
+        return np.array(self) >= other
 
     def __le__(self, other):
-        return np.array(self.array) <= other
+        return np.array(self) <= other
 
     def __getitem__(self, item):
         if isinstance(item, int):
