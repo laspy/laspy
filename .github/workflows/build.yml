@@ -19,31 +19,35 @@ jobs:
       fail-fast: true
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        python-version: ['3.7','3.8']
+        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        laz-backend: [ None, lazrs, laszip ]
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Display Python version
       run: |
           python -c "import sys; print(sys.version)"
-    - name: Setup
-      run: |
-          python -m pip install --upgrade numpy flake8 pytest
 
-    - name: Install
+    - name: Install With LAZ backend
+      if: matrix.laz-backend != 'None'
+      run: pip install .[${{ matrix.laz-backend }}]
+
+    - name: Install Without LAZ backend
+      if: matrix.laz-backend == 'None'
+      run: pip install .
+
+    - name: Run Tests
       run: |
-        python -m pip install -e .
-    - name: Lint with flake8
-      run: |
-        flake8 --statistics laspy  --exit-zero
-    - name: Test with pytest
-      run: |
-        python -m pip install pytest
-        python -m pytest --ignore misc
+        pip install pytest
+        pytest tests
+        pytest laspy
+
 
 
 
