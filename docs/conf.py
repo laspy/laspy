@@ -24,9 +24,9 @@ copyright = '2018-2020, laspy'
 author = 'Thomas Montaigu'
 
 # Parse the version from setup.py.
-with open('../setup.py') as f:
+with open('../laspy/__init__.py') as f:
     for line in f:
-        if line.find("version") >= 0:
+        if line.find("__version__") >= 0:
             version = line.split("=")[1].strip()
             version = version.strip(',')
             version = version.strip('"')
