@@ -12,7 +12,7 @@ Reading is done using :func:`laspy.read` function.
 This function will read everything in the file (Header, vlrs, point records, ...) and return an object
 that you can use to access to the data.
 
-.. code:: python
+.. code-block:: python
 
     import laspy
 
@@ -25,7 +25,7 @@ Opening
 laspy can also :func:`laspy.open` files reading just the header and vlrs but not the points, this is useful
 if you are interested in metadata that are contained in the header and do not need to read the points.
 
-.. code:: python
+.. code-block:: python
 
     import s3fs
     import laspy
@@ -43,7 +43,7 @@ The object returned by the :func:`laspy.open` function, :class:`.LasReader`
 can also be used to read points chunk by chunk by using :meth:`.LasReader.chunk_iterator`, which will allow you to do some
 processing on large files (splitting, filtering, etc)
 
-.. code:: python
+.. code-block:: python
 
     import laspy
 
@@ -60,13 +60,22 @@ To be able to write a las file you will need a :class:`.LasData`.
 You obtain this type of object by using one of the function described in the section above
 use its method :meth:`.LasData.write` to write to a file or a stream.
 
+
+.. code-block:: python
+
+    import laspy
+
+    las = laspy.read("some_file.laz")
+    las.points[las.classification == 2]
+    las.write("ground.laz")
+
 Chunked Writing
 ---------------
 
 Similar to :class:`.LasReader` there exists a way to write a file
 chunk by chunk.
 
-.. code:: python
+.. code-block:: python
 
     import laspy
 
@@ -80,9 +89,26 @@ chunk by chunk.
 Creating
 ========
 
-Creating a new Las from scratch is simple.
+Creating a new Las from scratch is hopefully simple:
+
 Use :func:`laspy.create`.
 
+Or the :class:`LasData` constructor which requires a :class:`.LasHeader`.
+
+You can get a header from a file or creating a new one.
+
+.. code-block:: python
+
+    import laspy
+
+    las = laspy.read("some_file.laz")
+
+    new_las = laspy.LasData(las.header)
+    new_las.points[las.classification == 2].copy()
+    new_las.write("ground.laz")
+
+    new_hdr = laspy.LasHeader(version="1.4", point_format=6)
+    new_las = laspy.LasData(new_hdr)
 
 Converting
 ==========

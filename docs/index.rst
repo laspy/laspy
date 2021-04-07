@@ -54,6 +54,7 @@ User Guide
     installation
     intro
     basic
+    complete_tutorial
     examples
     lessbasic
     migration
