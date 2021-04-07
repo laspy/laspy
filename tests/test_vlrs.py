@@ -1,7 +1,7 @@
 import pytest
 
 import laspy
-from test import test_common
+from tests import test_common
 
 
 def test_adding_classification_lookup():

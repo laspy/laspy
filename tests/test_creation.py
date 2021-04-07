@@ -5,7 +5,7 @@ import pytest
 
 import laspy
 from laspy import PointFormat
-from test.test_common import write_then_read_again, simple_las, test1_4_las
+from tests.test_common import write_then_read_again, simple_las, test1_4_las
 
 
 @pytest.fixture()

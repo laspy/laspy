@@ -2,7 +2,7 @@ import pytest
 
 import laspy
 from laspy import PointFormat
-from test.test_common import extra_bytes_laz
+from tests.test_common import extra_bytes_laz
 
 
 @pytest.mark.skipif(

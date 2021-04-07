@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import laspy
-from test.test_common import (
+from tests.test_common import (
     do_compression,
     simple_las,
     simple_laz,

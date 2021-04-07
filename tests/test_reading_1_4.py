@@ -1,7 +1,7 @@
 import pytest
 
 import laspy
-from test.test_common import test1_4_las
+from tests.test_common import test1_4_las
 
 
 @pytest.fixture()

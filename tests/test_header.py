@@ -2,7 +2,7 @@ import io
 
 import laspy
 from laspy import LasHeader
-from test import test_common
+from tests import test_common
 from datetime import date
 
 all_las_but_1_4 = test_common.all_las_but_1_4

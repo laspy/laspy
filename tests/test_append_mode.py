@@ -4,7 +4,7 @@ import os
 import pytest
 
 import laspy
-from test.test_common import simple_laz
+from tests.test_common import simple_laz
 
 
 def test_append(file_path):
