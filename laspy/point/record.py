@@ -175,7 +175,7 @@ class PackedPointRecord:
         """Gives access to the underlying numpy array
         Unpack the dimension if item is the name a sub-field
         """
-        if isinstance(item, (int, slice, np.ndarray)):
+        if isinstance(item, (int, slice, np.ndarray, list)):
             return PackedPointRecord(self.array[item], self.point_format)
 
         try:

@@ -511,12 +511,7 @@ class SubFieldView:
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         inpts = SubFieldView._convert_sub_views_to_arrays(inputs)
-        ret = getattr(ufunc, method)(*inpts, **kwargs)
-        if ret is not None and isinstance(ret, np.ndarray):
-            if ret.dtype == bool:
-                return ret
-            return self.__class__(ret, int(self.bit_mask))
-        return ret
+        return getattr(ufunc, method)(*inpts, **kwargs)
 
     def __array_function__(self, func, types, args, kwargs):
         argslist = SubFieldView._convert_sub_views_to_arrays(args)
@@ -559,16 +554,10 @@ class SubFieldView:
         return self._do_comparison(other, operator.gt)
 
     def __eq__(self, other):
-        if isinstance(other, SubFieldView):
-            return self.bit_mask == other.bit_mask and self.masked_array() == other
-        else:
-            return self._do_comparison(other, operator.eq)
+        return np.array(self) == other
 
     def __ne__(self, other):
-        if isinstance(other, SubFieldView):
-            return self.bit_mask != other.bit_mask and self.masked_array() != other
-        else:
-            return self._do_comparison(other, operator.ne)
+        return np.array(self) != other
 
     def __add__(self, other):
         return np.array(self) + other
@@ -665,25 +654,11 @@ class ScaledArrayView:
 
     def __array_function__(self, func, types, args, kwargs):
         args = ScaledArrayView._convert_scaled_views_to_arrays(args)
-        ret = func(*args, **kwargs)
-        if ret is not None:
-            if isinstance(ret, np.ndarray) and ret.dtype != np.bool:
-                return self.__class__(ret, self.scale, self.offset)
-            else:
-                return ret
-        return ret
+        return func(*args, **kwargs)
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
         inpts = ScaledArrayView._convert_scaled_views_to_arrays(inputs)
-        ret = getattr(ufunc, method)(*inpts, **kwargs)
-        if ret is not None:
-            if isinstance(ret, np.ndarray):
-                return self.__class__(ret, self.scale, self.offset)
-            elif ret.dtype != np.bool:
-                return self._apply_scale(ret)
-            else:
-                return ret
-        return ret
+        return getattr(ufunc, method)(*inpts, **kwargs)
 
     @staticmethod
     def _convert_scaled_views_to_arrays(
@@ -706,24 +681,10 @@ class ScaledArrayView:
         return len(self.array)
 
     def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return (
-                self.scale == other.scale
-                and self.offset == other.offset
-                and np.all(self.array == other.array)
-            )
-        else:
-            return self.scaled_array() == other
+        return self.scaled_array() == other
 
     def __ne__(self, other):
-        if isinstance(other, self.__class__):
-            return (
-                self.scale != other.scale
-                and self.offset != other.offset
-                and np.all(self.array != other.array)
-            )
-        else:
-            return self.scaled_array() != other
+        return self.scaled_array() != other
 
     def __add__(self, other):
         return np.array(self) + other
@@ -741,16 +702,16 @@ class ScaledArrayView:
         return np.array(self) // other
 
     def __lt__(self, other):
-        return self.array < self._remove_scale(other)
+        return np.array(self.array) < other
 
     def __gt__(self, other):
-        return self.array > self._remove_scale(other)
+        return np.array(self.array) > other
 
     def __ge__(self, other):
-        return self.array >= self._remove_scale(other)
+        return np.array(self.array) >= other
 
     def __le__(self, other):
-        return self.array <= self._remove_scale(other)
+        return np.array(self.array) <= other
 
     def __getitem__(self, item):
         if isinstance(item, int):
