@@ -194,7 +194,7 @@ def create_las(
     >>> las = create_las(point_format=6,file_version="1.2")
     Traceback (most recent call last):
      ...
-    laspy.errors.LaspyError: Point format 6 is not compatible with file version 1.2
+    laspy.errors.LaspyException: Point format 6 is not compatible with file version 1.2
 
 
     If you provide only the point_format the file_version will automatically
@@ -266,7 +266,7 @@ def convert(source_las, *, point_format_id=None, file_version=None):
     >>> convert(las, point_format_id=6, file_version='1.2')
     Traceback (most recent call last):
      ...
-    laspy.errors.LaspyError: Point format 6 is not compatible with file version 1.2
+    laspy.errors.LaspyException: Point format 6 is not compatible with file version 1.2
 
     Parameters
     ----------
