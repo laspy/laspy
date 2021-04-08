@@ -1,13 +1,127 @@
 Migration guides
 ================
 
-From 0.4.x to 1.0.0
--------------------
+From laspy 1.7.x to laspy 2.0.0
+-------------------------------
+
+
+laspy 2.0 is essentially a complete overhaul of the code base so you will probably
+have a few changes to make to the parts of your code that uses laspy 1.7.
+
+However there should not be that many, and should hopefully be worth.
+
+The benefits of laspy 2.0 are:
+ - Better LAZ support: reading *and* writing of LAZ 1.1 to 1.4 (See the Installation section)
+ - Support for Chunked / Streaming reading and writing of LAS/LAZ files.
+ - Support for reading data coming from other sources than files on disk (bytes or file-objects)
+
+
+The biggest changes between 1.7 and 2.0 are how files are read and written.
+
+The `Header` (:class:`.LasHeader`) class was modernized from laspy 1.7 to laspy 2.0,
+a few of the field names in the new header class do not have the same name.
+
+laspy 1.7 had the concept of `laspy.File` with an open mode.
+laspy 2.0 does not have the `laspy.File` class anymore but a :class:`.LasData`
+class instead which provide access to the `header`, `vlrs` and fields/dimensions.
+
+The `get_*` and `set_*` (eg `get_classification`) of `laspy.File` are not available in the new  :class:`.LasData`.
+
+
+The following sections should hopefully get you started
+
+Reading a file
+______________
+
+.. code-block:: python
+
+    import laspy
+
+    # Opening a file in laspy 1.7
+    file = laspy.file.File("somepath.las", mode ="r")
+
+    # Reading a file in laspy 2.0
+    las = laspy.read("somepath.las")
+
+
+Accessing the point fields / dimensions
+_______________________________________
+
+.. code-block:: python
+
+     import laspy
+
+     # accessing a field in laspy 1.7:
+     classification = file.classification
+
+     # accessing a field in laspy 2.0 (names from 1.7 should be compatible with 2.0):
+     classification = las.classification
+
+
+Writing
+_______
+
+.. code-block:: python
+
+    import laspy
+
+    # laspy 1.7:
+    file.pt_src_id[:] = 2
+    file.close()
+
+    # laspy 2.0
+    las.pt_src_id[:] = 2
+    las.write("somepath.laz")
+
+
+Creating a file
+_______________
+
+.. code-block:: python
+
+    import laspy
+
+    # laspy 1.7
+    new_file = laspy.file.File("new_path.las", header=file.header, mode="w")
+    new_file.X = ...
+    new_file.Y = ...
+    ...
+    new_file.close()
+
+    # laspy 2.0
+    new_las = laspy.LasData(las.header)
+    new_las.X = ...
+    new_las.Y = ...
+    ...
+    new_las.write("new_las.las")
+
+    # if you do not have an existing header:
+    new_las = laspy.create(file_version="1.2", point_format=3)
+    new_las.X = ...
+    new_las.Y = ...
+    ...
+    new_las.write("new_las.las")
+
+    # or
+    new_header = laspy.LasHeader(version="1.2", point_format=3)
+    new_las = laspy.LasData(las.header)
+    new_las.X = ...
+    new_las.Y = ...
+    ...
+    new_las.write("new_las.las")
+
+
+
+
+From pylas 0.4.x to laspy 2.0.0
+-------------------------------
+
+laspy 2.0 is essentially pylas, so the core of the library is the same.
 
 Changes in LAZ backend
 ______________________
 
-With laspy 1.0.0, the lazperf backend
+With laspy 2.0.0, the lazperf backend
 support was dropped, and the laszip backend
 changed from using the laszip executable
 to using laszip python bindings.

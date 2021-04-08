@@ -32,14 +32,23 @@ This example shows how you can create a new LAS file from scratch.
     import laspy
     import numpy as np
 
-    las = laspy.create()
+    my_data_xx, my_data_yy = np.meshgrid(np.linspace(-20, 20, 15), np.linspace(-20, 20, 15))
+    my_data_zz = my_data_xx ** 2 + 0.25 * my_data_yy ** 2
 
-    array = np.linspace(0.0, 15.0, 10000)
-    las.x = array
-    las.y = array
-    las.z = array
+    my_data = np.hstack((my_data_xx.reshape((-1, 1)), my_data_yy.reshape((-1, 1)), my_data_zz.reshape((-1, 1))))
 
-    las.write('diagonal.las')
+
+    las = laspy.create(file_version="1.2", point_format=3)
+
+    las.header.offsets = np.min(my_data, axis=0)
+    las.header.scales = [0.1, 0.1, 0.1]
+
+    las.x = my_data[:, 0]
+    las.y = my_data[:, 1]
+    las.z = my_data[:, 2]
+
+    las.write("new_file.las")
+
 
 
 Using chunked reading & writing
