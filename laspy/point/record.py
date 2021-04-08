@@ -28,7 +28,7 @@ def unscale_dimension(array_dim, scale, offset):
 def raise_not_enough_bytes_error(
     expected_bytes_len, missing_bytes_len, point_data_buffer_len, points_dtype
 ) -> NoReturn:
-    raise errors.LaspyError(
+    raise errors.LaspyException(
         "The file does not contain enough bytes to store the expected number of points\n"
         "expected {} bytes, read {} bytes ({} bytes missing == {} points) and it cannot be corrected\n"
         "{} (bytes) / {} (point_size) = {} (points)".format(

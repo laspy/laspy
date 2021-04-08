@@ -7,7 +7,7 @@ from typing import BinaryIO, Optional, Union, Iterable
 import numpy as np
 
 from .compression import LazBackend
-from .errors import LaspyError
+from .errors import LaspyException
 from .header import LasHeader
 from .point import dims
 from .point.format import PointFormat
@@ -97,17 +97,17 @@ class LasWriter:
             return
 
         if self.done:
-            raise LaspyError("Cannot write points anymore")
+            raise LaspyException("Cannot write points anymore")
 
         if points.point_format != self.header.point_format:
-            raise LaspyError("Incompatible point formats")
+            raise LaspyException("Incompatible point formats")
 
         self.header.update(points)
         self.point_writer.write_points(points)
 
     def write_evlrs(self, evlrs: VLRList) -> None:
         if self.header.version.minor < 4:
-            raise LaspyError(
+            raise LaspyException(
                 "EVLRs are not supported on files with version less than 1.4"
             )
 
@@ -138,7 +138,7 @@ class LasWriter:
         for backend in laz_backends:
             try:
                 if not backend.is_available():
-                    raise LaspyError(f"The '{backend}' is not available")
+                    raise LaspyException(f"The '{backend}' is not available")
 
                 if backend == LazBackend.Laszip:
                     return LaszipPointWriter(self.dest, self.header)
@@ -151,15 +151,15 @@ class LasWriter:
                         self.dest, self.header.point_format, parallel=False
                     )
                 else:
-                    raise LaspyError("Unknown LazBacked: {}".format(backend))
+                    raise LaspyException("Unknown LazBacked: {}".format(backend))
             except Exception as e:
                 logger.error(e)
                 last_error = e
 
         if last_error is not None:
-            raise LaspyError("No LazBackend selected, cannot compress")
+            raise LaspyException("No LazBackend selected, cannot compress")
         else:
-            raise LaspyError(f"No LazBackend could be initialized: {last_error}")
+            raise LaspyException(f"No LazBackend could be initialized: {last_error}")
 
     def __enter__(self):
         return self

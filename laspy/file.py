@@ -3,7 +3,7 @@ from . import errors
 
 class File:
     def __init__(self, *args, **kwargs) -> None:
-        raise errors.LaspyError(
+        raise errors.LaspyException(
             """laspy changed:
             To read a file do: las = laspy.read('somefile.laz')
             To create a new LAS data do: las = laspy.create(point_format=2, file_version='1.2')

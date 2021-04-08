@@ -41,12 +41,12 @@ class LasReader:
 
         if self.header.are_points_compressed:
             if not laz_backend:
-                raise errors.LaspyError(
+                raise errors.LaspyException(
                     "No LazBackend selected, cannot decompress data"
                 )
             self.point_source = self._create_laz_backend(source)
             if self.point_source is None:
-                raise errors.LaspyError(
+                raise errors.LaspyException(
                     "Data is compressed, but no LazBacked could be initialized"
                 )
         else:
@@ -100,7 +100,7 @@ class LasReader:
             ):
                 # We explicitly require seekable stream because we have to seek
                 # past the chunk table of LAZ file
-                raise errors.LaspyError(
+                raise errors.LaspyException(
                     "source must be seekable, to read evlrs form LAZ file"
                 )
             self.point_source.source.seek(self.header.start_of_first_evlr, io.SEEK_SET)
@@ -132,7 +132,7 @@ class LasReader:
         for backend in backends:
             try:
                 if not backend.is_available():
-                    raise errors.LaspyError(f"The '{backend}' is not available")
+                    raise errors.LaspyException(f"The '{backend}' is not available")
 
                 if backend == LazBackend.LazrsParallel:
                     return LazrsPointReader(source, laszip_vlr, parallel=True)
@@ -141,7 +141,7 @@ class LasReader:
                 elif backend == LazBackend.Laszip:
                     return LaszipPointReader(source, self.header)
                 else:
-                    raise errors.LaspyError("Unknown LazBackend: {}".format(backend))
+                    raise errors.LaspyException("Unknown LazBackend: {}".format(backend))
 
             except errors.LazError as e:
                 logger.error(e)

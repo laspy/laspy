@@ -5,7 +5,7 @@ from typing import Union, Iterable, BinaryIO, Optional
 import numpy as np
 
 from .compression import LazBackend
-from .errors import LaspyError
+from .errors import LaspyException
 from .header import LasHeader
 from .laswriter import UncompressedPointWriter
 from .point.record import PackedPointRecord
@@ -72,7 +72,7 @@ class LasAppender:
         :param points: The points to append
         """
         if points.point_format != self.header.point_format:
-            raise LaspyError("Point formats do not match")
+            raise LaspyException("Point formats do not match")
 
         self.points_writer.write_points(points)
         self.header.update(points)
@@ -120,7 +120,7 @@ class LasAppender:
         last_error = None
         for backend in laz_backend:
             if backend == LazBackend.Laszip:
-                raise LaspyError("Laszip backend does not support appending")
+                raise LaspyException("Laszip backend does not support appending")
             elif backend == LazBackend.LazrsParallel:
                 try:
                     return LazrsAppender(self.dest, self.header, parallel=True)
@@ -133,9 +133,9 @@ class LasAppender:
                     last_error = e
 
         if last_error is not None:
-            raise LaspyError(f"Could not initialize a laz backend: {last_error}")
+            raise LaspyException(f"Could not initialize a laz backend: {last_error}")
         else:
-            raise LaspyError(f"No valid laz backend selected")
+            raise LaspyException(f"No valid laz backend selected")
 
     def __enter__(self) -> "LasAppender":
         return self

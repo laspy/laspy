@@ -3,7 +3,7 @@ __version__ = "2.0.0a0"
 import logging
 
 from . import errors, vlrs, file
-from .errors import LaspyError
+from .errors import LaspyException
 from .laswriter import LasWriter
 from .lasreader import LasReader
 from .lib import LazBackend, convert

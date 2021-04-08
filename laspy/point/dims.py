@@ -477,7 +477,7 @@ def is_point_fmt_compatible_with_version(
 
 def raise_if_version_not_compatible_with_fmt(point_format_id: int, file_version: str):
     if not is_point_fmt_compatible_with_version(point_format_id, file_version):
-        raise errors.LaspyError(
+        raise errors.LaspyException(
             "Point format {} is not compatible with file version {}".format(
                 point_format_id, file_version
             )

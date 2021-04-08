@@ -38,7 +38,7 @@ class LasData:
                 header.point_format, header.point_count
             )
         elif points.point_format != header.point_format:
-            raise errors.LaspyError("Incompatible Point Formats")
+            raise errors.LaspyException("Incompatible Point Formats")
         self.__dict__["_points"] = points
         self.points: record.PackedPointRecord
         self.header: LasHeader = header

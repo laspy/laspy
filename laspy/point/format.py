@@ -4,7 +4,7 @@ from typing import Optional, Iterable
 import numpy as np
 
 from . import dims
-from ..errors import LaspyError
+from ..errors import LaspyException
 
 
 class ExtraBytesParams:
@@ -190,7 +190,7 @@ class PointFormat:
             dim_info.num_elements > 3
             and dim_info.kind != dims.DimensionKind.UnsignedInteger
         ):
-            raise LaspyError("Extra Dimensions do not support more than 3 elements")
+            raise LaspyException("Extra Dimensions do not support more than 3 elements")
         self.dimensions.append(dim_info)
 
     def dtype(self):

@@ -2,25 +2,25 @@
 """
 
 
-class LaspyError(Exception):
+class LaspyException(Exception):
     pass
 
 
-class UnknownExtraType(LaspyError):
+class UnknownExtraType(LaspyException):
     pass
 
 
-class PointFormatNotSupported(LaspyError):
+class PointFormatNotSupported(LaspyException):
     pass
 
 
-class FileVersionNotSupported(LaspyError):
+class FileVersionNotSupported(LaspyException):
     pass
 
 
-class LazError(LaspyError):
+class LazError(LaspyException):
     pass
 
 
-class IncompatibleDataFormat(LaspyError):
+class IncompatibleDataFormat(LaspyException):
     pass

@@ -17,7 +17,7 @@ def test_append(file_path):
 
 
 def test_raises_for_laszip_backend():
-    with pytest.raises(laspy.LaspyError):
+    with pytest.raises(laspy.LaspyException):
         with laspy.open(simple_laz, mode="a", laz_backend=laspy.LazBackend.Laszip):
             ...
 

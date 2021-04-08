@@ -14,7 +14,7 @@ from .compression import (
     is_point_format_compressed,
     uncompressed_id_to_compressed,
 )
-from .errors import LaspyError
+from .errors import LaspyException
 from .point import dims
 from .point.format import PointFormat, ExtraBytesParams
 from .point.record import PackedPointRecord
@@ -426,7 +426,7 @@ class LasHeader:
 
         file_sig = stream.read(4)
         if file_sig != LAS_FILE_SIGNATURE:
-            raise LaspyError(f'Invalid file signature "{file_sig}"')
+            raise LaspyException(f'Invalid file signature "{file_sig}"')
 
         header.file_source_id = int.from_bytes(
             stream.read(2), little_endian, signed=False
@@ -502,7 +502,7 @@ class LasHeader:
         if current_pos < header_size:
             header.extra_header_bytes = stream.read(header_size - current_pos)
         elif current_pos > header_size:
-            raise LaspyError("Incoherent header size")
+            raise LaspyException("Incoherent header size")
 
         header.vlrs = VLRList.read_from(stream, num_to_read=number_of_vlrs)
 
@@ -513,7 +513,7 @@ class LasHeader:
                     header.offset_to_point_data - current_pos
                 )
             elif current_pos > header.offset_to_point_data:
-                raise LaspyError("Incoherent offset to point data")
+                raise LaspyException("Incoherent offset to point data")
 
         header.are_points_compressed = is_point_format_compressed(point_format_id)
         point_format_id = compressed_id_to_uncompressed(point_format_id)
@@ -535,7 +535,7 @@ class LasHeader:
         header._point_format = point_format
 
         if point_size != point_format.size:
-            raise LaspyError("Incoherent point size")
+            raise LaspyException("Incoherent point size")
 
         return header
 
@@ -604,7 +604,7 @@ class LasHeader:
                 stream.write(int(0).to_bytes(4, little_endian, signed=False))
         else:
             if self.point_count > np.iinfo(np.uint32).max:
-                raise LaspyError(
+                raise LaspyException(
                     f"Version {self.version} cannot save clouds with more than"
                     f" {np.iinfo(np.uint32).max} points"
                 )

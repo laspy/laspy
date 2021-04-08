@@ -3,7 +3,7 @@ import pytest
 
 import laspy
 from laspy import LazBackend
-from laspy.errors import LaspyError
+from laspy.errors import LaspyException
 from tests.test_common import test1_4_las, write_then_read_again
 
 

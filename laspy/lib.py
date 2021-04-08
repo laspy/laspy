@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Union, Optional
 
 from .compression import LazBackend
-from .errors import LaspyError
+from .errors import LaspyException
 from .header import LasHeader, Version
 from .lasappender import LasAppender
 from .lasdata import LasData
@@ -92,12 +92,12 @@ def open_las(
     """
     if mode == "r":
         if header is not None:
-            raise LaspyError(
+            raise LaspyException(
                 "header argument is not used when opening in read mode, "
                 "did you meant to open in write mode ?"
             )
         if do_compress is not None:
-            raise LaspyError(
+            raise LaspyException(
                 "do_compress argument is not used when opening in read mode, "
                 "did you meant to open in write mode ?"
             )

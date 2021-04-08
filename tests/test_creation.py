@@ -35,7 +35,7 @@ def test_xyz():
 
 def test_wrong_version():
     for i in range(6, 8):
-        with pytest.raises(laspy.errors.LaspyError):
+        with pytest.raises(laspy.errors.LaspyException):
             _ = laspy.create(point_format=i, file_version="1.2")
 
 
