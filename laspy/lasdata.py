@@ -306,6 +306,9 @@ class LasData:
     def __setitem__(self, key, value):
         self.points[key] = value
 
+    def __len__(self):
+        return len(self.points)
+
     def __repr__(self) -> str:
         return "<LasData({}.{}, point fmt: {}, {} points, {} vlrs)>".format(
             self.header.version.major,
