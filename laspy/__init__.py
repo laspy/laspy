@@ -2,7 +2,7 @@ __version__ = "2.0.0a0"
 
 import logging
 
-from . import errors, vlrs
+from . import errors, vlrs, file
 from .errors import LaspyError
 from .laswriter import LasWriter
 from .lasreader import LasReader
@@ -19,14 +19,3 @@ from .lasdata import LasData
 from .vlrs import VLR
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
-
-
-class File:
-    def __init__(self, *args, **kwargs) -> None:
-        raise errors.LaspyError(
-            "laspy changed:"
-            "To read a file do: las = laspy.read('somefile.laz')"
-            "To create a new LAS data do: las = laspy.create(point_format=2, file_version='1.2')"
-            "To write a file previously read or created: las.write('somepath.las')"
-            "See the documentation for more information about the changes"
-        )

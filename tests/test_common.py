@@ -208,4 +208,4 @@ def test_point_record_setitem_scaled_view():
 
 def test_laspy_file_raises():
     with pytest.raises(laspy.errors.LaspyError):
-        laspy.File("some path")
+        laspy.file.File("some path")
