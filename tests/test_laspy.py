@@ -321,7 +321,6 @@ class LasWriterTestCase(unittest.TestCase):
         really_remove(self.output_tempfile)
 
 
-@pytest.mark.skip(reason="API changed")
 class LasHeaderWriterTestCase(unittest.TestCase):
     simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
     simple14 = os.path.join(os.path.dirname(__file__), 'data', 'simple1_4.las')
@@ -329,151 +328,106 @@ class LasHeaderWriterTestCase(unittest.TestCase):
     tempfile2 = os.path.abspath('headerwriter2.las')
 
     def setUp(self):
-        really_copyfile(self.simple, self.tempfile)
-        self.FileObject = File.File(self.tempfile, mode="rw")
+        self.las = laspy.read(self.simple)
 
     def test_file_src(self):
         """Testing file_src"""
-        f1 = self.FileObject.header.filesource_id + 1
-        self.FileObject.header.filesource_id = f1
-        f2 = self.FileObject.header.get_filesourceid()
-        self.assertTrue(f1 == f2)
+        f1 = self.las.header.file_source_id + 1
+        self.las.header.file_source_id = f1
+        f2 = self.las.header.file_source_id
+        assert f1 == f2
 
+    @pytest.mark.skip(reason="API changed")
     def test_uuid(self):
         """Testing uuid"""
-        guid = self.FileObject.header.guid
-        guid2 = self.FileObject.header.project_id
+        guid = self.las.header.guid
+        guid2 = self.las.header.project_id
         self.assertEqual(guid, guid2)
         newGuid = UUID(bytes=b"1" * 16)
-        self.FileObject.header.guid = newGuid
-        newGuid2 = self.FileObject.header.get_guid()
+        self.las.header.guid = newGuid
+        newGuid2 = self.las.header.get_guid()
         self.assertEqual(newGuid, newGuid2)
-
-    def test_glob_encode(self):
-        """Testing Global Encoding"""
-        g1 = self.FileObject.header.global_encoding + 1
-        self.FileObject.header.global_encoding = g1
-        g2 = self.FileObject.header.get_global_encoding()
-        self.assertTrue(g1 == g2)
 
     def test_versions(self):
         """Testing Versions"""
-        v1 = self.FileObject.header.major_version
-        self.assertEqual(v1, 1)
-        with self.assertRaises(laspy.util.LaspyException):
-            self.FileObject.header.major_version = 2
+        assert self.las.header.version.major == 1
+        with self.assertRaises(AttributeError):
+            self.las.header.version.major = 2
 
     def test_system_id(self):
         """Testing System ID"""
-        sys1 = self.FileObject.header.system_id
+        sys1 = self.las.header.system_identifier
         sys1 = "1234567891" + sys1[10:]
-        self.FileObject.header.system_id = sys1
-        sys2 = self.FileObject.header.get_systemid()
-        self.assertEqual(sys1, sys2)
+        self.las.header.system_identifier = sys1
+        sys2 = self.las.header.system_identifier
+        assert sys1 == sys2
 
     def test_software_id(self):
         """"Testing Software ID"""
-        s1 = self.FileObject.header.software_id
+        s1 = self.las.header.generating_software
         s1 = "1234567" + s1[7:]
-        self.FileObject.header.software_id = s1
-        s2 = self.FileObject.header.get_softwareid()
-        self.assertEqual(s1, s2)
-        with self.assertRaises(laspy.util.LaspyException):
-            self.FileObject.header.software_id = "123"
-        with self.assertRaises(laspy.util.LaspyException):
-            self.FileObject.header.software_id = "1" * 100
-
-    def test_padding(self):
-        """Testing Padding"""
-        x1 = list(self.FileObject.X)
-        self.FileObject.header.set_padding(10)
-        self.FileObject.header.set_padding(1000)
-        x2 = list(self.FileObject.X)
-        self.assertTrue((list(x1) == list(x2)))
-
-    def test_data_offset(self):
-        """Testing data offset"""
-        x1 = list(self.FileObject.X)
-        self.FileObject.header.data_offset = 400
-        self.assertEqual(self.FileObject.header.get_dataoffset(), 400)
-        x2 = list(self.FileObject.X)
-        self.assertTrue((list(x1) == list(x2)))
+        self.las.header.generating_software = s1
+        s2 = self.las.header.generating_software
+        assert s1 == s2
+        # with self.assertRaises(laspy.LaspyException):
+        #     self.las.header.generating_software = "123"
+        # with self.assertRaises(laspy.LaspyException):
+        #     self.las.header.generating_software = "1" * 100
 
     def test_date(self):
         """Testing Date"""
-        d1 = self.FileObject.header.date
-        self.assertTrue(d1 == None)
+        d1 = self.las.header.creation_date
+        assert d1 is None
         from datetime import datetime
         d2 = datetime(2007, 12, 10)
-        self.FileObject.header.date = d2
-        d3 = self.FileObject.header.get_date()
+        self.las.header.creation_date = d2
+        d3 = self.las.header.creation_date
         self.assertEqual(d2, d3)
 
     def test_point_recs_by_return(self):
         """Testing point records by return"""
-        r1 = [x + 1 for x in self.FileObject.header.point_return_count]
-        self.FileObject.header.point_return_count = r1
-        r2 = self.FileObject.header.get_pointrecordsbyreturncount()
-        self.assertTrue(r1 == r2)
+        r1 = self.las.header.number_of_points_by_return + 1
+        self.las.header.number_of_points_by_return = r1
+        r2 = self.las.header.number_of_points_by_return
+        assert np.all(r1 == r2)
 
     def test_min_max_update(self):
         """Testing the update min/max function"""
-        x = list(self.FileObject.X)
+        x = self.las.X
         x[0] = max(x) + 1
-        y = list(self.FileObject.Y)
+        y = self.las.Y
         y[0] = max(y) + 1
-        z = list(self.FileObject.Z)
+        z = self.las.Z
         z[0] = max(z) + 1
-        self.FileObject.X = x
-        self.FileObject.Y = y
-        self.FileObject.Z = z
-        self.FileObject.header.update_min_max()
-        file_max = self.FileObject.header.max
-        self.assertTrue(file_max == [self.FileObject.x[0], self.FileObject.y[0], self.FileObject.z[0]])
+        self.las.X = x
+        self.las.Y = y
+        self.las.Z = z
+        self.las.update_header()
+        file_max = self.las.header.maxs
+        assert np.all(file_max == [self.las.x[0], self.las.y[0], self.las.z[0]])
 
     def test_histogram(self):
         """Testing the update_histogram functon"""
-        h1 = self.FileObject.header.point_return_count
-        self.FileObject.header.update_histogram()
-        h2 = self.FileObject.header.point_return_count
-        self.assertEqual(h1, h2)
+        h1 = self.las.header.number_of_points_by_return
+        self.las.update_header()
+        h2 = self.las.header.number_of_points_by_return
+        assert np.all(h1 == h2)
 
     def test_offset(self):
         """Testing offset"""
-        o1 = self.FileObject.header.offset
+        o1 = self.las.header.offsets
         o1[0] += 1
-        self.FileObject.header.offset = o1
-        o2 = self.FileObject.header.get_offset()
-        self.assertTrue(o1 == o2)
+        self.las.header.offsets = o1
+        o2 = self.las.header.offsets
+        assert np.all(o1 == o2)
 
     def test_scale(self):
         """Testing Scale"""
-        s1 = self.FileObject.header.scale
+        s1 = self.las.header.scales
         s1[0] += 1
-        self.FileObject.header.scale = s1
-        s2 = list(self.FileObject.header.get_scale())
-        self.assertTrue(s1 == s2)
-
-    def test_vlr_parsing_api(self):
-        """Testing VLR body parsing api"""
-        really_copyfile(self.simple14, self.tempfile2)
-        VLRFile = File.File(self.tempfile2, mode="rw")
-        vlr0 = VLRFile.header.vlrs[0]
-        pb = vlr0.parsed_body
-        vlr0.parsed_body = pb[:-1] + (pb[-1] + 1,)
-        pb = vlr0.parsed_body
-        vlr0.pack_data()
-        VLRFile.header.save_vlrs()
-        VLRFile.close()
-
-        VLRFile = File.File(self.tempfile2, mode="rw")
-        self.assertTrue(pb == VLRFile.header.vlrs[0].parsed_body)
-        VLRFile.close()
-
-    def tearDown(self):
-        self.FileObject.close()
-        really_remove(self.tempfile)
-        really_remove(self.tempfile2)
+        self.las.header.scales = s1
+        s2 = self.las.header.scales
+        assert np.all(s1 == s2)
 
 
 class LasWriteModeTestCase(unittest.TestCase):

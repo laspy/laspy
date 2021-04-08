@@ -141,7 +141,9 @@ class LasReader:
                 elif backend == LazBackend.Laszip:
                     return LaszipPointReader(source, self.header)
                 else:
-                    raise errors.LaspyException("Unknown LazBackend: {}".format(backend))
+                    raise errors.LaspyException(
+                        "Unknown LazBackend: {}".format(backend)
+                    )
 
             except errors.LazError as e:
                 logger.error(e)

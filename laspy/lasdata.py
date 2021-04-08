@@ -145,21 +145,12 @@ class LasData:
         This method is called automatically when you save a file using
         :meth:`laspy.lasdatas.base.LasBase.write`
         """
+        self.header.partial_reset()
         self.header.point_format_id = self.points.point_format.id
-        self.header.point_count = len(self.points)
         self.header.point_data_record_length = self.points.point_size
 
         if len(self.points) > 0:
-            self.header.x_max = self.x.max()
-            self.header.y_max = self.y.max()
-            self.header.z_max = self.z.max()
-
-            self.header.x_min = self.x.min()
-            self.header.y_min = self.y.min()
-            self.header.z_min = self.z.min()
-
-            unique, counts = np.unique(self.return_number, return_counts=True)
-            self.header.number_of_points_by_return = counts
+            self.header.update(self.points)
 
         if self.header.version.minor >= 4:
             if self.evlrs is not None:

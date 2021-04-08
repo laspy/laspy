@@ -21,6 +21,18 @@ The biggest changes between 1.7 and 2.0 are how files are read and written.
 The `Header` (:class:`.LasHeader`) class was modernized from laspy 1.7 to laspy 2.0,
 a few of the field names in the new header class do not have the same name.
 
+max                -> maxs
+min                -> mins
+scale              -> scales
+offsets            -> offsets
+filesource_id      -> file_source_id
+major_version      -> version.major
+minor_version      -> version.minor
+system_id          -> system_identifier
+date               -> creation_date
+point_return_count -> number_of_points_by_return
+software_id        -> generating_software
+
 laspy 1.7 had the concept of `laspy.File` with an open mode.
 laspy 2.0 does not have the `laspy.File` class anymore but a :class:`.LasData`
 class instead which provide access to the `header`, `vlrs` and fields/dimensions.
