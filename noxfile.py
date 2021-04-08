@@ -9,7 +9,7 @@ def tests(session, laz_backend):
         session.install(".")
     else:
         session.install(f".[{laz_backend}]")
-    session.run("pytest", "-q", "pylastests")
+    session.run("pytest", "-q", "tests")
 
 
 
