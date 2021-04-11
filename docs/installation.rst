@@ -1,3 +1,5 @@
+.. _installation:
+
 ============
 Installation
 ============
@@ -27,11 +29,11 @@ When encountering LAZ data, laspy will try to use one of the backend in the orde
 
 `lazrs`_ is a Rust port of the laszip compression and decompression.
 Its main advantage is that it is able to compress/decompress using multiple threads which can
-greatly speed up things.
+greatly speed up things. However it does not supports points with waveforms.
 
 `laszip`_  is the official and original LAZ implementation by Martin Isenburg.
-The advantage of the `laszip` backend is that its the official implementation,
-but does not offer multi-threaded compression/decompression.
+The advantage of the `laszip` backend is that its the official implementation, it supports points
+with waveform but does not offer multi-threaded compression/decompression.
 
 
 Both the laszip bindings and lazrs are available on pip.

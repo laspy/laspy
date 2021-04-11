@@ -12,6 +12,11 @@ laspy reads and writes these formats and provides a Python API via Numpy Arrays.
 
 .. _LAS: https://www.asprs.org/committee-general/laser-las-file-format-exchange-activities.html
 
+
+.. note::
+
+   See :ref:`migration_guides` if you are coming from laspy 1.7.
+
 Here is an example of reading in LAZ data and getting some simple summaries of the pointcloud:
 
 .. testcode::

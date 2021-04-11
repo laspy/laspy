@@ -1,3 +1,5 @@
+.. _migration_guides:
+
 Migration guides
 ================
 
@@ -11,27 +13,14 @@ have a few changes to make to the parts of your code that uses laspy 1.7.
 However there should not be that many, and should hopefully be worth.
 
 The benefits of laspy 2.0 are:
- - Better LAZ support: reading *and* writing of LAZ 1.1 to 1.4 (See the Installation section)
+ - Better LAZ support: reading *and* writing of LAZ 1.1 to 1.4 (See the :ref:`installation` section)
  - Support for Chunked / Streaming reading and writing of LAS/LAZ files.
  - Support for reading data coming from other sources than files on disk (bytes or file-objects)
 
 
 The biggest changes between 1.7 and 2.0 are how files are read and written.
 
-The `Header` (:class:`.LasHeader`) class was modernized from laspy 1.7 to laspy 2.0,
-a few of the field names in the new header class do not have the same name.
 
-max                -> maxs
-min                -> mins
-scale              -> scales
-offsets            -> offsets
-filesource_id      -> file_source_id
-major_version      -> version.major
-minor_version      -> version.minor
-system_id          -> system_identifier
-date               -> creation_date
-point_return_count -> number_of_points_by_return
-software_id        -> generating_software
 
 laspy 1.7 had the concept of `laspy.File` with an open mode.
 laspy 2.0 does not have the `laspy.File` class anymore but a :class:`.LasData`
@@ -123,7 +112,37 @@ _______________
     new_las.write("new_las.las")
 
 
+Header change
+_____________
 
+The `Header` (:class:`.LasHeader`) class was modernized from laspy 1.7 to laspy 2.0,
+a few of the field names in the new header class do not have the same name.
+
++--------------------+------------------------------+
+| 1.7 name           |   2.0 name                   |
++====================+==============================+
+| max                |  maxs                        |
++--------------------+------------------------------+
+| min                |  mins                        |
++--------------------+------------------------------+
+| scale              |  scales                      |
++--------------------+------------------------------+
+| offsets            |  offsets                     |
++--------------------+------------------------------+
+| filesource_id      |  file_source_id              |
++--------------------+------------------------------+
+| major_version      |  version.major               |
++--------------------+------------------------------+
+| minor_version      |  version.minor               |
++--------------------+------------------------------+
+| system_id          |  system_identifier           |
++--------------------+------------------------------+
+| date               |  creation_date               |
++--------------------+------------------------------+
+| point_return_count |  number_of_points_by_return  |
++--------------------+------------------------------+
+| software_id        |  generating_software         |
++--------------------+------------------------------+
 
 From pylas 0.4.x to laspy 2.0.0
 -------------------------------
