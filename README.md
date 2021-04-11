@@ -5,6 +5,12 @@ files.
 
 Laspy is compatible with Python  3.6+.
 
+
+# Version 2.0
+
+laspy 2.0 is in alpha, and ready for you to test, to install, it add `--pre` to
+the pip install commands (eg  `pip install --pre laspy`)
+
 Examples
 --------
 
@@ -69,6 +75,17 @@ pip install laspy[lazrs] # with LAZ support via lazrs
 ## Changelog
 
 ### Version 2.0.0
+
+- Overhaul of the internals by essentially incorporating pylas into laspy,
+  while the API to retrieve and set dimensions stayed the same, other parts changed
+  and will require adaptation.
+- Better LAZ support
+  * Added support for writing LAZ
+  * Changed decompression mechanism by using either `laszip` python bindings (and not laszip-cli)
+  or `lazrs`
+- Added ability to read and write LAS/LAS in `stream` / `chunked` mode.
+- Changed laspy to support the reading and writing LAS/LAZ data from and to `file-objects` and `bytes`
+- Dropped support for python2.7, python3.6+ is supported.
 
 ### Version 1.7.0
 
