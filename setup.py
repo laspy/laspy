@@ -23,22 +23,12 @@ setup(
     packages=find_packages(exclude=("tests",)),
     install_requires=["numpy"],
     extras_require={
-        "dev": ["pytest", "sphinx", "sphinx-rtd-theme", "nox", "black"],
+        "dev": ["pytest", "sphinx", "sphinx-rtd-theme", "nox", "black==20.8b1"],
         "lazrs": ["lazrs>=0.2.3, < 0.3.0"],
         "laszip": ["laszip >= 0.0.1, < 0.1.0"],
     },
     include_package_data=True,
     zip_safe=False,
-    entry_points={
-        "console_scripts": [
-            "lascopy = laspy.tools.lascopy:main",
-            "lasexplorer = laspy.tools.lasexplorer:main",
-            "lasnoise = laspy.tools.lasnoise:main",
-            "lasverify = laspy.tools.lasverify:main",
-            "lasvalidate = laspy.tools.lasvalidate:main",
-            "lasviewer = laspy.tools.lasviewer:main",
-        ]
-    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
