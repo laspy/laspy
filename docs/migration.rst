@@ -50,8 +50,6 @@ _______________________________________
 
 .. code-block:: python
 
-     import laspy
-
      # accessing a field in laspy 1.7:
      classification = file.classification
 
@@ -63,8 +61,6 @@ Writing
 _______
 
 .. code-block:: python
-
-    import laspy
 
     # laspy 1.7:
     file.pt_src_id[:] = 2
@@ -127,7 +123,7 @@ a few of the field names in the new header class do not have the same name.
 +--------------------+------------------------------+
 | scale              |  scales                      |
 +--------------------+------------------------------+
-| offsets            |  offsets                     |
+| offset             |  offsets                     |
 +--------------------+------------------------------+
 | filesource_id      |  file_source_id              |
 +--------------------+------------------------------+

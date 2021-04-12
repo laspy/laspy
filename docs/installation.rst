@@ -43,13 +43,13 @@ To install laspy with one of its supported backend use one of the following comm
 .. code-block:: shell
 
     # To install with lazrs only
-    pip install laspy[lazrs]
+    pip install --pre laspy[lazrs]
 
     # To install with laszip only
-    pip install laspy[laszip]
+    pip install --pre laspy[laszip]
 
     # To install with both
-    pip install laspy[lazrs,laszip]
+    pip install --pre laspy[lazrs,laszip]
 
 
 .. _lazrs: https://github.com/tmontaigu/laz-rs

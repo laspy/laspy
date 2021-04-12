@@ -13,9 +13,31 @@ laspy reads and writes these formats and provides a Python API via Numpy Arrays.
 .. _LAS: https://www.asprs.org/committee-general/laser-las-file-format-exchange-activities.html
 
 
-.. note::
+.. important::
 
-   See :ref:`migration_guides` if you are coming from laspy 1.7.
+   laspy 2.0 is in alpha, it has some changes and improvements
+
+   Context:
+      In 2018 a new python libray to manage LAS/LAZ file was created under the name of pylas
+      as improving the laspy code base seemed to big of a challenge.
+
+      However today, the current plan is to merge pylas back into laspy and release it as
+      the version 2.0 of laspy.
+
+      As the bump in major version suggests, there are important changes that will require
+      user code to be changed. These changes should be easy to apply and hopefully the
+      improvements are worth the adaptation.
+
+      If there are some regressions do no hesitate to open an issue on Github_
+
+
+   See :ref:`installation` to see how to install the new version.
+
+   See :ref:`migration_guides` to get informations on how to update your code.
+
+   And look at the rest of the documentation.
+
+.. _Github: https://github.com/laspy/laspy
 
 Here is an example of reading in LAZ data and getting some simple summaries of the pointcloud:
 
