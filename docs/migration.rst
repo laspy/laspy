@@ -114,6 +114,9 @@ _____________
 The `Header` (:class:`.LasHeader`) class was modernized from laspy 1.7 to laspy 2.0,
 a few of the field names in the new header class do not have the same name.
 
+This list is non exhaustive, and for the items in this list
+the backward compatibility could be kept (meaning the 1.7 name is still usable)
+
 +--------------------+------------------------------+
 | 1.7 name           |   2.0 name                   |
 +====================+==============================+

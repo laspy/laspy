@@ -153,6 +153,18 @@ class LasHeader:
     #: The default point format Used when None is given to init
     DEFAULT_POINT_FORMAT = PointFormat(3)
 
+    _OLD_LASPY_NAMES = {
+        "max": "maxs",
+        "min": "mins",
+        "scale": "scales",
+        "offset": "offsets",
+        "filesource_id": "file_source_id",
+        "system_id": "system_identifier",
+        "date": "creation_date",
+        "point_return_count": "number_of_points_by_return",
+        "software_id": "generating_software",
+    }
+
     def __init__(
         self,
         *,
@@ -688,6 +700,27 @@ class LasHeader:
             eb_vlr.extra_bytes_structs.append(eb_struct)
 
         self.vlrs.append(eb_vlr)
+
+    # To keep some kind of backward compatibility
+    @property
+    def major_version(self) -> int:
+        return self.version.major
+
+    @property
+    def minor_version(self) -> int:
+        return self.version.minor
+
+    def __getattr__(self, item):
+        try:
+            return getattr(self, self._OLD_LASPY_NAMES[item])
+        except KeyError:
+            raise AttributeError(f"No attribute {item} in LasHeader") from None
+
+    def __setattr__(self, key, value):
+        try:
+            return setattr(self, self._OLD_LASPY_NAMES[key], value)
+        except KeyError:
+            super().__setattr__(key, value)
 
     def __repr__(self) -> str:
         return f"<LasHeader({self.version.major}.{self.version.minor}, {self.point_format})>"
