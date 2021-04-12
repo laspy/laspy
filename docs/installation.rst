@@ -7,10 +7,23 @@ Installation
 Installing from PyPi
 ====================
 
-.. code:: shell
+.. note::
 
-    pip install laspy
+    While laspy 2.0 is in alpha / beta (pre release) don't forget the *-\-pre*
 
+.. code-block:: shell
+
+    # To install with lazrs only
+    pip install --pre laspy[lazrs]
+
+    # To install with laszip only
+    pip install --pre laspy[laszip]
+
+    # To install with both
+    pip install --pre laspy[lazrs,laszip]
+
+
+More information on laz support below
 
 Optional dependencies for LAZ support
 =====================================
@@ -39,17 +52,6 @@ with waveform but does not offer multi-threaded compression/decompression.
 Both the laszip bindings and lazrs are available on pip.
 
 To install laspy with one of its supported backend use one of the following commands
-
-.. code-block:: shell
-
-    # To install with lazrs only
-    pip install --pre laspy[lazrs]
-
-    # To install with laszip only
-    pip install --pre laspy[laszip]
-
-    # To install with both
-    pip install --pre laspy[lazrs,laszip]
 
 
 .. _lazrs: https://github.com/tmontaigu/laz-rs
