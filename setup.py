@@ -20,13 +20,10 @@ setup(name='laspy',
       long_description=readme,
       long_description_content_type='text/markdown',
       packages=['laspy', 'laspy.tools'],
-      test_suite='test.test_laspy',
-      data_files=[("test/data",
-                  ["simple.las", "simple1_3.las",
-                   "simple1_4.las", "simple.laz"])],
       install_requires=['numpy'],
       extras_require={
-          "laz": 'lazperf ; platform_system!="Windows"'
+          "laz": 'lazperf ; platform_system!="Windows"',
+          "dev": ["sphinx"]
           },
       include_package_data=True,
       zip_safe=False,
