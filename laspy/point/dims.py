@@ -2,6 +2,7 @@
 the mapping between dimension names and their type, mapping between point format and
 compatible file version
 """
+import abc
 import itertools
 import operator
 from collections import UserDict
@@ -19,6 +20,7 @@ from typing import (
     List,
     Union,
     Any,
+    Type,
 )
 
 import numpy as np
@@ -484,38 +486,47 @@ def raise_if_version_not_compatible_with_fmt(point_format_id: int, file_version:
         )
 
 
-class SubFieldView:
-    """Offers a view onto a LAS field that is a bit field.
+def _convert_array_views_to_array(
+    view_class: Type, some_args: Union[List[Any], Tuple[Any, ...]]
+) -> List[Any]:
+    converted_args = []
+    for arg in some_args:
+        if isinstance(arg, (list, tuple)):
+            converted_args.append(_convert_array_views_to_array(view_class, arg))
+        elif isinstance(arg, view_class):
+            converted_args.append(np.array(arg))
+        else:
+            converted_args.append(arg)
 
-    This class allows to read and modify, the array that stores the
-    bit field directly.
-    """
+    return converted_args
 
-    def __init__(self, array: np.ndarray, bit_mask):
+
+class ArrayView(abc.ABC):
+    def __init__(self, array) -> None:
         self.array = array
-        self.bit_mask = self.array.dtype.type(bit_mask)
-        self.lsb = packing.least_significant_bit_set(bit_mask)
-        self.max_value_allowed = int(self.bit_mask >> self.lsb)
 
-    def masked_array(self):
-        return (self.array & self.bit_mask) >> self.lsb
+    @abc.abstractmethod
+    def __array__(self, **kwargs) -> np.ndarray:
+        ...
 
-    def copy(self):
-        return np.array(self)
+    @abc.abstractmethod
+    def __getitem__(self, item):
+        ...
 
-    def _do_comparison(self, value, comp):
-        if isinstance(value, (int, type(self.array.dtype))):
-            if value > self.max_value_allowed:
-                return np.zeros_like(self.array, np.bool)
-        return comp(self.array & self.bit_mask, value << self.lsb)
+    @abc.abstractmethod
+    def __setitem__(self, key, value):
+        ...
 
     def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        inpts = SubFieldView._convert_sub_views_to_arrays(inputs)
+        inpts = _convert_array_views_to_array(self.__class__, inputs)
         return getattr(ufunc, method)(*inpts, **kwargs)
 
     def __array_function__(self, func, types, args, kwargs):
-        argslist = SubFieldView._convert_sub_views_to_arrays(args)
+        argslist = _convert_array_views_to_array(self.__class__, args)
         return func(*argslist, **kwargs)
+
+    def copy(self) -> np.ndarray:
+        return np.array(self)
 
     @property
     def dtype(self):
@@ -529,32 +540,26 @@ class SubFieldView:
     def ndim(self):
         return self.array.ndim
 
-    def __array__(self, **kwargs):
-        ret = self.masked_array()
-        if not isinstance(ret, np.ndarray):
-            ret = np.array(ret)
-        return ret
+    def max(self, **kwargs):
+        return np.array(self).max(**kwargs)
 
-    def max(self, **unused_kwargs):
-        return self.masked_array().max()
-
-    def min(self, **unused_kwargs):
-        return self.masked_array().min()
+    def min(self, **kwargs):
+        return np.array(self).min(**kwargs)
 
     def __len__(self):
         return len(self.array)
 
     def __lt__(self, other):
-        return self._do_comparison(other, operator.lt)
+        return np.array(self) < other
 
     def __le__(self, other):
-        return self._do_comparison(other, operator.le)
+        return np.array(self) <= other
 
     def __ge__(self, other):
-        return self._do_comparison(other, operator.ge)
+        return np.array(self) >= other
 
     def __gt__(self, other):
-        return self._do_comparison(other, operator.gt)
+        return np.array(self) > other
 
     def __eq__(self, other):
         return np.array(self) == other
@@ -577,6 +582,50 @@ class SubFieldView:
     def __floordiv__(self, other):
         return np.array(self) // other
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__}({np.array(self)})>"
+
+
+class SubFieldView(ArrayView):
+    """Offers a view onto a LAS field that is a bit field.
+
+    This class allows to read and modify, the array that stores the
+    bit field directly.
+    """
+
+    def __init__(self, array: np.ndarray, bit_mask):
+        super().__init__(array)
+        self.bit_mask = self.array.dtype.type(bit_mask)
+        self.lsb = packing.least_significant_bit_set(bit_mask)
+        self.max_value_allowed = int(self.bit_mask >> self.lsb)
+
+    def masked_array(self):
+        return (self.array & self.bit_mask) >> self.lsb
+
+    def _do_comparison(self, value, comp):
+        if isinstance(value, (int, type(self.array.dtype))):
+            if value > self.max_value_allowed:
+                return np.zeros_like(self.array, np.bool)
+        return comp(self.array & self.bit_mask, value << self.lsb)
+
+    def __array__(self, **kwargs):
+        ret = self.masked_array()
+        if not isinstance(ret, np.ndarray):
+            ret = np.array(ret)
+        return ret
+
+    def __lt__(self, other):
+        return self._do_comparison(other, operator.lt)
+
+    def __le__(self, other):
+        return self._do_comparison(other, operator.le)
+
+    def __ge__(self, other):
+        return self._do_comparison(other, operator.ge)
+
+    def __gt__(self, other):
+        return self._do_comparison(other, operator.gt)
+
     def __setitem__(self, key, value):
         if np.max(value) > self.max_value_allowed:
             raise OverflowError(
@@ -592,41 +641,23 @@ class SubFieldView:
             return sliced.masked_array()
         return sliced
 
-    def __repr__(self):
-        return f"<SubFieldView({self.masked_array()})>"
 
-    @staticmethod
-    def _convert_sub_views_to_arrays(
-        some_args: Union[List[Any], Tuple[Any, ...]]
-    ) -> List[Any]:
-        converted_args = []
-        for arg in some_args:
-            if isinstance(arg, (list, tuple)):
-                converted_args.append(SubFieldView._convert_sub_views_to_arrays(arg))
-            elif isinstance(arg, SubFieldView):
-                converted_args.append(arg.masked_array())
-            else:
-                converted_args.append(arg)
-
-        return converted_args
-
-
-class ScaledArrayView:
+class ScaledArrayView(ArrayView):
     def __init__(
         self,
         array: np.ndarray,
         scale: Union[float, np.ndarray],
         offset: Union[float, np.ndarray],
     ) -> None:
-        self.array = array
+        super().__init__(array)
         self.scale = scale
         self.offset = offset
 
     def scaled_array(self):
         return self._apply_scale(self.array)
 
-    def copy(self):
-        return np.array(self)
+    def __array__(self):
+        return self.scaled_array()
 
     def _apply_scale(self, value):
         return (value * self.scale) + self.offset
@@ -634,87 +665,15 @@ class ScaledArrayView:
     def _remove_scale(self, value):
         return np.round((value - self.offset) / self.scale)
 
-    def max(self, **unused_kwargs):
-        return self._apply_scale(self.array.max())
+    def max(self, **kwargs):
+        return self._apply_scale(self.array.max(kwargs))
 
-    def min(self, **unused_kwargs):
-        return self._apply_scale(self.array.min())
-
-    def __array__(self):
-        return self.scaled_array()
+    def min(self, **kwargs):
+        return self._apply_scale(self.array.min(kwargs))
 
     @property
     def dtype(self):
         return np.dtype(np.float64)
-
-    @property
-    def shape(self):
-        return self.array.shape
-
-    @property
-    def ndim(self):
-        return self.array.ndim
-
-    def __array_function__(self, func, types, args, kwargs):
-        args = ScaledArrayView._convert_scaled_views_to_arrays(args)
-        return func(*args, **kwargs)
-
-    def __array_ufunc__(self, ufunc, method, *inputs, **kwargs):
-        inpts = ScaledArrayView._convert_scaled_views_to_arrays(inputs)
-        return getattr(ufunc, method)(*inpts, **kwargs)
-
-    @staticmethod
-    def _convert_scaled_views_to_arrays(
-        some_args: Union[List[Any], Tuple[Any, ...]]
-    ) -> List[Any]:
-        converted_args = []
-        for arg in some_args:
-            if isinstance(arg, (list, tuple)):
-                converted_args.append(
-                    ScaledArrayView._convert_scaled_views_to_arrays(arg)
-                )
-            elif isinstance(arg, ScaledArrayView):
-                converted_args.append(arg.scaled_array())
-            else:
-                converted_args.append(arg)
-
-        return converted_args
-
-    def __len__(self):
-        return len(self.array)
-
-    def __eq__(self, other):
-        return self.scaled_array() == other
-
-    def __ne__(self, other):
-        return self.scaled_array() != other
-
-    def __add__(self, other):
-        return np.array(self) + other
-
-    def __sub__(self, other):
-        return np.array(self) - other
-
-    def __mul__(self, other):
-        return np.array(self) * other
-
-    def __truediv__(self, other):
-        return np.array(self) / other
-
-    def __floordiv__(self, other):
-        return np.array(self) // other
-
-    def __lt__(self, other):
-        return np.array(self) < other
-
-    def __gt__(self, other):
-        return np.array(self) > other
-
-    def __ge__(self, other):
-        return np.array(self) >= other
-
-    def __le__(self, other):
-        return np.array(self) <= other
 
     def __getitem__(self, item):
         if isinstance(item, int):
