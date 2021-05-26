@@ -23,7 +23,14 @@ setup(
     packages=find_packages(exclude=("tests",)),
     install_requires=["numpy"],
     extras_require={
-        "dev": ["pytest", "sphinx", "sphinx-rtd-theme", "nox", "black==20.8b1"],
+        "dev": [
+            "pytest",
+            "sphinx",
+            "sphinx-rtd-theme",
+            "nox",
+            "black==20.8b1",
+            "pytest-benchmark",
+        ],
         "lazrs": ["lazrs>=0.2.3, < 0.3.0"],
         "laszip": ["laszip >= 0.0.1, < 0.1.0"],
     },
