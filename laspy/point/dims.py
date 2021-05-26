@@ -501,7 +501,7 @@ class SubFieldView:
         return (self.array & self.bit_mask) >> self.lsb
 
     def copy(self):
-        return SubFieldView(self.array.copy(), int(self.bit_mask))
+        return np.array(self)
 
     def _do_comparison(self, value, comp):
         if isinstance(value, (int, type(self.array.dtype))):
@@ -626,7 +626,7 @@ class ScaledArrayView:
         return self._apply_scale(self.array)
 
     def copy(self):
-        return ScaledArrayView(self.array.copy(), self.scale, self.offset)
+        return np.array(self)
 
     def _apply_scale(self, value):
         return (value * self.scale) + self.offset
