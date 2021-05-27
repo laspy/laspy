@@ -6,7 +6,7 @@ from laspy.point.dims import SubFieldView, ScaledArrayView
 
 
 def test_sub_field_view_behaves_like_array():
-    """ This function is used to test if the SubFieldView class
+    """This function is used to test if the SubFieldView class
     works & has an API that is similar to np.ndarray
     """
     array = np.zeros(10, np.uint8)
@@ -111,3 +111,6 @@ def test_scaled_array_view():
     x[9] = 42.0
     assert np.all(x[2:5] == 155.0)
     assert x[9] == 42.0
+
+    with pytest.raises(OverflowError):
+        x[8] = np.finfo(np.float64).max

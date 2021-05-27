@@ -711,26 +711,20 @@ class ScaledArrayView(ArrayView):
             return self.__class__(self.array[item], self.scale[item], self.offset[item])
 
     def __setitem__(self, key, value):
-        if isinstance(value, ScaledArrayView):
-            iinfo = np.iinfo(self.array.dtype)
-            if value.array.max() > iinfo.max or value.array.min() < iinfo.min:
-                raise OverflowError(
-                    "Values given do not fit after applying offset and scale"
-                )
-            self.array[key] = value.array[key]
-        else:
-            try:
-                info = np.iinfo(self.array.dtype)
-            except ValueError:
-                info = np.finfo(self.array.dtype)
+        try:
+            info = np.iinfo(self.array.dtype)
+        except ValueError:
+            info = np.finfo(self.array.dtype)
 
-            new_max = self._remove_scale(np.max(value))
-            new_min = self._remove_scale(np.min(value))
-            if np.all(new_max > info.max) or np.all(new_min < info.min):
-                raise OverflowError(
-                    "Values given do not fit after applying offset and scale"
-                )
-            self.array[key] = self._remove_scale(value)
+        new_max = self._remove_scale(np.max(value))
+        new_min = self._remove_scale(np.min(value))
+        if np.any(new_max > info.max) or np.any(new_min < info.min):
+            raise OverflowError(
+                "Values given do not fit after applying offset and scale"
+            )
+        if isinstance(value, ScaledArrayView):
+            value = np.array(value)
+        self.array[key] = self._remove_scale(value)
 
     def __repr__(self):
         return f"<ScaledArrayView({self.scaled_array()})>"
