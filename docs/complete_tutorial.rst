@@ -23,7 +23,7 @@ The following short script does just this:
     .. code-block:: python
 
         import laspy
-        las = laspy.read("./test/data/simple.las")
+        las = laspy.read("./tests/data/simple.las")
 
 This function reads all the data in the file into memory.
 
@@ -43,7 +43,7 @@ background section of the tutorial for a reference of laspy dimension and field 
             x_dimension = las_file.X
             scale = las_file.header.scales[0]
             offset = las_file.header.offsets[0]
-            return(x_dimension*scale + offset)
+            return (x_dimension * scale) + offset
 
         scaled_x = scaled_x_dimension(las)
 
@@ -85,7 +85,7 @@ file has accurate min and max values for the X, Y, and Z dimensions.
         import laspy
         import numpy as np
 
-        las = laspy.read("/path/to/lasfile")
+        las = laspy.read("./tests/data/simple.las")
         # Some notes on the code below:
         # 1. las.header.maxs returns an array: [max x, max y, max z]
         # 2. `|` is a numpy method which performs an element-wise "or"
@@ -119,63 +119,41 @@ only the points from a file which are within a certain distance of the first poi
 
         # Calculate the euclidean distance from all points to the first point
 
-        distances = np.sum((coords - first_point)**2, axis = 1)
+        distances = np.sum(np.sqrt((coords - first_point) ** 2), axis=1)
 
         # Create an array of indicators for whether or not a point is less than
         # 500000 units away from the first point
 
-        mask = distances < 500000
+        mask = distances < 500
 
         # Grab an array of all points which meet this threshold
 
         points_kept = las.points[mask]
 
-        print("We're keeping %i points out of %i total"%(len(mask), len(las.points)))
+        print("We kept %i points out of %i total" % (len(points_kept), len(las.points)))
 
 
 As you can see, having the data in numpy arrays is very convenient. Even better,
 it allows one to dump the data directly into any package with numpy/python bindings.
 For example, if you're interested in calculating the nearest neighbors of a set of points,
-you might want to use a highly optimized package like FLANN (http://people.cs.ubc.ca/~mariusm/index.php/FLANN/FLANN)
-
-Here's an example doing just this:
+you can use scipy's KDTtree (or cKDTree for better performance)
 
     .. code-block:: python
 
         import laspy
-        import pyflann as pf
+        from scipy.spatial import cKDTree
         import numpy as np
 
-        las = laspy.read("./test/data/simple.las")
-        # Grab a numpy dataset of our clustering dimensions:
-        dataset = np.vstack((las.X, las.Y, las.Z]).transpose()
-
-        # Find the nearest 5 neighbors of point 100.
-        flann = pf.FLANN()
-        neighbors = flann.nn(dataset, dataset[100,], num_neighbors = 5)
-        print("Five nearest neighbors of point 100: ")
-        print(neighbors[0])
-        print("Distances: ")
-        print(neighbors[1])
-
-
-Alternatively, one could use the built in KD-Tree functionality of scipy to do
-nearest neighbor queries:
-
-    .. code-block:: python
-
-        import laspy
-        import scipy
-        import numpy as np
-
-        las = laspy.read("./laspytest/data/simple.las")
+        las = laspy.read("./tests/data/simple.las")
         # Grab a numpy dataset of our clustering dimensions:
         dataset = np.vstack((las.X, las.Y, las.Z)).transpose()
         # Build the KD Tree
-        tree = scipy.spatial.kdtree(data)
+        tree = cKDTree(dataset)
         # This should do the same as the FLANN example above, though it might
         # be a little slower.
-        tree.query(dataset[100,], k = 5)
+        neighbors_distance, neighbors_indices = tree.query(dataset[100], k=5)
+        print(neighbors_indices)
+        print(neighbors_distance)
 
 
 
@@ -239,7 +217,7 @@ a new file:
         import laspy
         import numpy as np
 
-        las = laspy.read("/path/to/lasfile")
+        las = laspy.read("tests/data/simple.las")
 
         # Get arrays which indicate VALID X, Y, or Z values.
 
@@ -251,7 +229,7 @@ a new file:
 
         output_file = laspy.LasData(las.header)
         output_file.points = good_points
-        output_file.write("/path/to/output/lasfile")
+        output_file.write("good_points.las")
 
 
 
@@ -276,7 +254,7 @@ description fields you can do so with additional arguments.
 
         import laspy
 
-        las = laspy.read("./laspytest/data/close_points.las")
+        las = laspy.read("./tests/data/simple.las")
         # Instantiate a new VLR.
         new_vlr = laspy.VLR(user_id="The User ID", record_id=1,
                       record_data=b"\x00" * 1000)
@@ -288,7 +266,7 @@ description fields you can do so with additional arguments.
         # Append our new vlr to the current list. As the above dataset is derived
         # from simple.las which has no VLRS, this will be an empty list.
         las.vlrs.append(new_vlr)
-        las.write("./laspytest/data/close_points.las")
+        las.write("close_points.las")
 
 
 
