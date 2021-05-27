@@ -163,6 +163,7 @@ class LasHeader:
         "date": "creation_date",
         "point_return_count": "number_of_points_by_return",
         "software_id": "generating_software",
+        "point_records_count": "point_count",
     }
 
     def __init__(
