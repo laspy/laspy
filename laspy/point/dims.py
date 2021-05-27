@@ -675,6 +675,33 @@ class ScaledArrayView(ArrayView):
     def dtype(self):
         return np.dtype(np.float64)
 
+    def _do_comparison(self, other, op):
+        # The implementation of comparison by the base class
+        # does a conversion to np.array of self, which is not free
+        # we try to avoid that here
+        if isinstance(other, (int, float, np.number)):
+            other = self._remove_scale(other)
+            return getattr(self.array, op)(other)
+        return getattr(super(), op)(other)
+
+    def __ge__(self, other):
+        return self._do_comparison(other, "__ge__")
+
+    def __gt__(self, other):
+        return self._do_comparison(other, "__gt__")
+
+    def __le__(self, other):
+        return self._do_comparison(other, "__le__")
+
+    def __lt__(self, other):
+        return self._do_comparison(other, "__lt__")
+
+    def __eq__(self, other):
+        return self._do_comparison(other, "__eq__")
+
+    def __ne__(self, other):
+        return self._do_comparison(other, "__ne__")
+
     def __getitem__(self, item):
         if isinstance(item, int):
             return self._apply_scale(self.array[item])
