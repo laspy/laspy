@@ -2,6 +2,7 @@ import enum
 import io
 import logging
 import struct
+import typing
 from datetime import date, timedelta
 from typing import NamedTuple, BinaryIO, Optional, List, Union
 from uuid import UUID
@@ -532,7 +533,9 @@ class LasHeader:
         point_format_id = compressed_id_to_uncompressed(point_format_id)
         point_format = PointFormat(point_format_id)
         try:
-            extra_dims = header.vlrs.get("ExtraBytesVlr")[0].type_of_extra_dims()
+            extra_bytes_vlr = typing.cast(
+                ExtraBytesVlr, header.vlrs.get("ExtraBytesVlr")[0]
+            )
         except IndexError:
             pass
         else:
@@ -543,6 +546,9 @@ class LasHeader:
                 )
                 header.vlrs.extract("ExtraBytesVlr")
             else:
+                extra_dims: List[
+                    ExtraBytesParams
+                ] = extra_bytes_vlr.type_of_extra_dims()
                 for extra_dim_info in extra_dims:
                     point_format.add_extra_dimension(extra_dim_info)
         header._point_format = point_format

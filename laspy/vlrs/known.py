@@ -294,7 +294,7 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
 class ExtraBytesVlr(BaseKnownVLR):
     def __init__(self):
         super().__init__(description="Extra Bytes Record")
-        self.extra_bytes_structs = []
+        self.extra_bytes_structs: List[ExtraBytesStruct] = []
 
     def parse_record_data(self, data):
         if (len(data) % ExtraBytesStruct.size()) != 0:
@@ -321,12 +321,21 @@ class ExtraBytesVlr(BaseKnownVLR):
             num_elements = eb_struct.num_elements()
 
             scales = eb_struct.scale
-            if scales is not None:
-                scales = np.array(scales[:num_elements])
-
             offsets = eb_struct.offset
-            if offsets is not None:
-                offsets = np.array(offsets[:num_elements])
+
+            if scales is not None or offsets is not None:
+                # If one of scales or offsets is defined,
+                # we expect the other to be as well
+                # so set default scales or offsets
+                if offsets is None:
+                    offsets = np.zeros(num_elements, np.float64)
+                else:
+                    offsets = np.array(offsets[:num_elements])
+
+                if scales is None:
+                    scales = np.ones(num_elements, np.float64)
+                else:
+                    scales = np.array(scales[:num_elements])
 
             dim_info_list.append(
                 ExtraBytesParams(
