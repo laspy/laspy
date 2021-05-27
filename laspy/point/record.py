@@ -25,24 +25,6 @@ def unscale_dimension(array_dim, scale, offset):
     return np.round((np.array(array_dim) - offset) / scale)
 
 
-def raise_not_enough_bytes_error(
-    expected_bytes_len, missing_bytes_len, point_data_buffer_len, points_dtype
-) -> NoReturn:
-    raise errors.LaspyException(
-        "The file does not contain enough bytes to store the expected number of points\n"
-        "expected {} bytes, read {} bytes ({} bytes missing == {} points) and it cannot be corrected\n"
-        "{} (bytes) / {} (point_size) = {} (points)".format(
-            expected_bytes_len,
-            point_data_buffer_len,
-            missing_bytes_len,
-            missing_bytes_len / points_dtype.itemsize,
-            point_data_buffer_len,
-            points_dtype.itemsize,
-            point_data_buffer_len / points_dtype.itemsize,
-        )
-    )
-
-
 class PackedPointRecord:
     """
     In the PackedPointRecord, fields that are a combinations of many sub-fields (fields stored on less than a byte)
