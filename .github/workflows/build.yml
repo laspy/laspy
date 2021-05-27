@@ -59,7 +59,7 @@ jobs:
       - name: Install black
         run: |
           python3 -m pip install setuptools
-          python3 -m pip install black
+          python3 -m pip install black==20.8b1
 
       - name: Run black check
         run: python3 -m black --check laspy
