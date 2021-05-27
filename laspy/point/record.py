@@ -126,7 +126,7 @@ class PackedPointRecord:
         return new_record
 
     @classmethod
-    def from_buffer(cls, buffer, point_format, count, offset=0):
+    def from_buffer(cls, buffer, point_format, count=-1, offset=0):
         points_dtype = point_format.dtype()
         data = np.frombuffer(buffer, dtype=points_dtype, offset=offset, count=count)
 

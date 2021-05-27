@@ -76,8 +76,11 @@ class LasReader:
             n = min(n, points_left)
 
         r = record.PackedPointRecord.from_buffer(
-            self.point_source.read_n_points(n), self.header.point_format, n
+            self.point_source.read_n_points(n), self.header.point_format
         )
+        if len(r) < n:
+            logger.error(f"Could only read {len(r)} of the requested {n} points")
+
         points = record.ScaleAwarePointRecord(
             r.array, r.point_format, self.header.scales, self.header.offsets
         )
@@ -215,7 +218,9 @@ class UncompressedPointReader(IPointReader):
             data = bytearray(self.source.read(n * self.point_size))
         else:
             data = bytearray(n * self.point_size)
-            readinto(data)
+            num_read = readinto(data)
+            if num_read < len(data):
+                data = data[:num_read]
 
         return data
 
