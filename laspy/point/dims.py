@@ -716,9 +716,13 @@ class ScaledArrayView(ArrayView):
         except ValueError:
             info = np.finfo(self.array.dtype)
 
-        new_max = self._remove_scale(np.max(value))
-        new_min = self._remove_scale(np.min(value))
-        if np.any(new_max > info.max) or np.any(new_min < info.min):
+        new_max = np.max(value)
+        new_min = np.min(value)
+
+        max_allowed = self._apply_scale(info.max)
+        min_allowed = self._apply_scale(info.min)
+
+        if np.any(new_max > max_allowed) or np.any(new_min < min_allowed):
             raise OverflowError(
                 "Values given do not fit after applying offset and scale"
             )
