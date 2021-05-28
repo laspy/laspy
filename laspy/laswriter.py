@@ -1,7 +1,7 @@
 import abc
 import io
 import logging
-from copy import copy
+from copy import deepcopy
 from typing import BinaryIO, Optional, Union, Iterable
 
 import numpy as np
@@ -63,7 +63,7 @@ class LasWriter:
             should the `dest` be closed when the writer is closed
         """
         self.closefd = closefd
-        self.header = copy(header)
+        self.header = deepcopy(header)
         self.header.partial_reset()
         self.header.maxs = [np.finfo("f8").min] * 3
         self.header.mins = [np.finfo("f8").max] * 3
