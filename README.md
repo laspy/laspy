@@ -84,7 +84,7 @@ pip install laspy[lazrs] # with LAZ support via lazrs
   * Changed decompression mechanism by using either `laszip` python bindings (and not laszip-cli)
   or `lazrs`
 - Added ability to read and write LAS/LAS in `stream` / `chunked` mode.
-- Changed laspy to support the reading and writing LAS/LAZ data from and to `file-objects` and `bytes`
+- Changed laspy to support the reading and writing of LAS/LAZ data from and to `file-objects` and `bytes`
 - Dropped support for python2.7, python3.6+ is supported.
 
 ### Version 1.7.0
