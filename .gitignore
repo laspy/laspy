@@ -3,3 +3,4 @@ laspy.egg-info/
 docs/build
 build/
 .vscode/settings.json
+.idea

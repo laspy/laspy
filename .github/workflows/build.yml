@@ -19,32 +19,50 @@ jobs:
       fail-fast: true
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        python-version: ['3.7','3.8']
+        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        laz-backend: [ None, lazrs, laszip ]
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Setup Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+
     - name: Display Python version
       run: |
           python -c "import sys; print(sys.version)"
-    - name: Setup
-      run: |
-          python -m pip install --upgrade numpy flake8 pytest
 
-    - name: Install
-      run: |
-        python -m pip install -e .
-    - name: Lint with flake8
-      run: |
-        flake8 --statistics laspy  --exit-zero
-    - name: Test with pytest
-      run: |
-        python -m pip install pytest
-        python -m pytest --ignore misc
+    - name: Install With LAZ backend
+      if: matrix.laz-backend != 'None'
+      run: pip install .[${{ matrix.laz-backend }}]
 
+    - name: Install Without LAZ backend
+      if: matrix.laz-backend == 'None'
+      run: pip install .
+
+    - name: Run Tests
+      run: |
+        pip install pytest
+        pytest tests
+        pytest laspy
+
+
+  formatting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
+
+      - name: Install black
+        run: |
+          python3 -m pip install setuptools
+          python3 -m pip install black==20.8b1
+
+      - name: Run black check
+        run: python3 -m black --check laspy
 
 
 
@@ -57,6 +75,7 @@ jobs:
     strategy:
       fail-fast: true
 
+    if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/checkout@v2
       - name: Source
@@ -69,7 +88,7 @@ jobs:
 
       - uses: pypa/gh-action-pypi-publish@master
         name: Publish package
-        if: github.event_name == 'release' && github.event.action == 'published'
+
         with:
           user: __token__
           password: ${{ secrets.pypi_token }}

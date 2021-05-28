@@ -1,8 +1,21 @@
-from __future__ import absolute_import
+__version__ = "2.0.0a1"
 
-__version__ = '1.8.0'
+import logging
 
-from laspy import base
-from laspy import file
-from laspy import header
-from laspy import util
+from . import errors, vlrs, file
+from .errors import LaspyException
+from .laswriter import LasWriter
+from .lasreader import LasReader
+from .lib import LazBackend, convert
+from .lib import create_las as create
+from .lib import mmap_las as mmap
+from .lib import open_las as open
+from .lib import read_las as read
+from .point import PointFormat, ExtraBytesParams, DimensionKind, DimensionInfo
+from .point.dims import supported_point_formats, supported_versions
+from .point.format import lost_dimensions
+from .header import LasHeader
+from .lasdata import LasData
+from .vlrs import VLR
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())
