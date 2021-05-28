@@ -19,9 +19,7 @@ A simple example to show the basics of Laspy. Here we create an output
 file that only consists of terrain points from the input file:
 
 ```python
-
 from laspy.file import File
-import numpy as np
 
 inFile = File('/path/to/file.las', mode='r')
 
