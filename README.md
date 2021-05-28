@@ -31,7 +31,7 @@ outFile.close()
 ```
 
 API Documentation and tutorials are available at
-[PythonHosted](http://pythonhosted.org/laspy).
+[ReadTheDocs](https://laspy.readthedocs.io/en/latest/).
 
 ## Installation
 
