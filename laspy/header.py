@@ -603,8 +603,11 @@ class LasHeader:
         stream.write(self.creation_date.year.to_bytes(2, little_endian, signed=False))
 
         header_size = LAS_HEADERS_SIZE[str(self.version)]
+        header_size += len(self.extra_header_bytes)
         if write_vlrs is True:
-            self.offset_to_point_data = header_size + len(vlr_bytes)
+            self.offset_to_point_data = (
+                header_size + len(vlr_bytes) + len(self.extra_vlr_bytes)
+            )
 
         stream.write(header_size.to_bytes(2, little_endian, signed=False))
         stream.write(self.offset_to_point_data.to_bytes(4, little_endian, signed=False))
@@ -664,8 +667,11 @@ class LasHeader:
                     )
                 )
 
+        stream.write(self.extra_header_bytes)
+
         if write_vlrs is True:
             stream.write(vlr_bytes)
+            stream.write(self.extra_vlr_bytes)
 
     def _sync_extra_bytes_vlr(self) -> None:
         try:

@@ -2,6 +2,7 @@ import io
 
 import laspy
 from laspy import LasHeader
+from laspy.lib import write_then_read_again
 from tests import test_common
 from datetime import date
 
@@ -132,3 +133,24 @@ def test_header_date():
     expected_date = date(year=2015, month=2, day=22)
     assert las.header.creation_date == expected_date
     assert las.header.creation_date == header_2.creation_date
+
+
+def test_extra_header_bytes():
+    las = laspy.read(test_common.simple_las)
+
+    extra_bytes = "Some extra bytes between header and VLRs".encode()
+    las.header.extra_header_bytes = extra_bytes
+    assert las.header.extra_header_bytes == extra_bytes
+
+    las = write_then_read_again(las)
+    assert las.header.extra_header_bytes == extra_bytes
+
+def test_extra_vlr_bytes():
+    las = laspy.read(test_common.simple_las)
+
+    extra_bytes = "Some extra bytes between VLRs and start of points".encode()
+    las.header.extra_vlr_bytes = extra_bytes
+    assert las.header.extra_vlr_bytes == extra_bytes
+
+    las = write_then_read_again(las)
+    assert las.header.extra_vlr_bytes == extra_bytes
