@@ -218,6 +218,9 @@ class PointFormat:
             return False
 
         for my_eb, ot_eb in zip_longest(self.extra_dimensions, other.extra_dimensions):
+            if my_eb is None or ot_eb is None:
+                return False
+
             if my_eb != ot_eb:
                 return False
 

@@ -434,6 +434,24 @@ class DimensionInfo(NamedTuple):
             f"{self.num_elements}{self.kind.letter()}{self.num_bytes_singular_element}"
         )
 
+    def __eq__(self, other: "DimensionInfo") -> bool:
+        # Named Tuple implements that for us, but
+        # when scales and offset are not None (thus are array)
+        # The default '==' won't work
+        # (ValueError, value of an array with more than one element is ambiguous)
+        return (
+            self.name == other.name
+            and self.kind == other.kind
+            and self.num_bits == other.num_bits
+            and self.is_standard == other.is_standard
+            and self.description == other.description
+            and np.all(self.offsets == other.offsets)
+            and np.all(self.scales == other.scales)
+        )
+
+    def __ne__(self, other: "DimensionInfo") -> bool:
+        return not self == other
+
 
 def size_of_point_format_id(point_format_id: int) -> int:
     return ALL_POINT_FORMATS_DTYPE[point_format_id].itemsize
