@@ -1,3 +1,4 @@
+import io
 import os
 
 import numpy as np
@@ -191,3 +192,37 @@ def test_decompression_is_same_as_uncompressed():
     c_points_buffer = bytes(c_las.points.memoryview())
 
     assert u_point_buffer == c_points_buffer
+
+
+def check_seeking_works(las_reader: laspy.LasReader):
+    p1 = las_reader.read_points(10)
+
+    idx = las_reader.seek(5)
+    assert idx == 5
+
+    p2 = las_reader.read_points(5)
+    assert p1[5:] == p2
+
+    idx = las_reader.seek(-5, io.SEEK_CUR)
+    assert idx == 5
+    p2 = las_reader.read_points(5)
+    assert p1[5:] == p2
+
+    rest = las_reader.read_points(-1)
+    assert len(rest) == las_reader.header.point_count - 10
+
+    idx = las_reader.seek(-150, io.SEEK_END)
+    assert idx == las_reader.header.point_count - 150
+    p2 = las_reader.read_points(-1)
+    assert p2 == rest[-150:]
+
+
+def test_seek_las(las_file_path):
+    with laspy.open(las_file_path) as reader:
+        check_seeking_works(reader)
+
+
+@pytest.mark.parametrize("laz_backend", laspy.LazBackend.detect_available())
+def test_seek_laz(laz_file_path, laz_backend):
+    with laspy.open(laz_file_path, laz_backend=laz_backend) as reader:
+        check_seeking_works(reader)

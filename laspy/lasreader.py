@@ -50,9 +50,7 @@ class LasReader:
                     "Data is compressed, but no LazBacked could be initialized"
                 )
         else:
-            self.point_source = UncompressedPointReader(
-                source, self.header.point_format.size
-            )
+            self.point_source = UncompressedPointReader(source, self.header)
 
         self.points_read = 0
 
@@ -114,6 +112,44 @@ class LasReader:
             las_data.evlrs = self._read_evlrs(self.point_source.source, seekable=True)
 
         return las_data
+
+    def seek(self, pos: int, whence: int = io.SEEK_SET) -> int:
+        """Seeks to the start of the point at the given pos
+
+        Parameters
+        ----------
+        pos: index of the point to seek to
+        whence: optional, controls how the pos parameter is interpreted:
+                io.SEEK_SET: (default) pos is the index of the point from the beginning
+                io.SEEK_CUR: pos is the point_index relative to the point_index of the last point read
+                io.SEEK_END: pos is the point_index relative to last point
+        Returns
+        -------
+        The index of the point the reader seeked to, relative to the first point
+        """
+        if whence == io.SEEK_SET:
+            allowed_range = range(0, self.header.point_count)
+            point_index = pos
+        elif whence == io.SEEK_CUR:
+            allowed_range = range(
+                -self.points_read, self.header.point_count - self.points_read
+            )
+            point_index = self.points_read + pos
+        elif whence == io.SEEK_END:
+            allowed_range = range(-self.header.point_count, 0)
+            point_index = self.header.point_count + pos
+        else:
+            raise ValueError(f"Invalid value for whence: {whence}")
+
+        if pos not in allowed_range:
+            whence_str = ["start", "current point", "end"]
+            raise IndexError(
+                f"When seeking from the {whence_str[whence]}, pos must be in {allowed_range}"
+            )
+
+        self.point_source.seek(point_index)
+        self.points_read = point_index
+        return point_index
 
     def chunk_iterator(self, points_per_iteration: int) -> "PointChunkIterator":
         """Returns an iterator, that will read points by chunks
@@ -204,6 +240,10 @@ class IPointReader(abc.ABC):
         ...
 
     @abc.abstractmethod
+    def seek(self, point_index: int) -> None:
+        ...
+
+    @abc.abstractmethod
     def close(self) -> None:
         ...
 
@@ -211,22 +251,28 @@ class IPointReader(abc.ABC):
 class UncompressedPointReader(IPointReader):
     """Implementation of IPointReader for the simple uncompressed case"""
 
-    def __init__(self, source, point_size) -> None:
+    def __init__(self, source, header: LasHeader) -> None:
         self.source = source
-        self.point_size = point_size
+        self.header = header
 
     def read_n_points(self, n: int) -> bytearray:
         try:
             readinto = self.source.readinto
         except AttributeError:
-            data = bytearray(self.source.read(n * self.point_size))
+            data = bytearray(self.source.read(n * self.header.point_format.size))
         else:
-            data = bytearray(n * self.point_size)
+            data = bytearray(n * self.header.point_format.size)
             num_read = readinto(data)
             if num_read < len(data):
                 data = data[:num_read]
 
         return data
+
+    def seek(self, point_index: int) -> None:
+        self.source.seek(
+            self.header.offset_to_point_data
+            + (point_index * self.header.point_format.size)
+        )
 
     def close(self):
         self.source.close()
@@ -248,6 +294,9 @@ class LaszipPointReader(IPointReader):
         points_data = bytearray(n * self.point_size)
         self.unzipper.decompress_into(points_data)
         return points_data
+
+    def seek(self, point_index: int) -> None:
+        self.unzipper.seek(point_index)
 
     def close(self) -> None:
         self.source.close()
@@ -272,6 +321,9 @@ class LazrsPointReader(IPointReader):
         point_bytes = bytearray(n * self.vlr.item_size())
         self.decompressor.decompress_many(point_bytes)
         return point_bytes
+
+    def seek(self, point_index: int) -> None:
+        self.decompressor.seek(point_index)
 
     def close(self) -> None:
         self.source.close()
