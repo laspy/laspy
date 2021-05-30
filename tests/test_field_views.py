@@ -92,6 +92,10 @@ def test_sub_field_as_array():
     with pytest.raises(OverflowError):
         field[:] = cpy[:]
 
+    # Here we just test that this can run,
+    # We had an error about with our __array__ signature
+    cpy[:] = field[:]
+    assert np.all(cpy == field)
 
 def test_scaled_array_view():
     array = np.zeros(10, np.int32)
@@ -114,3 +118,4 @@ def test_scaled_array_view():
 
     with pytest.raises(OverflowError):
         x[8] = np.finfo(np.float64).max
+

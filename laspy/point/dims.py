@@ -528,7 +528,7 @@ class ArrayView(abc.ABC):
         self.array = array
 
     @abc.abstractmethod
-    def __array__(self, **kwargs) -> np.ndarray:
+    def __array__(self, *args, **kwargs) -> np.ndarray:
         ...
 
     @abc.abstractmethod
@@ -630,7 +630,7 @@ class SubFieldView(ArrayView):
                 return np.zeros_like(self.array, np.bool)
         return comp(self.array & self.bit_mask, value << self.lsb)
 
-    def __array__(self, **kwargs):
+    def __array__(self, *args, **kwargs):
         ret = self.masked_array()
         if not isinstance(ret, np.ndarray):
             ret = np.array(ret)
@@ -678,7 +678,7 @@ class ScaledArrayView(ArrayView):
     def scaled_array(self):
         return self._apply_scale(self.array)
 
-    def __array__(self):
+    def __array__(self, *args, **kwargs) -> np.ndarray:
         return self.scaled_array()
 
     def _apply_scale(self, value):
