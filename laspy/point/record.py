@@ -5,13 +5,11 @@ in the context of Las point data
 """
 import logging
 from copy import deepcopy
-from typing import NoReturn
 
 import numpy as np
 
 from . import dims
 from .dims import ScaledArrayView, OLD_LASPY_NAMES
-from .. import errors
 from ..point import PointFormat
 
 logger = logging.getLogger(__name__)
@@ -175,19 +173,11 @@ class PackedPointRecord:
         # 2) Is it a Scaled Extra Byte Dimension ?
         try:
             dim_info = self.point_format.dimension_by_name(item)
-            if dim_info.is_standard is False:
-                if dim_info.scales is not None or dim_info.offsets is not None:
-                    scale = (
-                        np.ones(dim_info.num_elements, np.float64)
-                        if dim_info.scales is None
-                        else dim_info.scales[: dim_info.num_elements]
-                    )
-                    offset = (
-                        np.zeros(dim_info.num_elements, np.float64)
-                        if dim_info.offsets is None
-                        else dim_info.offsets[: dim_info.num_elements]
-                    )
-                    return ScaledArrayView(self.array[item], scale, offset)
+            if dim_info.is_standard is False and dim_info.is_scaled:
+                assert dim_info.scales is not None and dim_info.offsets is not None
+                return ScaledArrayView(
+                    self.array[item], dim_info.scales, dim_info.offsets
+                )
         except ValueError:
             pass
 

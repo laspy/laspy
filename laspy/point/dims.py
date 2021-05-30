@@ -404,6 +404,10 @@ class DimensionInfo(NamedTuple):
         return int(self.num_bits // (8 * self.num_elements))
 
     @property
+    def is_scaled(self) -> bool:
+        return self.scales is not None or self.offsets is not None
+
+    @property
     def max(self):
         if self.kind == DimensionKind.BitField:
             return (2 ** self.num_bits) - 1
