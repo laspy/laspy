@@ -61,6 +61,10 @@ class LasReader:
 
         If there are no points left to read, returns None.
 
+        Will only read as many points as the header advertise.
+        That is, if you ask to read 50 points and there are only 45 points left
+        this function will only read 45 points.
+
         Parameters
         ----------
         n: The number of points to read
