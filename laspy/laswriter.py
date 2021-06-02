@@ -125,6 +125,7 @@ class LasWriter:
             self.point_writer.write_updated_header(self.header)
         if self.closefd:
             self.dest.close()
+        self.done = True
 
     def _create_laz_backend(
         self, laz_backends: Union[LazBackend, Iterable[LazBackend]]
