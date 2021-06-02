@@ -119,3 +119,19 @@ def test_scaled_array_view():
     with pytest.raises(OverflowError):
         x[8] = np.finfo(np.float64).max
 
+
+def test_array_views_on_empty_things():
+    """
+    Test that __setitem__ of the Array views do not fail
+    when the value is an empty array / sequence,
+    to match the behaviour of numpy array
+    """
+    array = np.zeros(0, np.int32)
+    x = ScaledArrayView(array, 0.01, 10)
+    # This shall not fail
+    x[:] = np.zeros(0)
+
+    array = np.zeros(0, np.uint8)
+    field = SubFieldView(array, 0b0000_0010)
+    # This shall not fail
+    field[:] = np.zeros(0)

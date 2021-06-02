@@ -3,6 +3,7 @@ the mapping between dimension names and their type, mapping between point format
 compatible file version
 """
 import abc
+import collections
 import itertools
 import operator
 from collections import UserDict
@@ -649,6 +650,10 @@ class SubFieldView(ArrayView):
         return self._do_comparison(other, operator.gt)
 
     def __setitem__(self, key, value):
+        # bail out on empty sequences
+        if isinstance(value, collections.abc.Sized) and len(value) == 0:
+            return
+
         if np.max(value) > self.max_value_allowed:
             raise OverflowError(
                 f"value {np.max(value)} is greater than allowed (max: {self.max_value_allowed})"
@@ -733,6 +738,10 @@ class ScaledArrayView(ArrayView):
             return self.__class__(self.array[item], self.scale[item], self.offset[item])
 
     def __setitem__(self, key, value):
+        # bail out on empty sequences
+        if isinstance(value, collections.abc.Sized) and len(value) == 0:
+            return
+
         try:
             info = np.iinfo(self.array.dtype)
         except ValueError:
