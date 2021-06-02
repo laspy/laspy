@@ -27,6 +27,7 @@ class VLRList(list):
             for i, vlr in enumerate(self[start:stop]):
                 if vlr.__class__.__name__ == value:
                     return i + start
+            raise ValueError(f"VLR '{value}' could not be found in the list")
         else:
             return super().index(value, start, stop)
 
