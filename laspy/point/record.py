@@ -31,8 +31,8 @@ class PackedPointRecord:
     This uses of less memory than if the sub-fields were unpacked
 
     >>> #return number is a sub-field
-    >>> from laspy import PointFormat
-    >>> packed_point_record = PackedPointRecord.zeros(PointFormat(0), 10)
+    >>> from laspy import PointFormat, PackedPointRecord
+    >>> packed_point_record = PackedPointRecord.zeros(10,PointFormat(0))
     >>> return_number = packed_point_record['return_number']
     >>> return_number
     <SubFieldView([0 0 0 0 0 0 0 0 0 0])>
@@ -58,8 +58,8 @@ class PackedPointRecord:
         """
         return self.array.dtype.itemsize
 
-    @classmethod
-    def zeros(cls, point_format, point_count):
+    @staticmethod
+    def zeros(point_count, point_format):
         """Creates a new point record with all dimensions initialized to zero
 
         Parameters
@@ -75,10 +75,10 @@ class PackedPointRecord:
 
         """
         data = np.zeros(point_count, point_format.dtype())
-        return cls(data, point_format)
+        return PackedPointRecord(data, point_format)
 
-    @classmethod
-    def empty(cls, point_format):
+    @staticmethod
+    def empty(point_format):
         """Creates an empty point record.
 
         Parameters
@@ -91,7 +91,7 @@ class PackedPointRecord:
         PackedPointRecord
 
         """
-        return cls.zeros(point_format, point_count=0)
+        return PackedPointRecord.zeros(point_count=0, point_format=point_format)
 
     @classmethod
     def from_point_record(
