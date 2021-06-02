@@ -20,6 +20,7 @@ from .point import dims
 from .point.format import PointFormat, ExtraBytesParams
 from .point.record import PackedPointRecord
 from .vlrs.known import ExtraBytesStruct, ExtraBytesVlr
+from .vlrs import VLR
 from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)
@@ -221,7 +222,7 @@ class LasHeader:
         self.number_of_points_by_return: np.ndarray = np.zeros(15, dtype=np.uint32)
 
         #: The VLRS
-        self.vlrs: VLRList = VLRList()
+        self._vlrs: VLRList = VLRList()
 
         #: Extra bytes between end of header and first vlrs
         self.extra_header_bytes: bytes = b""
@@ -367,6 +368,21 @@ class LasHeader:
     @z_min.setter
     def z_min(self, value: float) -> None:
         self.mins[2] = value
+
+    @property
+    def vlrs(self) -> VLRList:
+        return self._vlrs
+
+    @vlrs.setter
+    def vlrs(self, vlrs: typing.Iterable[VLR]) -> None:
+        self._vlrs = VLRList(vlrs)
+
+        try:
+            self.vlrs.extract("LaszipVlr")
+        except ValueError:
+            pass
+
+        self._sync_extra_bytes_vlr()
 
     def add_extra_dims(self, params: List[ExtraBytesParams]) -> None:
         for param in params:
@@ -518,7 +534,7 @@ class LasHeader:
         elif current_pos > header_size:
             raise LaspyException("Incoherent header size")
 
-        header.vlrs = VLRList.read_from(stream, num_to_read=number_of_vlrs)
+        header._vlrs = VLRList.read_from(stream, num_to_read=number_of_vlrs)
 
         if seekable:
             current_pos = stream.tell()
@@ -534,7 +550,7 @@ class LasHeader:
         point_format = PointFormat(point_format_id)
         try:
             extra_bytes_vlr = typing.cast(
-                ExtraBytesVlr, header.vlrs.get("ExtraBytesVlr")[0]
+                ExtraBytesVlr, header._vlrs.get("ExtraBytesVlr")[0]
             )
         except IndexError:
             pass
@@ -544,7 +560,7 @@ class LasHeader:
                     "There is an ExtraByteVlr but the header.point_size matches the "
                     "point size without extra bytes. The extra bytes vlr info will be ignored"
                 )
-                header.vlrs.extract("ExtraBytesVlr")
+                header._vlrs.extract("ExtraBytesVlr")
             else:
                 extra_dims: List[
                     ExtraBytesParams
@@ -562,7 +578,7 @@ class LasHeader:
         little_endian = "little"
         if write_vlrs is True:
             with io.BytesIO() as tmp:
-                self.vlrs.write_to(tmp)
+                self._vlrs.write_to(tmp)
                 vlr_bytes = tmp.getvalue()
 
         stream.write(LAS_FILE_SIGNATURE)
@@ -608,7 +624,7 @@ class LasHeader:
 
         stream.write(header_size.to_bytes(2, little_endian, signed=False))
         stream.write(self.offset_to_point_data.to_bytes(4, little_endian, signed=False))
-        stream.write(len(self.vlrs).to_bytes(4, little_endian, signed=False))
+        stream.write(len(self._vlrs).to_bytes(4, little_endian, signed=False))
 
         point_format_id = self.point_format.id
         if self.are_points_compressed:
@@ -669,7 +685,7 @@ class LasHeader:
 
     def _sync_extra_bytes_vlr(self) -> None:
         try:
-            self.vlrs.extract("ExtraBytesVlr")
+            self._vlrs.extract("ExtraBytesVlr")
         except IndexError:
             pass
 
@@ -706,7 +722,7 @@ class LasHeader:
             eb_struct.data_type = type_id
             eb_vlr.extra_bytes_structs.append(eb_struct)
 
-        self.vlrs.append(eb_vlr)
+        self._vlrs.append(eb_vlr)
 
     # To keep some kind of backward compatibility
     @property

@@ -1,9 +1,11 @@
 import io
+from datetime import date
+
+import pytest
 
 import laspy
 from laspy import LasHeader
 from tests import test_common
-from datetime import date
 
 all_las_but_1_4 = test_common.all_las_but_1_4
 
@@ -132,3 +134,23 @@ def test_header_date():
     expected_date = date(year=2015, month=2, day=22)
     assert las.header.creation_date == expected_date
     assert las.header.creation_date == header_2.creation_date
+
+
+def test_set_vlrs_header():
+    """
+    Test that when setting the vlrs of a header,
+    if the given vlr list has an extra bytes vlr,
+    the header does not take it, as this header is specific
+    """
+    las = laspy.read(test_common.extra_bytes_las)
+
+    # test that it exists
+    _ = las.vlrs.index("ExtraBytesVlr")
+
+    hdr = laspy.LasHeader()
+    hdr.vlrs = las.vlrs
+    # Now it should not be in the hdr vlrs
+    with pytest.raises(ValueError):
+        _ = hdr.vlrs.index("ExtraBytesVlr")
+    # but still in the original list
+    _ = las.vlrs.index("ExtraBytesVlr")
