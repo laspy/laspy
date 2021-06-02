@@ -135,3 +135,21 @@ def test_array_views_on_empty_things():
     field = SubFieldView(array, 0b0000_0010)
     # This shall not fail
     field[:] = np.zeros(0)
+
+
+def test_scaled_point_record_set_x_y_z():
+    record = laspy.ScaleAwarePointRecord.zeros(
+        5, laspy.PointFormat(3), np.array([1.0] * 3), np.array([0.0] * 3))
+
+    assert np.all(record.x == 0.0)
+    assert np.all(record.y == 0.0)
+    assert np.all(record.z == 0.0)
+
+    record.x = 17.0
+    record.y = 17.12
+    record.z = np.array([293090.812739] * len(record))
+
+    assert np.all(record.x == 17.0)
+    assert np.all(record.y == 17.12)
+    assert np.all(record.z == 293090.812739)
+

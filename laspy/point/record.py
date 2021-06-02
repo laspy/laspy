@@ -256,3 +256,9 @@ class ScaleAwarePointRecord(PackedPointRecord):
             return ScaledArrayView(self.array["Z"], self.scales[2], self.offsets[2])
         else:
             return super().__getitem__(item)
+
+    def __setattr__(self, key, value):
+        if key in ("x", "y", "z"):
+            self[key][:] = value
+        else:
+            return super().__setattr__(key, value)
