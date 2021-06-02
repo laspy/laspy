@@ -566,6 +566,9 @@ class LasV_13TestCase(unittest.TestCase):
         File2.z_t += 1
         np.all(test1 != File2.z_t)
 
+    def tearDown(self):
+        really_remove(self.output_tempfile)
+
 
 class LasV_14TestCase(unittest.TestCase):
     simple = os.path.join(os.path.dirname(__file__), 'data', 'simple1_4.las')
@@ -645,6 +648,9 @@ class LasV_14TestCase(unittest.TestCase):
         assert np.all(classification_flags == File2.classification_flags)
         assert np.all(classification == File2.classification)
         assert np.all(scanner_channel == File2.scanner_channel)
+
+    def tearDown(self):
+        really_remove(self.output_tempfile)
 
 
 def really_remove(path, max_=1):
