@@ -193,7 +193,7 @@ class IPointWriter(abc.ABC):
 
     def write_updated_header(self, header):
         self.destination.seek(0, io.SEEK_SET)
-        header.write_to(self.destination)
+        header.write_to(self.destination, ensure_same_size=True)
 
 
 class UncompressedPointWriter(IPointWriter):
@@ -258,7 +258,7 @@ class LaszipPointWriter(IPointWriter):
             file_header.number_of_evlrs = header.number_of_evlrs
             file_header.start_of_first_evlr = header.start_of_first_evlr
             self.dest.seek(0, io.SEEK_SET)
-            file_header.write_to(self.dest)
+            file_header.write_to(self.dest, ensure_same_size=True)
             assert self.dest.tell() == end_of_header_pos
 
 

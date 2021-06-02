@@ -5,6 +5,7 @@ import pytest
 
 import laspy
 from laspy import LasHeader
+from laspy.lib import write_then_read_again
 from tests import test_common
 
 all_las_but_1_4 = test_common.all_las_but_1_4
@@ -154,3 +155,23 @@ def test_set_vlrs_header():
         _ = hdr.vlrs.index("ExtraBytesVlr")
     # but still in the original list
     _ = las.vlrs.index("ExtraBytesVlr")
+
+def test_extra_header_bytes():
+    las = laspy.read(test_common.simple_las)
+
+    extra_bytes = "Some extra bytes between header and VLRs".encode()
+    las.header.extra_header_bytes = extra_bytes
+    assert las.header.extra_header_bytes == extra_bytes
+
+    las = write_then_read_again(las)
+    assert las.header.extra_header_bytes == extra_bytes
+
+def test_extra_vlr_bytes():
+    las = laspy.read(test_common.simple_las)
+
+    extra_bytes = "Some extra bytes between VLRs and start of points".encode()
+    las.header.extra_vlr_bytes = extra_bytes
+    assert las.header.extra_vlr_bytes == extra_bytes
+
+    las = write_then_read_again(las)
+    assert las.header.extra_vlr_bytes == extra_bytes

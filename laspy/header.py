@@ -543,6 +543,9 @@ class LasHeader:
                     header.offset_to_point_data - current_pos
                 )
             elif current_pos > header.offset_to_point_data:
+                print(
+                    current_pos, header.offset_to_point_data, header_size, header.vlrs
+                )
                 raise LaspyException("Incoherent offset to point data")
 
         header.are_points_compressed = is_point_format_compressed(point_format_id)
@@ -574,12 +577,28 @@ class LasHeader:
 
         return header
 
-    def write_to(self, stream: BinaryIO, write_vlrs: bool = True) -> None:
+    def write_to(self, stream: BinaryIO, ensure_same_size: bool = False) -> None:
+        """
+        ensure_same_size: if true this function will raise an internal error
+        of the written header would not change the offset to point data
+        it originally had (meaning the file could become broken),
+        Used when rewriting a header to update the file (new point count, mins, maxs, etc)
+        """
         little_endian = "little"
-        if write_vlrs is True:
-            with io.BytesIO() as tmp:
-                self._vlrs.write_to(tmp)
-                vlr_bytes = tmp.getvalue()
+        with io.BytesIO() as tmp:
+            self._vlrs.write_to(tmp)
+            vlr_bytes = tmp.getvalue()
+
+        header_size = LAS_HEADERS_SIZE[str(self.version)]
+        header_size += len(self.extra_header_bytes)
+        new_offset_to_data = header_size + len(vlr_bytes) + len(self.extra_vlr_bytes)
+
+        if ensure_same_size and new_offset_to_data != self.offset_to_point_data:
+            raise LaspyException(
+                "Internal error, writing header would change original offset to data"
+                "and break the file"
+            )
+        self.offset_to_point_data = new_offset_to_data
 
         stream.write(LAS_FILE_SIGNATURE)
         stream.write(self.file_source_id.to_bytes(2, little_endian, signed=False))
@@ -617,10 +636,6 @@ class LasHeader:
             )
         )
         stream.write(self.creation_date.year.to_bytes(2, little_endian, signed=False))
-
-        header_size = LAS_HEADERS_SIZE[str(self.version)]
-        if write_vlrs is True:
-            self.offset_to_point_data = header_size + len(vlr_bytes)
 
         stream.write(header_size.to_bytes(2, little_endian, signed=False))
         stream.write(self.offset_to_point_data.to_bytes(4, little_endian, signed=False))
@@ -679,9 +694,9 @@ class LasHeader:
                         8, little_endian, signed=False
                     )
                 )
-
-        if write_vlrs is True:
-            stream.write(vlr_bytes)
+        stream.write(self.extra_header_bytes)
+        stream.write(vlr_bytes)
+        stream.write(self.extra_vlr_bytes)
 
     def _sync_extra_bytes_vlr(self) -> None:
         try:

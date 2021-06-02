@@ -98,11 +98,7 @@ class LasAppender:
     def _write_updated_header(self) -> None:
         pos = self.dest.tell()
         self.dest.seek(0, io.SEEK_SET)
-        # we don't want to rewrite the vlrs
-        # as written vlrs may not have to exact
-        # same number of bytes (e.g. if we remove
-        # extra spurious null bytes)
-        self.header.write_to(self.dest, write_vlrs=False)
+        self.header.write_to(self.dest, ensure_same_size=True)
         self.dest.seek(pos, io.SEEK_SET)
 
     def _create_laz_backend(
