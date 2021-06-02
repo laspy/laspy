@@ -215,8 +215,21 @@ def apply_new_scaling(record, scales: np.ndarray, offsets: np.ndarray) -> None:
 class ScaleAwarePointRecord(PackedPointRecord):
     def __init__(self, array, point_format, scales, offsets):
         super().__init__(array, point_format)
-        self.scales = scales
-        self.offsets = offsets
+        self.scales = np.array(scales)
+        self.offsets = np.array(offsets)
+
+    @staticmethod
+    def zeros(point_count, point_format, scales, offsets):
+        """Creates a new point record with all dimensions initialized to zero"""
+        data = np.zeros(point_count, point_format.dtype())
+        return ScaleAwarePointRecord(data, point_format, scales, offsets)
+
+    @staticmethod
+    def empty(point_format, scales, offsets):
+        """Creates an empty point record."""
+        return ScaleAwarePointRecord.zeros(
+            point_count=0, point_format=point_format, scales=scales, offsets=offsets
+        )
 
     def change_scaling(self, scales=None, offsets=None) -> None:
         if scales is not None:

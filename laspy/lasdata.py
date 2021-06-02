@@ -35,7 +35,7 @@ class LasData:
     ) -> None:
         if points is None:
             points = record.PackedPointRecord.zeros(
-                header.point_format, header.point_count
+                header.point_count, header.point_format
             )
         elif points.point_format != header.point_format:
             raise errors.LaspyException("Incompatible Point Formats")
