@@ -22,12 +22,16 @@ from .point.record import PackedPointRecord
 from .vlrs.known import ExtraBytesStruct, ExtraBytesVlr
 from .vlrs import VLR
 from .vlrs.vlrlist import VLRList
+from . import __version__
 
 logger = logging.getLogger(__name__)
 
 GENERATING_SOFTWARE_LEN = 32
 SOFTWARE_IDENTIFIER_LEN = 32
+
 LAS_FILE_SIGNATURE = b"LASF"
+DEFAULT_GENERATING_SOFTWARE = f"laspy {__version__}"
+assert len(DEFAULT_GENERATING_SOFTWARE) < GENERATING_SOFTWARE_LEN
 
 
 class Version(NamedTuple):
@@ -204,7 +208,7 @@ class LasHeader:
         self.system_identifier: str = "OTHER"
         #: The software which generated the file
         #: Initialized to 'laspy'
-        self.generating_software: str = "laspy"
+        self.generating_software: str = DEFAULT_GENERATING_SOFTWARE
         self._point_format: PointFormat = point_format
         #: Day the file was created, initialized to date.today()
         self.creation_date: Optional[date] = date.today()
