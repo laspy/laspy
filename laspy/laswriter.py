@@ -93,6 +93,11 @@ class LasWriter:
         self.point_writer.write_initial_header_and_vlrs(self.header)
 
     def write_points(self, points: PackedPointRecord) -> None:
+        """
+        Parameters
+        ----------
+        points: The points to be written
+        """
         if not points:
             return
 

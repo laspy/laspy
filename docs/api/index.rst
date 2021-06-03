@@ -23,6 +23,8 @@ Re-exported classes
  - :class:`.LasReader`
  - :class:`.LasWriter`
  - :class:`.LasAppender`
+ - :class:`.PackedPointRecord`
+ - :class:`.ScaleAwarePointRecord`
 
 
 Submodules
