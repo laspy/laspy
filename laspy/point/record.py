@@ -213,22 +213,81 @@ def apply_new_scaling(record, scales: np.ndarray, offsets: np.ndarray) -> None:
 
 
 class ScaleAwarePointRecord(PackedPointRecord):
+    """A ScaleAwarePointRecord is a point record that knows the scales and offets
+    to use, and is thus able to get and set the scaled x, y, z coordinates
+
+    To create one, use :meth:`.ScaleAwarePointRecord.zeros` or :meth:`.ScaleAwarePointRecord.empty`
+
+    """
+
     def __init__(self, array, point_format, scales, offsets):
         super().__init__(array, point_format)
         self.scales = np.array(scales)
         self.offsets = np.array(offsets)
 
+        if self.scales.shape != (3,):
+            raise ValueError("scales must be an array of 3 elements")
+
+        if self.offsets.shape != (3,):
+            raise ValueError("scales must be an array of 3 elements")
+
     @staticmethod
-    def zeros(point_count, point_format, scales, offsets):
-        """Creates a new point record with all dimensions initialized to zero"""
+    def zeros(
+        point_count, *, point_format=None, scales=None, offsets=None, header=None
+    ):
+        """Creates a new point record with all dimensions initialized to zero
+
+        Examples
+        --------
+
+        >>> record = ScaleAwarePointRecord.zeros(
+        ... 5, point_format=PointFormat(3), scales=[1.0, 1.0, 1.0], offsets=[0.1, 0.5, 17.5])
+        >>> len(record)
+        5
+
+        >>> import laspy
+        >>> hdr = laspy.LasHeader()
+        >>> record = ScaleAwarePointRecord.zeros(5, header=hdr)
+        >>> len(record)
+        5
+
+        >>> hdr = laspy.LasHeader()
+        >>> record = ScaleAwarePointRecord.zeros(5, header=hdr, scales=[1.0, 1.0, 1.0])
+        Traceback (most recent call last):
+        ValueError: header argument is mutually exclusive with point_format, scales and offets
+
+        >>> record = ScaleAwarePointRecord.zeros(5, point_format=PointFormat(3))
+        Traceback (most recent call last):
+        ValueError: You have to provide all 3: point_format, scale and offsets
+        """
+        first_set = (point_format, scales, offsets)
+
+        if header is not None:
+            if any(arg is not None for arg in first_set):
+                raise ValueError(
+                    "header argument is mutually exclusive with point_format, scales and offets"
+                )
+            point_format = header.point_format
+            scales = header.scales
+            offsets = header.offsets
+        else:
+            if any(arg is None for arg in first_set):
+                raise ValueError(
+                    "You have to provide all 3: " "point_format, scale and offsets"
+                )
+
         data = np.zeros(point_count, point_format.dtype())
         return ScaleAwarePointRecord(data, point_format, scales, offsets)
 
     @staticmethod
-    def empty(point_format, scales, offsets):
+    def empty(point_format, scales=None, offsets=None, header=None):
         """Creates an empty point record."""
         return ScaleAwarePointRecord.zeros(
-            point_count=0, point_format=point_format, scales=scales, offsets=offsets
+            point_count=0,
+            point_format=point_format,
+            scales=scales,
+            offsets=offsets,
+            header=header,
         )
 
     def change_scaling(self, scales=None, offsets=None) -> None:

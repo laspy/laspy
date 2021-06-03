@@ -139,7 +139,11 @@ def test_array_views_on_empty_things():
 
 def test_scaled_point_record_set_x_y_z():
     record = laspy.ScaleAwarePointRecord.zeros(
-        5, laspy.PointFormat(3), np.array([1.0] * 3), np.array([0.0] * 3))
+        5,
+        point_format=laspy.PointFormat(3),
+        scales=[1.0] * 3,
+        offsets=[0.0] * 3
+    )
 
     assert np.all(record.x == 0.0)
     assert np.all(record.y == 0.0)
