@@ -290,7 +290,7 @@ class ScaleAwarePointRecord(PackedPointRecord):
             header=header,
         )
 
-    def change_scaling(self, scales=None, offsets=None) -> None:
+    def _change_scaling(self, scales=None, offsets=None) -> None:
         if scales is not None:
             self.scales = scales
         if offsets is not None:
