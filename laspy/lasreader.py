@@ -54,14 +54,15 @@ class LasReader:
 
         self.points_read = 0
 
-    def read_points(self, n: int) -> Optional[record.ScaleAwarePointRecord]:
+    def read_points(self, n: int) -> record.ScaleAwarePointRecord:
         """Read n points from the file
 
-        If there are no points left to read, returns None.
 
         Will only read as many points as the header advertise.
         That is, if you ask to read 50 points and there are only 45 points left
         this function will only read 45 points.
+
+        If there are no points left to read, returns an empty point record.
 
         Parameters
         ----------
@@ -70,7 +71,11 @@ class LasReader:
         """
         points_left = self.header.point_count - self.points_read
         if points_left <= 0:
-            return None
+            return record.ScaleAwarePointRecord.empty(
+                self.header.point_format,
+                self.header.scales,
+                self.header.offsets,
+            )
 
         if n < 0:
             n = points_left
@@ -86,13 +91,14 @@ class LasReader:
         points = record.ScaleAwarePointRecord(
             r.array, r.point_format, self.header.scales, self.header.offsets
         )
+
         self.points_read += n
         return points
 
     def read(self) -> LasData:
         """Reads all the points not read and returns a LasData object"""
         points = self.read_points(-1)
-        if points is None:
+        if not points:
             points = record.PackedPointRecord.empty(self.header.point_format)
         else:
             points = record.PackedPointRecord(points.array, points.point_format)
@@ -219,7 +225,7 @@ class PointChunkIterator:
 
     def __next__(self) -> record.ScaleAwarePointRecord:
         points = self.reader.read_points(self.points_per_iteration)
-        if points is None:
+        if not points:
             raise StopIteration
         return points
 
