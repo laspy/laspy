@@ -25,6 +25,8 @@ from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)
 
+GENERATING_SOFTWARE_LEN = 32
+SOFTWARE_IDENTIFIER_LEN = 32
 LAS_FILE_SIGNATURE = b"LASF"
 
 
@@ -469,8 +471,12 @@ class LasHeader:
             int.from_bytes(stream.read(1), little_endian, signed=False),
         )
 
-        header.system_identifier = stream.read(32).rstrip(b"\0").decode()
-        header.generating_software = stream.read(32).rstrip(b"\0").decode()
+        header.system_identifier = (
+            stream.read(SOFTWARE_IDENTIFIER_LEN).rstrip(b"\0").decode()
+        )
+        header.generating_software = (
+            stream.read(GENERATING_SOFTWARE_LEN).rstrip(b"\0").decode()
+        )
 
         creation_day_of_year = int.from_bytes(
             stream.read(2), little_endian, signed=False
@@ -608,24 +614,24 @@ class LasHeader:
         stream.write(self.version.minor.to_bytes(1, little_endian, signed=False))
 
         system_identifier = self.system_identifier.encode("ascii")
-        if len(system_identifier) > 32:
+        if len(system_identifier) > SOFTWARE_IDENTIFIER_LEN:
             logger.warning(
-                f"system identifier does not fit into the 32 maximum bytes,"
+                f"system identifier does not fit into the {SOFTWARE_IDENTIFIER_LEN} maximum bytes,"
                 f" it will be truncated"
             )
-            stream.write(system_identifier[:32])
+            stream.write(system_identifier[:SOFTWARE_IDENTIFIER_LEN])
         else:
-            stream.write(system_identifier.ljust(32, b"\0"))
+            stream.write(system_identifier.ljust(SOFTWARE_IDENTIFIER_LEN, b"\0"))
 
         generating_software = self.generating_software.encode("ascii")
-        if len(generating_software) > 32:
+        if len(generating_software) > GENERATING_SOFTWARE_LEN:
             logger.warning(
-                f"generating software does not fit into the 32 maximum bytes,"
+                f"generating software does not fit into the {GENERATING_SOFTWARE_LEN} maximum bytes,"
                 f" it will be truncated"
             )
-            stream.write(generating_software[:32])
+            stream.write(generating_software[:GENERATING_SOFTWARE_LEN])
         else:
-            stream.write(generating_software.ljust(32, b"\0"))
+            stream.write(generating_software.ljust(GENERATING_SOFTWARE_LEN, b"\0"))
 
         if self.creation_date is None:
             self.creation_date = date.today()
