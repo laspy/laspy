@@ -51,17 +51,6 @@ class VLR(BaseVLR):
     def record_data_bytes(self) -> bytes:
         return self.record_data
 
-    @classmethod
-    def read_from(cls, stream: BinaryIO):
-        stream.read(2)
-        user_id = stream.read(16).decode().rstrip("\0")
-        record_id = int.from_bytes(stream.read(2), byteorder="little", signed=False)
-        description = stream.read(16).decode().rstrip("\0")
-        record_length = int.from_bytes(stream.read(2), byteorder="little", signed=False)
-        record_data = stream.read(record_length)
-        vlr = cls(user_id, record_id, description, record_data)
-        return vlr
-
     def __eq__(self, other):
         return (
             self.record_id == other.record_id
