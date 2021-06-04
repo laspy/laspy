@@ -4,7 +4,6 @@ compatible file version
 """
 import abc
 import collections
-import itertools
 import operator
 from collections import UserDict
 from enum import Enum
@@ -54,7 +53,7 @@ class SubField(NamedTuple):
 
 
 def _point_format_to_dtype(
-    point_format: Iterable[str], dimensions_to_type: Mapping[str, str]
+    point_format: Iterable[str], dimensions_to_type: Mapping[str, np.dtype]
 ) -> np.dtype:
     """build the numpy.dtype for a point format
 
@@ -76,7 +75,7 @@ def _point_format_to_dtype(
 
 def _build_point_formats_dtypes(
     point_format_dimensions: Mapping[int, Tuple[str]],
-    dimensions_dict: Mapping[str, str],
+    dimensions_dict: Mapping[str, np.dtype],
 ) -> Dict[int, np.dtype]:
     """Builds the dict mapping point format id to numpy.dtype
     In the dtypes, bit fields are still packed, and need to be unpacked each time
@@ -103,33 +102,33 @@ OLD_LASPY_NAMES = {
 
 # Definition of the points dimensions and formats
 # LAS version [1.0, 1.1, 1.2, 1.3, 1.4]
-DIMENSIONS_TO_TYPE: Dict[str, str] = {
-    "X": "i4",
-    "Y": "i4",
-    "Z": "i4",
-    "intensity": "u2",
-    "bit_fields": "u1",
-    "raw_classification": "u1",
-    "scan_angle_rank": "i1",
-    "user_data": "u1",
-    "point_source_id": "u2",
-    "gps_time": "f8",
-    "red": "u2",
-    "green": "u2",
-    "blue": "u2",
+DIMENSIONS_TO_TYPE: Dict[str, np.dtype] = {
+    "X": np.dtype("i4"),
+    "Y": np.dtype("i4"),
+    "Z": np.dtype("i4"),
+    "intensity": np.dtype("u2"),
+    "bit_fields": np.dtype("u1"),
+    "raw_classification": np.dtype("u1"),
+    "scan_angle_rank": np.dtype("i1"),
+    "user_data": np.dtype("u1"),
+    "point_source_id": np.dtype("u2"),
+    "gps_time": np.dtype("f8"),
+    "red": np.dtype("u2"),
+    "green": np.dtype("u2"),
+    "blue": np.dtype("u2"),
     # Waveform related dimensions
-    "wavepacket_index": "u1",
-    "wavepacket_offset": "u8",
-    "wavepacket_size": "u4",
-    "return_point_wave_location": "u4",
-    "x_t": "f4",
-    "y_t": "f4",
-    "z_t": "f4",
+    "wavepacket_index": np.dtype("u1"),
+    "wavepacket_offset": np.dtype("u8"),
+    "wavepacket_size": np.dtype("u4"),
+    "return_point_wave_location": np.dtype("u4"),
+    "x_t": np.dtype("f4"),
+    "y_t": np.dtype("f4"),
+    "z_t": np.dtype("f4"),
     # Las 1.4
-    "classification_flags": "u1",
-    "scan_angle": "i2",
-    "classification": "u1",
-    "nir": "u2",
+    "classification_flags": np.dtype("u1"),
+    "scan_angle": np.dtype("i2"),
+    "classification": np.dtype("u1"),
+    "nir": np.dtype("u2"),
 }
 
 POINT_FORMAT_0: Tuple[str, ...] = (
@@ -339,45 +338,39 @@ class DimensionInfo(NamedTuple):
     scales: Optional[np.ndarray] = None
 
     @classmethod
-    def from_type_str(
+    def from_extra_bytes_param(cls, params):
+        me = cls(
+            params.name,
+            DimensionKind.from_letter(params.type.base.kind),
+            params.type.itemsize * 8,
+            params.type.shape[0] if params.type.ndim == 1 else 1,
+            False,
+            params.description,
+            params.offsets,
+            params.scales,
+        )
+        me._validate()
+        return me
+
+    @classmethod
+    def from_dtype(
         cls,
         name: str,
-        type_str: str,
+        dtype: np.dtype,
         is_standard: bool = True,
         description: str = "",
         offsets: Optional[np.ndarray] = None,
         scales: Optional[np.ndarray] = None,
     ) -> "DimensionInfo":
-        if (
-            offsets is not None
-            and scales is None
-            or offsets is None
-            and scales is not None
-        ):
-            raise ValueError("Cannot provide scales without offsets and vice-versa")
-
-        first_digits = "".join(itertools.takewhile(lambda l: l.isdigit(), type_str))
-        if first_digits:
-            num_elements = int(first_digits)
-            type_str = type_str[len(first_digits) :]
+        if dtype.ndim != 0:
+            num_elements = dtype.shape[0]
         else:
             num_elements = 1
 
-        dtype = np.dtype(type_str)
-        kind = DimensionKind.from_letter(type_str[0])
-        num_bits = num_elements * dtype.itemsize * 8
+        kind = DimensionKind.from_letter(dtype.base.kind)
+        num_bits = dtype.itemsize * 8
 
-        if offsets is not None and len(offsets) != num_elements:
-            raise ValueError(
-                f"len(offsets) ({len(offsets)}) is not the same as the number of elements ({num_elements})"
-            )
-
-        if scales is not None and len(scales) != num_elements:
-            raise ValueError(
-                f"len(scales) ({len(scales)}) is not the same as the number of elements ({num_elements})"
-            )
-
-        return cls(
+        self = cls(
             name,
             kind,
             num_bits,
@@ -387,6 +380,8 @@ class DimensionInfo(NamedTuple):
             offsets=offsets,
             scales=scales,
         )
+        self._validate()
+        return self
 
     @classmethod
     def from_bitmask(
@@ -439,6 +434,13 @@ class DimensionInfo(NamedTuple):
             f"{self.num_elements}{self.kind.letter()}{self.num_bytes_singular_element}"
         )
 
+    @property
+    def dtype(self) -> Optional[np.dtype]:
+        type_str = self.type_str()
+        if type_str is not None:
+            return np.dtype(type_str)
+        return None
+
     def __eq__(self, other: "DimensionInfo") -> bool:
         # Named Tuple implements that for us, but
         # when scales and offset are not None (thus are array)
@@ -456,6 +458,22 @@ class DimensionInfo(NamedTuple):
 
     def __ne__(self, other: "DimensionInfo") -> bool:
         return not self == other
+
+    def _validate(self):
+        if (self.offsets is not None and self.scales is None) or (
+            self.offsets is None and self.scales is not None
+        ):
+            raise ValueError("Cannot provide scales without offsets and vice-versa")
+
+        if self.offsets is not None and len(self.offsets) != self.num_elements:
+            raise ValueError(
+                f"len(offsets) ({len(self.offsets)}) is not the same as the number of elements ({self.num_elements})"
+            )
+
+        if self.scales is not None and len(self.scales) != self.num_elements:
+            raise ValueError(
+                f"len(scales) ({len(self.scales)}) is not the same as the number of elements ({self.num_elements})"
+            )
 
 
 def size_of_point_format_id(point_format_id: int) -> int:

@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from typing import Optional, Iterable
+from typing import Optional, Iterable, Union, Type
 
 import numpy as np
 
@@ -13,15 +13,17 @@ class ExtraBytesParams:
     def __init__(
         self,
         name: str,
-        type: str,
+        type: Union[str, np.dtype, Type[np.uint8]],
         description: str = "",
         offsets: Optional[np.ndarray] = None,
         scales: Optional[np.ndarray] = None,
     ) -> None:
         self.name = name
         """ The name of the extra dimension """
-        self.type = type
+        if not isinstance(type, np.dtype):
+            type = np.dtype(type)
         """ The type of the extra dimension """
+        self.type = type
         self.description = description
         """ A description of the extra dimension """
         self.offsets = offsets
@@ -67,7 +69,7 @@ class PointFormat:
             try:
                 sub_fields = composed_dims[dim_name]
             except KeyError:
-                dimension = dims.DimensionInfo.from_type_str(
+                dimension = dims.DimensionInfo.from_dtype(
                     dim_name, dims.DIMENSIONS_TO_TYPE[dim_name], is_standard=True
                 )
                 self.dimensions.append(dimension)
@@ -178,14 +180,8 @@ class PointFormat:
 
     def add_extra_dimension(self, param: ExtraBytesParams) -> None:
         """Add an extra, user-defined dimension"""
-        dim_info = dims.DimensionInfo.from_type_str(
-            param.name,
-            param.type,
-            is_standard=False,
-            description=param.description,
-            offsets=param.offsets,
-            scales=param.scales,
-        )
+        dim_info = dims.DimensionInfo.from_extra_bytes_param(param)
+        # todo: this should be checked in extra bytes param ctor
         if (
             dim_info.num_elements > 3
             and dim_info.kind != dims.DimensionKind.UnsignedInteger

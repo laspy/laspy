@@ -575,15 +575,15 @@ class LasHeader:
                 )
                 header._vlrs.extract("ExtraBytesVlr")
             else:
-                extra_dims: List[
-                    ExtraBytesParams
-                ] = extra_bytes_vlr.type_of_extra_dims()
-                for extra_dim_info in extra_dims:
+                for extra_dim_info in extra_bytes_vlr.type_of_extra_dims():
                     point_format.add_extra_dimension(extra_dim_info)
         header._point_format = point_format
 
         if point_size != point_format.size:
-            raise LaspyException("Incoherent point size")
+            raise LaspyException(
+                f"Incoherent point size, "
+                f"header says {point_size} point_format created says {point_format.size}"
+            )
 
         return header
 
@@ -720,31 +720,24 @@ class LasHeader:
 
         eb_vlr = ExtraBytesVlr()
         for extra_dimension in extra_dimensions:
-            type_str = extra_dimension.type_str()
-            assert type_str is not None
+            dtype = extra_dimension.dtype
+            assert dtype is not None
 
             eb_struct = ExtraBytesStruct(
                 name=extra_dimension.name.encode(),
                 description=extra_dimension.description.encode(),
             )
 
-            if extra_dimension.num_elements > 3 and type_str[-2:] == "u1":
+            if extra_dimension.num_elements > 3 and dtype.base == np.uint8:
                 type_id = 0
                 eb_struct.options = extra_dimension.num_elements
             else:
-                type_id = extradims.get_id_for_extra_dim_type(type_str)
-
-            if extra_dimension.scales is not None:
-                eb_struct.set_scale_is_relevant()
-                for i in range(extra_dimension.num_elements):
-                    eb_struct.scale[i] = extra_dimension.scales[i]
-
-            if extra_dimension.offsets is not None:
-                eb_struct.set_offset_is_relevant()
-                for i in range(extra_dimension.num_elements):
-                    eb_struct.offset[i] = extra_dimension.offsets[i]
+                type_id = extradims.get_id_for_extra_dim_type(dtype)
 
             eb_struct.data_type = type_id
+            eb_struct.scale = extra_dimension.scales
+            eb_struct.offset = extra_dimension.offsets
+
             eb_vlr.extra_bytes_structs.append(eb_struct)
 
         self._vlrs.append(eb_vlr)

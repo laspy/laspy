@@ -71,9 +71,9 @@ def test_creating_extra_bytes(extra_bytes_params, simple_las_path):
 def test_creating_scaled_extra_bytes(extra_bytes_params, simple_las_path):
     las = laspy.read(simple_las_path)
 
-    try:
-        num_elements = int(extra_bytes_params.type[0])
-    except ValueError:
+    if extra_bytes_params.type.ndim == 1:
+        num_elements = extra_bytes_params.type.shape[0]
+    else:
         num_elements = 1
 
     params = laspy.ExtraBytesParams(
@@ -256,7 +256,7 @@ def test_cant_create_scaled_extra_bytes_with_offsets_array_smaller(num_elements)
     )
 
 
-@pytest.mark.parametrize("num_elements", [1, 2, 3])
+@pytest.mark.parametrize("num_elements", [2])
 def test_cant_create_scaled_extra_bytes_with_scales_array_smaller(num_elements):
     las = laspy.create()
     with pytest.raises(ValueError) as error:

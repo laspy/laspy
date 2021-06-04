@@ -50,11 +50,13 @@ and an array field of 3 doubles for each points.
 .. code-block:: python
 
     import laspy
+    import numpy as np
+
     las = laspy.read("somefile.las")
 
     las.add_extra_dim(laspy.ExtraBytesParams(
         name="codification",
-        type="uint64",
+        type=np.uint64,
         description="More classes available"
     ))
 

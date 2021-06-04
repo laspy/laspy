@@ -13,10 +13,8 @@ import numpy as np
 
 from .vlr import BaseVLR, VLR
 from ..extradims import (
-    get_type_for_extra_dim,
-    get_kind_of_extra_dim,
+    get_dtype_for_extra_dim,
 )
-from ..point.dims import DimensionKind
 from ..point.format import ExtraBytesParams
 from ..utils import encode_to_null_terminated
 
@@ -217,21 +215,8 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
     SCALE_BIT_MASK = 0b000_1000
     OFFSET_BIT_MASK = 0b0001_0000
 
-    def _struct_parser_for_kind(self):
-        signedness = get_kind_of_extra_dim(self.data_type)
-
-        if signedness == DimensionKind.FloatingPoint:
-            return self._double_struct
-        elif signedness == DimensionKind.SignedInteger:
-            return self._int64t_struct
-        elif signedness == DimensionKind.UnsignedInteger:
-            return self._uint64t_struct
-        else:
-            return None
-
-    def _parse_special_property(self, name):
-        strct = self._struct_parser_for_kind()
-        return tuple(strct.unpack(d)[0] for d in getattr(self, name))
+    def _parse_special_property(self, name) -> np.ndarray:
+        return np.frombuffer(getattr(self, name), dtype=self.dtype())
 
     @property
     def no_data(self):
@@ -251,25 +236,41 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
             return self._offset
         return None
 
+    @offset.setter
+    def offset(self, value):
+        if value is None:
+            self.options &= ~self.OFFSET_BIT_MASK
+        else:
+            print("offsets", self._offset, value)
+            num_elements = self.num_elements()
+            self._offset[:num_elements] = value[:num_elements]
+            self.options |= self.OFFSET_BIT_MASK
+
     @property
     def scale(self):
         if self.options & self.SCALE_BIT_MASK != 0:
             return self._scale
         return None
 
-    def set_scale_is_relevant(self) -> None:
-        self.options |= self.SCALE_BIT_MASK
-
-    def set_offset_is_relevant(self) -> None:
-        self.options |= self.OFFSET_BIT_MASK
+    @scale.setter
+    def scale(self, value):
+        if value is None:
+            self.options &= ~self.SCALE_BIT_MASK
+        else:
+            num_elements = self.num_elements()
+            self._scale[:num_elements] = value[:num_elements]
+            self.options |= self.SCALE_BIT_MASK
 
     def format_name(self):
         return self.name.rstrip(NULL_BYTE).decode()
 
-    def type_str(self):
+    def dtype(self) -> np.dtype:
         if self.data_type == 0:
-            return "{}u1".format(self.options)
-        return get_type_for_extra_dim(self.data_type)
+            if self.options == 1:
+                # numpy says doing '1u1' is deprecated
+                return np.dtype("u1")
+            return np.dtype(f"{self.options}u1")
+        return get_dtype_for_extra_dim(self.data_type)
 
     def num_elements(self) -> int:
         if self.data_type == 0:
@@ -340,7 +341,7 @@ class ExtraBytesVlr(BaseKnownVLR):
             dim_info_list.append(
                 ExtraBytesParams(
                     eb_struct.format_name(),
-                    eb_struct.type_str(),
+                    eb_struct.dtype(),
                     description=eb_struct.description.rstrip(NULL_BYTE).decode(),
                     scales=scales,
                     offsets=offsets,

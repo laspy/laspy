@@ -1,8 +1,8 @@
+import numpy as np
+
 from . import errors
-from .point.dims import DimensionKind
 
 _extra_dims_base = (
-    "",
     "u1",
     "i1",
     "u2",
@@ -15,41 +15,20 @@ _extra_dims_base = (
     "f8",
 )
 
-_extra_dims_array_2 = tuple("2{}".format(_type) for _type in _extra_dims_base[1:])
-_extra_dims_array_3 = tuple("3{}".format(_type) for _type in _extra_dims_base[1:])
-
-_extra_dims = _extra_dims_base + _extra_dims_array_2 + _extra_dims_array_3
-
-_type_to_extra_dim_id = {type_str: i for i, type_str in enumerate(_extra_dims)}
-
-
-def get_kind_of_extra_dim(type_index: int) -> DimensionKind:
-    """Returns the signedness foe the given type index
-
-    Parameters
-    ----------
-    type_index: int
-        index of the type as defined in the LAS Specification
-
-    Returns
-    -------
-    DimensionSignedness,
-        the enum variant
-    """
-    try:
-        t = _extra_dims[type_index]
-        if t[0] == "i":
-            return DimensionKind.UnsignedInteger
-        elif t[0] == "u":
-            return DimensionKind.SignedInteger
-        else:
-            return DimensionKind.FloatingPoint
-    except IndexError:
-        raise errors.UnknownExtraType(type_index)
+_allowed_extra_dims_types = []
+_allowed_extra_dims_types.extend(np.dtype(base) for base in _extra_dims_base)
+for i in (2, 3):
+    _allowed_extra_dims_types.extend(
+        np.dtype(f"{i}{base}") for base in _extra_dims_base
+    )
+_allowed_extra_dims_types = tuple(_allowed_extra_dims_types)
 
 
-def get_type_for_extra_dim(type_index: int) -> str:
-    """Returns the type str ('u1" or "u2", etc) for the given type index
+def get_dtype_for_extra_dim(type_index: int) -> np.dtype:
+    """Returns the dtype for the given type index
+
+    Note that 0 is a special case not handled by this
+
     Parameters
     ----------
     type_index: int
@@ -61,18 +40,19 @@ def get_type_for_extra_dim(type_index: int) -> str:
         a string representing the type, can be understood by numpy
 
     """
+    assert type_index != 0, "Can't get np.dtype for type_index 0"
     try:
-        return _extra_dims[type_index]
+        return _allowed_extra_dims_types[type_index - 1]
     except IndexError:
         raise errors.UnknownExtraType(type_index) from None
 
 
-def get_id_for_extra_dim_type(type_str: str) -> int:
+def get_id_for_extra_dim_type(dtype: np.dtype) -> int:
     """Returns the index of the type as defined in the LAS Specification
 
     Parameters
     ----------
-    type_str: str
+    dtype: str
 
     Returns
     -------
@@ -81,6 +61,6 @@ def get_id_for_extra_dim_type(type_str: str) -> int:
 
     """
     try:
-        return _type_to_extra_dim_id[type_str]
-    except KeyError:
-        raise errors.UnknownExtraType(type_str) from None
+        return _allowed_extra_dims_types.index(dtype) + 1
+    except ValueError:
+        raise errors.UnknownExtraType(dtype) from None
