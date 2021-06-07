@@ -84,7 +84,6 @@ chunk by chunk.
             for points in f.chunk_iterator(1_234_567):
                 writer.write_points(points[points.classification == 2]
 
-.. _accessing_header:
 
 Creating
 ========
@@ -93,13 +92,14 @@ Creating a new Las from scratch is hopefully simple:
 
 Use :func:`laspy.create`.
 
-Or the :class:`LasData` constructor which requires a :class:`.LasHeader`.
+Or the :class:`.LasData` constructor which requires a :class:`.LasHeader`.
 
 You can get a header from a file or creating a new one.
 
 .. code-block:: python
 
     import laspy
+    import numpy as np
 
     las = laspy.read("some_file.laz")
 
@@ -108,6 +108,8 @@ You can get a header from a file or creating a new one.
     new_las.write("ground.laz")
 
     new_hdr = laspy.LasHeader(version="1.4", point_format=6)
+    # You can set the scales and offsets to values tha suits your data
+    new_hdr.scales = np.array([1.0, 0.5, 0.1])
     new_las = laspy.LasData(new_hdr)
 
 Converting
@@ -117,6 +119,8 @@ laspy also offers the ability to convert a file between the different version an
 (as long as they are compatible).
 
 To convert, use the :func:`laspy.convert`
+
+.. _accessing_header:
 
 Accessing the file header
 =========================
