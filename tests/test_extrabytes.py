@@ -256,7 +256,7 @@ def test_cant_create_scaled_extra_bytes_with_offsets_array_smaller(num_elements)
     )
 
 
-@pytest.mark.parametrize("num_elements", [2])
+@pytest.mark.parametrize("num_elements", [1,2,3])
 def test_cant_create_scaled_extra_bytes_with_scales_array_smaller(num_elements):
     las = laspy.create()
     with pytest.raises(ValueError) as error:
