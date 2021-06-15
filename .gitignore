@@ -1,6 +1,11 @@
 laspy.egg-info/
 *.pyc
+
+dist
 docs/build
 build/
-.vscode/settings.json
+venv
+.venv
+
+.vscode
 .idea
