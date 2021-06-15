@@ -72,7 +72,7 @@ sudo ln -s /usr/local/bin/laszip /usr/local/bin laszip-cli
 
 ## Changelog
 
-## Unreleased
+### Version 1.7.1
 - Fixed numpy version check (issue [#128](https://github.com/laspy/laspy/issues/128), PR [#129](https://github.com/laspy/laspy/pull/129))    
 
 ### Version 1.7.0
@@ -80,8 +80,6 @@ sudo ln -s /usr/local/bin/laszip /usr/local/bin laszip-cli
 - Fixed bug in point record format 5, 9 and 10 [#105](https://github.com/laspy/laspy/issues/105)
 - Return explicit msg if laszip executable was not found [#110](https://github.com/laspy/laspy/issues/110)
 - Supprt numpy 1.17 [#122](https://github.com/laspy/laspy/issues/122)
-
-
 
 ### Version 1.6.0
 
