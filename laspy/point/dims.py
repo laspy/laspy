@@ -581,11 +581,11 @@ class ArrayView(abc.ABC):
     def ndim(self):
         return self.array.ndim
 
-    def max(self, **kwargs):
-        return np.array(self).max(**kwargs)
+    def max(self, *args, **kwargs):
+        return np.array(self).max(*args, **kwargs)
 
-    def min(self, **kwargs):
-        return np.array(self).min(**kwargs)
+    def min(self, *args, **kwargs):
+        return np.array(self).min(*args, **kwargs)
 
     def __len__(self):
         return len(self.array)
@@ -710,11 +710,11 @@ class ScaledArrayView(ArrayView):
     def _remove_scale(self, value):
         return np.round((value - self.offset) / self.scale)
 
-    def max(self, **kwargs):
-        return self._apply_scale(self.array.max(kwargs))
+    def max(self, *args, **kwargs):
+        return self._apply_scale(self.array.max(*args, **kwargs))
 
-    def min(self, **kwargs):
-        return self._apply_scale(self.array.min(kwargs))
+    def min(self, *args, **kwargs):
+        return self._apply_scale(self.array.min(*args, **kwargs))
 
     @property
     def dtype(self):

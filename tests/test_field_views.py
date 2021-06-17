@@ -21,6 +21,8 @@ def test_sub_field_view_behaves_like_array():
     assert np.max(field) == 0
     assert field.min() == 0
     assert np.min(field) == 0
+    assert np.min(field) == field.min()
+    assert np.max(field) == field.max()
 
     field[:] = 1
     assert np.all(field == 1)
@@ -97,12 +99,15 @@ def test_sub_field_as_array():
     cpy[:] = field[:]
     assert np.all(cpy == field)
 
+
 def test_scaled_array_view():
     array = np.zeros(10, np.int32)
     x = ScaledArrayView(array, 0.01, 10)
 
     assert np.max(x) == 10.0
     assert np.min(x) == 10.0
+    assert np.min(x) == x.min()
+    assert np.max(x) == x.max()
 
     assert np.all(x > 0.0)
     assert np.all(x < 18.0)
@@ -139,10 +144,7 @@ def test_array_views_on_empty_things():
 
 def test_scaled_point_record_set_x_y_z():
     record = laspy.ScaleAwarePointRecord.zeros(
-        5,
-        point_format=laspy.PointFormat(3),
-        scales=[1.0] * 3,
-        offsets=[0.0] * 3
+        5, point_format=laspy.PointFormat(3), scales=[1.0] * 3, offsets=[0.0] * 3
     )
 
     assert np.all(record.x == 0.0)
@@ -156,4 +158,3 @@ def test_scaled_point_record_set_x_y_z():
     assert np.all(record.x == 17.0)
     assert np.all(record.y == 17.12)
     assert np.all(record.z == 293090.812739)
-
