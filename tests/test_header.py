@@ -156,6 +156,7 @@ def test_set_vlrs_header():
     # but still in the original list
     _ = las.vlrs.index("ExtraBytesVlr")
 
+
 def test_extra_header_bytes():
     las = laspy.read(test_common.simple_las)
 
@@ -165,6 +166,7 @@ def test_extra_header_bytes():
 
     las = write_then_read_again(las)
     assert las.header.extra_header_bytes == extra_bytes
+
 
 def test_extra_vlr_bytes():
     las = laspy.read(test_common.simple_las)

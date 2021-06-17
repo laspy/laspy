@@ -23,7 +23,7 @@ The following short script does just this:
     .. code-block:: python
 
         import laspy
-        las = laspy.read("./tests/data/simple.las")
+        las = laspy.read("./tests/data/data/simple.las")
 
 This function reads all the data in the file into memory.
 
@@ -85,7 +85,7 @@ file has accurate min and max values for the X, Y, and Z dimensions.
         import laspy
         import numpy as np
 
-        las = laspy.read("./tests/data/simple.las")
+        las = laspy.read("./tests/data/data/simple.las")
         # Some notes on the code below:
         # 1. las.header.maxs returns an array: [max x, max y, max z]
         # 2. `|` is a numpy method which performs an element-wise "or"
@@ -144,7 +144,7 @@ you can use scipy's KDTtree (or cKDTree for better performance)
         from scipy.spatial import cKDTree
         import numpy as np
 
-        las = laspy.read("./tests/data/simple.las")
+        las = laspy.read("./tests/data/data/simple.las")
         # Grab a numpy dataset of our clustering dimensions:
         dataset = np.vstack((las.X, las.Y, las.Z)).transpose()
         # Build the KD Tree
@@ -217,7 +217,7 @@ a new file:
         import laspy
         import numpy as np
 
-        las = laspy.read("tests/data/simple.las")
+        las = laspy.read("tests/data/data/simple.las")
 
         # Get arrays which indicate VALID X, Y, or Z values.
 
@@ -254,7 +254,7 @@ description fields you can do so with additional arguments.
 
         import laspy
 
-        las = laspy.read("./tests/data/simple.las")
+        las = laspy.read("./tests/data/data/simple.las")
         # Instantiate a new VLR.
         new_vlr = laspy.VLR(user_id="The User ID", record_id=1,
                       record_data=b"\x00" * 1000)

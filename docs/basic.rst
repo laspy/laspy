@@ -128,14 +128,14 @@ Accessing the file header
 You can access the header of a las file you read or opened by retrieving the 'header' attribute:
 
 >>> import laspy
->>> las = laspy.read('tests/simple.las')
+>>> las = laspy.read('tests/data/simple.las')
 >>> las.header
 <LasHeader(1.2, <PointFormat(3, 0 bytes of extra dims)>)>
 >>> las.header.point_count
 1065
 
 
->>> with laspy.open('tests/simple.las') as f:
+>>> with laspy.open('tests/data/simple.las') as f:
 ...     f.header.point_count
 1065
 
@@ -153,7 +153,7 @@ To access point records using the dimension name, you have 2 options:
 2) dict-like attribute access `las[dimension_name]`.
 
 >>> import numpy as np
->>> las = laspy.read('tests/simple.las')
+>>> las = laspy.read('tests/data/simple.las')
 >>> np.all(las.user_data == las['user_data'])
 True
 
@@ -184,7 +184,7 @@ If you wish to get only the extra dimension names the point format can give them
 ['X', 'Y', 'Z', 'intensity', 'return_number', 'number_of_returns', 'scan_direction_flag', 'edge_of_flight_line', 'classification', 'synthetic', 'key_point', 'withheld', 'scan_angle_rank', 'user_data', 'point_source_id', 'gps_time', 'red', 'green', 'blue']
 >>> list(point_format.extra_dimension_names)
 []
->>> las = laspy.read('tests/extrabytes.las')
+>>> las = laspy.read('tests/data/extrabytes.las')
 >>> list(las.point_format.extra_dimension_names)
 ['Colors', 'Reserved', 'Flags', 'Intensity', 'Time']
 
@@ -210,11 +210,11 @@ Manipulating VLRs
 
 To access the VLRs stored in a file, simply access the `vlr` member of the las object.
 
->>> las = laspy.read('tests/extrabytes.las')
+>>> las = laspy.read('tests/data/extrabytes.las')
 >>> las.vlrs
 [<ExtraBytesVlr(extra bytes structs: 5)>]
 
->>> with laspy.open('tests/extrabytes.las') as f:
+>>> with laspy.open('tests/data/extrabytes.las') as f:
 ...     f.header.vlrs
 [<ExtraBytesVlr(extra bytes structs: 5)>]
 

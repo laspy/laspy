@@ -3,7 +3,7 @@ from pathlib import Path
 
 import laspy
 
-simple_1_1 = Path(__file__).parent / "simple1_1.las"
+simple_1_1 = Path(__file__).parent / "data" / "simple1_1.las"
 
 
 def test_read_las_1_1():

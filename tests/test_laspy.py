@@ -10,11 +10,11 @@ import laspy
 
 
 def flip_bit(x):
-    return (1 * (x == 0))
+    return 1 * (x == 0)
 
 
 class LasReaderTestCase(unittest.TestCase):
-    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
+    simple = os.path.join(os.path.dirname(__file__), "data", "simple.las")
     tempfile = "junk.las"
 
     def setUp(self):
@@ -78,59 +78,49 @@ class LasReaderTestCase(unittest.TestCase):
 
     def test_intensity(self):
         """Fetch and test intensity dimension"""
-        self.assertEqual(self.p1.intensity, 233,
-                         self.intensity[self.idx1])
-        self.assertEqual(self.p2.intensity, 1,
-                         self.intensity[self.idx2])
+        self.assertEqual(self.p1.intensity, 233, self.intensity[self.idx1])
+        self.assertEqual(self.p2.intensity, 1, self.intensity[self.idx2])
 
     def test_bit_flags(self):
         """Fetch and test the binary flags associated with flag_byte dimension"""
         self.assertEqual(self.p1.flag_byte, self.flag_byte[self.idx1])
         self.assertEqual(self.p2.flag_byte, self.flag_byte[self.idx2])
-        self.assertEqual(self.p1.return_num,
-                         self.return_num[self.idx1], 1)
-        self.assertEqual(self.p2.return_num,
-                         self.return_num[self.idx2], 2)
-        self.assertEqual(self.p1.num_returns,
-                         self.num_returns[self.idx1], 1)
-        self.assertEqual(self.p2.num_returns,
-                         self.num_returns[self.idx2], 2)
-        self.assertEqual(self.p1.scan_dir_flag,
-                         self.scan_dir_flag[self.idx1], 0)
-        self.assertEqual(self.p2.scan_dir_flag,
-                         self.scan_dir_flag[self.idx2], 1)
-        self.assertEqual(self.p1.edge_flight_line,
-                         self.edge_flight_line[self.idx1], 0)
-        self.assertEqual(self.p2.edge_flight_line,
-                         self.edge_flight_line[self.idx2], 0)
+        self.assertEqual(self.p1.return_num, self.return_num[self.idx1], 1)
+        self.assertEqual(self.p2.return_num, self.return_num[self.idx2], 2)
+        self.assertEqual(self.p1.num_returns, self.num_returns[self.idx1], 1)
+        self.assertEqual(self.p2.num_returns, self.num_returns[self.idx2], 2)
+        self.assertEqual(self.p1.scan_dir_flag, self.scan_dir_flag[self.idx1], 0)
+        self.assertEqual(self.p2.scan_dir_flag, self.scan_dir_flag[self.idx2], 1)
+        self.assertEqual(self.p1.edge_flight_line, self.edge_flight_line[self.idx1], 0)
+        self.assertEqual(self.p2.edge_flight_line, self.edge_flight_line[self.idx2], 0)
 
     def test_scan_angle_rank(self):
         """Fetch and test scan_angle_rank dimension"""
-        self.assertEqual(self.p1.scan_angle_rank, 2,
-                         self.scan_angle_rank[self.idx1])
-        self.assertEqual(self.p2.scan_angle_rank, 12,
-                         self.scan_angle_rank[self.idx2])
+        self.assertEqual(self.p1.scan_angle_rank, 2, self.scan_angle_rank[self.idx1])
+        self.assertEqual(self.p2.scan_angle_rank, 12, self.scan_angle_rank[self.idx2])
 
     def test_raw_classification(self):
         """Fetch and test the dimension of raw_classification bytes"""
-        self.assertEqual(self.p1.raw_classification, 1,
-                         self.raw_classification[self.idx1])
-        self.assertEqual(self.p2.raw_classification, 2,
-                         self.raw_classification[self.idx2])
+        self.assertEqual(
+            self.p1.raw_classification, 1, self.raw_classification[self.idx1]
+        )
+        self.assertEqual(
+            self.p2.raw_classification, 2, self.raw_classification[self.idx2]
+        )
 
     def test_ptstrcid(self):
         """Fetch and test pt_src_id dimension"""
-        self.assertEqual(self.p1.pt_src_id, 7328,
-                         self.pt_src_id[self.idx1])
-        self.assertEqual(self.p2.pt_src_id, 7334,
-                         self.pt_src_id[self.idx2])
+        self.assertEqual(self.p1.pt_src_id, 7328, self.pt_src_id[self.idx1])
+        self.assertEqual(self.p2.pt_src_id, 7334, self.pt_src_id[self.idx2])
 
     def test_GPSTime(self):
         """Fetch and test gps_time dimension"""
-        self.assertTrue(self.p1.gps_time - 2 * 246504.221932
-                        + self.gps_time[self.idx1] < 0.00001)
-        self.assertTrue(self.p2.gps_time - 2 * 249774.658254
-                        + self.gps_time[self.idx2] < 0.00001)
+        self.assertTrue(
+            self.p1.gps_time - 2 * 246504.221932 + self.gps_time[self.idx1] < 0.00001
+        )
+        self.assertTrue(
+            self.p2.gps_time - 2 * 249774.658254 + self.gps_time[self.idx2] < 0.00001
+        )
 
     def test_red(self):
         """Fetch and test red dimension"""
@@ -149,9 +139,9 @@ class LasReaderTestCase(unittest.TestCase):
 
 
 class LasWriterTestCase(unittest.TestCase):
-    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
-    tempfile = 'writer.las'
-    output_tempfile = 'writer_output.las'
+    simple = os.path.join(os.path.dirname(__file__), "data", "simple.las")
+    tempfile = "writer.las"
+    output_tempfile = "writer_output.las"
 
     def setUp(self):
         self.FileObject = laspy.read(self.simple)
@@ -322,10 +312,10 @@ class LasWriterTestCase(unittest.TestCase):
 
 
 class LasHeaderWriterTestCase(unittest.TestCase):
-    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
-    simple14 = os.path.join(os.path.dirname(__file__), 'data', 'simple1_4.las')
-    tempfile = os.path.abspath('headerwriter.las')
-    tempfile2 = os.path.abspath('headerwriter2.las')
+    simple = os.path.join(os.path.dirname(__file__), "data", "simple.las")
+    simple14 = os.path.join(os.path.dirname(__file__), "data", "simple1_4.las")
+    tempfile = os.path.abspath("headerwriter.las")
+    tempfile2 = os.path.abspath("headerwriter2.las")
 
     def setUp(self):
         self.las = laspy.read(self.simple)
@@ -379,6 +369,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         d1 = self.las.header.creation_date
         assert d1 is None
         from datetime import datetime
+
         d2 = datetime(2007, 12, 10)
         self.las.header.creation_date = d2
         d3 = self.las.header.creation_date
@@ -431,9 +422,9 @@ class LasHeaderWriterTestCase(unittest.TestCase):
 
 
 class LasWriteModeTestCase(unittest.TestCase):
-    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple.las')
-    tempfile = 'write-mode.las'
-    output_tempfile = 'write-mode-output.las'
+    simple = os.path.join(os.path.dirname(__file__), "data", "simple.las")
+    tempfile = "write-mode.las"
+    output_tempfile = "write-mode-output.las"
 
     def setUp(self):
         self.File1 = laspy.read(self.simple)
@@ -482,8 +473,8 @@ class LasWriteModeTestCase(unittest.TestCase):
 
 
 class LasV_13TestCase(unittest.TestCase):
-    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple1_3.las')
-    output_tempfile = 'v13-output.las'
+    simple = os.path.join(os.path.dirname(__file__), "data", "simple1_3.las")
+    output_tempfile = "v13-output.las"
 
     def setUp(self):
         self.File1 = laspy.read(self.simple)
@@ -492,22 +483,38 @@ class LasV_13TestCase(unittest.TestCase):
         """Testing v1.3 Global Encoding"""
         old = self.File1.header.global_encoding.gps_time_type
         assert old == laspy.header.GpsTimeType.WEEK_TIME
-        self.File1.header.global_encoding.gps_time_type = laspy.header.GpsTimeType.STANDARD
-        assert self.File1.header.global_encoding.gps_time_type == laspy.header.GpsTimeType.STANDARD
+        self.File1.header.global_encoding.gps_time_type = (
+            laspy.header.GpsTimeType.STANDARD
+        )
+        assert (
+            self.File1.header.global_encoding.gps_time_type
+            == laspy.header.GpsTimeType.STANDARD
+        )
 
-        self.File1.header.global_encoding.gps_time_type = laspy.header.GpsTimeType.WEEK_TIME
-        assert self.File1.header.global_encoding.gps_time_type == laspy.header.GpsTimeType.WEEK_TIME
+        self.File1.header.global_encoding.gps_time_type = (
+            laspy.header.GpsTimeType.WEEK_TIME
+        )
+        assert (
+            self.File1.header.global_encoding.gps_time_type
+            == laspy.header.GpsTimeType.WEEK_TIME
+        )
 
         File2 = laspy.LasData(self.File1.header)
         File2.write(self.output_tempfile)
         File2 = laspy.read(self.output_tempfile)
 
-        self.assertEqual(self.File1.header.global_encoding.waveform_data_packets_internal,
-                         File2.header.global_encoding.waveform_data_packets_internal)
-        self.assertEqual(self.File1.header.global_encoding.waveform_data_packets_external,
-                         File2.header.global_encoding.waveform_data_packets_external)
-        self.assertEqual(self.File1.header.global_encoding.synthetic_return_numbers,
-                         File2.header.global_encoding.synthetic_return_numbers)
+        self.assertEqual(
+            self.File1.header.global_encoding.waveform_data_packets_internal,
+            File2.header.global_encoding.waveform_data_packets_internal,
+        )
+        self.assertEqual(
+            self.File1.header.global_encoding.waveform_data_packets_external,
+            File2.header.global_encoding.waveform_data_packets_external,
+        )
+        self.assertEqual(
+            self.File1.header.global_encoding.synthetic_return_numbers,
+            File2.header.global_encoding.synthetic_return_numbers,
+        )
 
     def test_wave_packet_desc_index(self):
         """Testing wave_packet_desc_index."""
@@ -571,9 +578,9 @@ class LasV_13TestCase(unittest.TestCase):
 
 
 class LasV_14TestCase(unittest.TestCase):
-    simple = os.path.join(os.path.dirname(__file__), 'data', 'simple1_4.las')
-    tempfile = 'v14.las'
-    output_tempfile = 'v14-output.las'
+    simple = os.path.join(os.path.dirname(__file__), "data", "simple1_4.las")
+    tempfile = "v14.las"
+    output_tempfile = "v14-output.las"
 
     def setUp(self):
         self.File1 = laspy.read(self.simple)
@@ -582,16 +589,27 @@ class LasV_14TestCase(unittest.TestCase):
         """Testing v1.4 Global Encoding"""
         old = self.File1.header.global_encoding.gps_time_type
         assert old == laspy.header.GpsTimeType.WEEK_TIME
-        self.File1.header.global_encoding.gps_time_type = laspy.header.GpsTimeType.STANDARD
-        assert self.File1.header.global_encoding.gps_time_type == laspy.header.GpsTimeType.STANDARD
+        self.File1.header.global_encoding.gps_time_type = (
+            laspy.header.GpsTimeType.STANDARD
+        )
+        assert (
+            self.File1.header.global_encoding.gps_time_type
+            == laspy.header.GpsTimeType.STANDARD
+        )
 
         File2 = laspy.LasData(self.File1.header)
-        self.assertEqual(self.File1.header.global_encoding.waveform_data_packets_internal,
-                         File2.header.global_encoding.waveform_data_packets_internal)
-        self.assertEqual(self.File1.header.global_encoding.waveform_data_packets_external,
-                         File2.header.global_encoding.waveform_data_packets_external)
-        self.assertEqual(self.File1.header.global_encoding.synthetic_return_numbers,
-                         File2.header.global_encoding.synthetic_return_numbers)
+        self.assertEqual(
+            self.File1.header.global_encoding.waveform_data_packets_internal,
+            File2.header.global_encoding.waveform_data_packets_internal,
+        )
+        self.assertEqual(
+            self.File1.header.global_encoding.waveform_data_packets_external,
+            File2.header.global_encoding.waveform_data_packets_external,
+        )
+        self.assertEqual(
+            self.File1.header.global_encoding.synthetic_return_numbers,
+            File2.header.global_encoding.synthetic_return_numbers,
+        )
 
     def test_glob_encode_bits(self):
         b1 = self.File1.header.global_encoding.gps_time_type

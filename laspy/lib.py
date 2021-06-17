@@ -40,12 +40,12 @@ def open_las(
     When opening a file in 'w' mode, a header (:class:`laspy.LasHeader`)
     is required
 
-        >>> with open_las('tests/simple.las') as f:
+        >>> with open_las('tests/data/simple.las') as f:
         ...     print(f.header.point_format.id)
         3
 
 
-        >>> f = open('tests/simple.las', mode='rb')
+        >>> f = open('tests/data/simple.las', mode='rb')
         >>> with open_las(f,closefd=False) as flas:
         ...     print(flas.header)
         <LasHeader(1.2, <PointFormat(3, 0 bytes of extra dims)>)>
@@ -56,7 +56,7 @@ def open_las(
         True
 
 
-        >>> f = open('tests/simple.las', mode='rb')
+        >>> f = open('tests/data/simple.las', mode='rb')
         >>> with open_las(f) as flas:
         ...    las = flas.read()
         >>> f.closed
@@ -147,7 +147,7 @@ def read_las(source, closefd=True, laz_backend=LazBackend.detect_available()):
 
     Reads the whole file into memory.
 
-    >>> las = read_las("tests/simple.las")
+    >>> las = read_las("tests/data/simple.las")
     >>> las.classification
     <SubFieldView([1 1 1 ... 1 1 1])>
 
@@ -235,7 +235,7 @@ def convert(source_las, *, point_format_id=None, file_version=None):
 
     convert to point format 0
 
-    >>> las = read_las('tests/simple.las')
+    >>> las = read_las('tests/data/simple.las')
     >>> las.header.version
     Version(major=1, minor=2)
     >>> las = convert(las, point_format_id=0)
@@ -247,7 +247,7 @@ def convert(source_las, *, point_format_id=None, file_version=None):
     convert to point format 6, which need version >= 1.4
     then convert back to point format 0, version is not downgraded
 
-    >>> las = read_las('tests/simple.las')
+    >>> las = read_las('tests/data/simple.las')
     >>> str(las.header.version)
     '1.2'
     >>> las = convert(las, point_format_id=6)
@@ -262,7 +262,7 @@ def convert(source_las, *, point_format_id=None, file_version=None):
     an exception is raised if the requested point format is not compatible
     with the file version
 
-    >>> las = read_las('tests/simple.las')
+    >>> las = read_las('tests/data/simple.las')
     >>> convert(las, point_format_id=6, file_version='1.2')
     Traceback (most recent call last):
      ...

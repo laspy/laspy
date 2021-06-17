@@ -13,7 +13,7 @@ We use the classification field to filter points, but this can work with the oth
 
     import laspy
 
-    las = laspy.read('tests/simple.las')
+    las = laspy.read('tests/data/simple.las')
 
     new_file = laspy.create(point_format=las.header.point_format, file_version=las.header.version)
     new_file.points = las.points[las.classification == 1]

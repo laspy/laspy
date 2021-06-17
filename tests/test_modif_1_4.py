@@ -3,7 +3,6 @@ import pytest
 
 import laspy
 from laspy import LazBackend
-from laspy.errors import LaspyException
 from tests.test_common import test1_4_las, write_then_read_again
 
 
@@ -38,7 +37,12 @@ def test_writing_las_with_evlrs():
     las = laspy.read(test1_4_las)
     assert las.evlrs == []
 
-    evlr = laspy.VLR(user_id="test", record_id=42, description="Just a test", record_data=b"And so he grinds his own hands")
+    evlr = laspy.VLR(
+        user_id="test",
+        record_id=42,
+        description="Just a test",
+        record_data=b"And so he grinds his own hands",
+    )
     las.evlrs.append(evlr)
 
     las_1 = write_then_read_again(las, do_compress=False)
@@ -49,7 +53,12 @@ def test_writing_laz_with_evlrs(laz_backend):
     las = laspy.read(test1_4_las)
     assert las.evlrs == []
 
-    evlr = laspy.VLR(user_id="test", record_id=42, description="Just a test", record_data=b"And so he grinds he own hands")
+    evlr = laspy.VLR(
+        user_id="test",
+        record_id=42,
+        description="Just a test",
+        record_data=b"And so he grinds he own hands",
+    )
     las.evlrs.append(evlr)
 
     las_1 = write_then_read_again(las, do_compress=True, laz_backend=laz_backend)

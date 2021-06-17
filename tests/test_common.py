@@ -5,14 +5,15 @@ import pytest
 
 import laspy
 from laspy.lib import write_then_read_again
+from . import conftest
 
-simple_las = Path(__file__).parent / "simple.las"
-simple_laz = Path(__file__).parent / "simple.laz"
-vegetation1_3_las = Path(__file__).parent / "vegetation_1_3.las"
-test1_4_las = Path(__file__).parent / "test1_4.las"
-extra_bytes_las = Path(__file__).parent / "extrabytes.las"
-extra_bytes_laz = Path(__file__).parent / "extra.laz"
-plane_laz = Path(__file__).parent / "plane.laz"
+simple_las = conftest.SIMPLE_LAS_FILE_PATH
+simple_laz = conftest.SIMPLE_LAZ_FILE_PATH
+vegetation1_3_las = conftest.VEGETATION1_3_LAS_FILE_PATH
+test1_4_las = conftest.TEST1_4_LAS_FILE_PATH
+extra_bytes_las = conftest.EXTRA_BYTES_LAS_FILE_PATH
+extra_bytes_laz = conftest.EXTRA_BYTES_LAZ_FILE_PATH
+plane_laz = conftest.PLANE_LAZ_FILE_PATH
 
 if not laspy.LazBackend.detect_available():
     do_compression = [False]
@@ -181,7 +182,7 @@ def test_coords_when_using_create_from_header(las):
 
 
 def test_slicing(las):
-    las.points = las.points[len(las.points) // 2:]
+    las.points = las.points[len(las.points) // 2 :]
 
 
 @pytest.mark.parametrize("do_compress", do_compression)
@@ -193,10 +194,7 @@ def test_point_record_setitem_scaled_view():
     las = laspy.read(simple_las)
     las.add_extra_dim(
         laspy.ExtraBytesParams(
-            'lol',
-            'uint64',
-            scales=np.array([2.0]),
-            offsets=np.array([0.0])
+            "lol", "uint64", scales=np.array([2.0]), offsets=np.array([0.0])
         )
     )
 

@@ -180,7 +180,7 @@ a bit field would no propagate to the real array.
     import laspy
     import numpy as np
 
-    las = laspy.read("tests/simple.las")
+    las = laspy.read("tests/data/simple.las")
 
     # return number is a bit field
     print(las.return_number)
@@ -218,7 +218,7 @@ modifications to the real array, and tries to act like a real numpy array.
     import laspy
     import numpy as np
 
-    las = laspy.read("tests/simple.las")
+    las = laspy.read("tests/data/simple.las")
 
     print(las.return_number)
     # <SubFieldView([1 1 1 ... 1 1 1])>
@@ -240,7 +240,7 @@ it is easy to copy them to numpy arrays:
     import laspy
     import numpy as np
 
-    las = laspy.read("tests/simple.las")
+    las = laspy.read("tests/data/simple.las")
     print(las.return_number)
     # <SubFieldView([1 1 1 ... 1 1 1])>
 
@@ -256,7 +256,7 @@ where a ScaledArrayView class has been introduced
     import laspy
     import numpy as np
 
-    las = laspy.read("tests/simple.las")
+    las = laspy.read("tests/data/simple.las")
     print(las.x)
     # <ScaledArrayView([637012.24 636896.33 636784.74 ... 637501.67 637433.27 637342.85])>>
 

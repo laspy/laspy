@@ -10,5 +10,3 @@ def test_mmap(mmapped_file_path):
 
     las = laspy.read(mmapped_file_path)
     assert np.all(las.classification == 25)
-
-

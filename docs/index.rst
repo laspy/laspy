@@ -46,7 +46,7 @@ Here is an example of reading in LAZ data and getting some simple summaries of t
     import numpy as np
     import laspy
 
-    with laspy.open('laspytests/simple.laz') as fh:
+    with laspy.open('laspytests/data/simple.laz') as fh:
         print('Points from Header:', fh.header.point_count)
         las = fh.read()
         print(las)

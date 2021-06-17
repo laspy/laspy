@@ -1,8 +1,7 @@
 import numpy as np
-
-import laspy
 import pytest
 
+import laspy
 from laspy.lib import write_then_read_again
 
 
@@ -23,5 +22,3 @@ def test_point_format_conversion_copies_field_values(file_path, target_point_for
         assert np.allclose(
             converted[dim_name], original[dim_name]
         ), "{} not equal".format(dim_name)
-
-
