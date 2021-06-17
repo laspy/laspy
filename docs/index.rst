@@ -15,7 +15,7 @@ laspy reads and writes these formats and provides a Python API via Numpy Arrays.
 
 .. important::
 
-   laspy 2.0 is in alpha, it has some changes and improvements
+   laspy 2.0 is out, it has some changes and improvements over 1.x.
 
    Context:
       In 2018 a new python libray to manage LAS/LAZ file was created under the name of pylas

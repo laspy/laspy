@@ -7,20 +7,17 @@ Installation
 Installing from PyPi
 ====================
 
-.. note::
-
-    While laspy 2.0 is in alpha / beta (pre release) don't forget the *-\-pre*
 
 .. code-block:: shell
 
     # To install with lazrs only
-    pip install --pre laspy[lazrs]
+    pip install laspy[lazrs]
 
     # To install with laszip only
-    pip install --pre laspy[laszip]
+    pip install laspy[laszip]
 
     # To install with both
-    pip install --pre laspy[lazrs,laszip]
+    pip install laspy[lazrs,laszip]
 
 
 More information on laz support below

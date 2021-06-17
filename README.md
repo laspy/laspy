@@ -6,11 +6,6 @@ files.
 Laspy is compatible with Python  3.6+.
 
 
-# Version 2.0
-
-laspy 2.0 is in alpha, and ready for you to test, to install, it add `--pre` to
-the pip install commands (eg  `pip install --pre laspy`)
-
 Examples
 --------
 
