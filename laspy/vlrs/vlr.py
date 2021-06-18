@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import BinaryIO
 
 
 class IVLR(ABC):

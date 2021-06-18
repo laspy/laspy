@@ -2,8 +2,6 @@ import logging
 import pathlib
 from typing import Union, Optional, List, Sequence, overload, BinaryIO
 
-import numpy as np
-
 from . import errors
 from .compression import LazBackend
 from .header import LasHeader
