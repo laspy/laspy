@@ -23,8 +23,8 @@ class ExtraBytesParams:
         if isinstance(type, str):
             # Work around numpy deprecating support
             # for '1type' strings
-            n = ''.join(takewhile(lambda c: c.isdigit(), type))
-            if n == '1':
+            n = "".join(takewhile(lambda c: c.isdigit(), type))
+            if n == "1":
                 type = type[1:]
 
         self.type = np.dtype(type)
