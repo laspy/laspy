@@ -69,6 +69,11 @@ pip install laspy[lazrs] # with LAZ support via lazrs
 
 ## Changelog
 
+### Version 2.0.1
+
+- Fix `.min` `.max` methods of array views
+- Ship the tests as part of the source distribution (But they won't be installed with `pip install`)
+
 ### Version 2.0.0
 
 - Overhaul of the internals by essentially incorporating pylas into laspy,
