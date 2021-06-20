@@ -1,4 +1,4 @@
-from itertools import zip_longest
+from itertools import zip_longest, takewhile
 from typing import Optional, Iterable, Union, Type
 
 import numpy as np
@@ -20,10 +20,15 @@ class ExtraBytesParams:
     ) -> None:
         self.name = name
         """ The name of the extra dimension """
-        if not isinstance(type, np.dtype):
-            type = np.dtype(type)
+        if isinstance(type, str):
+            # Work around numpy deprecating support
+            # for '1type' strings
+            n = ''.join(takewhile(lambda c: c.isdigit(), type))
+            if n == '1':
+                type = type[1:]
+
+        self.type = np.dtype(type)
         """ The type of the extra dimension """
-        self.type = type
         self.description = description
         """ A description of the extra dimension """
         self.offsets = offsets
