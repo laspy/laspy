@@ -476,10 +476,10 @@ class LasHeader:
         )
 
         header.system_identifier = (
-            stream.read(SOFTWARE_IDENTIFIER_LEN).rstrip(b"\0").decode()
+            stream.read(SOFTWARE_IDENTIFIER_LEN).rstrip(b"\0").decode('utf-8', 'ignore')
         )
         header.generating_software = (
-            stream.read(GENERATING_SOFTWARE_LEN).rstrip(b"\0").decode()
+            stream.read(GENERATING_SOFTWARE_LEN).rstrip(b"\0").decode('utf-8', 'ignore')
         )
 
         creation_day_of_year = int.from_bytes(
