@@ -3,10 +3,10 @@ from typing import List
 
 from . import vlrlist
 from .known import GeoAsciiParamsVlr, GeoDoubleParamsVlr, GeoKeyDirectoryVlr
+import logging
 
 GeoTiffKey = namedtuple("GeoTiffKey", ("id", "value"))
 
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,7 @@ def parse_geo_tiff(
 ) -> List[GeoTiffKey]:
     """Parses the GeoTiff VLRs information into nicer structs"""
     geotiff_keys = []
+    print(ascii_vlr.strings)
 
     for k in key_dir_vlr.geo_keys:
         if k.tiff_tag_location == 0:
@@ -62,11 +63,7 @@ def parse_geo_tiff(
         elif k.tiff_tag_location == 34736:
             value = double_vlr.doubles[k.value_offset]
         elif k.tiff_tag_location == 34737:
-            try:
-                value = ascii_vlr.strings[k.value_offset][k.count :]
-            except IndexError:
-                # Maybe I'm just misunderstanding the specification :thinking:
-                value = ascii_vlr.strings[0][k.value_offset : k.value_offset + k.count]
+            value = ascii_vlr.string(k.value_offset, k.count)
         else:
             logger.warning(
                 "GeoTiffKey with unknown tiff tag location ({})".format(
