@@ -209,7 +209,7 @@ class PackedPointRecord:
 def apply_new_scaling(record, scales: np.ndarray, offsets: np.ndarray) -> None:
     record["X"] = unscale_dimension(np.asarray(record.x), scales[0], offsets[0])
     record["Y"] = unscale_dimension(np.asarray(record.y), scales[1], offsets[1])
-    record["Z"] = unscale_dimension(np.asarray(record.x), scales[2], offsets[2])
+    record["Z"] = unscale_dimension(np.asarray(record.z), scales[2], offsets[2])
 
 
 class ScaleAwarePointRecord(PackedPointRecord):
@@ -290,7 +290,7 @@ class ScaleAwarePointRecord(PackedPointRecord):
             header=header,
         )
 
-    def _change_scaling(self, scales=None, offsets=None) -> None:
+    def change_scaling(self, scales=None, offsets=None) -> None:
         if scales is not None:
             self.scales = scales
         if offsets is not None:
