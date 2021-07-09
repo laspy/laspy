@@ -94,6 +94,15 @@ class LasWriter:
 
     def write_points(self, points: PackedPointRecord) -> None:
         """
+        .. note ::
+
+            If you are writing points coming from multiple different input files
+            into one output file, you have to make sure the point record
+            you write all use the same scales and offset of the writer.
+
+            You can use :meth:`.LasData.change_scaling` or :meth:`.ScaleAwarePointRecord.change_scaling`
+            to do that.
+
         Parameters
         ----------
         points: The points to be written

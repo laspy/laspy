@@ -230,6 +230,21 @@ class LasData:
                 writer.write_evlrs(self.evlrs)
 
     def change_scaling(self, scales=None, offsets=None) -> None:
+        """ This changes the scales and/or offset used for the x,y,z
+        dimensions.
+
+        It recomputes the internal, non-scaled X,Y,Z dimensions
+        to match the new scales and offsets.
+
+        It also updates the header with the new values of scales and offsets.
+
+        Parameters
+        ----------
+        scales: optional
+                New scales to be used. If not provided, the scales won't change.
+        offsets: optional
+                 New offsets to be used. If not provided, the offsets won't change.
+        """
         if scales is None:
             scales = self.header.scales
         if offsets is None:
