@@ -90,12 +90,14 @@ class LasData:
 
     @points.setter
     def points(self, new_points: record.PackedPointRecord) -> None:
-        if new_points.point_format != self._points.point_format:
+        if new_points.point_format != self.point_format:
             raise errors.IncompatibleDataFormat(
                 "Cannot set points with a different point format, convert first"
             )
         self._points = new_points
         self.update_header()
+        # make sure both point format point to the same object
+        self._points.point_format = self.header.point_format
 
     @property
     def vlrs(self) -> VLRList:
