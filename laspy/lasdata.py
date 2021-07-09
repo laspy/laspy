@@ -230,7 +230,7 @@ class LasData:
                 writer.write_evlrs(self.evlrs)
 
     def change_scaling(self, scales=None, offsets=None) -> None:
-        """ This changes the scales and/or offset used for the x,y,z
+        """This changes the scales and/or offset used for the x,y,z
         dimensions.
 
         It recomputes the internal, non-scaled X,Y,Z dimensions

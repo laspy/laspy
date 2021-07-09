@@ -291,8 +291,7 @@ class ScaleAwarePointRecord(PackedPointRecord):
         )
 
     def change_scaling(self, scales=None, offsets=None) -> None:
-        """ See :meth:`.LasData.change_scaling`
-        """
+        """See :meth:`.LasData.change_scaling`"""
         if scales is not None:
             self.scales = scales
         if offsets is not None:

@@ -185,9 +185,10 @@ class LazrsAppender:
             idx_first_point_of_last_chunk = number_of_complete_chunk * vlr.chunk_size()
             decompressor.seek(idx_first_point_of_last_chunk)
 
-        points_of_last_chunk = bytearray(
-            (header.point_count % vlr.chunk_size()) * vlr.item_size()
+        num_points_in_last_chunk = header.point_count - (
+            number_of_complete_chunk * vlr.chunk_size()
         )
+        points_of_last_chunk = bytearray(num_points_in_last_chunk * vlr.item_size())
         decompressor.decompress_many(points_of_last_chunk)
 
         self.dest.seek(header.offset_to_point_data, io.SEEK_SET)
@@ -196,9 +197,13 @@ class LazrsAppender:
                 self.dest, vlr
             )  # This overwrites old offset
         else:
-            self.compressor = lazrs.LasZipCompressor(
-                self.dest, vlr
-            )  # This overwrites the old offset
+            raise NotImplementedError(
+                "Appending with Lazrs single threaded is not support currently due to a bug"
+            )
+            # self.compressor = lazrs.LasZipCompressor(
+            #     self.dest, vlr
+            # )
+        assert self.dest.tell() == header.offset_to_point_data + 8
         self.dest.seek(sum(self.chunk_table), io.SEEK_CUR)
         self.compressor.compress_many(points_of_last_chunk)
 
@@ -214,8 +219,10 @@ class LazrsAppender:
 
         # So we update it
         self.dest.seek(self.offset_to_point_data, io.SEEK_SET)
+        appended_chunk_table = lazrs.read_chunk_table(self.dest)
+        chunk_table = self.chunk_table + appended_chunk_table
+
+        self.dest.seek(self.offset_to_point_data, io.SEEK_SET)
         offset_to_chunk_table = int.from_bytes(self.dest.read(8), "little", signed=True)
-        self.dest.seek(-8, io.SEEK_CUR)
-        chunk_table = self.chunk_table + lazrs.read_chunk_table(self.dest)
         self.dest.seek(offset_to_chunk_table, io.SEEK_SET)
         lazrs.write_chunk_table(self.dest, chunk_table)
