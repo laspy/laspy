@@ -33,6 +33,15 @@ class LasReader:
         closefd: bool = True,
         laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
     ):
+        """
+        Initialize the LasReader
+
+        Parameters
+        ----------
+        source: file_object
+        closefd: bool, default True
+        laz_backend: LazBackend or list of LazBackend, optional
+        """
         self.closefd = closefd
         if laz_backend is None:
             laz_backend = LazBackend.detect_available()

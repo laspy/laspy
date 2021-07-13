@@ -1,0 +1,21 @@
+/*.wy-nav-content {*/
+/*    max-width: 80%;*/
+/*}*/
+
+dl.method > dt > em:before {
+    content: " ";
+    clear: right;
+    display: block;
+}
+
+
+dl.method > dt > em > span.n:before {
+    content: "\00a0 \00a0 \00a0 \00a0 ";
+}
+
+
+dl.method > dt > span.sig-paren:before {
+    content: " ";
+    clear: right;
+    display: block;
+}

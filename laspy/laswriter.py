@@ -44,22 +44,22 @@ class LasWriter:
         """
         Parameters
         ----------
-        dest:
+        dest: file_object
             file object where the LAS/LAZ will be written
 
-        header:
+        header: LasHeader
             The header of the file to be written
 
-        do_compress: optional bool
-            whether the file data should be written as LAS (uncompressed)
+        do_compress: bool, optional
+            Whether the file data should be written as LAS (uncompressed)
             or LAZ (compressed).
             If None, the file won't be compressed, unless a laz_backend is provided
 
-        laz_backend: optional LazBackend or sequence of LazBackend
+        laz_backend: LazBackend or list of LazBackend, optional
             The LazBackend to use (or if it is a sequence the LazBackend to try)
             for the compression
 
-        closefd: default True
+        closefd: bool, default True
             should the `dest` be closed when the writer is closed
         """
         self.closefd = closefd
@@ -105,7 +105,14 @@ class LasWriter:
 
         Parameters
         ----------
-        points: The points to be written
+        points: PackedPointRecord or ScaleAwarePointRecord
+                The points to be written
+
+        Raises
+        ------
+        LaspyException
+            If the point format of the points does not match
+            the point format of the writer.
         """
         if not points:
             return
@@ -120,6 +127,18 @@ class LasWriter:
         self.point_writer.write_points(points)
 
     def write_evlrs(self, evlrs: VLRList) -> None:
+        """Writes the EVLRs to the file
+
+        Parameters
+        ----------
+        evlrs: VLRList
+               The EVLRs to be written
+
+        Raises
+        ------
+        LaspyException
+            If the file's version is not >= 1.4
+        """
         if self.header.version.minor < 4:
             raise LaspyException(
                 "EVLRs are not supported on files with version less than 1.4"
@@ -133,6 +152,11 @@ class LasWriter:
             evlrs.write_to(self.dest, as_extended=True)
 
     def close(self) -> None:
+        """Closes the writer.
+
+        flushes the points, updates the header, making it impossible
+        to write points afterwards.
+        """
         if self.point_writer is not None:
             if not self.done:
                 self.point_writer.done()

@@ -94,6 +94,11 @@ autodoc_member_order = 'bysource'
 #
 html_theme = 'sphinx_rtd_theme'
 
+
+def setup(app):
+    app.add_css_file("style.css")
+
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -103,7 +108,7 @@ html_theme = 'sphinx_rtd_theme'
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -120,7 +125,6 @@ html_static_path = []
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'laspydoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -150,7 +154,6 @@ latex_documents = [
      'Ryan McCarthy', 'manual'),
 ]
 
-
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
@@ -159,7 +162,6 @@ man_pages = [
     (master_doc, 'laspy', 'laspy Documentation',
      [author], 1)
 ]
-
 
 # -- Options for Texinfo output ----------------------------------------------
 
@@ -172,10 +174,7 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-
 # -- Extension configuration -------------------------------------------------
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
 }
-
-
