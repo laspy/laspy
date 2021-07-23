@@ -69,6 +69,14 @@ pip install laspy[lazrs] # with LAZ support via lazrs
 
 ## Changelog
 
+### Version 2.0.2
+
+- Fix system_identifier reading by ignoring non ascii characters instead of erroring ,(issue #148, PR #149).
+- Fix `LasData.change_scaling` method.
+- Update minimum lazrs version which allows to:
+  - Fix Appending in LAZ files.
+  - Improve memory usage when reading/writing. (issue #152)
+
 ### Version 2.0.1
 
 - Fix `.min` `.max` methods of array views
