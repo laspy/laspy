@@ -33,7 +33,11 @@ class LasAppender:
             raise TypeError("Expected the 'dest' to be a seekable file object")
         header = LasHeader.read_from(dest)
         if laz_backend is None:
-            laz_backend = LazBackend.detect_available()
+            laz_backend = [
+                bck
+                for bck in LazBackend.detect_available()
+                if bck is not LazBackend.Laszip
+            ]
 
         self.dest = dest
         self.header = header
@@ -193,16 +197,13 @@ class LazrsAppender:
 
         self.dest.seek(header.offset_to_point_data, io.SEEK_SET)
         if parallel:
-            self.compressor = lazrs.ParLasZipCompressor(
-                self.dest, vlr
-            )  # This overwrites old offset
+            self.compressor = lazrs.ParLasZipCompressor(self.dest, vlr)
         else:
-            raise NotImplementedError(
-                "Appending with Lazrs single threaded is not support currently due to a bug"
-            )
-            # self.compressor = lazrs.LasZipCompressor(
-            #     self.dest, vlr
-            # )
+            self.compressor = lazrs.LasZipCompressor(self.dest, vlr)
+        # This effectively overwrites the old offset value.
+        # But, more importantly, it makes the compressor aware of where to
+        # write the offset value when its done.
+        self.compressor.reserve_offset_to_chunk_table()
         assert self.dest.tell() == header.offset_to_point_data + 8
         self.dest.seek(sum(self.chunk_table), io.SEEK_CUR)
         self.compressor.compress_many(points_of_last_chunk)
