@@ -7,6 +7,8 @@ Installation
 Installing from PyPi
 ====================
 
+Pip
+____
 
 .. code-block:: shell
 
@@ -19,8 +21,19 @@ Installing from PyPi
     # To install with both
     pip install laspy[lazrs,laszip]
 
+Conda
+_____
 
-More information on laz support below
+A conda build of laspy is available and maintained (but not by laspy)
+
+.. code-block:: shell
+
+    conda install -c conda-forge laspy
+
+However, ``lazrs`` and ``laszip`` [#f1]_ are not available via conda, so to have LAZ support, you will
+still need to install a LAZ backend via ``pip``
+
+
 
 Optional dependencies for LAZ support
 =====================================
@@ -58,5 +71,9 @@ To install laspy with one of its supported backend use one of the following comm
 
 
 
+.. rubric:: Footnotes.
+
+.. [#f1] A ``laszip`` package exists on conda-forge, but it only includes the C++ library, not the the Python
+         bindings, which means that installing it won't give you a LAZ capable laspy installation.
 
 
