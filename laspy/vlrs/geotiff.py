@@ -1,12 +1,11 @@
+import logging
 from collections import namedtuple
-from typing import List
+from typing import List, Optional
 
 from . import vlrlist
 from .known import GeoAsciiParamsVlr, GeoDoubleParamsVlr, GeoKeyDirectoryVlr
 
 GeoTiffKey = namedtuple("GeoTiffKey", ("id", "value"))
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -39,19 +38,29 @@ def parse_geo_tiff_keys_from_vlrs(vlr_list: vlrlist.VLRList) -> List[GeoTiffKey]
     geo_key_dir = vlr_list.get_by_id(
         GeoKeyDirectoryVlr.official_user_id(), GeoKeyDirectoryVlr.official_record_ids()
     )[0]
-    geo_doubles = vlr_list.get_by_id(
-        GeoDoubleParamsVlr.official_user_id(), GeoDoubleParamsVlr.official_record_ids()
-    )[0]
-    geo_ascii = vlr_list.get_by_id(
-        GeoAsciiParamsVlr.official_user_id(), GeoAsciiParamsVlr.official_record_ids()
-    )[0]
+
+    try:
+        geo_doubles = vlr_list.get_by_id(
+            GeoDoubleParamsVlr.official_user_id(),
+            GeoDoubleParamsVlr.official_record_ids(),
+        )[0]
+    except IndexError:
+        geo_doubles = None
+
+    try:
+        geo_ascii = vlr_list.get_by_id(
+            GeoAsciiParamsVlr.official_user_id(),
+            GeoAsciiParamsVlr.official_record_ids(),
+        )[0]
+    except IndexError:
+        geo_ascii = None
     return parse_geo_tiff(geo_key_dir, geo_doubles, geo_ascii)
 
 
 def parse_geo_tiff(
     key_dir_vlr: GeoKeyDirectoryVlr,
-    double_vlr: GeoDoubleParamsVlr,
-    ascii_vlr: GeoAsciiParamsVlr,
+    double_vlr: Optional[GeoDoubleParamsVlr],
+    ascii_vlr: Optional[GeoAsciiParamsVlr],
 ) -> List[GeoTiffKey]:
     """Parses the GeoTiff VLRs information into nicer structs"""
     geotiff_keys = []
@@ -60,13 +69,19 @@ def parse_geo_tiff(
         if k.tiff_tag_location == 0:
             value = k.value_offset
         elif k.tiff_tag_location == 34736:
+            if double_vlr is None:
+                raise RuntimeError(
+                    "Geotiff tag location points to GeoDoubleParams, "
+                    "but it does not exists"
+                )
             value = double_vlr.doubles[k.value_offset]
         elif k.tiff_tag_location == 34737:
-            try:
-                value = ascii_vlr.strings[k.value_offset][k.count :]
-            except IndexError:
-                # Maybe I'm just misunderstanding the specification :thinking:
-                value = ascii_vlr.strings[0][k.value_offset : k.value_offset + k.count]
+            if ascii_vlr is None:
+                raise RuntimeError(
+                    "Geotiff tag location points to GeoAsciiParams, "
+                    "but it does not exists"
+                )
+            value = ascii_vlr.string(k.value_offset, k.count)
         else:
             logger.warning(
                 "GeoTiffKey with unknown tiff tag location ({})".format(

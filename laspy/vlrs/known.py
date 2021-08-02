@@ -535,8 +535,24 @@ class GeoAsciiParamsVlr(BaseKnownVLR):
         super().__init__(description="GeoTIFF GeoAsciiParamsTag")
         self.strings = []
 
+    def string(self, global_offset, size):
+        # The string in the vlr were stored contiguously, and null-separated
+        # we parsed them into list of strings.
+        # In the geokeys vlr, the offset to a string, is an offset in the
+        # contiguous strings, to this function does the conversion to find the
+        # correct string in our storage
+        count = 0
+        for string in self.strings:
+            count += len(string) + 1  # Account for the null byte
+            if count >= global_offset:
+                local_offset = global_offset - (count - len(string) - 1)
+                return string[local_offset:size]
+        raise IndexError(f"Invalid index: {global_offset}")
+
     def parse_record_data(self, record_data):
+        print("record data: ", record_data)
         self.strings = [s.decode("ascii") for s in record_data.split(NULL_BYTE)]
+        self.rd = record_data
 
     def record_data_bytes(self):
         return NULL_BYTE.join(s.encode("ascii") for s in self.strings)

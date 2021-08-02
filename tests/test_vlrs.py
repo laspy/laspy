@@ -48,3 +48,9 @@ def test_adding_extra_bytes_vlr_by_hand():
     las = laspy.lib.write_then_read_again(simple)
     assert simple.points.point_size == las.points.point_size
     assert len(las.vlrs.get("ExtraBytesVlr")) == 0
+
+
+def test_geokey_parsing_does_not_require_optional_params():
+    las = laspy.read("tests/data/simple1_3.las")
+    geo_keys = laspy.vlrs.geotiff.parse_geo_tiff_keys_from_vlrs(las.vlrs)
+    assert len(geo_keys) == 6
