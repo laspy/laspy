@@ -545,8 +545,8 @@ class GeoAsciiParamsVlr(BaseKnownVLR):
         for string in self.strings:
             count += len(string) + 1  # Account for the null byte
             if count >= global_offset:
-                local_offset =  global_offset - (count - len(string) - 1)
-                return string[local_offset: size]
+                local_offset = global_offset - (count - len(string) - 1)
+                return string[local_offset:size]
         raise IndexError(f"Invalid index: {global_offset}")
 
     def parse_record_data(self, record_data):
