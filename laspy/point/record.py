@@ -280,7 +280,7 @@ class ScaleAwarePointRecord(PackedPointRecord):
         return ScaleAwarePointRecord(data, point_format, scales, offsets)
 
     @staticmethod
-    def empty(point_format, scales=None, offsets=None, header=None):
+    def empty(point_format=None, scales=None, offsets=None, header=None):
         """Creates an empty point record."""
         return ScaleAwarePointRecord.zeros(
             point_count=0,
