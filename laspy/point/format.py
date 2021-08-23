@@ -1,5 +1,5 @@
 from itertools import zip_longest, takewhile
-from typing import Optional, Iterable, Union, Type
+from typing import Optional, Iterable, Union, Type, List
 
 import numpy as np
 
@@ -67,8 +67,8 @@ class PointFormat:
         point_format_id: int
             point format id
         """
-        self.id = point_format_id
-        self.dimensions = []
+        self.id: int = point_format_id
+        self.dimensions: List[dims.DimensionInfo] = []
         composed_dims = dims.COMPOSED_FIELDS[self.id]
         for dim_name in dims.ALL_POINT_FORMATS_DIMENSIONS[self.id]:
             try:

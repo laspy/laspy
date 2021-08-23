@@ -19,8 +19,8 @@ from .errors import LaspyException
 from .point import dims
 from .point.format import PointFormat, ExtraBytesParams
 from .point.record import PackedPointRecord
-from .vlrs.known import ExtraBytesStruct, ExtraBytesVlr
 from .vlrs import VLR
+from .vlrs.known import ExtraBytesStruct, ExtraBytesVlr
 from .vlrs.vlrlist import VLRList
 from . import __version__
 
@@ -579,7 +579,20 @@ class LasHeader:
                     point_format.add_extra_dimension(extra_dim_info)
         header._point_format = point_format
 
-        if point_size != point_format.size:
+        if point_size > point_format.size:
+            # We have unregistered extra bytes
+            num_extra_bytes = point_size - point_format.size
+            point_format.dimensions.append(
+                dims.DimensionInfo(
+                    name="ExtraBytes",
+                    kind=dims.DimensionKind.UnsignedInteger,
+                    num_bits=8 * num_extra_bytes,
+                    num_elements=num_extra_bytes,
+                    is_standard=False,
+                    description="Un-registered ExtraBytes",
+                )
+            )
+        elif point_size < point_format.size:
             raise LaspyException(
                 f"Incoherent point size, "
                 f"header says {point_size} point_format created says {point_format.size}"

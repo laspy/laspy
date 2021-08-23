@@ -13,6 +13,8 @@ SIMPLE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "simple.laz"
 EXTRA_BYTES_LAZ_FILE_PATH = Path(__file__).parent / "data" / "extra.laz"
 PLANE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "plane.laz"
 
+UNREGISTERED_EXTRA_BYTES_LAS = Path(__file__).parent / "data" / "unregistered_extra_bytes.las"
+
 ALL_LAS_FILE_PATH = [
     SIMPLE_LAS_FILE_PATH,
     VEGETATION1_3_LAS_FILE_PATH,

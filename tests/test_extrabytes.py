@@ -7,6 +7,7 @@ import pytest
 
 import laspy
 from laspy.lib import write_then_read_again
+from tests.conftest import UNREGISTERED_EXTRA_BYTES_LAS
 
 
 def test_read_example_extra_bytes_las(las_file_path_with_extra_bytes):
@@ -272,3 +273,26 @@ def test_cant_create_scaled_extra_bytes_with_scales_array_smaller(num_elements):
         str(error.value)
         == f"len(scales) ({num_elements - 1}) is not the same as the number of elements ({num_elements})"
     )
+
+
+def test_handle_unregistered_extra_bytes():
+    # Test that if the point size in the header is bigger
+    # than the expected point size of the point format
+    # and no extra bytes vlr is present, we can still read and
+    # write the file
+
+    def check_file(las):
+        assert las.point_format.id == 6
+        assert las.point_format.size == 34
+        assert las.point_format.num_extra_bytes == 4
+        assert np.all(las.x == np.array([1, 2, 3, 4]))
+        assert np.all(las.y == np.array([1, 2, 3, 4]))
+        assert np.all(las.z == np.array([1, 2, 3, 4]))
+        assert list(las.point_format.extra_dimension_names) == ["ExtraBytes"]
+        assert las.vlrs == []
+
+    las = laspy.read(UNREGISTERED_EXTRA_BYTES_LAS)
+    check_file(las)
+
+    las = laspy.lib.write_then_read_again(las)
+    check_file(las)
