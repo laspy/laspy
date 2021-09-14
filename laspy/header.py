@@ -603,7 +603,7 @@ class LasHeader:
     def write_to(self, stream: BinaryIO, ensure_same_size: bool = False) -> None:
         """
         ensure_same_size: if true this function will raise an internal error
-        of the written header would not change the offset to point data
+        if the written header would change the offset to point data
         it originally had (meaning the file could become broken),
         Used when rewriting a header to update the file (new point count, mins, maxs, etc)
         """
