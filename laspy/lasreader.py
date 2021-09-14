@@ -48,18 +48,21 @@ class LasReader:
         self.laz_backend = laz_backend
         self.header = LasHeader.read_from(source)
 
-        if self.header.are_points_compressed:
-            if not laz_backend:
-                raise errors.LaspyException(
-                    "No LazBackend selected, cannot decompress data"
-                )
-            self.point_source = self._create_laz_backend(source)
-            if self.point_source is None:
-                raise errors.LaspyException(
-                    "Data is compressed, but no LazBacked could be initialized"
-                )
+        if self.header.point_count > 0:
+            if self.header.are_points_compressed:
+                if not laz_backend:
+                    raise errors.LaspyException(
+                        "No LazBackend selected, cannot decompress data"
+                    )
+                self.point_source = self._create_laz_backend(source)
+                if self.point_source is None:
+                    raise errors.LaspyException(
+                        "Data is compressed, but no LazBacked could be initialized"
+                    )
+            else:
+                self.point_source = UncompressedPointReader(source, self.header)
         else:
-            self.point_source = UncompressedPointReader(source, self.header)
+            self.point_source = EmptyPointReader()
 
         self.points_read = 0
 
@@ -342,3 +345,18 @@ class LazrsPointReader(IPointReader):
 
     def close(self) -> None:
         self.source.close()
+
+
+class EmptyPointReader(IPointReader):
+    """Does nothing but returning empty bytes.
+    Used to make sure we handle empty LAS files in a robust way.
+    """
+
+    def read_n_points(self, n: int) -> bytearray:
+        return bytearray()
+
+    def close(self) -> None:
+        pass
+
+    def seek(self, point_index: int) -> None:
+        pass
