@@ -69,6 +69,12 @@ pip install laspy[lazrs] # with LAZ support via lazrs
 
 ## Changelog
 
+### Unreleased
+
+- Fix function that parses geotiff VLRs
+- Fix handling of points with 'unregistered' extra bytes (PR #158)
+- Fix to handle empty LAS/LAZ more robustly
+
 ### Version 2.0.2
 
 - Fix system_identifier reading by ignoring non ascii characters instead of erroring ,(issue #148, PR #149).
