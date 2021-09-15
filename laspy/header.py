@@ -553,9 +553,6 @@ class LasHeader:
                     header.offset_to_point_data - current_pos
                 )
             elif current_pos > header.offset_to_point_data:
-                print(
-                    current_pos, header.offset_to_point_data, header_size, header.vlrs
-                )
                 raise LaspyException("Incoherent offset to point data")
 
         header.are_points_compressed = is_point_format_compressed(point_format_id)

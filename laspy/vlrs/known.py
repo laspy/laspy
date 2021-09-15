@@ -241,7 +241,6 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
         if value is None:
             self.options &= ~self.OFFSET_BIT_MASK
         else:
-            print("offsets", self._offset, value)
             num_elements = self.num_elements()
             self._offset[:num_elements] = value[:num_elements]
             self.options |= self.OFFSET_BIT_MASK
@@ -470,7 +469,6 @@ class GeoKeyDirectoryVlr(BaseKnownVLR):
             len(record_data[GeoKeysHeaderStructs.size() :]) // GeoKeyEntryStruct.size()
         )
         if num_keys != self.geo_keys_header.number_of_keys:
-            # print("Mismatch num keys")
             self.geo_keys_header.number_of_keys = num_keys
 
         for i in range(self.geo_keys_header.number_of_keys):
@@ -550,7 +548,6 @@ class GeoAsciiParamsVlr(BaseKnownVLR):
         raise IndexError(f"Invalid index: {global_offset}")
 
     def parse_record_data(self, record_data):
-        print("record data: ", record_data)
         self.strings = [s.decode("ascii") for s in record_data.split(NULL_BYTE)]
         self.rd = record_data
 
