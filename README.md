@@ -69,7 +69,7 @@ pip install laspy[lazrs] # with LAZ support via lazrs
 
 ## Changelog
 
-### Unreleased
+### Version 2.0.3
 
 - Fix function that parses geotiff VLRs
 - Fix handling of points with 'unregistered' extra bytes (PR #158)
