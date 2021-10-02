@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Union
 
 
 class IVLR(ABC):
@@ -14,7 +15,7 @@ class IVLR(ABC):
 
     @property
     @abstractmethod
-    def description(self) -> str:
+    def description(self) -> Union[str, bytes]:
         ...
 
     @abstractmethod
@@ -24,9 +25,9 @@ class IVLR(ABC):
 
 class BaseVLR(IVLR, ABC):
     def __init__(self, user_id, record_id, description=""):
-        self._user_id = user_id
-        self._record_id = record_id
-        self._description = description
+        self._user_id: str = user_id
+        self._record_id: int = record_id
+        self._description: Union[str, bytes] = description
 
     @property
     def user_id(self) -> str:
@@ -37,7 +38,7 @@ class BaseVLR(IVLR, ABC):
         return self._record_id
 
     @property
-    def description(self) -> str:
+    def description(self) -> Union[str, bytes]:
         return self._description
 
 

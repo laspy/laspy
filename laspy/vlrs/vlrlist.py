@@ -5,7 +5,7 @@ import numpy as np
 
 from .known import vlr_factory, IKnownVLR
 from .vlr import VLR
-from ..utils import encode_to_len
+from ..utils import encode_to_len, read_string, write_string
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +173,7 @@ class VLRList(list):
                 record_data_len = int.from_bytes(
                     data_stream.read(2), byteorder="little", signed=False
                 )
-            description = data_stream.read(DESCRIPTION_LEN).split(b"\0")[0].decode()
+            description = read_string(data_stream, DESCRIPTION_LEN)
             record_data_bytes = data_stream.read(record_data_len)
 
             vlr = VLR(user_id, record_id, description, record_data_bytes)
@@ -188,7 +188,7 @@ class VLRList(list):
             record_data = vlr.record_data_bytes()
 
             stream.write(b"\0\0")
-            stream.write(encode_to_len(vlr.user_id, USER_ID_LEN))
+            write_string(stream, vlr.user_id, USER_ID_LEN)
             stream.write(vlr.record_id.to_bytes(2, byteorder="little", signed=False))
             if as_extended:
                 if len(record_data) > np.iinfo("uint16").max:
@@ -200,7 +200,7 @@ class VLRList(list):
                 stream.write(
                     len(record_data).to_bytes(2, byteorder="little", signed=False)
                 )
-            stream.write(encode_to_len(vlr.description, DESCRIPTION_LEN))
+            write_string(stream, vlr.description, DESCRIPTION_LEN)
             stream.write(record_data)
 
             bytes_written += 54 if not as_extended else 60

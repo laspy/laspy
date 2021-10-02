@@ -19,6 +19,7 @@ from .errors import LaspyException
 from .point import dims
 from .point.format import PointFormat, ExtraBytesParams
 from .point.record import PackedPointRecord
+from .utils import read_string, write_string
 from .vlrs import VLR
 from .vlrs.known import ExtraBytesStruct, ExtraBytesVlr
 from .vlrs.vlrlist import VLRList
@@ -27,7 +28,7 @@ from . import __version__
 logger = logging.getLogger(__name__)
 
 GENERATING_SOFTWARE_LEN = 32
-SOFTWARE_IDENTIFIER_LEN = 32
+SYSTEM_IDENTIFIER_LEN = 32
 
 LAS_FILE_SIGNATURE = b"LASF"
 DEFAULT_GENERATING_SOFTWARE = f"laspy {__version__}"
@@ -205,10 +206,10 @@ class LasHeader:
         self._version: Version = version
         #: System identifier
         #: Initialized to 'OTHER'
-        self.system_identifier: str = "OTHER"
+        self.system_identifier: Union[str, bytes] = "OTHER"
         #: The software which generated the file
         #: Initialized to 'laspy'
-        self.generating_software: str = DEFAULT_GENERATING_SOFTWARE
+        self.generating_software: Union[str, bytes] = DEFAULT_GENERATING_SOFTWARE
         self._point_format: PointFormat = point_format
         #: Day the file was created, initialized to date.today()
         self.creation_date: Optional[date] = date.today()
@@ -477,12 +478,8 @@ class LasHeader:
             int.from_bytes(stream.read(1), little_endian, signed=False),
         )
 
-        header.system_identifier = (
-            stream.read(SOFTWARE_IDENTIFIER_LEN).rstrip(b"\0").decode("utf-8", "ignore")
-        )
-        header.generating_software = (
-            stream.read(GENERATING_SOFTWARE_LEN).rstrip(b"\0").decode("utf-8", "ignore")
-        )
+        header.system_identifier = read_string(stream, SYSTEM_IDENTIFIER_LEN)
+        header.generating_software = read_string(stream, GENERATING_SOFTWARE_LEN)
 
         creation_day_of_year = int.from_bytes(
             stream.read(2), little_endian, signed=False
@@ -629,25 +626,23 @@ class LasHeader:
         stream.write(self.version.major.to_bytes(1, little_endian, signed=False))
         stream.write(self.version.minor.to_bytes(1, little_endian, signed=False))
 
-        system_identifier = self.system_identifier.encode("ascii")
-        if len(system_identifier) > SOFTWARE_IDENTIFIER_LEN:
+        was_truncated = write_string(
+            stream, self.system_identifier, SYSTEM_IDENTIFIER_LEN
+        )
+        if was_truncated:
             logger.warning(
-                f"system identifier does not fit into the {SOFTWARE_IDENTIFIER_LEN} maximum bytes,"
+                f"system identifier does not fit into the {SYSTEM_IDENTIFIER_LEN} maximum bytes,"
                 f" it will be truncated"
             )
-            stream.write(system_identifier[:SOFTWARE_IDENTIFIER_LEN])
-        else:
-            stream.write(system_identifier.ljust(SOFTWARE_IDENTIFIER_LEN, b"\0"))
 
-        generating_software = self.generating_software.encode("ascii")
-        if len(generating_software) > GENERATING_SOFTWARE_LEN:
+        was_truncated = write_string(
+            stream, self.generating_software, GENERATING_SOFTWARE_LEN
+        )
+        if was_truncated:
             logger.warning(
                 f"generating software does not fit into the {GENERATING_SOFTWARE_LEN} maximum bytes,"
                 f" it will be truncated"
             )
-            stream.write(generating_software[:GENERATING_SOFTWARE_LEN])
-        else:
-            stream.write(generating_software.ljust(GENERATING_SOFTWARE_LEN, b"\0"))
 
         if self.creation_date is None:
             self.creation_date = date.today()
