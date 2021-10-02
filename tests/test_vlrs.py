@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 import laspy
@@ -51,6 +53,6 @@ def test_adding_extra_bytes_vlr_by_hand():
 
 
 def test_geokey_parsing_does_not_require_optional_params():
-    las = laspy.read("tests/data/simple1_3.las")
+    las = laspy.read(str(Path(__file__).parent / "data/simple1_3.las"))
     geo_keys = laspy.vlrs.geotiff.parse_geo_tiff_keys_from_vlrs(las.vlrs)
     assert len(geo_keys) == 6
