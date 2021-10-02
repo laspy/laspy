@@ -40,6 +40,7 @@ class LasWriter:
         do_compress: Optional[bool] = None,
         laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
         closefd: bool = True,
+        encoding_errors: str = "strict",
     ) -> None:
         """
         Parameters
@@ -61,8 +62,14 @@ class LasWriter:
 
         closefd: bool, default True
             should the `dest` be closed when the writer is closed
+
+        encoding_errors: str, default 'strict'
+            How encoding errors should be treated.
+            Possible values and their explanation can be seen here:
+            https://docs.python.org/3/library/codecs.html#error-handlers.
         """
         self.closefd = closefd
+        self.encoding_errors = encoding_errors
         self.header = deepcopy(header)
         self.header.partial_reset()
         self.header.maxs = [np.finfo("f8").min] * 3
@@ -90,7 +97,9 @@ class LasWriter:
         else:
             self.point_writer: IPointWriter = UncompressedPointWriter(self.dest)
 
-        self.point_writer.write_initial_header_and_vlrs(self.header)
+        self.point_writer.write_initial_header_and_vlrs(
+            self.header, self.encoding_errors
+        )
 
     def write_points(self, points: PackedPointRecord) -> None:
         """
@@ -160,7 +169,7 @@ class LasWriter:
         if self.point_writer is not None:
             if not self.done:
                 self.point_writer.done()
-            self.point_writer.write_updated_header(self.header)
+            self.point_writer.write_updated_header(self.header, self.encoding_errors)
         if self.closefd:
             self.dest.close()
         self.done = True
@@ -218,8 +227,10 @@ class IPointWriter(abc.ABC):
     def destination(self) -> BinaryIO:
         ...
 
-    def write_initial_header_and_vlrs(self, header: LasHeader) -> None:
-        header.write_to(self.destination)
+    def write_initial_header_and_vlrs(
+        self, header: LasHeader, encoding_errors: str
+    ) -> None:
+        header.write_to(self.destination, encoding_errors=encoding_errors)
 
     @abc.abstractmethod
     def write_points(self, points: PackedPointRecord) -> None:
@@ -229,9 +240,11 @@ class IPointWriter(abc.ABC):
     def done(self) -> None:
         ...
 
-    def write_updated_header(self, header):
+    def write_updated_header(self, header: LasHeader, encoding_errors: str):
         self.destination.seek(0, io.SEEK_SET)
-        header.write_to(self.destination, ensure_same_size=True)
+        header.write_to(
+            self.destination, ensure_same_size=True, encoding_errors=encoding_errors
+        )
 
 
 class UncompressedPointWriter(IPointWriter):
@@ -283,11 +296,13 @@ class LaszipPointWriter(IPointWriter):
     def done(self) -> None:
         self.zipper.done()
 
-    def write_initial_header_and_vlrs(self, header: LasHeader) -> None:
+    def write_initial_header_and_vlrs(
+        self, header: LasHeader, encoding_errors: str
+    ) -> None:
         # Do nothing as creating the laszip zipper writes the header and vlrs
         pass
 
-    def write_updated_header(self, header: LasHeader) -> None:
+    def write_updated_header(self, header: LasHeader, encoding_errors: str) -> None:
         if header.number_of_evlrs != 0:
             # We wrote some evlrs, we have to update the header
             self.dest.seek(0, io.SEEK_SET)
@@ -296,7 +311,9 @@ class LaszipPointWriter(IPointWriter):
             file_header.number_of_evlrs = header.number_of_evlrs
             file_header.start_of_first_evlr = header.start_of_first_evlr
             self.dest.seek(0, io.SEEK_SET)
-            file_header.write_to(self.dest, ensure_same_size=True)
+            file_header.write_to(
+                self.dest, ensure_same_size=True, encoding_errors=encoding_errors
+            )
             assert self.dest.tell() == end_of_header_pos
 
 
@@ -317,10 +334,12 @@ class LazrsPointWriter(IPointWriter):
             Union[lazrs.ParLasZipCompressor, lazrs.LasZipCompressor]
         ] = None
 
-    def write_initial_header_and_vlrs(self, header: LasHeader) -> None:
+    def write_initial_header_and_vlrs(
+        self, header: LasHeader, encoding_errors: str
+    ) -> None:
         laszip_vlr = LasZipVlr(self.vlr.record_data())
         header.vlrs.append(laszip_vlr)
-        super().write_initial_header_and_vlrs(header)
+        super().write_initial_header_and_vlrs(header, encoding_errors)
         # We have to initialize our compressor here
         # because on init, it writes the offset to chunk table
         # so the header and vlrs have to be written

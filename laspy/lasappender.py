@@ -28,6 +28,7 @@ class LasAppender:
         dest: BinaryIO,
         laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
         closefd: bool = True,
+        encoding_errors: str = "strict",
     ) -> None:
         if not dest.seekable():
             raise TypeError("Expected the 'dest' to be a seekable file object")
@@ -67,6 +68,7 @@ class LasAppender:
             self.evlrs: Optional[VLRList] = None
 
         self.closefd = closefd
+        self.encoding_errors = encoding_errors
 
     def append_points(self, points: PackedPointRecord) -> None:
         """Append the points to the file, the points
@@ -102,7 +104,9 @@ class LasAppender:
     def _write_updated_header(self) -> None:
         pos = self.dest.tell()
         self.dest.seek(0, io.SEEK_SET)
-        self.header.write_to(self.dest, ensure_same_size=True)
+        self.header.write_to(
+            self.dest, ensure_same_size=True, encoding_errors=self.encoding_errors
+        )
         self.dest.seek(pos, io.SEEK_SET)
 
     def _create_laz_backend(

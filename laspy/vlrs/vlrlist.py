@@ -182,7 +182,12 @@ class VLRList(list):
 
         return vlrlist
 
-    def write_to(self, stream: BinaryIO, as_extended: bool = False) -> int:
+    def write_to(
+        self,
+        stream: BinaryIO,
+        as_extended: bool = False,
+        encoding_errors: str = "strict",
+    ) -> int:
         bytes_written = 0
         for vlr in self:
             record_data = vlr.record_data_bytes()
@@ -200,7 +205,12 @@ class VLRList(list):
                 stream.write(
                     len(record_data).to_bytes(2, byteorder="little", signed=False)
                 )
-            write_string(stream, vlr.description, DESCRIPTION_LEN)
+            write_string(
+                stream,
+                vlr.description,
+                DESCRIPTION_LEN,
+                encoding_errors=encoding_errors,
+            )
             stream.write(record_data)
 
             bytes_written += 54 if not as_extended else 60

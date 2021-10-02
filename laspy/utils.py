@@ -41,6 +41,7 @@ def write_string(
     string: Union[str, bytes],
     max_length: int,
     encoding: str = "ascii",
+    encoding_errors: str = "strict",
 ) -> bool:
     """
     Writes the string or bytes to the stream.
@@ -49,10 +50,10 @@ def write_string(
     so the input data may be null padded or truncated.
     """
     if isinstance(string, str):
-        raw_bytes = string.encode(encoding)
+        raw_bytes = string.encode(encoding, errors=encoding_errors)
     else:
         # check that the bytes are valid for the given encoding
-        _ = string.decode(encoding)
+        _ = string.decode(encoding, errors=encoding_errors)
         raw_bytes = string
 
     if len(raw_bytes) > max_length:

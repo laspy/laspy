@@ -28,6 +28,7 @@ def open_las(
     laz_backend=None,
     header=None,
     do_compress=None,
+    encoding_errors: str = "strict",
 ) -> Union[LasReader, LasWriter, LasAppender]:
     """The laspy.open opens a LAS/LAZ file in one of the 3 supported
     mode:
@@ -89,6 +90,12 @@ def open_las(
         Whether the stream/file object shall be closed, this only work
         when using open_las in a with statement. An exception is raised if
         closefd is specified and the source is a filename
+
+    encoding_errors: str, default 'strict'
+        Only used in writing and appending mode.
+        How encoding errors should be treated.
+        Possible values and their explanation can be seen here:
+        https://docs.python.org/3/library/codecs.html#error-handlers.
     """
     if mode == "r":
         if header is not None:
@@ -128,6 +135,7 @@ def open_las(
             do_compress=do_compress,
             laz_backend=laz_backend,
             closefd=closefd,
+            encoding_errors=encoding_errors,
         )
     elif mode == "a":
         if isinstance(source, (str, Path)):
@@ -136,7 +144,12 @@ def open_las(
             stream = io.BytesIO(source)
         else:
             stream = source
-        return LasAppender(stream, closefd=closefd, laz_backend=laz_backend)
+        return LasAppender(
+            stream,
+            closefd=closefd,
+            laz_backend=laz_backend,
+            encoding_errors=encoding_errors,
+        )
 
     else:
         raise ValueError(f"Unknown mode '{mode}'")

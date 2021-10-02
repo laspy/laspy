@@ -596,7 +596,12 @@ class LasHeader:
 
         return header
 
-    def write_to(self, stream: BinaryIO, ensure_same_size: bool = False) -> None:
+    def write_to(
+        self,
+        stream: BinaryIO,
+        ensure_same_size: bool = False,
+        encoding_errors: str = "strict",
+    ) -> None:
         """
         ensure_same_size: if true this function will raise an internal error
         if the written header would change the offset to point data
@@ -605,7 +610,7 @@ class LasHeader:
         """
         little_endian = "little"
         with io.BytesIO() as tmp:
-            self._vlrs.write_to(tmp)
+            self._vlrs.write_to(tmp, encoding_errors=encoding_errors)
             vlr_bytes = tmp.getvalue()
 
         header_size = LAS_HEADERS_SIZE[str(self.version)]
@@ -627,7 +632,10 @@ class LasHeader:
         stream.write(self.version.minor.to_bytes(1, little_endian, signed=False))
 
         was_truncated = write_string(
-            stream, self.system_identifier, SYSTEM_IDENTIFIER_LEN
+            stream,
+            self.system_identifier,
+            SYSTEM_IDENTIFIER_LEN,
+            encoding_errors=encoding_errors,
         )
         if was_truncated:
             logger.warning(
@@ -636,7 +644,10 @@ class LasHeader:
             )
 
         was_truncated = write_string(
-            stream, self.generating_software, GENERATING_SOFTWARE_LEN
+            stream,
+            self.generating_software,
+            GENERATING_SOFTWARE_LEN,
+            encoding_errors=encoding_errors,
         )
         if was_truncated:
             logger.warning(
