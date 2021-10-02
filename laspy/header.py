@@ -460,7 +460,9 @@ class LasHeader:
         little_endian = "little"
         header = cls()
 
-        file_sig = stream.read(4)
+        file_sig = stream.read(len(LAS_FILE_SIGNATURE))
+        if not file_sig:
+            raise LaspyException(f"Source is empty")
         if file_sig != LAS_FILE_SIGNATURE:
             raise LaspyException(f'Invalid file signature "{file_sig}"')
 
