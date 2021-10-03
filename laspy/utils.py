@@ -36,7 +36,7 @@ def read_string(
         return raw_string
 
 
-def write_string(
+def write_as_c_string(
     stream: BinaryIO,
     string: Union[str, bytes],
     max_length: int,
@@ -44,7 +44,10 @@ def write_string(
     encoding_errors: str = "strict",
 ) -> bool:
     """
-    Writes the string or bytes to the stream.
+    Writes the string or bytes as a 'C' string to the stream.
+
+    A 'C' string is null terminated, so this function writes the null
+    terminator.
 
     It will always write `max_length` bytes to the stream,
     so the input data may be null padded or truncated.
@@ -56,9 +59,54 @@ def write_string(
         _ = string.decode(encoding, errors=encoding_errors)
         raw_bytes = string
 
-    if len(raw_bytes) > max_length:
-        stream.write(raw_bytes[:max_length])
-        return True
-    else:
-        stream.write(raw_bytes.ljust(max_length, b"\0"))
-        return False
+    raw_bytes, was_truncated = null_terminate_and_pad(raw_bytes, max_length)
+    stream.write(raw_bytes)
+
+    return was_truncated
+
+
+def null_terminate_and_pad(raw_bytes: bytes, max_length: int) -> (bytes, bool):
+    """
+    Returns null-terminated bytes of exactly `max_length` long.
+
+    The bytes are null padded (at the end) if the `len(raw_bytes) < max_length`.
+
+    If the input raw bytes are longer that `max_length - 1` (account for the null-terminator)
+    then the data will be truncated
+
+    >>> null_terminate_and_pad(b'abcd', 5)
+    (b'abcd\\x00', False)
+
+    # input has 4 bytes, and must be 4 bytes long
+    # but since its guaranteed to be null terminated,
+    # the last byte will be truncated
+    >>> null_terminate_and_pad(b'abcd', 4)
+    (b'abc\\x00', True)
+
+    >>> null_terminate_and_pad(b'abcd', 10)
+    (b'abcd\\x00\\x00\\x00\\x00\\x00\\x00', False)
+
+    >>> null_terminate_and_pad(b'abcdabcd', 5)
+    (b'abcd\\x00', True)
+
+    >>> null_terminate_and_pad(b'abcde\\x00', 8)
+    (b'abcde\\x00\\x00\\x00', False)
+
+    >>> null_terminate_and_pad(b'abcde\\x00z', 8)
+    (b'abcde\\x00\\x00\\x00', True)
+    """
+    was_truncated = False
+
+    null_pos = raw_bytes.find(b"\0")
+    if null_pos != -1:
+        was_truncated = null_pos != len(raw_bytes) - 1
+        raw_bytes = raw_bytes[:null_pos]
+
+    if len(raw_bytes) >= max_length:
+        raw_bytes = raw_bytes[: max_length - 1]
+        was_truncated = True
+
+    # This will effectively null terminate/null pad
+    raw_bytes = raw_bytes.ljust(max_length, b"\0")
+
+    return raw_bytes, was_truncated
