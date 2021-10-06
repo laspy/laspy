@@ -149,6 +149,8 @@ class PackedPointRecord:
         )
 
     def __len__(self):
+        if self.array.ndim == 0:
+            return 1
         return self.array.shape[0]
 
     def __getitem__(self, item):
