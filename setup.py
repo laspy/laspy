@@ -31,7 +31,7 @@ setup(
             "black==20.8b1",
             "pytest-benchmark",
         ],
-        "lazrs": ["lazrs>=0.3.1, < 0.4.0"],
+        "lazrs": ["lazrs>=0.4.0, < 0.5.0"],
         "laszip": ["laszip >= 0.1.0, < 0.2.0"],
     },
     include_package_data=True,
