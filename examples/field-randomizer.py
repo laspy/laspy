@@ -20,16 +20,16 @@ def main(args):
         dimensions = (dim for dim in las.point_format.dimensions if dim.name not in args.exclude)
         for dimension in dimensions:
             print(f"\t{dimension.name}", end='')
-            if dimension.kind == laspy.DimensionKind.FloatingPoint:
-                print("...skipped because it is floating point")
-                continue
 
             if np.any(las[dimension.name] != 0) and args.keep_existing:
                 print("...skipped because it is already populated")
                 continue
 
-            type_str = dimension.type_str() if dimension.kind != laspy.DimensionKind.BitField else 'u1'
-            las[dimension.name] = np.random.randint(dimension.min, dimension.max + 1, len(las.points), type_str)
+            if dimension.kind == laspy.DimensionKind.FloatingPoint:
+                las[dimension.name] = np.random.uniform(low=dimension.min, high=dimension.max, size=len(las.points))
+            else:
+                type_str = dimension.type_str() if dimension.kind != laspy.DimensionKind.BitField else 'u1'
+                las[dimension.name] = np.random.randint(dimension.min, dimension.max + 1, len(las.points), type_str)
             print()
 
         if args.out_path.suffix:
