@@ -6,6 +6,8 @@ import numpy as np
 from . import dims
 from ..errors import LaspyException
 
+Number = Union[np.number, float, int]
+
 
 class ExtraBytesParams:
     """All parameters needed to create extra bytes"""
@@ -15,8 +17,8 @@ class ExtraBytesParams:
         name: str,
         type: Union[str, np.dtype, Type[np.uint8]],
         description: str = "",
-        offsets: Optional[np.ndarray] = None,
-        scales: Optional[np.ndarray] = None,
+        offsets: Optional[Iterable[Number]] = None,
+        scales: Optional[Iterable[Number]] = None,
     ) -> None:
         self.name = name
         """ The name of the extra dimension """
@@ -31,9 +33,9 @@ class ExtraBytesParams:
         """ The type of the extra dimension """
         self.description = description
         """ A description of the extra dimension """
-        self.offsets = offsets
+        self.offsets = np.array(offsets) if offsets is not None else offsets
         """ The offsets to use if its a 'scaled dimension', can be none """
-        self.scales = scales
+        self.scales = np.array(scales) if scales is not None else scales
         """ The scales to use if its a 'scaled dimension', can be none """
 
 
