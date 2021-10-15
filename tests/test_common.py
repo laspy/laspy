@@ -182,7 +182,7 @@ def test_coords_when_using_create_from_header(las):
 
 
 def test_slicing(las):
-    las.points = las.points[len(las.points) // 2 :]
+    las.points = las.points[len(las.points) // 2:]
 
 
 @pytest.mark.parametrize("do_compress", do_compression)
@@ -207,3 +207,50 @@ def test_point_record_setitem_scaled_view():
 def test_laspy_file_raises():
     with pytest.raises(laspy.errors.LaspyException):
         laspy.file.File("some path")
+
+
+def test_lasdata_setitem_xyz_with_2d_array():
+    las = laspy.read(simple_las)
+
+    xyz = np.ones(len(las), dtype='3f8')
+    xyz[..., 1] = 2.0
+    xyz[..., 2] = 3.0
+
+    las[['x', 'y', 'z']] = xyz
+
+    assert np.all(las.x == xyz[..., 0])
+    assert np.all(las.y == xyz[..., 1])
+    assert np.all(las.z == xyz[..., 2])
+
+
+def test_lasdata_setitem_xyz_with_structured_array():
+    las = laspy.read(simple_las)
+
+    xyz = np.ones(len(las), dtype=[('x', 'f8'), ('y', 'f8'), ('z', 'f8')])
+    xyz['y'] = 2.0
+    xyz['z'] = 3.0
+
+    las[['x', 'y', 'z']] = xyz
+
+    assert np.all(las.x == xyz['x'])
+    assert np.all(las.y == xyz['y'])
+    assert np.all(las.z == xyz['z'])
+
+
+def test_lasdata_setitem_one_dimension():
+    las = laspy.read(simple_las)
+
+    las[['x']] = np.ones(len(las), 'f8') * 17.0
+    assert np.all(las.x == 17.0)
+
+
+def test_lasdata_setitem_works_with_subfields():
+    las = laspy.read(simple_las)
+
+    new_values = np.ones(len(las), dtype=[('classification', 'u1'), ('return_number', 'u1')])
+    new_values['classification'] = 23
+    new_values['return_number'] = 2
+
+    las[['classification', 'return_number']] = new_values
+    assert np.all(las.classification == 23)
+    assert np.all(las.return_number == 2)

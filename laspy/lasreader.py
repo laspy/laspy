@@ -110,12 +110,8 @@ class LasReader:
     def read(self) -> LasData:
         """Reads all the points not read and returns a LasData object"""
         points = self.read_points(-1)
-        if not points:
-            points = record.PackedPointRecord.empty(self.header.point_format)
-        else:
-            points = record.PackedPointRecord(points.array, points.point_format)
-
         las_data = LasData(header=self.header, points=points)
+
         if self.header.version.minor >= 4:
             if (
                 self.header.are_points_compressed

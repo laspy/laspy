@@ -133,7 +133,7 @@ class PackedPointRecord:
                 self.array, np.zeros(size_diff, dtype=self.array.dtype)
             )
         elif size_diff < 0:
-            self.array = self._array[:new_size].copy()
+            self.array = self.array[:new_size].copy()
 
     def _append_zeros_if_too_small(self, value):
         """Appends zeros to the points stored if the value we are trying to
@@ -187,6 +187,22 @@ class PackedPointRecord:
 
     def __setitem__(self, key, value):
         """Sets elements in the array"""
+        if isinstance(key, (tuple, list)):
+            if not isinstance(value, np.ndarray):
+                value = np.asarray(value)
+
+            if value.dtype.isbuiltin == 0:
+                # value is most likely a structured array (dtype = [('name1', 'type1'), ...])
+                # https://numpy.org/devdocs/reference/generated/numpy.dtype.isbuiltin.html
+                for name, v_name in zip(key, value.dtype.names):
+                    self[name] = value[v_name]
+            else:
+                if len(key) == 1 and value.ndim == 1:
+                    value = value[..., np.newaxis]
+                for i, name in enumerate(key):
+                    self[name] = value[..., i]
+            return
+
         self._append_zeros_if_too_small(value)
         if isinstance(key, str):
             self[key][:] = value
@@ -305,7 +321,13 @@ class ScaleAwarePointRecord(PackedPointRecord):
         self.offsets = offsets
 
     def __getitem__(self, item):
-        if isinstance(item, (slice, np.ndarray)):
+        if isinstance(item, (int, slice, np.ndarray, list, tuple)):
+            if isinstance(item, (list, tuple)):
+                # x, y ,z do not really exists in the array, but they are computed from X, Y, Z
+                item = [
+                    item if item not in ("x", "y", "z") else item.upper()
+                    for item in item
+                ]
             return ScaleAwarePointRecord(
                 self.array[item], self.point_format, self.scales, self.offsets
             )

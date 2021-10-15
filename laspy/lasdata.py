@@ -2,6 +2,8 @@ import logging
 import pathlib
 from typing import Union, Optional, List, Sequence, overload, BinaryIO
 
+import numpy as np
+
 from . import errors
 from .compression import LazBackend
 from .header import LasHeader
@@ -29,54 +31,35 @@ class LasData:
     """
 
     def __init__(
-        self, header: LasHeader, points: Optional[record.PackedPointRecord] = None
+        self,
+        header: LasHeader,
+        points: Optional[
+            Union[record.PackedPointRecord, record.ScaleAwarePointRecord]
+        ] = None,
     ) -> None:
         if points is None:
-            points = record.PackedPointRecord.zeros(
-                header.point_count, header.point_format
+            points = record.ScaleAwarePointRecord.zeros(
+                header.point_count, header=header
             )
-        elif points.point_format != header.point_format:
+        if points.point_format != header.point_format:
             raise errors.LaspyException("Incompatible Point Formats")
+        if isinstance(points, record.PackedPointRecord):
+            points = record.ScaleAwarePointRecord(
+                points.array,
+                header.point_format,
+                scales=header.scales,
+                offsets=header.offsets,
+            )
+        else:
+            assert np.all(header.scales, points.scales)
+            assert np.all(header.offsets, points.offsets)
         self.__dict__["_points"] = points
-        self.points: record.PackedPointRecord
+        self.points: record.ScaleAwarePointRecord
         self.header: LasHeader = header
         if header.version.minor >= 4:
             self.evlrs: Optional[VLRList] = VLRList()
         else:
             self.evlrs: Optional[VLRList] = None
-
-    @property
-    def x(self) -> ScaledArrayView:
-        """Returns the scaled x positions of the points as doubles"""
-        return ScaledArrayView(self.X, self.header.x_scale, self.header.x_offset)
-
-    @x.setter
-    def x(self, value) -> None:
-        if len(value) > len(self.points):
-            self.points.resize(len(value))
-        self.x[:] = value
-
-    @property
-    def y(self) -> ScaledArrayView:
-        """Returns the scaled y positions of the points as doubles"""
-        return ScaledArrayView(self.Y, self.header.y_scale, self.header.y_offset)
-
-    @y.setter
-    def y(self, value) -> None:
-        if len(value) > len(self.points):
-            self.points.resize(len(value))
-        self.y[:] = value
-
-    @property
-    def z(self) -> ScaledArrayView:
-        """Returns the scaled z positions of the points as doubles"""
-        return ScaledArrayView(self.Z, self.header.z_scale, self.header.z_offset)
-
-    @z.setter
-    def z(self, value) -> None:
-        if len(value) > len(self.points):
-            self.points.resize(len(value))
-        self.z[:] = value
 
     @property
     def point_format(self) -> PointFormat:
@@ -245,12 +228,7 @@ class LasData:
         offsets: optional
                  New offsets to be used. If not provided, the offsets won't change.
         """
-        if scales is None:
-            scales = self.header.scales
-        if offsets is None:
-            offsets = self.header.offsets
-
-        record.apply_new_scaling(self, scales, offsets)
+        self.points.change_scaling(scales, offsets)
 
         self.header.scales = scales
         self.header.offsets = offsets
