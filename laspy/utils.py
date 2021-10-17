@@ -11,8 +11,15 @@ def encode_to_len(string: str, wanted_len: int, codec="ascii") -> bytes:
 
 
 def encode_to_null_terminated(string: str, codec: str = "utf-8") -> bytes:
+    """
+    >>> encode_to_null_terminated("las files are cool")
+    b'las files are cool\\x00'
+
+    >>> encode_to_null_terminated("")
+    b'\\x00'
+    """
     b = string.encode(codec)
-    if b[-1] != 0:
+    if not b or b[-1] != 0:
         b += b"\0"
     return b
 
