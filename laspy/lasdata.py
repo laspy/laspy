@@ -67,6 +67,26 @@ class LasData:
         return self.points.point_format
 
     @property
+    def xyz(self) -> np.ndarray:
+        """Returns a **new** 2D numpy array with the x,y,z coordinates
+
+        >>> import laspy
+        >>> las = laspy.read("tests/data/simple.las")
+        >>> xyz = las.xyz
+        >>> xyz.ndim
+        2
+        >>> xyz.shape
+        (1065, 3)
+        >>> np.all(xyz[..., 0] == las.x)
+        True
+        """
+        return np.vstack((self.x, self.y, self.z)).transpose()
+
+    @xyz.setter
+    def xyz(self, value) -> None:
+        self.points[("x", "y", "z")] = value
+
+    @property
     def points(self) -> record.PackedPointRecord:
         """Returns the point record"""
         return self._points
