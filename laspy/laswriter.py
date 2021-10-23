@@ -34,13 +34,14 @@ class LasWriter:
     """
 
     def __init__(
-        self,
-        dest: BinaryIO,
-        header: LasHeader,
-        do_compress: Optional[bool] = None,
-        laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
-        closefd: bool = True,
-        encoding_errors: str = "strict",
+            self,
+            dest: BinaryIO,
+            header: LasHeader,
+            do_compress: Optional[bool] = None,
+            laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
+            closefd: bool = True,
+            encoding_errors: str = "strict",
+            use_variable_size_chunks: bool = False,
     ) -> None:
         """
         Parameters
@@ -91,6 +92,9 @@ class LasWriter:
                 do_compress = False
             self.laz_backend = LazBackend.detect_available()
         self.header.are_points_compressed = do_compress
+
+        if use_variable_size_chunks and not do_compress:
+            raise LaspyException("Cannot ask to use variable_size_chunks when not compressing")
 
         if do_compress:
             self.point_writer: IPointWriter = self._create_laz_backend(self.laz_backend)
@@ -175,7 +179,7 @@ class LasWriter:
         self.done = True
 
     def _create_laz_backend(
-        self, laz_backends: Union[LazBackend, Iterable[LazBackend]]
+            self, laz_backends: Union[LazBackend, Iterable[LazBackend]]
     ) -> "IPointWriter":
         try:
             laz_backends = iter(laz_backends)
@@ -237,6 +241,10 @@ class IPointWriter(abc.ABC):
         ...
 
     @abc.abstractmethod
+    def write_chunks(self, chunks: Iterable[PackedPointRecord]) -> None:
+        ...
+
+    @abc.abstractmethod
     def done(self) -> None:
         ...
 
@@ -270,7 +278,6 @@ class LaszipPointWriter(IPointWriter):
     """
     Compressed point writer using laszip backend
     """
-
     def __init__(self, dest: BinaryIO, header: LasHeader) -> None:
         self.dest = dest
         header.set_compressed(False)
@@ -292,6 +299,9 @@ class LaszipPointWriter(IPointWriter):
     def write_points(self, points: PackedPointRecord) -> None:
         points_bytes = np.frombuffer(points.array, np.uint8)
         self.zipper.compress(points_bytes)
+
+    def write_chunks(self, chunks: Iterable[PackedPointRecord]) -> None:
+        raise LaspyException("LaszipPointWriter does not support variable-size chunks")
 
     def done(self) -> None:
         self.zipper.done()
@@ -323,7 +333,7 @@ class LazrsPointWriter(IPointWriter):
     """
 
     def __init__(
-        self, dest: BinaryIO, point_format: PointFormat, parallel: bool
+            self, dest: BinaryIO, point_format: PointFormat, parallel: bool
     ) -> None:
         self.dest = dest
         self.vlr = lazrs.LazVlr.new_for_compression(
@@ -354,10 +364,17 @@ class LazrsPointWriter(IPointWriter):
 
     def write_points(self, points: PackedPointRecord) -> None:
         assert (
-            self.compressor is not None
+                self.compressor is not None
         ), "Trying to write points without having written header"
         points_bytes = np.frombuffer(points.array, np.uint8)
         self.compressor.compress_many(points_bytes)
+
+    def write_chunks(self, chunks: Iterable[PackedPointRecord]) -> None:
+        if not self.vlr.uses_variable_size_chunk():
+            raise LaspyException("Cannot use write_chunks on non variable-size chunks")
+
+        chunks_bytes = [chunk.memoryview() for chunk in chunks]
+        self.compressor.compress_chunks(chunks_bytes)
 
     def done(self) -> None:
         if self.compressor is not None:
