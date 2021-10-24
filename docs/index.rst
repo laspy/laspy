@@ -85,6 +85,7 @@ User Guide
     complete_tutorial
     lessbasic
     migration
+    changelog
 
 API Documentation
 =================

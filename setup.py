@@ -30,6 +30,7 @@ setup(
             "nox",
             "black==20.8b1",
             "pytest-benchmark",
+            "m2r2",
         ],
         "lazrs": ["lazrs>=0.4.0, < 0.5.0"],
         "laszip": ["laszip >= 0.1.0, < 0.2.0"],

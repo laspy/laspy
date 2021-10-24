@@ -53,6 +53,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx.ext.doctest',
+    'm2r2'
     # 'sphinx_autodoc_typehints'
 ]
 
