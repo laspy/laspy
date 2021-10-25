@@ -750,10 +750,9 @@ class ScaledArrayView(ArrayView):
     def __getitem__(self, item):
         if isinstance(item, int):
             return self._apply_scale(self.array[item])
-        elif isinstance(item, slice):
-            return self.__class__(self.array[item], self.scale, self.offset)
         else:
-            return self.__class__(self.array[item], self.scale[item], self.offset[item])
+            return self.__class__(self.array[item], self.scale, self.offset)
+
 
     def __setitem__(self, key, value):
         # bail out on empty sequences
