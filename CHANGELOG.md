@@ -17,6 +17,7 @@
 ### Fixed
 - Fix `PackedPointRecord.__len__` when array has no dim
 - Fix scaled extra byte creation when the offsets/scales given to `ExtraBytesParam` where of type `list` or `tuple`
+- Fix `ScaledArrayView` to allow indexing with `list` or `numpy.array`.
 
 ## Version 2.0.3
 

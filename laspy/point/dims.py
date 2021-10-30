@@ -753,7 +753,20 @@ class ScaledArrayView(ArrayView):
         elif isinstance(item, slice):
             return self.__class__(self.array[item], self.scale, self.offset)
         else:
-            return self.__class__(self.array[item], self.scale[item], self.offset[item])
+            sliced_array = self.array[item]
+            if len(item) == 2:
+                if item[1] is Ellipsis:
+                    # item is (index, ...), it queries for all the dimensions
+                    # of a point or set of point, so we don't slice the scales/offsets
+                    return self.__class__(sliced_array, self.scale, self.offset)
+                elif item[0] is Ellipsis:
+                    # item is something like (..., index)
+                    # it queries for one dimension or set of dimension
+                    # for all the points, so we need to slice the scales/offsets
+                    return self.__class__(
+                        sliced_array, self.scale[item[1]], self.offset[item[1]]
+                    )
+            return self.__class__(sliced_array, self.scale, self.offset)
 
     def __setitem__(self, key, value):
         # bail out on empty sequences

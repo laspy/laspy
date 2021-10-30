@@ -61,6 +61,48 @@ def test_array_view_int_index_return_singular_elements():
         assert (a[i] * 2.0) == s[i]
 
 
+def test_scaled_array_view_ellipsis_indexing(simple_las_path):
+    las = laspy.read(simple_las_path)
+
+    las.add_extra_dim(
+        laspy.ExtraBytesParams(
+            name="test_dim",
+            type="3int32",
+            scales=np.array([1.0, 2.0, 3.0], np.float64),
+            offsets=np.array([10.0, 20.0, 30.0], np.float64),
+        )
+    )
+
+    # Query all the points in the 2nd dimension
+    assert np.all(las.test_dim[..., 2] == 30.0)
+
+    # Query the 10 nth point, we expect all its dimensions
+    assert np.all(las.test_dim[10, ...] == [10.0, 20.0, 30.0])
+
+
+def test_scaled_array_view_indexing_with_array_or_list(simple_las_path):
+    las = laspy.read(simple_las_path)
+
+    las.add_extra_dim(
+        laspy.ExtraBytesParams(
+            name="test_dim",
+            type="3int32",
+            scales=np.array([1.0, 2.0, 3.0], np.float64),
+            offsets=np.array([10.0, 20.0, 30.0], np.float64),
+        )
+    )
+
+    d = las.test_dim[[0, 1, 10, 12]]
+    assert d.ndim == 2
+    assert d.shape == (4, 3)
+    assert np.all(d[..., 0] == 10.0)
+    assert np.all(d[..., 1] == 20.0)
+    assert np.all(d[..., 2] == 30.0)
+
+    d2 = las.test_dim[np.array([0, 1, 10, 12])]
+    assert np.all(d == d2)
+
+
 def test_sub_field_view_with_self(simple_las_path):
     las = laspy.read(simple_las_path)
 
