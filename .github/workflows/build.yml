@@ -19,7 +19,7 @@ jobs:
       fail-fast: true
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ "3.6", "3.7", "3.8", "3.9", "3.10" ]
         laz-backend: [ None, lazrs, laszip ]
 
     steps:
