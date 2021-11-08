@@ -196,12 +196,12 @@ class VLRList(list):
             write_as_c_string(stream, vlr.user_id, USER_ID_LEN)
             stream.write(vlr.record_id.to_bytes(2, byteorder="little", signed=False))
             if as_extended:
-                if len(record_data) > np.iinfo("uint16").max:
-                    raise ValueError("vlr record_data is too long")
                 stream.write(
                     len(record_data).to_bytes(8, byteorder="little", signed=False)
                 )
             else:
+                if len(record_data) > np.iinfo("uint16").max:
+                    raise ValueError("vlr record_data is too long")
                 stream.write(
                     len(record_data).to_bytes(2, byteorder="little", signed=False)
                 )
