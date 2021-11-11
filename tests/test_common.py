@@ -254,3 +254,32 @@ def test_lasdata_setitem_works_with_subfields():
     las[['classification', 'return_number']] = new_values
     assert np.all(las.classification == 23)
     assert np.all(las.return_number == 2)
+
+
+def test_las_data_getitem_indices():
+    las = laspy.read(simple_las)
+    las.classification[:] = 0
+
+    indices = np.array([1, 2, 3, 4])
+    sliced_las = las[indices]
+    sliced_las.classification[:] = 1
+
+    assert np.all(sliced_las.classification == 1)
+    # We expect sliced_las to give us a copy,
+    # So original las is no modified
+    assert np.all(las.classification == 0)
+
+
+def test_las_data_getitem_slice():
+    las = laspy.read(simple_las)
+    las.classification[:] = 0
+
+    sliced_las = las[0:10]
+    sliced_las.classification[:] = 1
+
+    assert np.all(sliced_las.classification == 1)
+    # Slicing does not trigger, advanced indexing
+    # so the underlying array is not a copy
+    # https://numpy.org/doc/stable/reference/arrays.indexing.html
+    assert np.all(las.classification[:10] == 1)
+    assert np.all(las.classification[10:] == 0)

@@ -1,5 +1,7 @@
 import logging
 import pathlib
+import typing
+from copy import deepcopy
 from typing import Union, Optional, List, Sequence, overload, BinaryIO
 
 import numpy as np
@@ -9,7 +11,7 @@ from .compression import LazBackend
 from .header import LasHeader
 from .laswriter import LasWriter
 from .point import record, dims, ExtraBytesParams, PointFormat
-from .point.dims import ScaledArrayView, OLD_LASPY_NAMES
+from .point.dims import ScaledArrayView, SubFieldView, OLD_LASPY_NAMES
 from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)
@@ -304,8 +306,28 @@ class LasData:
         else:
             super().__setattr__(key, value)
 
+    @typing.overload
+    def __getitem__(
+        self, item: Union[str, List[str]]
+    ) -> Union[np.ndarray, ScaledArrayView, SubFieldView]:
+        ...
+
+    @typing.overload
+    def __getitem__(self, item: Union[int, typing.Iterable[int], slice]) -> "LasData":
+        ...
+
     def __getitem__(self, item):
-        return self.points[item]
+        try:
+            item_is_list_of_str = all(isinstance(el, str) for el in iter(item))
+        except TypeError:
+            item_is_list_of_str = False
+
+        if isinstance(item, str) or item_is_list_of_str:
+            return self.points[item]
+        else:
+            las = LasData(deepcopy(self.header), points=self.points[item])
+            las.update_header()
+            return las
 
     def __setitem__(self, key, value):
         self.points[key] = value

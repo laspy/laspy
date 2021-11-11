@@ -13,6 +13,8 @@
 - `laspy` will no longer raise encoding errors when reading files for which the header's `generating_software` or
   `system_identifier` as well as the vlr's `description` is not `ascii` encoded as the spec mandates.
   However, an encoding error will be raised when writing such files.
+- `LasData.__getitem__` will now return a `LasData` when indexing with slice or numpy array.
+   `assert isinstance(las[[1, 2, 3, 4]], laspy.LasData)`
  
 ### Fixed
 - Fix `PackedPointRecord.__len__` when array has no dim
