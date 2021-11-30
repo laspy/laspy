@@ -184,7 +184,7 @@ class LasData:
     ) -> None:
         ...
 
-    def write(self, destination, do_compress=None, laz_backend=None):
+    def write(self, destination, do_compress=None, laz_backend=None, update_header=True):
         """Writes to a stream or file
 
         .. note::
@@ -206,15 +206,19 @@ class LasData:
             Flags to indicate if you want to compress the data
         laz_backend: optional, the laz backend to use
             By default, laspy detect available backends
+        update_header: bool, optional
+            Flags to indicate if you want to update header before data are written
         """
         if isinstance(destination, (str, pathlib.Path)):
             do_compress = pathlib.Path(destination).suffix.lower() == ".laz"
 
             with open(destination, mode="wb+") as out:
-                self._write_to(out, do_compress=do_compress, laz_backend=laz_backend)
+                self._write_to(
+                    out, do_compress=do_compress, laz_backend=laz_backend, update_header=update_header
+                )
         else:
             self._write_to(
-                destination, do_compress=do_compress, laz_backend=laz_backend
+                destination, do_compress=do_compress, laz_backend=laz_backend, update_header=update_header
             )
 
     def _write_to(
@@ -222,6 +226,7 @@ class LasData:
         out_stream: BinaryIO,
         do_compress: Optional[bool] = None,
         laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = None,
+        update_header: Optional[bool] = None,
     ) -> None:
         with LasWriter(
             out_stream,
@@ -229,6 +234,7 @@ class LasData:
             do_compress=do_compress,
             closefd=False,
             laz_backend=laz_backend,
+            update_header=update_header,
         ) as writer:
             writer.write_points(self.points)
             if self.header.version.minor >= 4 and self.evlrs is not None:

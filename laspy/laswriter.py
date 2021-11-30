@@ -40,6 +40,7 @@ class LasWriter:
         do_compress: Optional[bool] = None,
         laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
         closefd: bool = True,
+        update_header: bool = True,
         encoding_errors: str = "strict",
     ) -> None:
         """
@@ -63,6 +64,9 @@ class LasWriter:
         closefd: bool, default True
             should the `dest` be closed when the writer is closed
 
+        update_header: bool, default True
+            should the header be updated before writing the file
+
         encoding_errors: str, default 'strict'
             How encoding errors should be treated.
             Possible values and their explanation can be seen here:
@@ -71,9 +75,11 @@ class LasWriter:
         self.closefd = closefd
         self.encoding_errors = encoding_errors
         self.header = deepcopy(header)
-        self.header.partial_reset()
-        self.header.maxs = [np.finfo("f8").min] * 3
-        self.header.mins = [np.finfo("f8").max] * 3
+        self.update_header = update_header
+        if self.update_header:
+            self.header.partial_reset()
+            self.header.maxs = [np.finfo("f8").min] * 3
+            self.header.mins = [np.finfo("f8").max] * 3
 
         self.dest = dest
         self.done = False
@@ -132,7 +138,9 @@ class LasWriter:
         if points.point_format != self.header.point_format:
             raise LaspyException("Incompatible point formats")
 
-        self.header.update(points)
+        if self.update_header:
+            self.header.update(points)
+        
         self.point_writer.write_points(points)
 
     def write_evlrs(self, evlrs: VLRList) -> None:
