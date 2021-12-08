@@ -283,3 +283,46 @@ def test_las_data_getitem_slice():
     # https://numpy.org/doc/stable/reference/arrays.indexing.html
     assert np.all(las.classification[:10] == 1)
     assert np.all(las.classification[10:] == 0)
+
+
+def test_change_scaling():
+    """ Check our change scaling method.
+
+    We expect the scaled x,y,z not to change
+    while the unscaled (integers) X,Y,Z should change.
+    """
+    hdr = laspy.LasHeader()
+    hdr.offsets = np.array([0.0, 0.0, 0.0])
+    hdr.scales = np.array([1.0, 1.0, 1.0])
+
+    las = laspy.LasData(hdr)
+
+    las['x'] = np.array([1, 2, 3, 4])
+    las['y'] = np.array([1, 2, 3, 4])
+    las['z'] = np.array([1, 2, 3, 4])
+
+    assert np.all(las.x == [1, 2, 3, 4])
+    assert np.all(las.y == [1, 2, 3, 4])
+    assert np.all(las.z == [1, 2, 3, 4])
+
+    assert np.all(las.X == [1, 2, 3, 4])
+    assert np.all(las.Y == [1, 2, 3, 4])
+    assert np.all(las.Z == [1, 2, 3, 4])
+
+    las.change_scaling(scales=[0.5, 0.1, 0.01])
+    assert np.all(las.x == [1, 2, 3, 4])
+    assert np.all(las.y == [1, 2, 3, 4])
+    assert np.all(las.z == [1, 2, 3, 4])
+
+    assert np.all(las.X == [2, 4, 6, 8])
+    assert np.all(las.Y == [10, 20, 30, 40])
+    assert np.all(las.Z == [100, 200, 300, 400])
+
+    las.change_scaling(offsets=[1, 20, 30])
+    assert np.all(las.x == [1, 2, 3, 4])
+    assert np.all(las.y == [1, 2, 3, 4])
+    assert np.all(las.z == [1, 2, 3, 4])
+
+    assert np.all(las.X == [0, 2, 4, 6])
+    assert np.all(las.Y == [-190, -180, -170, -160])
+    assert np.all(las.Z == [-2900, -2800, -2700, -2600])
