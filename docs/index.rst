@@ -7,7 +7,7 @@
 laspy: Python library for lidar LAS/LAZ IO.
 ===========================================
 
-`LAS`_ (and it's compressed counterpart LAZ), is a popular format for lidar pointcloud and full waveform,
+`LAS`_ (and its compressed counterpart LAZ), is a popular format for lidar pointcloud and full waveform,
 laspy reads and writes these formats and provides a Python API via Numpy Arrays.
 
 .. _LAS: https://www.asprs.org/committee-general/laser-las-file-format-exchange-activities.html
