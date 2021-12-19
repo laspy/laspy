@@ -7,7 +7,7 @@ import pytest
 
 import laspy
 from laspy.lib import write_then_read_again
-from tests.conftest import UNREGISTERED_EXTRA_BYTES_LAS
+from tests.conftest import UNREGISTERED_EXTRA_BYTES_LAS, EXTRA_BYTES_LAS_FILE_PATH, SIMPLE_LAS_FILE_PATH
 
 
 def test_read_example_extra_bytes_las(las_file_path_with_extra_bytes):
@@ -37,7 +37,7 @@ def test_read_write_example_extra_bytes_file(las_file_path_with_extra_bytes):
 
 
 def test_adding_extra_bytes_keeps_values_of_all_existing_fields(
-    extra_bytes_params, simple_las_path
+        extra_bytes_params, simple_las_path
 ):
     """
     Test that when extra bytes are added, the existing fields keep their
@@ -210,7 +210,7 @@ def test_creating_bytes_with_description_too_long(simple_las_path):
                 name="a fine name",
                 type="int32",
                 description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                " Sed non risus",
+                            " Sed non risus",
             )
         )
 
@@ -252,8 +252,8 @@ def test_cant_create_scaled_extra_bytes_with_offsets_array_smaller(num_elements)
             )
         )
     assert (
-        str(error.value)
-        == f"len(offsets) ({num_elements - 1}) is not the same as the number of elements ({num_elements})"
+            str(error.value)
+            == f"len(offsets) ({num_elements - 1}) is not the same as the number of elements ({num_elements})"
     )
 
 
@@ -270,8 +270,8 @@ def test_cant_create_scaled_extra_bytes_with_scales_array_smaller(num_elements):
             )
         )
     assert (
-        str(error.value)
-        == f"len(scales) ({num_elements - 1}) is not the same as the number of elements ({num_elements})"
+            str(error.value)
+            == f"len(scales) ({num_elements - 1}) is not the same as the number of elements ({num_elements})"
     )
 
 
@@ -296,3 +296,70 @@ def test_handle_unregistered_extra_bytes():
 
     las = laspy.lib.write_then_read_again(las)
     check_file(las)
+
+
+def test_remove_standard_dimension_fails():
+    """
+    Test we cannot remove non-extra dimension
+    """
+    las = laspy.read(SIMPLE_LAS_FILE_PATH)
+    for name in las.point_format.standard_dimension_names:
+        with pytest.raises(laspy.LaspyException):
+            las.remove_extra_dims(name)
+
+
+def test_remove_all_extra_dimensions():
+    """
+    Test that if we remove all extra bytes of a file,
+    the values of standard fields are not altered
+
+    This also test that writing files from which we deleted extra bytes works
+    """
+    las = laspy.read(EXTRA_BYTES_LAS_FILE_PATH)
+
+    extra_dimension_names = list(las.point_format.extra_dimension_names)
+    assert len(extra_dimension_names) > 0, "If the input file has no extra dimension, " \
+                                           "this test is useless"
+
+    copied_standard_values = [(name, np.copy(las[name])) for name in las.point_format.standard_dimension_names]
+
+    las.remove_extra_dims(extra_dimension_names)
+
+    for name, copied_value in copied_standard_values:
+        assert np.all(las[name] == copied_value)
+
+    new_las = laspy.lib.write_then_read_again(las)
+    assert new_las.point_format == las.point_format
+    for name, copied_value in copied_standard_values:
+        assert np.all(new_las[name] == copied_value)
+
+
+def test_remove_some_extra_dimensions():
+    """
+    Test that if we remove some extra bytes of a file,
+    the values of standard fields as well as kept extra bytes are not altered
+
+    This also test that writing files from which we deleted extra bytes works
+    """
+    las = laspy.read(EXTRA_BYTES_LAS_FILE_PATH)
+
+    extra_dimension_names = list(las.point_format.extra_dimension_names)
+    assert len(extra_dimension_names) > 0, "If the input file has no extra dimension, " \
+                                           "this test is useless"
+
+    extra_dimensions_to_keep = ["Colors", "Time"]
+    dims_to_copy = list(las.point_format.standard_dimension_names) + extra_dimensions_to_keep
+    copied_standard_values = [(name, np.copy(las[name])) for name in dims_to_copy]
+
+    extra_dims_to_remove = [name for name in las.point_format.extra_dimension_names if
+                            name not in extra_dimensions_to_keep]
+
+    las.remove_extra_dims(extra_dims_to_remove)
+
+    for name, copied_value in copied_standard_values:
+        assert np.all(las[name] == copied_value)
+
+    new_las = laspy.lib.write_then_read_again(las)
+    assert new_las.point_format == las.point_format
+    for name, copied_value in copied_standard_values:
+        assert np.all(new_las[name] == copied_value)

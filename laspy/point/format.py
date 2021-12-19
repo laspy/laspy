@@ -196,6 +196,26 @@ class PointFormat:
             raise LaspyException("Extra Dimensions do not support more than 3 elements")
         self.dimensions.append(dim_info)
 
+    def remove_extra_dimension(self, name: str) -> None:
+        dimensions = [
+            dim for dim in self.dimensions if dim.name == name and not dim.is_standard
+        ]
+
+        try:
+            dimension = dimensions[0]
+        except IndexError:
+            if name in self.standard_dimension_names:
+                raise LaspyException(
+                    f"The dimension named '{name}' is not an extra dimension, "
+                    "so it cannot be removed"
+                )
+            else:
+                raise LaspyException(
+                    f"'No extra dimension named '{name}' exist"
+                ) from None
+
+        self.dimensions = [dim for dim in self.dimensions if dim is not dimension]
+
     def dtype(self):
         """Returns the numpy.dtype used to store the point records in a numpy array
 

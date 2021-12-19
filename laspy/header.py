@@ -4,7 +4,7 @@ import logging
 import struct
 import typing
 from datetime import date, timedelta
-from typing import NamedTuple, BinaryIO, Optional, List, Union
+from typing import NamedTuple, BinaryIO, Optional, List, Union, Iterable
 from uuid import UUID
 
 import numpy as np
@@ -398,6 +398,14 @@ class LasHeader:
 
     def add_extra_dim(self, params: ExtraBytesParams):
         self.add_extra_dims([params])
+
+    def remove_extra_dim(self, name: str) -> None:
+        self.remove_extra_dims([name])
+
+    def remove_extra_dims(self, names: Iterable[str]) -> None:
+        for name in names:
+            self.point_format.remove_extra_dimension(name)
+        self._sync_extra_bytes_vlr()
 
     def set_version_and_point_format(
         self, version: Version, point_format: PointFormat

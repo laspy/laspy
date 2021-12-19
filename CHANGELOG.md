@@ -5,6 +5,7 @@
 ### Added
 - Added a better error message when reading empty files
 - Added a new `xyz` attribute to `LasData` that returns x, y, z as a new numpy array or sets the x, y, z from an array
+- Added `LasData.remove_extra_dim` and `LasData.remove_extra_dims` to allow the removal of extra dimensions (__only__)
 
 ### Changed
 - Minimum `lazrs` version updated to 0.4.0 to bring support for LAZ with variable size chunks

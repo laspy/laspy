@@ -2,7 +2,7 @@ import logging
 import pathlib
 import typing
 from copy import deepcopy
-from typing import Union, Optional, List, Sequence, overload, BinaryIO
+from typing import Union, Optional, List, Sequence, overload, BinaryIO, Iterable
 
 import numpy as np
 
@@ -138,10 +138,67 @@ class LasData:
         params: list of parameters of the new extra dimensions to add
         """
         self.header.add_extra_dims(params)
-        new_point_record = record.PackedPointRecord.from_point_record(
-            self.points, self.header.point_format
+        new_point_record = record.ScaleAwarePointRecord.zeros(
+            len(self.points), header=self.header
         )
+        new_point_record.copy_fields_from(self.points)
         self.points = new_point_record
+
+    def remove_extra_dims(self, names: Iterable[str]) -> None:
+        """Remove multiple extra dimensions from this object
+
+        Parameters
+        ----------
+
+        names: iterable,
+            names of the extra dimensions to be removed
+
+
+        Raises
+        ------
+
+        LaspyException: if you try to remove an extra dimension that do not exist.
+
+        """
+        extra_dimension_names = list(self.point_format.extra_dimension_names)
+        not_extra_dimension = [
+            name for name in names if name not in extra_dimension_names
+        ]
+        if not_extra_dimension:
+            raise errors.LaspyException(
+                f"'{not_extra_dimension}' are not extra dimensions and cannot be removed"
+            )
+
+        self.header.remove_extra_dims(names)
+        new_point_record = record.ScaleAwarePointRecord.zeros(
+            len(self.points), header=self.header
+        )
+        new_point_record.copy_fields_from(self.points)
+        self.points = new_point_record
+
+    def remove_extra_dim(self, name: str) -> None:
+        """Remove an extra dimensions from this object
+
+        .. note::
+
+             If you plan on removing multiple extra dimensions,
+             prefer :meth:`.remove_extra_dims` as it will
+             save re-allocations and data copy
+
+         Parameters
+         ----------
+
+         name: str,
+             name of the extra dimension to be removed
+
+
+         Raises
+         ------
+
+         LaspyException: if you try to remove an extra dimension that do not exist.
+
+        """
+        self.remove_extra_dims([name])
 
     def update_header(self) -> None:
         """Update the information stored in the header
