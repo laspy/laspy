@@ -50,10 +50,6 @@ class LasReader:
 
         if self.header.point_count > 0:
             if self.header.are_points_compressed:
-                if not laz_backend:
-                    raise errors.LaspyException(
-                        "No LazBackend selected, cannot decompress data"
-                    )
                 self.point_source = self._create_laz_backend(source)
                 if self.point_source is None:
                     raise errors.LaspyException(
@@ -180,12 +176,25 @@ class LasReader:
             self.point_source.close()
 
     def _create_laz_backend(self, source) -> Optional["IPointReader"]:
+        """Creates the laz backend to use according to `self.laz_backend`.
+
+        If `self.laz_backend` contains mutilple backends, this functions will
+        try to create them in order until one of them is successfully constructed.
+
+        If none could be constructed, the error of the last backend tried wil be raised
+        """
+        if not self.laz_backend:
+            raise errors.LaspyException(
+                "No LazBackend selected, cannot decompress data"
+            )
+
         try:
             backends = iter(self.laz_backend)
         except TypeError:
             backends = (self.laz_backend,)
 
         laszip_vlr = self.header.vlrs.pop(self.header.vlrs.index("LasZipVlr"))
+        last_error = None
         for backend in backends:
             try:
                 if not backend.is_available():
@@ -202,8 +211,11 @@ class LasReader:
                         "Unknown LazBackend: {}".format(backend)
                     )
 
-            except errors.LazError as e:
+            except Exception as e:
+                last_error = e
                 logger.error(e)
+
+        raise last_error
 
     def _read_evlrs(self, source, seekable=False) -> Optional[VLRList]:
         """Reads the EVLRs of the file, will fail if the file version
