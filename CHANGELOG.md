@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Fixed regression introduced in 2.1.0 where setting the x, y or z value would not properly set the corresponding
+  X, Y or Z value.
+
 ## 2.1.0
 
 ### Added

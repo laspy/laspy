@@ -326,3 +326,64 @@ def test_change_scaling():
     assert np.all(las.X == [0, 2, 4, 6])
     assert np.all(las.Y == [-190, -180, -170, -160])
     assert np.all(las.Z == [-2900, -2800, -2700, -2600])
+
+
+def test_setting_x_y_z_on_las_data():
+    """
+    The goal of this test if to make sure that when setting the `x`,`y` and `z`
+    attribute of a LasData object, the X,Y,Z version of the coordinates
+    are properly set in the inner point record
+    """
+    las = laspy.read(simple_las)
+
+    new_las = laspy.create()
+
+    new_las.x = las.x
+    new_las.y = las.y
+    new_las.z = las.z
+
+    assert np.all(new_las.x == las.x)
+    assert np.all(new_las.X == las.X)
+    assert np.all(new_las.y == las.y)
+    assert np.all(new_las.Y == las.Y)
+    assert np.all(new_las.z == las.z)
+    assert np.all(new_las.Z == las.Z)
+
+
+    new_las = laspy.lib.write_then_read_again(new_las)
+
+    assert np.all(new_las.x == las.x)
+    assert np.all(new_las.X == las.X)
+    assert np.all(new_las.y == las.y)
+    assert np.all(new_las.Y == las.Y)
+    assert np.all(new_las.z == las.z)
+    assert np.all(new_las.Z == las.Z)
+
+
+def test_setting_xyz_on_las_data():
+    """
+    The goal of this test if to make sure that when setting the `xyz`
+    attribute of a LasData object, the X,Y,Z version of the coordinates
+    are properly set in the inner point record
+    """
+    las = laspy.read(simple_las)
+
+    new_las = laspy.create()
+
+    new_las.xyz = las.xyz
+
+    assert np.all(new_las.x == las.x)
+    assert np.all(new_las.X == las.X)
+    assert np.all(new_las.y == las.y)
+    assert np.all(new_las.Y == las.Y)
+    assert np.all(new_las.z == las.z)
+    assert np.all(new_las.Z == las.Z)
+
+    new_las = laspy.lib.write_then_read_again(new_las)
+
+    assert np.all(new_las.x == las.x)
+    assert np.all(new_las.X == las.X)
+    assert np.all(new_las.y == las.y)
+    assert np.all(new_las.Y == las.Y)
+    assert np.all(new_las.z == las.z)
+    assert np.all(new_las.Z == las.Z)
