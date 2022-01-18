@@ -309,8 +309,10 @@ class LasData:
         """
         self.points.change_scaling(scales, offsets)
 
-        self.header.scales = scales
-        self.header.offsets = offsets
+        if scales is not None:
+            self.header.scales = scales
+        if offsets is not None:
+            self.header.offsets = offsets
 
     def __getattr__(self, item):
         """Automatically called by Python when the attribute
