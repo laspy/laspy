@@ -309,7 +309,12 @@ def test_change_scaling():
     assert np.all(las.Y == [1, 2, 3, 4])
     assert np.all(las.Z == [1, 2, 3, 4])
 
+    saved_offsets = las.header.offsets.copy()
     las.change_scaling(scales=[0.5, 0.1, 0.01])
+
+    assert np.all(las.header.scales == [0.5, 0.1, 0.01])
+    assert np.all(las.header.offsets == saved_offsets)
+
     assert np.all(las.x == [1, 2, 3, 4])
     assert np.all(las.y == [1, 2, 3, 4])
     assert np.all(las.z == [1, 2, 3, 4])
@@ -318,7 +323,12 @@ def test_change_scaling():
     assert np.all(las.Y == [10, 20, 30, 40])
     assert np.all(las.Z == [100, 200, 300, 400])
 
+    saved_scales = las.header.scales.copy()
     las.change_scaling(offsets=[1, 20, 30])
+
+    assert np.all(las.header.scales == saved_scales)
+    assert np.all(las.header.offsets == [1, 20, 30])
+
     assert np.all(las.x == [1, 2, 3, 4])
     assert np.all(las.y == [1, 2, 3, 4])
     assert np.all(las.z == [1, 2, 3, 4])
