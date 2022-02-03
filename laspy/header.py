@@ -416,16 +416,25 @@ class LasHeader:
 
     def partial_reset(self) -> None:
         self.creation_date = date.today()
-        self.point_count = 0
 
-        self.maxs = np.zeros(3, dtype=np.float64)
-        self.mins = np.zeros(3, dtype=np.float64)
-        self.number_of_points_by_return = np.zeros(15, dtype=np.uint32)
+        f64info = np.finfo(np.float64)
+        self.maxs = np.ones(3, dtype=np.float64) * f64info.min
+        self.mins = np.ones(3, dtype=np.float64) * f64info.max
 
         self.start_of_first_evlr = 0
         self.number_of_evlrs = 0
+        self.point_count = 0
+        self.number_of_points_by_return = np.zeros(15, dtype=np.uint32)
 
     def update(self, points: PackedPointRecord) -> None:
+        self.partial_reset()
+        if not points:
+            self.maxs = [0.0, 0.0, 0.0]
+            self.mins = [0.0, 0.0, 0.0]
+        else:
+            self.grow(points)
+
+    def grow(self, points: PackedPointRecord) -> None:
         self.x_max = max(
             self.x_max,
             (points["X"].max() * self.x_scale) + self.x_offset,

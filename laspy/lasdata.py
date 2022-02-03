@@ -211,8 +211,7 @@ class LasData:
         self.header.point_format_id = self.points.point_format.id
         self.header.point_data_record_length = self.points.point_size
 
-        if len(self.points) > 0:
-            self.header.update(self.points)
+        self.header.update(self.points)
 
         if self.header.version.minor >= 4:
             if self.evlrs is not None:

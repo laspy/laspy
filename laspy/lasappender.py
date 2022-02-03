@@ -82,7 +82,7 @@ class LasAppender:
             raise LaspyException("Point formats do not match")
 
         self.points_writer.write_points(points)
-        self.header.update(points)
+        self.header.grow(points)
 
     def close(self) -> None:
         self.points_writer.done()

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- Fixed `LasHeader.update` (thus fixing `LasData.update_header`) computation of x,y,z mins and maxs
+
 ## 2.1.1
 
 ### Fixed
