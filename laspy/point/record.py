@@ -139,9 +139,8 @@ class PackedPointRecord:
         """Appends zeros to the points stored if the value we are trying to
         fit is bigger
         """
-        size_diff = len(value) - len(self.array)
-        if size_diff > 0:
-            self.resize(size_diff)
+        if len(value) > len(self.array):
+            self.resize(len(value))
 
     def __eq__(self, other):
         return self.point_format == other.point_format and np.all(
