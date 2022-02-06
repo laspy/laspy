@@ -12,6 +12,7 @@ EXTRA_BYTES_LAS_FILE_PATH = Path(__file__).parent / "data" / "extrabytes.las"
 SIMPLE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "simple.laz"
 EXTRA_BYTES_LAZ_FILE_PATH = Path(__file__).parent / "data" / "extra.laz"
 PLANE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "plane.laz"
+AUTZEN_FILE_PATH = Path(__file__).parent / "data" / "autzen.las"
 
 UNREGISTERED_EXTRA_BYTES_LAS = Path(__file__).parent / "data" / "unregistered_extra_bytes.las"
 

@@ -7,9 +7,10 @@ import abc
 import ctypes
 import logging
 import struct
-from typing import List, Optional, Any, Tuple, Dict
+from typing import List, Optional, Any, Tuple, Dict, TypeVar, Type
 
 import numpy as np
+import pyproj
 
 from .vlr import BaseVLR, VLR
 from ..extradims import (
@@ -23,6 +24,10 @@ abstractmethod = abc.abstractmethod
 logger = logging.getLogger(__name__)
 
 NULL_BYTE = b"\0"
+
+
+GeoKeyDirectoryType = TypeVar("GeoKeyDirectoryType", bound="GeoKeyDirectoryVlr")
+GeoAsciiParamsType = TypeVar("GeoAsciiParamsType", bound="GeoAsciiParamsVlr")
 
 
 class IKnownVLR(abc.ABC):
@@ -482,6 +487,83 @@ class GeoKeyDirectoryVlr(BaseKnownVLR):
         b += b"".join(map(bytes, self.geo_keys))
         return b
 
+    def record_from_crs(self, crs: pyproj.CRS):
+        all_keys = {
+            "GTModelTypeGeoKey": GeoKeyEntryStruct(),
+            "GTRasterTypeGeoKey": GeoKeyEntryStruct(),
+            "GTCitationGeoKey": GeoKeyEntryStruct(),
+            "GeodeticCRSGeoKey": GeoKeyEntryStruct(),
+            "GeodeticCitationGeoKey": GeoKeyEntryStruct(),
+            "AngularUnitsGeoKey": GeoKeyEntryStruct(),
+            "ProjectedCRSGeoKey": GeoKeyEntryStruct(),
+            "LinearUnitsGeoKey": GeoKeyEntryStruct(),
+        }
+        all_keys["GTModelTypeGeoKey"].id = 1024
+        all_keys["GTModelTypeGeoKey"].count = 1
+        all_keys["GTRasterTypeGeoKey"].id = 1025
+        all_keys["GTRasterTypeGeoKey"].count = 1
+        all_keys["GTRasterTypeGeoKey"].value_offset = 1
+        all_keys["GTCitationGeoKey"].id = 1026
+        all_keys["GTCitationGeoKey"].tiff_tag_location = 34737
+        all_keys["GeodeticCRSGeoKey"].id = 2048
+        all_keys["GeodeticCRSGeoKey"].count = 1
+        all_keys["GeodeticCitationGeoKey"].id = 2049
+        all_keys["GeodeticCitationGeoKey"].tiff_tag_location = 34737
+        all_keys["AngularUnitsGeoKey"].id = 2054
+        all_keys["AngularUnitsGeoKey"].count = 1
+        all_keys["AngularUnitsGeoKey"].value_offset = 9102  # always degrees
+        all_keys["ProjectedCRSGeoKey"].id = 3072
+        all_keys["ProjectedCRSGeoKey"].count = 1
+        all_keys["LinearUnitsGeoKey"].id = 3076
+        all_keys["LinearUnitsGeoKey"].count = 1
+        added_keys = [
+            "GTModelTypeGeoKey",
+            "GTRasterTypeGeoKey",
+            "GTCitationGeoKey",
+            "GeodeticCitationGeoKey",
+            "AngularUnitsGeoKey",
+        ]
+
+        epsg = crs.to_epsg()
+        coord_name = crs.coordinate_operation.name + "|"
+        geodetic_name = crs.geodetic_crs.name + "|"
+        ascii_params = coord_name + geodetic_name
+
+        all_keys["GTCitationGeoKey"].count = len(coord_name.encode("utf8"))
+        all_keys["GeodeticCitationGeoKey"].count = len(geodetic_name.encode("utf8"))
+        all_keys["GeodeticCitationGeoKey"].value_offset = len(coord_name.encode("utf8"))
+
+        if crs.is_projected:
+            all_keys["GTModelTypeGeoKey"].value_offset = 1
+            all_keys["ProjectedCRSGeoKey"].value_offset = epsg
+            added_keys.append("ProjectedCRSGeoKey")
+        elif crs.is_geographic:
+            all_keys["GTModelTypeGeoKey"].value_offset = 2
+            all_keys["GeodeticCRSGeoKey"].value_offset = epsg
+            added_keys.append("GeodeticCRSGeoKey")
+
+        # assume linear units are same on both axes
+        all_keys["LinearUnitsGeoKey"].value_offset = int(crs.axis_info[0].unit_code)
+        added_keys.append("LinearUnitsGeoKey")
+
+        self.geo_keys = [all_keys[k] for k in added_keys]
+        self.geo_keys_header.number_of_keys = len(self.geo_keys)
+
+    def parse_crs(self):
+        for key in self.geo_keys:
+            # get ProjectedCRSGeoKey by id
+            if key.id == 3072:
+                return pyproj.CRS.from_epsg(key.value_offset)
+        return None
+
+    @classmethod
+    def from_crs(
+        cls: Type[GeoKeyDirectoryType], crs: pyproj.CRS
+    ) -> GeoKeyDirectoryType:
+        self = cls()
+        self.record_from_crs(crs)
+        return self
+
     def __repr__(self):
         return "<{}({} geo_keys)>".format(self.__class__.__name__, len(self.geo_keys))
 
@@ -554,6 +636,18 @@ class GeoAsciiParamsVlr(BaseKnownVLR):
     def record_data_bytes(self):
         return NULL_BYTE.join(s.encode("ascii") for s in self.strings)
 
+    def record_from_crs(self, crs):
+        coord_name = crs.coordinate_operation.name + "|"
+        geodetic_name = crs.geodetic_crs.name + "|"
+        ascii_params = coord_name + geodetic_name
+        self.strings = [ascii_params, ""]
+
+    @classmethod
+    def from_crs(cls: Type[GeoAsciiParamsType], crs: pyproj.CRS) -> GeoAsciiParamsType:
+        self = cls()
+        self.record_from_crs(crs)
+        return self
+
     def __repr__(self):
         return "<GeoAsciiParamsVlr({})>".format(self.strings)
 
@@ -613,6 +707,9 @@ class WktCoordinateSystemVlr(BaseKnownVLR):
 
     def record_data_bytes(self):
         return self._encode_string()
+
+    def parse_crs(self):
+        return pyproj.CRS.from_wkt(self.string)
 
     @staticmethod
     def official_user_id():

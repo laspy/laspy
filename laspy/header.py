@@ -8,6 +8,7 @@ from typing import NamedTuple, BinaryIO, Optional, List, Union, Iterable
 from uuid import UUID
 
 import numpy as np
+import pyproj
 
 from . import extradims
 from .compression import (
@@ -21,7 +22,13 @@ from .point.format import PointFormat, ExtraBytesParams
 from .point.record import PackedPointRecord
 from .utils import read_string, write_as_c_string
 from .vlrs import VLR
-from .vlrs.known import ExtraBytesStruct, ExtraBytesVlr
+from .vlrs.known import (
+    ExtraBytesStruct,
+    ExtraBytesVlr,
+    WktCoordinateSystemVlr,
+    GeoKeyDirectoryVlr,
+    GeoAsciiParamsVlr,
+)
 from .vlrs.vlrlist import VLRList
 from . import __version__
 
@@ -399,6 +406,40 @@ class LasHeader:
     def add_extra_dim(self, params: ExtraBytesParams):
         self.add_extra_dims([params])
 
+    def add_crs(self, crs: pyproj.CRS, keep_compatibility: bool = True) -> None:
+        """Add a Coordinate Reference System VLR from a pyproj CRS object.
+
+        The type of VLR created depends on the las version and point format
+        version. Las version >= 1.4 use WKT string, las version < 1.4 and point
+        format < 6 use GeoTiff tags.
+
+        .. warning::
+            Not all CRS are supported when adding GeoTiff tags. For example, custom
+            CRS. Typically, if the CRS has an EPSG code it will be supported.
+        """
+
+        # check and remove any existing crs vlrs
+        for crs_vlr_name in (
+            "WktCoordinateSystemVlr",
+            "GeoKeyDirectoryVlr",
+            "GeoAsciiParamsVlr",
+            "GeoDoubleParamsVlr",
+        ):
+            try:
+                self._vlrs.extract(crs_vlr_name)
+            except IndexError:
+                pass
+
+        new_ver = self._version >= Version(1, 4)
+        new_pt = self.point_format.id >= 6
+
+        if new_pt or (new_ver and not keep_compatibility):
+            self._vlrs.append(WktCoordinateSystemVlr(crs.to_wkt()))
+            self.global_encoding.wkt = True
+        else:
+            self._vlrs.append(GeoKeyDirectoryVlr.from_crs(crs))
+            self._vlrs.append(GeoAsciiParamsVlr.from_crs(crs))
+
     def remove_extra_dim(self, name: str) -> None:
         self.remove_extra_dims([name])
 
@@ -742,6 +783,17 @@ class LasHeader:
         stream.write(self.extra_header_bytes)
         stream.write(vlr_bytes)
         stream.write(self.extra_vlr_bytes)
+
+    def parse_crs(self) -> Optional[pyproj.CRS]:
+        """Method to parse OGC WKT or GeoTiff VLR keys into a pyproj CRS object"""
+
+        geo_vlr = self._vlrs.get_by_id("LASF_Projection")
+
+        for rec in geo_vlr:
+            if type(rec) in [WktCoordinateSystemVlr, GeoKeyDirectoryVlr]:
+                return rec.parse_crs()
+
+        return None
 
     def _sync_extra_bytes_vlr(self) -> None:
         try:

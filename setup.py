@@ -21,7 +21,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
-    install_requires=["numpy"],
+    install_requires=["numpy", "pyproj"],
     extras_require={
         "dev": [
             "pytest",
