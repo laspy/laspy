@@ -151,3 +151,29 @@ def test_writing_empty_file(laz_backend):
             las.write(out)
         else:
             las.write(out, laz_backend=laz_backend)
+
+def test_changing_scales_offset_after_create():
+    las = laspy.create(point_format=8, file_version='1.4')
+
+    las.header.x_scale = 0.0001
+    las.header.y_scale = 0.0001
+    las.header.z_scale = 0.0001
+
+    las.x = np.ones((10,)) * 11
+    las.y = np.ones((10,)) * 12
+    las.z = np.ones((10,)) * 13
+
+    las.x[0] = 1
+    las.y[0] = 2
+    las.z[0] = 3
+
+    las.update_header()
+    assert np.all(las.header.mins == [1, 2, 3])
+    assert np.all(las.header.maxs == [11, 12, 13])
+    assert las.x.min() == 1
+    assert las.y.min() == 2
+    assert las.z.min() == 3
+
+    assert las.x.max() == 11
+    assert las.y.max() == 12
+    assert las.z.max() == 13

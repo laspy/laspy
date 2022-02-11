@@ -207,11 +207,9 @@ class LasData:
         This method is called automatically when you save a file using
         :meth:`laspy.lasdatas.base.LasBase.write`
         """
-        self.header.partial_reset()
+        self.header.update(self.points)
         self.header.point_format_id = self.points.point_format.id
         self.header.point_data_record_length = self.points.point_size
-
-        self.header.update(self.points)
 
         if self.header.version.minor >= 4:
             if self.evlrs is not None:
@@ -355,8 +353,14 @@ class LasData:
         if (
             key in self.point_format.dimension_names
             or key in self.points.array.dtype.names
-            or key in ("x", "y", "z")
         ):
+            self.points[key] = value
+        elif key in ("x", "y", "z"):
+            # It is possible that user created a `LasData` object
+            # via `laspy.create`, and changed the headers offsets and scales
+            # values afterwards. So we need to sync the points's record.
+            self.points.offsets = self.header.offsets
+            self.points.scales = self.header.scales
             self.points[key] = value
         elif key in dims.DIMENSIONS_TO_TYPE:
             raise ValueError(
