@@ -1,7 +1,7 @@
 import nox
 
 
-@nox.session(python=["3.6", "3.7", "3.8", "3.9"])
+@nox.session(python=["3.7", "3.8", "3.9", "3.10"])
 @nox.parametrize("laz_backend", [None, "lazrs", "laszip"])
 def tests(session, laz_backend):
     session.install("pytest")

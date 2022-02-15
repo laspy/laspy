@@ -2,6 +2,10 @@
 
 ## 2.1.2
 
+### Changed
+
+- Support for Python3.6 removed.
+
 ### Fixed
 - Fixed `LasHeader.update` (thus fixing `LasData.update_header`) computation of x,y,z mins and maxs
 - Fixed regression introduced in 2.1.0 where changing the `header.scales` and/or `header.offsets`

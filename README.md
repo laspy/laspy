@@ -3,7 +3,7 @@
 Laspy is a python library for reading, modifying and creating LAS LiDAR
 files.
 
-Laspy is compatible with Python  3.6+.
+Laspy is compatible with Python  3.7+.
 
 
 Examples

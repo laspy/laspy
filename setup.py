@@ -21,6 +21,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
+    python_requires=">=3.7",
     install_requires=["numpy", "pyproj"],
     extras_require={
         "dev": [
