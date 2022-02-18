@@ -185,17 +185,17 @@ class LasData:
              prefer :meth:`.remove_extra_dims` as it will
              save re-allocations and data copy
 
-         Parameters
-         ----------
+        Parameters
+        ----------
 
-         name: str,
-             name of the extra dimension to be removed
+        name: str,
+            name of the extra dimension to be removed
 
 
-         Raises
-         ------
+        Raises
+        ------
 
-         LaspyException: if you try to remove an extra dimension that do not exist.
+        LaspyException: if you try to remove an extra dimension that do not exist.
 
         """
         self.remove_extra_dims([name])

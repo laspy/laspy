@@ -82,7 +82,7 @@ def open_las(
 
     do_compress: optional, bool, only meaningful in writing mode:
         - None (default) guess if compression is needed using the file extension
-        or if a laz_backend was explicitely provided
+          or if a laz_backend was explicitely provided
         - True compresses the file
         - False do not compress the file
 
