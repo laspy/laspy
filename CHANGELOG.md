@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.1.2
 
 ### Fixed
 - Fixed `LasHeader.update` (thus fixing `LasData.update_header`) computation of x,y,z mins and maxs
