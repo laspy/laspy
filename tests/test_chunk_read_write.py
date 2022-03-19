@@ -64,7 +64,9 @@ def test_chunked_writing_gives_expected_points(file_path, backend):
             )
 
 
-def check_chunked_reading_is_gives_expected_points(groundtruth_las, reader, iter_size):
+def check_chunked_reading_is_gives_expected_points(
+    groundtruth_las: laspy.LasData, reader: laspy.LasReader, iter_size: int
+):
     """Checks that the points read by the reader are the same as groundtruth points."""
     assert groundtruth_las.point_format == reader.header.point_format
     for i, points in enumerate(reader.chunk_iterator(iter_size)):
@@ -73,3 +75,40 @@ def check_chunked_reading_is_gives_expected_points(groundtruth_las, reader, iter
             assert np.allclose(
                 expected_points[dim_name], points[dim_name]
             ), f"{dim_name} not equal"
+
+
+@pytest.mark.parametrize("backend", laspy.LazBackend.detect_available() + (None,))
+def test_chunked_dimension_modification(file_path, backend):
+    """
+    Test that when using chunked mode, if we modify the values in the chunks
+    before writing them the values are actually modified.
+    """
+
+    mem_dest = io.BytesIO()
+
+    # Read of file in chunked mode modify some values before writing them
+    # to a new file
+    with laspy.open(file_path, laz_backend=backend) as reader:
+        with laspy.open(
+            mem_dest, mode="w", laz_backend=backend, header=reader.header, closefd=False
+        ) as dest:
+            for points in reader.chunk_iterator(50):
+                # try a sub field
+                points.classification += 1
+                # try a normal field
+                points.user_data += 2
+                # try a scaled field
+                points.x += 10.0
+
+                dest.write_points(points)
+
+    mem_dest.seek(0)
+
+    # Prepare out ground truth
+    ground_truth_las = laspy.read(file_path)
+    ground_truth_las.classification += 1
+    ground_truth_las.user_data += 2
+    ground_truth_las.x += 10.0
+
+    reader = laspy.open(mem_dest, laz_backend=backend)
+    check_chunked_reading_is_gives_expected_points(ground_truth_las, reader, 42)

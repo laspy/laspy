@@ -12,6 +12,7 @@ from .header import LasHeader
 from .laswriter import LasWriter
 from .point import record, dims, ExtraBytesParams, PointFormat
 from .point.dims import ScaledArrayView, SubFieldView, OLD_LASPY_NAMES
+from .point.record import DimensionNameValidity
 from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)
@@ -344,25 +345,19 @@ class LasData:
         eg: user tries to set the red field of a file with point format 0:
         an error is raised
         """
-
-        try:
-            key = OLD_LASPY_NAMES[key]
-        except KeyError:
-            pass
-
-        if (
-            key in self.point_format.dimension_names
-            or key in self.points.array.dtype.names
-        ):
-            self.points[key] = value
-        elif key in ("x", "y", "z"):
+        if key in ("x", "y", "z"):
             # It is possible that user created a `LasData` object
             # via `laspy.create`, and changed the headers offsets and scales
             # values afterwards. So we need to sync the points's record.
             self.points.offsets = self.header.offsets
             self.points.scales = self.header.scales
             self.points[key] = value
-        elif key in dims.DIMENSIONS_TO_TYPE:
+            return
+
+        name_validity = self.points.validate_dimension_name(key)
+        if name_validity == DimensionNameValidity.Valid:
+            self[key] = value
+        elif name_validity == DimensionNameValidity.Unsupported:
             raise ValueError(
                 f"Point format {self.point_format} does not support {key} dimension"
             )
