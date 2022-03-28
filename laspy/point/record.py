@@ -286,7 +286,7 @@ class ScaleAwarePointRecord(PackedPointRecord):
             raise ValueError("scales must be an array of 3 elements")
 
         if self.offsets.shape != (3,):
-            raise ValueError("scales must be an array of 3 elements")
+            raise ValueError("offsets must be an array of 3 elements")
 
     @staticmethod
     def zeros(
