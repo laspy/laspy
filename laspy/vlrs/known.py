@@ -434,7 +434,7 @@ class GeoKeyEntryStruct(ctypes.LittleEndianStructure):
 class GeoKeysHeaderStructs(ctypes.LittleEndianStructure):
     _pack_ = 1
     _fields_ = [
-        ("key_direction_version", ctypes.c_uint16),
+        ("key_directory_version", ctypes.c_uint16),
         ("key_revision", ctypes.c_uint16),
         ("minor_revision", ctypes.c_uint16),
         ("number_of_keys", ctypes.c_uint16),
@@ -442,7 +442,7 @@ class GeoKeysHeaderStructs(ctypes.LittleEndianStructure):
 
     def __init__(self):
         super().__init__(
-            key_directory_version=1, key_revision=1, minor_revision=0, number_of_kets=0
+            key_directory_version=1, key_revision=1, minor_revision=0, number_of_keys=0
         )
 
     @staticmethod
@@ -451,7 +451,7 @@ class GeoKeysHeaderStructs(ctypes.LittleEndianStructure):
 
     def __repr__(self):
         return "<GeoKeysHeader(vers: {}, rev:{}, minor: {}, num_keys: {})>".format(
-            self.key_direction_version,
+            self.key_directory_version,
             self.key_revision,
             self.minor_revision,
             self.number_of_keys,
