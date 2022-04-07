@@ -406,7 +406,7 @@ class DimensionInfo(NamedTuple):
     @property
     def max(self):
         if self.kind == DimensionKind.BitField:
-            return (2 ** self.num_bits) - 1
+            return (2**self.num_bits) - 1
         elif self.kind == DimensionKind.FloatingPoint:
             return np.finfo(self.type_str()).max
         else:

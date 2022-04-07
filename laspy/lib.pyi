@@ -10,6 +10,7 @@ from .lasreader import LasReader
 from .typehints import PathLike
 
 LazBackend = LazBackend
+
 @overload
 def open_las(
     source: PathLike,

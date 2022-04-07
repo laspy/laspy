@@ -29,7 +29,7 @@ setup(
             "sphinx",
             "sphinx-rtd-theme",
             "nox",
-            "black==20.8b1",
+            "black==22.3.0",
             "pytest-benchmark",
             "m2r2",
         ],

@@ -65,4 +65,4 @@ def compressed_id_to_uncompressed(point_format_id: int) -> int:
 
 
 def uncompressed_id_to_compressed(point_format_id: int) -> int:
-    return (2 ** 7) | point_format_id
+    return (2**7) | point_format_id
