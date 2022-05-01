@@ -35,8 +35,12 @@ still need to install a LAZ backend via ``pip``
 
 
 
-Optional dependencies for LAZ support
-=====================================
+Optional dependencies 
+=====================
+
+
+LAZ support
+___________
 
 laspy does not support LAZ (.laz) file by itself but can use one of several optional dependencies
 to support compressed LAZ files.
@@ -62,6 +66,15 @@ with waveform but does not offer multi-threaded compression/decompression.
 Both the laszip bindings and lazrs are available on pip.
 
 To install laspy with one of its supported backend use one of the following commands
+
+
+CRS / SRS
+_________
+
+LAS files allows to define the CRS / SRS in which the points coordinates are.
+When `pyproj` is installed, you can use the :meth:`.LasHeader.add_crs` to add 
+CRS information to a file, or you can use :meth:`.LasHeader.parse_crs` to get 
+`pyproj.CRS`.
 
 
 .. _lazrs: https://github.com/tmontaigu/laz-rs

@@ -22,7 +22,7 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests",)),
     python_requires=">=3.7",
-    install_requires=["numpy", "pyproj"],
+    install_requires=["numpy"],
     extras_require={
         "dev": [
             "pytest",
@@ -35,6 +35,7 @@ setup(
         ],
         "lazrs": ["lazrs>=0.4.0, < 0.5.0"],
         "laszip": ["laszip >= 0.1.0, < 0.2.0"],
+        "pyproj": ["pyproj"],
     },
     include_package_data=True,
     zip_safe=False,
