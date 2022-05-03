@@ -1,7 +1,7 @@
 # Changelog
 
 
-## 2.2.0
+## 2.2.0 beta 0
 
 ### Added
 - Added new optional feature to support adding CRS / SRS to a LAS file from a `pyproj.CRS` as 
