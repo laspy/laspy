@@ -3,6 +3,7 @@ __version__ = "2.2.0b0"
 import logging
 
 from . import errors, vlrs, file
+from .copc import CopcReader, Bounds
 from .errors import LaspyException
 from .laswriter import LasWriter
 from .lasreader import LasReader

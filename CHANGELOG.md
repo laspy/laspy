@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Added
+- Added support for querying COPC LAZ files via a new class `CopcReader`.
+
 ### Fixed
 - Fixed support for stream / source that are not `seekable`.
 

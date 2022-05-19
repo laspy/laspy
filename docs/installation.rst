@@ -35,8 +35,8 @@ still need to install a LAZ backend via ``pip``
 
 
 
-Optional dependencies 
-=====================
+Optional dependencies  / features
+=================================
 
 
 LAZ support
@@ -82,6 +82,19 @@ CRS information to a file, or you can use :meth:`.LasHeader.parse_crs` to get
 .. _laszip: https://github.com/LASzip/LASzip
 .. _[lazrs PyPi]: https://pypi.org/project/lazrs/
 
+
+Cloud Optimized Point Cloud (COPC)
+__________________________________
+
+`laspy` supports `COPC`_ files via its :class:`.CopcReader` class.
+This features **requires** the optional dependency ``lazrs`` to be installed.
+
+Optionaly, when python package `requests`_ is installed the :class:`.CopcReader`
+can handle COPC that are in a HTTP server.
+
+
+.. _COPC: https://github.com/copcio/copcio.github.io
+.. _requests: https://docs.python-requests.org/en/latest
 
 
 .. rubric:: Footnotes.

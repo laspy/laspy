@@ -25,6 +25,7 @@ Re-exported classes
  - :class:`.LasAppender`
  - :class:`.PackedPointRecord`
  - :class:`.ScaleAwarePointRecord`
+ - :class:`.CopcReader`
 
 
 Submodules
@@ -36,6 +37,7 @@ Submodules
    laspy.header
    laspy.lasreader
    laspy.lasdata
+   laspy.copc
    laspy.vlrs.vlrlist
    laspy.vlrs.known
    laspy.vlrs.vlr

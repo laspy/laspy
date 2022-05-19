@@ -92,3 +92,10 @@ to split potentially large LAS/LAZ file into multiple smaller file.
 
 .. literalinclude:: ../examples/recursive-split.py
     :language: Python
+
+
+COPC
+----
+
+
+.. literalinclude:: ../examples/copc.py
