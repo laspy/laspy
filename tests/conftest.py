@@ -8,11 +8,13 @@ SIMPLE_LAS_FILE_PATH = Path(__file__).parent / "data" / "simple.las"
 VEGETATION1_3_LAS_FILE_PATH = Path(__file__).parent / "data" / "vegetation_1_3.las"
 TEST1_4_LAS_FILE_PATH = Path(__file__).parent / "data" / "test1_4.las"
 EXTRA_BYTES_LAS_FILE_PATH = Path(__file__).parent / "data" / "extrabytes.las"
+LAS_1_4_WITH_EVLRS_FILE_PATH = Path(__file__).parent / "data" / "1_4_w_evlr.las"
 
 SIMPLE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "simple.laz"
 EXTRA_BYTES_LAZ_FILE_PATH = Path(__file__).parent / "data" / "extra.laz"
 PLANE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "plane.laz"
 AUTZEN_FILE_PATH = Path(__file__).parent / "data" / "autzen.las"
+LAZ_1_4_WITH_EVLRS_FILE_PATH = Path(__file__).parent / "data" / "1_4_w_evlr.laz"
 
 UNREGISTERED_EXTRA_BYTES_LAS = Path(__file__).parent / "data" / "unregistered_extra_bytes.las"
 

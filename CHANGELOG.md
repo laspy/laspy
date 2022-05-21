@@ -10,6 +10,9 @@
 ### Changed
 - Support for Python3.6 removed.
 
+### Fixed
+- Fixed support for stream / source that are not `seekable`.
+
 ---
   
 ## 2.1.2

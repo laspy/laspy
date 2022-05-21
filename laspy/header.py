@@ -518,15 +518,15 @@ class LasHeader:
         self.are_points_compressed = state
 
     @classmethod
-    def read_from(cls, stream: BinaryIO, seekable=True) -> "LasHeader":
+    def read_from(cls, stream: BinaryIO) -> "LasHeader":
         little_endian = "little"
         header = cls()
 
-        file_sig = stream.read(len(LAS_FILE_SIGNATURE))
-        if not file_sig:
-            raise LaspyException(f"Source is empty")
-        if file_sig != LAS_FILE_SIGNATURE:
-            raise LaspyException(f'Invalid file signature "{file_sig}"')
+        stream = io.BytesIO(cls._prefetch_header_data(stream))
+
+        file_sig = stream.read(4)
+        # This should not be possible as _prefetch already checks this
+        assert file_sig == LAS_FILE_SIGNATURE
 
         header.file_source_id = int.from_bytes(
             stream.read(2), little_endian, signed=False
@@ -595,10 +595,7 @@ class LasHeader:
                     stream.read(8), little_endian, signed=False
                 )
 
-        if seekable:
-            current_pos = stream.tell()
-        else:
-            current_pos = LAS_HEADERS_SIZE[str(header.version)]
+        current_pos = stream.tell()
         if current_pos < header_size:
             header.extra_header_bytes = stream.read(header_size - current_pos)
         elif current_pos > header_size:
@@ -606,14 +603,13 @@ class LasHeader:
 
         header._vlrs = VLRList.read_from(stream, num_to_read=number_of_vlrs)
 
-        if seekable:
-            current_pos = stream.tell()
-            if current_pos < header.offset_to_point_data:
-                header.extra_vlr_bytes = stream.read(
-                    header.offset_to_point_data - current_pos
-                )
-            elif current_pos > header.offset_to_point_data:
-                raise LaspyException("Incoherent offset to point data")
+        current_pos = stream.tell()
+        if current_pos < header.offset_to_point_data:
+            header.extra_vlr_bytes = stream.read(
+                header.offset_to_point_data - current_pos
+            )
+        elif current_pos > header.offset_to_point_data:
+            raise LaspyException("Incoherent offset to point data")
 
         header.are_points_compressed = is_point_format_compressed(point_format_id)
         point_format_id = compressed_id_to_uncompressed(point_format_id)
@@ -802,6 +798,38 @@ class LasHeader:
                 return rec.parse_crs()
 
         return None
+
+    @staticmethod
+    def _prefetch_header_data(source) -> bytes:
+        """
+        reads (and returns) from the source all the bytes that
+        are between the beginning of the file and the start of point data
+        (which corresponds to Header + VLRS).
+
+        It is done in two calls to the source's `read` method
+
+        This is done because `LasHeader.read_from`
+        does a bunch of read to the source, so we prefer to
+        prefetch data in memory in case the original source
+        is not buffered (like a http source could be)
+        """
+        header_bytes = source.read(LAS_HEADERS_SIZE["1.1"])
+
+        file_sig = header_bytes[: len(LAS_FILE_SIGNATURE)]
+        if not file_sig:
+            raise LaspyException(f"Source is empty")
+        if file_sig != LAS_FILE_SIGNATURE:
+            raise LaspyException(f'Invalid file signature "{file_sig}"')
+        if len(header_bytes) < LAS_HEADERS_SIZE["1.1"]:
+            raise LaspyException("File is to small to be a valid LAS")
+
+        offset_to_data = int.from_bytes(
+            header_bytes[96 : 96 + 4], byteorder="little", signed=False
+        )
+
+        rest = source.read(offset_to_data - len(header_bytes))
+
+        return header_bytes + rest
 
     def _sync_extra_bytes_vlr(self) -> None:
         try:

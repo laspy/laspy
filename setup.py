@@ -33,7 +33,7 @@ setup(
             "pytest-benchmark",
             "m2r2",
         ],
-        "lazrs": ["lazrs>=0.4.0, < 0.5.0"],
+        "lazrs": ["lazrs>=0.4.3, < 0.5.0"],
         "laszip": ["laszip >= 0.1.0, < 0.2.0"],
         "pyproj": ["pyproj"],
     },
