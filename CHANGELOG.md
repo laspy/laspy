@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2.2.0 beta 1
 
 ### Added
 - Added support for querying COPC LAZ files via a new class `CopcReader`.
