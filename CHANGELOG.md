@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.2.0
+
+### Added
+- Added support for querying COPC LAZ files via a new class `CopcReader`.
+- Added new optional feature to support adding CRS / SRS to a LAS file from a `pyproj.CRS` as
+  well as reading the CRS / SRS information from a LAS file to a `pyproj.CRS`. 
+
+### Fixed
+- Fixed support for stream / source that are not `seekable`.
+
+### Changed
+- Support for Python3.6 removed.
+
+---
+
 ## 2.2.0 beta 1
 
 ### Added
