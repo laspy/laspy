@@ -1,4 +1,3 @@
 include pyproject.toml
-include tox.ini
 recursive-include tests *.py *.las *.laz
 
