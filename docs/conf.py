@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'laspy'
-copyright = '2018-2020, laspy'
+copyright = '2018-2022, laspy'
 author = 'Thomas Montaigu'
 
 # Parse the version from setup.py.

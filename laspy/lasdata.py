@@ -304,6 +304,46 @@ class LasData:
                 New scales to be used. If not provided, the scales won't change.
         offsets: optional
                  New offsets to be used. If not provided, the offsets won't change.
+
+        Example
+        -------
+
+        >>> import laspy
+        >>> header = laspy.LasHeader()
+        >>> header.scales = np.array([0.1, 0.1, 0.1])
+        >>> header.offsets = np.array([0, 0 ,0])
+
+        >>> las = laspy.LasData(header=header)
+        >>> las.x = [10.0]
+        >>> las.y = [20.0]
+        >>> las.z = [30.0]
+
+        >>> # X = (x - x_offset) / x_scale
+        >>> assert np.all(las.xyz == [[10.0, 20., 30]])
+        >>> assert np.all(las.X == [100])
+        >>> assert np.all(las.Y == [200])
+        >>> assert np.all(las.Z == [300])
+
+        We change the scales (only changing x_scale here)
+        but not the offsets.
+
+        The xyz coordinates (double) are the same (minus possible rounding with actual coordinates)
+        However the integer coordinates changed
+
+        >>> las.change_scaling(scales=[0.01, 0.1, 0.1])
+        >>> assert np.all(las.xyz == [[10.0, 20., 30]])
+        >>> assert np.all(las.X == [1000])
+        >>> assert np.all(las.Y == [200])
+        >>> assert np.all(las.Z == [300])
+
+        Same idea if we change the offsets, the xyz do not change
+        but XYZ does
+
+        >>> las.change_scaling(offsets=[0, 10, 15])
+        >>> assert np.all(las.xyz == [[10.0, 20., 30]])
+        >>> assert np.all(las.X == [1000])
+        >>> assert np.all(las.Y == [100])
+        >>> assert np.all(las.Z == [150])
         """
         self.points.change_scaling(scales, offsets)
 
