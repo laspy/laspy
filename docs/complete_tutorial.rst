@@ -119,7 +119,7 @@ only the points from a file which are within a certain distance of the first poi
 
         # Calculate the euclidean distance from all points to the first point
 
-        distances = np.sum(np.sqrt((coords - first_point) ** 2), axis=1)
+        distances = np.sqrt(np.sum((coords - first_point) ** 2, axis=1))
 
         # Create an array of indicators for whether or not a point is less than
         # 500000 units away from the first point
