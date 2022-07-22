@@ -244,7 +244,7 @@ and some fields takes more bits, for example the classification is now stored on
 +----------------------+-----------+--------------+
 | user_data            | unsigned  |      8       |
 +----------------------+-----------+--------------+
-| scan_angle_rank      | signed    |      16      |
+| scan_angle           | signed    |      16      |
 +----------------------+-----------+--------------+
 | point_source_id      | unsigned  |      8       |
 +----------------------+-----------+--------------+
