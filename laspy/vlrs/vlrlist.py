@@ -63,18 +63,12 @@ class VLRList(list):
             a list of vlrs matching the user_id and records_ids
 
         """
-        if user_id != "" and record_ids != (None,):
-            return [
-                vlr
-                for vlr in self
-                if vlr.user_id == user_id and vlr.record_id in record_ids
-            ]
-        else:
-            return [
-                vlr
-                for vlr in self
-                if vlr.user_id == user_id or vlr.record_id in record_ids
-            ]
+        return [
+            vlr
+            for vlr in self
+            if (user_id == "" or vlr.user_id == user_id)
+            and (record_ids == (None,) or vlr.record_id in record_ids)
+        ]
 
     def get(self, vlr_type: str) -> List[IKnownVLR]:
         """Returns the list of vlrs of the requested type
