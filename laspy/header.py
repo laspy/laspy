@@ -795,7 +795,9 @@ class LasHeader:
 
         for rec in geo_vlr:
             if isinstance(rec, (WktCoordinateSystemVlr, GeoKeyDirectoryVlr)):
-                return rec.parse_crs()
+                crs = rec.parse_crs()
+                if crs is not None:
+                    return crs
 
         return None
 
