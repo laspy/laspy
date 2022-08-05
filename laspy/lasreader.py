@@ -407,6 +407,10 @@ class EmptyPointReader(IPointReader):
     Used to make sure we handle empty LAS files in a robust way.
     """
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.source = io.BytesIO()
+
     def read_n_points(self, n: int) -> bytearray:
         return bytearray()
 
