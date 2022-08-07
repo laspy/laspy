@@ -48,6 +48,26 @@ class LasReader:
         self.laz_backend = laz_backend
         self.header = LasHeader.read_from(source)
 
+        # Although they are at the end of the file, EVLRs may contain
+        # information worth having when opening (not reading) a file (like CRS).
+        # So we try to read them, only if we have a seekable source,
+        # otherwise we are forced to try to read them after
+        # having read all points.
+        self.evlrs: Optional[VLRList]
+        if self.header.version.minor >= 4:
+            if self.header.number_of_evlrs > 0 and source.seekable():
+                source.seek(self.header.start_of_first_evlr, io.SEEK_SET)
+                self.evlrs = VLRList.read_from(
+                    source, self.header.number_of_evlrs, extended=True
+                )
+                source.seek(self.header.offset_to_point_data)
+            elif self.header.number_of_evlrs > 0 and not source.seekable():
+                self.evlrs = None
+            else:
+                self.evlrs = VLRList()
+        else:
+            self.evlrs = None
+
         if self.header.point_count > 0:
             if self.header.are_points_compressed:
                 self.point_source = self._create_laz_backend(source)
@@ -115,56 +135,54 @@ class LasReader:
         points = self.read_points(-1)
         las_data = LasData(header=self.header, points=points)
 
-        if self.header.version.minor >= 4:
-            source = self.point_source.source
-            if self.header.number_of_evlrs == 0:
-                las_data.evlrs = VLRList()
-            elif source.seekable():
-                source.seek(self.header.start_of_first_evlr, io.SEEK_SET)
-                las_data.evlrs = VLRList.read_from(
-                    source, self.header.number_of_evlrs, extended=True
-                )
-            elif self.header.are_points_compressed:
-                if isinstance(self.point_source, LazrsPointReader):
-                    # Few things: If the stream is non seekable, only a LazrsPointReader
-                    # could have been created (parallel requires ability to seek)
-                    #
-                    # Also, to work, the next lines of code assumes that:
-                    # 1) We actually are just after the last point
-                    # 2) The chunk table _starts_ just after the last point
-                    # 3) The first EVLR starts just after the chunk table
-                    # These assumptions should be fine for most of the cases
-                    # and non seekable sources are probably not that common
-                    _ = self.point_source.read_chunk_table_only()
-
-                    # Since the LazrsDecompressor uses a buffered reader
-                    # the python file object's position is not at the position we
-                    # think it is.
-                    # So we have to read data from the decompressor's
-                    # buffered stream.
-                    class LocalReader:
-                        def __init__(self, source: LazrsPointReader) -> None:
-                            self.source = source
-
-                        def read(self, n: int) -> bytes:
-                            return self.source.read_raw_bytes(n)
-
-                    las_data.evlrs = VLRList.read_from(
-                        LocalReader(self.point_source),
-                        self.header.number_of_evlrs,
-                        extended=True,
-                    )
-                else:
+        if self.header.version.minor >= 4 and self.evlrs is None:
+            # We tried to read evlrs during __init__, if we don't have them yet
+            # that means the source was not seekable. In that case we are still going to
+            # try to read the evlrs by relying on the fact that they should generally be
+            # right after the last point.
+            assert self.point_source.source.seekable() == False
+            assert self.header.number_of_evlrs > 0
+            if self.header.are_points_compressed:
+                if not isinstance(self.point_source, LazrsPointReader):
                     raise errors.LaspyException(
                         "Reading EVLRs from a LAZ in a non-seekable stream "
                         "can only be done with lazrs backend"
                     )
+                # Few things: If the stream is non seekable, only a LazrsPointReader
+                # could have been created (parallel requires ability to seek)
+                #
+                # Also, to work, the next lines of code assumes that:
+                # 1) We actually are just after the last point
+                # 2) The chunk table _starts_ just after the last point
+                # 3) The first EVLR starts just after the chunk table
+                # These assumptions should be fine for most of the cases
+                # and non seekable sources are probably not that common
+                _ = self.point_source.read_chunk_table_only()
+
+                # Since the LazrsDecompressor uses a buffered reader
+                # the python file object's position is not at the position we
+                # think it is.
+                # So we have to read data from the decompressor's
+                # buffered stream.
+                class LocalReader:
+                    def __init__(self, source: LazrsPointReader) -> None:
+                        self.source = source
+
+                    def read(self, n: int) -> bytes:
+                        return self.source.read_raw_bytes(n)
+
+                self.evlrs = VLRList.read_from(
+                    LocalReader(self.point_source),
+                    self.header.number_of_evlrs,
+                    extended=True,
+                )
             else:
                 # For this to work, we assume that the first evlr
-                # start kust after the last point
-                las_data.evlrs = VLRList.read_from(
-                    source, self.header.number_of_evlrs, extended=True
+                # start just after the last point
+                self.evlrs = VLRList.read_from(
+                    self.point_source.source, self.header.number_of_evlrs, extended=True
                 )
+        las_data.evlrs = self.evlrs
 
         return las_data
 
