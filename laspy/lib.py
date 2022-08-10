@@ -17,6 +17,7 @@ from .lasmmap import LasMMAP
 from .lasreader import LasReader
 from .laswriter import LasWriter
 from .point import dims, record, PointFormat
+from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)
 
@@ -319,7 +320,7 @@ def convert(source_las, *, point_format_id=None, file_version=None):
     header.set_version_and_point_format(version, point_format)
 
     if source_las.evlrs is not None:
-        evlrs = source_las.evlrs.copy()
+        evlrs = VLRList(source_las.evlrs.copy())
     else:
         evlrs = None
 
