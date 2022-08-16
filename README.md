@@ -5,9 +5,20 @@ files.
 
 Laspy is compatible with Python  3.7+.
 
+## Features
 
-Examples
---------
+- LAS support.
+- LAZ support via `lazrs` or `laszip` backend.
+- LAS/LAZ streamed/chunked reading/writting.
+- [COPC] support over files.
+- [COPC] support over https with `requests` package.
+- CRS support via `pyproj` package.
+
+
+[COPC]: https://github.com/copcio/copcio.github.io
+
+
+## Examples
 
 Directly read and write las
 ```Python
