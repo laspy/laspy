@@ -208,9 +208,9 @@ class LasWriter:
                 last_error = e
 
         if last_error is not None:
-            raise LaspyException("No LazBackend selected, cannot compress")
-        else:
             raise LaspyException(f"No LazBackend could be initialized: {last_error}")
+        else:
+            raise LaspyException("No LazBackend selected, cannot compress")
 
     def __enter__(self):
         return self
