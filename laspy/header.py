@@ -19,7 +19,7 @@ from .errors import LaspyException
 from .point import dims
 from .point.format import PointFormat, ExtraBytesParams
 from .point.record import PackedPointRecord
-from .utils import read_string, write_as_c_string
+from .utils import read_string, write_string
 from .vlrs import VLR
 from .vlrs.geotiff import create_geotiff_projection_vlrs
 from .vlrs.known import (
@@ -688,7 +688,7 @@ class LasHeader:
         stream.write(self.version.major.to_bytes(1, little_endian, signed=False))
         stream.write(self.version.minor.to_bytes(1, little_endian, signed=False))
 
-        was_truncated = write_as_c_string(
+        was_truncated = write_string(
             stream,
             self.system_identifier,
             SYSTEM_IDENTIFIER_LEN,
@@ -700,7 +700,7 @@ class LasHeader:
                 f" it will be truncated"
             )
 
-        was_truncated = write_as_c_string(
+        was_truncated = write_string(
             stream,
             self.generating_software,
             GENERATING_SOFTWARE_LEN,
