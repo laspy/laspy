@@ -819,6 +819,9 @@ class LasHeader:
 
         geo_vlr = self._vlrs.get_by_id("LASF_Projection")
 
+        if self.evlrs is not None:
+            geo_vlr.extend(self.evlrs.get_by_id("LASF_Projection"))
+
         for rec in geo_vlr:
             if isinstance(rec, (WktCoordinateSystemVlr, GeoKeyDirectoryVlr)):
                 crs = rec.parse_crs()
