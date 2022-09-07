@@ -252,7 +252,13 @@ class LasHeader:
         #: The number of evlrs in the file
         self.number_of_evlrs: int = 0
 
-        # Info we keep because its useful for us but not the user
+        #: EVLRs, even though they are not stored in the 'header'
+        #: part of the file we keep them in this class
+        #: as they contain same information as vlr.
+        #: None when the file does not support EVLR
+        self.evlrs: Optional[VLRList] = None
+
+        # Info we keep because it's useful for us but not the user
         self.offset_to_point_data: int = 0
         self.are_points_compressed: bool = False
 
@@ -518,11 +524,13 @@ class LasHeader:
         self.are_points_compressed = state
 
     @classmethod
-    def read_from(cls, stream: BinaryIO) -> "LasHeader":
+    def read_from(
+        cls, original_stream: BinaryIO, read_evlrs: bool = False
+    ) -> "LasHeader":
         little_endian = "little"
         header = cls()
 
-        stream = io.BytesIO(cls._prefetch_header_data(stream))
+        stream = io.BytesIO(cls._prefetch_header_data(original_stream))
 
         file_sig = stream.read(4)
         # This should not be possible as _prefetch already checks this
@@ -650,6 +658,24 @@ class LasHeader:
                 f"Incoherent point size, "
                 f"header says {point_size} point_format created says {point_format.size}"
             )
+
+        if not read_evlrs:
+            return header
+
+        stream = original_stream
+        if header.version.minor >= 4:
+            if header.number_of_evlrs > 0 and stream.seekable():
+                stream.seek(header.start_of_first_evlr, io.SEEK_SET)
+                header.evlrs = VLRList.read_from(
+                    stream, header.number_of_evlrs, extended=True
+                )
+                stream.seek(header.offset_to_point_data)
+            elif header.number_of_evlrs > 0 and not stream.seekable():
+                header.evlrs = None
+            else:
+                header.evlrs = VLRList()
+        else:
+            header.evlrs = None
 
         return header
 
