@@ -709,7 +709,7 @@ class CopcReader:
                The level of detail (LOD).
 
                - If None, all LOD are going to be considered
-               - If it is an int, only points that that are of the requested LOD
+               - If it is an int, only points that are of the requested LOD
                  will be returned.
                - If it is a range, points for which the LOD is within the range
                  will be returned

@@ -46,27 +46,7 @@ class LasReader:
         if laz_backend is None:
             laz_backend = LazBackend.detect_available()
         self.laz_backend = laz_backend
-        self.header = LasHeader.read_from(source)
-
-        # Although they are at the end of the file, EVLRs may contain
-        # information worth having when opening (not reading) a file (like CRS).
-        # So we try to read them, only if we have a seekable source,
-        # otherwise we are forced to try to read them after
-        # having read all points.
-        self.evlrs: Optional[VLRList]
-        if self.header.version.minor >= 4:
-            if self.header.number_of_evlrs > 0 and source.seekable():
-                source.seek(self.header.start_of_first_evlr, io.SEEK_SET)
-                self.evlrs = VLRList.read_from(
-                    source, self.header.number_of_evlrs, extended=True
-                )
-                source.seek(self.header.offset_to_point_data)
-            elif self.header.number_of_evlrs > 0 and not source.seekable():
-                self.evlrs = None
-            else:
-                self.evlrs = VLRList()
-        else:
-            self.evlrs = None
+        self.header = LasHeader.read_from(source, read_evlrs=True)
 
         if self.header.point_count > 0:
             if self.header.are_points_compressed:
@@ -81,6 +61,14 @@ class LasReader:
             self.point_source = EmptyPointReader()
 
         self.points_read = 0
+
+    @property
+    def evlrs(self) -> Optional[VLRList]:
+        return self.header.evlrs
+
+    @evlrs.setter
+    def evlrs(self, evlrs: VLRList) -> None:
+        self.header.evlrs = evlrs
 
     def read_points(self, n: int) -> record.ScaleAwarePointRecord:
         """Read n points from the file
@@ -182,7 +170,6 @@ class LasReader:
                 self.evlrs = VLRList.read_from(
                     self.point_source.source, self.header.number_of_evlrs, extended=True
                 )
-        las_data.evlrs = self.evlrs
 
         return las_data
 
