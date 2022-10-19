@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+## Changed
+- EVLRs are now read during the file opening part.
+- EVLRs are now part of the `LasHeader` class (but are still) accesible
+  via `LasReader.evlrs` or `LasData.evlrs.
+
+## Fixed
+- Fixed CRS parsing on fiels with both `GeoKeyDirectoryVlr` and `WktCoordinateSystemVlr` and the first one is empty
+- `LasHeader.parse_crs` also looks for the CRS VLRs in the EVLRs of the file.
+- Fixed `LasHeader.generating_software` and `LasHeader.system_id` being limited to 31
+  bytes instead of 32.
+- Fixed `laspy.convert` to ensure the returng `LasData.evlrs` is a `Vlrlist` and
+  no simply a `list`
+
+---
+
 ## 2.2.0
 
 ### Added
@@ -83,7 +100,7 @@
 
 ## Version 2.0.3
 
-## Fixed
+### Fixed
 - Fix function that parses geotiff VLRs
 - Fix handling of points with 'unregistered' extra bytes (PR #158)
 - Fix to handle empty LAS/LAZ more robustly
