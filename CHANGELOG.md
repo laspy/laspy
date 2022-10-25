@@ -1,13 +1,13 @@
 # Changelog
 
-## Unreleased
+## 2.3.0
 
-## Changed
+### Changed
 - EVLRs are now read during the file opening part.
-- EVLRs are now part of the `LasHeader` class (but are still) accesible
+- EVLRs are now part of the `LasHeader` class, but are still accesible
   via `LasReader.evlrs` or `LasData.evlrs.
 
-## Fixed
+### Fixed
 - Fixed CRS parsing on fiels with both `GeoKeyDirectoryVlr` and `WktCoordinateSystemVlr` and the first one is empty
 - `LasHeader.parse_crs` also looks for the CRS VLRs in the EVLRs of the file.
 - Fixed `LasHeader.generating_software` and `LasHeader.system_id` being limited to 31
