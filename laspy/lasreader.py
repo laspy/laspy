@@ -48,17 +48,13 @@ class LasReader:
         self.laz_backend = laz_backend
         self.header = LasHeader.read_from(source, read_evlrs=True)
 
-        if self.header.point_count > 0:
-            if self.header.are_points_compressed:
-                self.point_source = self._create_laz_backend(source)
-                if self.point_source is None:
-                    raise errors.LaspyException(
-                        "Data is compressed, but no LazBacked could be initialized"
-                    )
-            else:
-                self.point_source = UncompressedPointReader(source, self.header)
-        else:
-            self.point_source = EmptyPointReader()
+        # The point source is lazily instanciated.
+        # Because some reader implementation may
+        # read informations that require to seek towards the end of
+        # the file (eg: chunk table), and we prefer to limit opening
+        # to reading the header
+        self._point_source: Optional["IPointReader"] = None
+        self._source = source
 
         self.points_read = 0
 
@@ -69,6 +65,12 @@ class LasReader:
     @evlrs.setter
     def evlrs(self, evlrs: VLRList) -> None:
         self.header.evlrs = evlrs
+
+    @property
+    def point_source(self) -> "IPointReader":
+        if self._point_source is None:
+            self._point_source = self._create_point_source(self._source)
+        return self._point_source
 
     def read_points(self, n: int) -> record.ScaleAwarePointRecord:
         """Read n points from the file
@@ -222,8 +224,14 @@ class LasReader:
 
     def close(self) -> None:
         """closes the file object used by the reader"""
+
         if self.closefd:
-            self.point_source.close()
+            # We check the actual source,
+            # to avoid creating it, just to close it
+            if self._point_source is not None:
+                self._point_source.close()
+            else:
+                self._source.close()
 
     def _create_laz_backend(self, source) -> Optional["IPointReader"]:
         """Creates the laz backend to use according to `self.laz_backend`.
@@ -266,6 +274,20 @@ class LasReader:
                 logger.error(e)
 
         raise last_error
+
+    def _create_point_source(self, source) -> "IPointReader":
+        if self.header.point_count > 0:
+            if self.header.are_points_compressed:
+                point_source = self._create_laz_backend(source)
+                if point_source is None:
+                    raise errors.LaspyException(
+                        "Data is compressed, but no LazBacked could be initialized"
+                    )
+                return point_source
+            else:
+                return UncompressedPointReader(source, self.header)
+        else:
+            return EmptyPointReader()
 
     def __enter__(self):
         return self

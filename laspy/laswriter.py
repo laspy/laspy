@@ -71,6 +71,13 @@ class LasWriter:
         self.closefd = closefd
         self.encoding_errors = encoding_errors
         self.header = deepcopy(header)
+        # The point writer will take take of creating and writing
+        # the correct laszip vlr, however we have to make sure
+        # no prior laszip vlr exists
+        try:
+            self.header.vlrs.pop(header.vlrs.index("LasZipVlr"))
+        except ValueError:
+            pass
         self.header.partial_reset()
 
         self.dest = dest
