@@ -529,6 +529,15 @@ class LasHeader:
     def read_from(
         cls, original_stream: BinaryIO, read_evlrs: bool = False
     ) -> "LasHeader":
+        """
+        Reads the header from the stream
+
+        read_evlrs: If true, evlrs will be read
+
+        Leaves the stream pos right before the point starts
+        (regardless of is read_evlrs was true)
+
+        """
         little_endian = "little"
         header = cls()
 
@@ -661,23 +670,9 @@ class LasHeader:
                 f"header says {point_size} point_format created says {point_format.size}"
             )
 
-        if not read_evlrs:
-            return header
-
-        stream = original_stream
-        if header.version.minor >= 4:
-            if header.number_of_evlrs > 0 and stream.seekable():
-                stream.seek(header.start_of_first_evlr, io.SEEK_SET)
-                header.evlrs = VLRList.read_from(
-                    stream, header.number_of_evlrs, extended=True
-                )
-                stream.seek(header.offset_to_point_data)
-            elif header.number_of_evlrs > 0 and not stream.seekable():
-                header.evlrs = None
-            else:
-                header.evlrs = VLRList()
-        else:
-            header.evlrs = None
+        if read_evlrs:
+            header.read_evlrs(original_stream)
+            stream.seek(header.offset_to_point_data)
 
         return header
 
@@ -831,6 +826,35 @@ class LasHeader:
                     return crs
 
         return None
+
+    def read_evlrs(self, stream):
+        """
+        Reads EVLRs from the stream and sets them in the
+        data property.
+
+        The evlrs are accessed from the `evlrs` property
+
+        Does nothing if either of these is true:
+            - The file does not support EVLRS (version < 1.4)
+            - The file has no EVLRS
+            - The stream does not support seeking
+
+        Leaves/restores the stream position to where it was before the call
+        """
+        if self.version.minor >= 4:
+            if self.number_of_evlrs > 0 and stream.seekable():
+                saved_pos = stream.tell()
+                stream.seek(self.start_of_first_evlr, io.SEEK_SET)
+                self.evlrs = VLRList.read_from(
+                    stream, self.number_of_evlrs, extended=True
+                )
+                stream.seek(saved_pos)
+            elif self.number_of_evlrs > 0 and not stream.seekable():
+                self.evlrs = None
+            else:
+                self.evlrs = VLRList()
+        else:
+            self.evlrs = None
 
     @staticmethod
     def _prefetch_header_data(source) -> bytes:

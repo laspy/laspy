@@ -30,6 +30,7 @@ def open_las(
     header=None,
     do_compress=None,
     encoding_errors: str = "strict",
+    read_evlrs: bool = True,
 ) -> Union[LasReader, LasWriter, LasAppender]:
     """The laspy.open opens a LAS/LAZ file in one of the 3 supported
     mode:
@@ -97,6 +98,20 @@ def open_las(
         How encoding errors should be treated.
         Possible values and their explanation can be seen here:
         https://docs.python.org/3/library/codecs.html#error-handlers.
+
+    read_evlrs: bool, default True
+            Only applies to 'r' mode.
+
+            If True the evlrs will be read during the __init__ / file opening
+            along with the LasHeader.
+
+            It is fine for most of the cases,
+            but can be problematic when opening file from a data stream like
+            AWS S3 as EVLRs are located at the end of the files, thus
+            will require to pull the whole file.
+
+            Does nothing if the input file does not support
+            EVLRs
     """
     if mode == "r":
         if header is not None:
@@ -115,7 +130,9 @@ def open_las(
             stream = io.BytesIO(source)
         else:
             stream = source
-        return LasReader(stream, closefd=closefd, laz_backend=laz_backend)
+        return LasReader(
+            stream, closefd=closefd, laz_backend=laz_backend, read_evlrs=read_evlrs
+        )
     elif mode == "w":
         if header is None:
             raise ValueError("A header is needed when opening a file for writing")

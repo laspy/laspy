@@ -1,7 +1,9 @@
+import numpy as np
 import pytest
 import os
 
 import laspy
+from laspy import LazBackend
 from tests.test_common import test1_4_las
 
 
@@ -90,3 +92,93 @@ def test_we_read_evlrs_when_simply_opening():
     )
     with laspy.open(file_with_evlrs) as reader:
         assert reader.evlrs == [expected_evlrs]
+
+
+def test_we_dont_read_evlrs_when_opening_if_user_does_not_want():
+    file_with_evlrs = os.path.dirname(__file__) + "/data/1_4_w_evlr.las"
+    with laspy.open(file_with_evlrs, read_evlrs=False) as reader:
+        assert reader.evlrs is None
+
+
+def test_reader_read_reads_evlrs_even_if_skipped_at_opening():
+    file_with_evlrs = os.path.dirname(__file__) + "/data/1_4_w_evlr.las"
+    expected_evlrs = [
+        laspy.VLR(
+            user_id="pylastest",
+            record_id=42,
+            description="just a test evlr",
+            record_data=b"Test 1 2 ... 1 2",
+        )
+    ]
+    with laspy.open(file_with_evlrs, read_evlrs=False) as reader:
+        assert reader.evlrs is None
+        las = reader.read()
+        assert las.evlrs == expected_evlrs
+        assert reader.evlrs == expected_evlrs
+
+
+@pytest.mark.parametrize(
+    "file,backend",
+    [
+        ("/data/1_4_w_evlr.las", None),
+        pytest.param(
+            "/data/1_4_w_evlr.laz",
+            LazBackend.Laszip,
+            marks=pytest.mark.skipif(
+                not LazBackend.Laszip.is_available(), reason="laszip is not installed"
+            ),
+        ),
+        pytest.param(
+            "/data/1_4_w_evlr.laz",
+            LazBackend.Lazrs,
+            marks=pytest.mark.skipif(
+                not LazBackend.Lazrs.is_available(), reason="lazrs is not installed"
+            ),
+        ),
+        pytest.param(
+            "/data/1_4_w_evlr.laz",
+            LazBackend.LazrsParallel,
+            marks=pytest.mark.skipif(
+                not LazBackend.LazrsParallel.is_available(),
+                reason="lazrs is not installed",
+            ),
+        ),
+    ],
+)
+def test_manually_reading_evlrs(file, backend):
+    # The goal is to test we can read evlrs
+    # in between reading points, as reading evlrs
+    # will require to seek to them, so this is to make sure
+    # we correctly reseek to the previous position
+    # and that we can continue to read points
+
+    file_with_evlrs = os.path.dirname(__file__) + file
+    expected_evlrs = [
+        laspy.VLR(
+            user_id="pylastest",
+            record_id=42,
+            description="just a test evlr",
+            record_data=b"Test 1 2 ... 1 2",
+        )
+    ]
+
+    expected_points = laspy.read(file_with_evlrs, laz_backend=backend).points
+
+    with laspy.open(file_with_evlrs, read_evlrs=False, laz_backend=backend) as reader:
+        points = laspy.ScaleAwarePointRecord.empty(header=reader.header)
+
+        assert reader.evlrs is None
+
+        chunk_size = 100
+
+        iter = reader.chunk_iterator(chunk_size)
+        chunk1 = next(iter)
+        assert np.alltrue(chunk1 == expected_points[:chunk_size])
+
+        reader.read_evlrs()
+        assert reader.evlrs == expected_evlrs
+
+        for i, chunk in enumerate(iter):
+            assert np.alltrue(
+                chunk == expected_points[(i + 1) * chunk_size : (i + 2) * chunk_size]
+            )
