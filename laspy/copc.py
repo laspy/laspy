@@ -467,7 +467,7 @@ def http_queue_strategy(
     for query in byte_queries:
         query_queue.put(query)
 
-    for _ in range(num_threads):
+    for _ in range(min(len(byte_queries), num_threads)):
         HttpFetcherThread(source.url, query_queue, result_queue).start()
 
     query_queue.join()
@@ -670,6 +670,7 @@ class CopcReader:
                 ...
 
         """
+        uri = str(uri)
         if uri.startswith("http"):
             source = HttpRangeStream(uri)
         else:
@@ -694,7 +695,7 @@ class CopcReader:
                 If None, the whole file's bounds will be considered
                 2D bounds are suported, (No point will be filtered on its Z coordinate)
 
-        resolution: float or int, optional, defailt None
+        resolution: float or int, optional, default None
                 Limits the octree levels to be queried in order to have
                 a point cloud with the requested resolution.
 
@@ -727,7 +728,6 @@ class CopcReader:
         if bounds is not None:
             bounds = bounds.ensure_3d(self.header.mins, self.header.maxs)
 
-        # nodes = query_octree_nodes(self.root, query_bounds=bounds, level_range=level)
         nodes = load_octree_for_query(
             self.source,
             self.copc_info,
