@@ -353,7 +353,7 @@ class LasHeaderWriterTestCase(unittest.TestCase):
         assert sys1 == sys2
 
     def test_software_id(self):
-        """"Testing Software ID"""
+        """ "Testing Software ID"""
         s1 = self.las.header.generating_software
         s1 = "1234567" + s1[7:]
         self.las.header.generating_software = s1

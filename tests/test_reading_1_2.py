@@ -226,4 +226,3 @@ def test_seek_las(las_file_path):
 def test_seek_laz(laz_file_path, laz_backend):
     with laspy.open(laz_file_path, laz_backend=laz_backend) as reader:
         check_seeking_works(reader)
-

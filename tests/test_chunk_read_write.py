@@ -9,6 +9,7 @@ import pytest
 
 import laspy
 
+
 def check_chunked_reading_gives_expected_points(
     groundtruth_las: laspy.LasData, reader: laspy.LasReader, iter_size: int
 ):
@@ -21,6 +22,7 @@ def check_chunked_reading_gives_expected_points(
                 expected_points[dim_name], points[dim_name]
             ), f"{dim_name} not equal"
 
+
 def test_chunked_las_reading_gives_expected_points(las_file_path):
     """
     Test chunked LAS reading
@@ -29,6 +31,7 @@ def test_chunked_las_reading_gives_expected_points(las_file_path):
         with laspy.open(las_file_path) as reader:
             las = las_reader.read()
             check_chunked_reading_gives_expected_points(las, reader, iter_size=50)
+
 
 def test_chunked_laz_reading_gives_expected_points(laz_file_path, laz_backend):
     """
@@ -69,9 +72,8 @@ def test_chunked_writing_gives_expected_points(file_path, backend):
 
         tmp_output.seek(0)
         with laspy.open(tmp_output, closefd=False) as reader:
-            check_chunked_reading_gives_expected_points(
-                original_las, reader, iter_size
-            )
+            check_chunked_reading_gives_expected_points(original_las, reader, iter_size)
+
 
 @pytest.mark.parametrize("backend", laspy.LazBackend.detect_available() + (None,))
 def test_chunked_dimension_modification(file_path, backend):

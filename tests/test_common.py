@@ -183,7 +183,7 @@ def test_coords_when_using_create_from_header(las):
 
 
 def test_slicing(las):
-    las.points = las.points[len(las.points) // 2:]
+    las.points = las.points[len(las.points) // 2 :]
 
 
 @pytest.mark.parametrize("do_compress", do_compression)
@@ -213,11 +213,11 @@ def test_laspy_file_raises():
 def test_lasdata_setitem_xyz_with_2d_array():
     las = laspy.read(simple_las)
 
-    xyz = np.ones(len(las), dtype='3f8')
+    xyz = np.ones(len(las), dtype="3f8")
     xyz[..., 1] = 2.0
     xyz[..., 2] = 3.0
 
-    las[['x', 'y', 'z']] = xyz
+    las[["x", "y", "z"]] = xyz
 
     assert np.all(las.x == xyz[..., 0])
     assert np.all(las.y == xyz[..., 1])
@@ -227,32 +227,34 @@ def test_lasdata_setitem_xyz_with_2d_array():
 def test_lasdata_setitem_xyz_with_structured_array():
     las = laspy.read(simple_las)
 
-    xyz = np.ones(len(las), dtype=[('x', 'f8'), ('y', 'f8'), ('z', 'f8')])
-    xyz['y'] = 2.0
-    xyz['z'] = 3.0
+    xyz = np.ones(len(las), dtype=[("x", "f8"), ("y", "f8"), ("z", "f8")])
+    xyz["y"] = 2.0
+    xyz["z"] = 3.0
 
-    las[['x', 'y', 'z']] = xyz
+    las[["x", "y", "z"]] = xyz
 
-    assert np.all(las.x == xyz['x'])
-    assert np.all(las.y == xyz['y'])
-    assert np.all(las.z == xyz['z'])
+    assert np.all(las.x == xyz["x"])
+    assert np.all(las.y == xyz["y"])
+    assert np.all(las.z == xyz["z"])
 
 
 def test_lasdata_setitem_one_dimension():
     las = laspy.read(simple_las)
 
-    las[['x']] = np.ones(len(las), 'f8') * 17.0
+    las[["x"]] = np.ones(len(las), "f8") * 17.0
     assert np.all(las.x == 17.0)
 
 
 def test_lasdata_setitem_works_with_subfields():
     las = laspy.read(simple_las)
 
-    new_values = np.ones(len(las), dtype=[('classification', 'u1'), ('return_number', 'u1')])
-    new_values['classification'] = 23
-    new_values['return_number'] = 2
+    new_values = np.ones(
+        len(las), dtype=[("classification", "u1"), ("return_number", "u1")]
+    )
+    new_values["classification"] = 23
+    new_values["return_number"] = 2
 
-    las[['classification', 'return_number']] = new_values
+    las[["classification", "return_number"]] = new_values
     assert np.all(las.classification == 23)
     assert np.all(las.return_number == 2)
 
@@ -287,7 +289,7 @@ def test_las_data_getitem_slice():
 
 
 def test_change_scaling():
-    """ Check our change scaling method.
+    """Check our change scaling method.
 
     We expect the scaled x,y,z not to change
     while the unscaled (integers) X,Y,Z should change.
@@ -298,9 +300,9 @@ def test_change_scaling():
 
     las = laspy.LasData(hdr)
 
-    las['x'] = np.array([1, 2, 3, 4])
-    las['y'] = np.array([1, 2, 3, 4])
-    las['z'] = np.array([1, 2, 3, 4])
+    las["x"] = np.array([1, 2, 3, 4])
+    las["y"] = np.array([1, 2, 3, 4])
+    las["z"] = np.array([1, 2, 3, 4])
 
     assert np.all(las.x == [1, 2, 3, 4])
     assert np.all(las.y == [1, 2, 3, 4])
@@ -359,7 +361,6 @@ def test_setting_x_y_z_on_las_data():
     assert np.all(new_las.Y == las.Y)
     assert np.all(new_las.z == las.z)
     assert np.all(new_las.Z == las.Z)
-
 
     new_las = laspy.lib.write_then_read_again(new_las)
 

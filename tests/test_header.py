@@ -181,24 +181,24 @@ def test_extra_vlr_bytes():
 
 
 def test_header_update_after_slicing():
-    """ Test that after slicing a LasData and after its header was
+    """Test that after slicing a LasData and after its header was
     updated, its header's bound correctly reflect the new points.
     """
     las = laspy.read(test_common.simple_las)
 
     def dim_min_max_from_header(header, dim_name):
-        if dim_name == 'x':
+        if dim_name == "x":
             return header.x_min, header.x_max
 
-        if dim_name == 'y':
+        if dim_name == "y":
             return header.y_min, header.y_max
 
-        if dim_name == 'z':
+        if dim_name == "z":
             return header.z_min, header.z_max
 
         raise RuntimeError(f"Bad dim name {dim_name}")
 
-    for dim in ('x', 'y', 'z'):
+    for dim in ("x", "y", "z"):
         values = las[dim]
 
         old_min, old_max = dim_min_max_from_header(las.header, dim)
@@ -212,20 +212,26 @@ def test_header_update_after_slicing():
         values = las[dim]
 
         new_header_min, new_header_max = dim_min_max_from_header(las.header, dim)
-        assert new_header_max == values.max(), "Header max value does not correspond to actual max value"
-        assert new_header_min == values.min(), "Header min value does not correspond to actual min value"
+        assert (
+            new_header_max == values.max()
+        ), "Header max value does not correspond to actual max value"
+        assert (
+            new_header_min == values.min()
+        ), "Header min value does not correspond to actual min value"
         assert new_header_min > old_min
         assert new_header_max < old_max
 
 
 def test_header_update_setting_points_on_new_las():
-    """ Internally, when updating the header, its mins and maxs will temporarily be set
+    """Internally, when updating the header, its mins and maxs will temporarily be set
     to f64::max_value and f64::min_value. This test is to make sure those value are
     truly temporary. Even when setting the points to an empty record
     """
     las = laspy.read(test_common.simple_las)
 
-    new_las = laspy.create(point_format=las.header.point_format, file_version=las.header.version)
+    new_las = laspy.create(
+        point_format=las.header.point_format, file_version=las.header.version
+    )
     assert np.all(new_las.header.mins == [0.0, 0.0, 0.0])
     assert np.all(new_las.header.maxs == [0.0, 0.0, 0.0])
     assert np.sum(new_las.header.number_of_points_by_return) == 0
@@ -238,18 +244,23 @@ def test_header_update_setting_points_on_new_las():
     new_las.points = las.points.copy()
     assert np.all(new_las.header.mins == las.header.mins)
     assert np.all(new_las.header.maxs == las.header.maxs)
-    assert np.all(new_las.header.number_of_points_by_return == las.header.number_of_points_by_return)
+    assert np.all(
+        new_las.header.number_of_points_by_return
+        == las.header.number_of_points_by_return
+    )
+
 
 def test_header_min_max_chunk_mode():
-    """ Test that when writing a file using 'chunk mode' the header`s bounds are correct
-    """
+    """Test that when writing a file using 'chunk mode' the header`s bounds are correct"""
     las = laspy.read(test_common.simple_las)
-    header = laspy.LasHeader(point_format=las.header.point_format, version=las.header.version)
+    header = laspy.LasHeader(
+        point_format=las.header.point_format, version=las.header.version
+    )
     with io.BytesIO() as stream:
         with laspy.open(stream, mode="w", header=header, closefd=False) as writer:
             # We intenionally write the file in two write_points call
-            writer.write_points(las.points[:len(las.points) // 2])
-            writer.write_points(las.points[len(las.points) // 2:])
+            writer.write_points(las.points[: len(las.points) // 2])
+            writer.write_points(las.points[len(las.points) // 2 :])
 
         stream.seek(0)
         new_las = laspy.read(stream)
@@ -258,7 +269,7 @@ def test_header_min_max_chunk_mode():
 
 
 def test_update_header_empty_las_data():
-    """ Test updating the header on and empyt las, and writing
+    """Test updating the header on and empyt las, and writing
     an empyt las produces correct bounds values in header
 
     """

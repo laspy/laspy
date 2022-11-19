@@ -79,13 +79,14 @@ def test_scanner_channel(file):
     assert file.scanner_channel.max() == 0
     assert file.scanner_channel.min() == 0
 
+
 def test_we_read_evlrs_when_simply_opening():
     file_with_evlrs = os.path.dirname(__file__) + "/data/1_4_w_evlr.las"
     expected_evlrs = laspy.VLR(
-            user_id="pylastest",
-            record_id=42,
-            description="just a test evlr",
-            record_data=b'Test 1 2 ... 1 2',
-        )
+        user_id="pylastest",
+        record_id=42,
+        description="just a test evlr",
+        record_data=b"Test 1 2 ... 1 2",
+    )
     with laspy.open(file_with_evlrs) as reader:
         assert reader.evlrs == [expected_evlrs]
