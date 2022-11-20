@@ -122,6 +122,10 @@ class PackedPointRecord:
 
     @classmethod
     def from_buffer(cls, buffer, point_format, count=-1, offset=0):
+        # TODO: adjust count size to prevent exception
+        # - Jaeyoon Jeong(diem389@gmail.com), 2020-10-06
+        item_size = point_format.size
+        count = len(buffer) // item_size
         points_dtype = point_format.dtype()
         data = np.frombuffer(buffer, dtype=points_dtype, offset=offset, count=count)
 
