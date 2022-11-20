@@ -1,3 +1,4 @@
+import io
 from pathlib import Path
 
 import pytest
@@ -56,3 +57,18 @@ def test_geokey_parsing_does_not_require_optional_params():
     las = laspy.read(str(Path(__file__).parent / "data/simple1_3.las"))
     geo_keys = laspy.vlrs.geotiff.parse_geo_tiff_keys_from_vlrs(las.vlrs)
     assert len(geo_keys) == 6
+
+
+def test_cannot_write_vlrs_with_more_than_uint16_max_bytes():
+    las = laspy.read(test_common.simple_las)
+    big_junk_vlr = laspy.VLR(
+        user_id="LASPY_ID",
+        record_id=0,
+        description="A VLR full of junk data",
+        record_data=b"1" * (65_535 + 1),
+    )
+    las.vlrs.append(big_junk_vlr)
+
+    with pytest.raises(ValueError):
+        with io.BytesIO() as output:
+            las.write(output)

@@ -5,7 +5,7 @@ import numpy as np
 
 from .known import vlr_factory, IKnownVLR
 from .vlr import VLR
-from ..utils import encode_to_len, read_string, write_as_c_string
+from ..utils import read_string, write_as_c_string
 
 logger = logging.getLogger(__name__)
 
@@ -194,8 +194,11 @@ class VLRList(list):
                     len(record_data).to_bytes(8, byteorder="little", signed=False)
                 )
             else:
-                if len(record_data) > np.iinfo("uint16").max:
-                    raise ValueError("vlr record_data is too long")
+                max_length = np.iinfo("uint16").max
+                if len(record_data) > max_length:
+                    raise ValueError(
+                        f"VLR record_date length ({len(record_data)}) exceeds the maximum length ({max_length})"
+                    )
                 stream.write(
                     len(record_data).to_bytes(2, byteorder="little", signed=False)
                 )

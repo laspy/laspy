@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.3.0
+## Version 2.3.0 (25/10/2022)
 
 ### Changed
 - EVLRs are now read during the file opening part.
@@ -17,7 +17,7 @@
 
 ---
 
-## 2.2.0
+## Version 2.2.0 (29/06/2022)
 
 ### Added
 - Added support for querying COPC LAZ files via a new class `CopcReader`.
@@ -32,7 +32,7 @@
 
 ---
 
-## 2.2.0 beta 1
+## Version 2.2.0 beta 1 (14/06/2022)
 
 ### Added
 - Added support for querying COPC LAZ files via a new class `CopcReader`.
@@ -42,7 +42,7 @@
 
 ---
 
-## 2.2.0 beta 0
+## Version 2.2.0 beta 0 (03/05/2022)
 
 ### Added
 - Added new optional feature to support adding CRS / SRS to a LAS file from a `pyproj.CRS` as 
@@ -53,7 +53,7 @@
 
 ---
   
-## 2.1.2
+## Version 2.1.2 (18/02/2022)
 
 
 ### Fixed
@@ -63,7 +63,7 @@
 
 ---
 
-## 2.1.1
+## Version 2.1.1 (23/01/2022)
 
 ### Fixed
 - Fixed regression introduced in 2.1.0 where setting the x, y or z value would not properly set the corresponding
@@ -74,7 +74,7 @@
 
 ---
 
-## 2.1.0
+## Version 2.1.0 (09/01/2022)
 
 ### Added
 - Added a better error message when reading empty files
@@ -98,7 +98,7 @@
 
 ---
 
-## Version 2.0.3
+## Version 2.0.3 (16/09/2021)
 
 ### Fixed
 - Fix function that parses geotiff VLRs
@@ -107,7 +107,7 @@
 
 ---
 
-## Version 2.0.2
+## Version 2.0.2 (23/07/2021)
 
 ### Changed
 - Update minimum lazrs version which allows to:
@@ -120,7 +120,7 @@
 
 ---
 
-## Version 2.0.1
+## Version 2.0.1 (29/06/2021)
 
 ### Fixed
 - Fix `.min` `.max` methods of array views
@@ -128,7 +128,7 @@
 
 ---
 
-## Version 2.0.0
+## Version 2.0.0 (15/06/2021)
 
 - Overhaul of the internals by essentially incorporating pylas into laspy,
   while the API to retrieve and set dimensions stayed the same, other parts changed
@@ -143,24 +143,24 @@
 
 ---
 
-## Version 1.7.0
+## Version 1.7.0 (13/03/2020)
 
 - Fixed bug in point record format 5, 9 and 10 [#105](https://github.com/laspy/laspy/issues/105)
 - Return explicit msg if laszip executable was not found [#110](https://github.com/laspy/laspy/issues/110)
 - Supprt numpy 1.17 [#122](https://github.com/laspy/laspy/issues/122)
 
-## Version 1.6.0
+## Version 1.6.0 (11/10/2018)
 
 - Bug fix  [#92](https://github.com/laspy/laspy/issues/92)
 - Test creation of all valid custom dimension data types
 - Modify handling of extra bytes to be char data instead of numeric byte data
 
-## Version 1.5.1
+## Version 1.5.1 (5/12/2017)
 
 - Bug fixes [#67](https://github.com/laspy/laspy/pull/67), [#75](https://github.com/laspy/laspy/pull/75), [b02b40900b5](https://github.com/laspy/laspy/commit/b02b40900b5620972930cd0c201b4db1a6a69754)
 - Allow usage of `laszip-cli` when working with LAZ files [#77](https://github.com/laspy/laspy/pull/77)
 
-## Version 1.5.0
+## Version 1.5.0 (30/03/2017)
 
 - Improved memory handling in base.FileManager [#48](https://github.com/laspy/laspy/pull/48)
 - Introduced `r-` file mode, that only reads the header of as LAS file [#48](https://github.com/laspy/laspy/pull/48)

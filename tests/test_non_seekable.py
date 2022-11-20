@@ -5,25 +5,10 @@ from .conftest import (
     las_file_path,
     LAZ_1_4_WITH_EVLRS_FILE_PATH,
     LAS_1_4_WITH_EVLRS_FILE_PATH,
+    NonSeekableStream,
 )
 from .test_chunk_read_write import check_chunked_reading_gives_expected_points
 from laspy import VLR
-
-
-class NonSeekableStream:
-    """
-    Fake non stream / file object which simulates a file object
-    on which we cannot seek
-    """
-
-    def __init__(self, inner):
-        self.inner = inner
-
-    def read(self, n):
-        return self.inner.read(n)
-
-    def seekable(self):
-        return False
 
 
 EXPECTED_EVLRS = [

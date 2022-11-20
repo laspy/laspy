@@ -14,12 +14,20 @@ def recursive_split(x_min, y_min, x_max, y_max, max_x_size, max_y_size):
     y_size = y_max - y_min
 
     if x_size > max_x_size:
-        left = recursive_split(x_min, y_min, x_min + (x_size // 2), y_max, max_x_size, max_y_size)
-        right = recursive_split(x_min + (x_size // 2), y_min, x_max, y_max, max_x_size, max_y_size)
+        left = recursive_split(
+            x_min, y_min, x_min + (x_size // 2), y_max, max_x_size, max_y_size
+        )
+        right = recursive_split(
+            x_min + (x_size // 2), y_min, x_max, y_max, max_x_size, max_y_size
+        )
         return left + right
     elif y_size > max_y_size:
-        up = recursive_split(x_min, y_min, x_max, y_min + (y_size // 2), max_x_size, max_y_size)
-        down = recursive_split(x_min, y_min + (y_size // 2), x_max, y_max, max_x_size, max_y_size)
+        up = recursive_split(
+            x_min, y_min, x_max, y_min + (y_size // 2), max_x_size, max_y_size
+        )
+        down = recursive_split(
+            x_min, y_min + (y_size // 2), x_max, y_max, max_x_size, max_y_size
+        )
         return up + down
     else:
         return [(x_min, y_min, x_max, y_max)]
@@ -33,7 +41,9 @@ def tuple_size(string):
 
 
 def main():
-    parser = argparse.ArgumentParser("LAS recursive splitter", description="Splits a las file bounds recursively")
+    parser = argparse.ArgumentParser(
+        "LAS recursive splitter", description="Splits a las file bounds recursively"
+    )
     parser.add_argument("input_file")
     parser.add_argument("output_dir")
     parser.add_argument("size", type=tuple_size, help="eg: 50x64.17")
@@ -48,7 +58,7 @@ def main():
             file.header.x_max,
             file.header.y_max,
             args.size[0],
-            args.size[1]
+            args.size[1],
         )
 
         writers: List[Optional[laspy.LasWriter]] = [None] * len(sub_bounds)
@@ -69,9 +79,9 @@ def main():
                     if np.any(mask):
                         if writers[i] is None:
                             output_path = Path(sys.argv[2]) / f"output_{i}.laz"
-                            writers[i] = laspy.open(output_path,
-                                                    mode='w',
-                                                    header=file.header)
+                            writers[i] = laspy.open(
+                                output_path, mode="w", header=file.header
+                            )
                         sub_points = points[mask]
                         writers[i].write_points(sub_points)
 
@@ -86,5 +96,5 @@ def main():
                     writer.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

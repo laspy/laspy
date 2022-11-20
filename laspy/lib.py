@@ -74,7 +74,7 @@ def open_las(
         - "w" for writing
         - "a" for appending
 
-    laz_backend: Optional, the LAZ backend to use to handle decompression/comression
+    laz_backend: Optional, laspy.LazBackend, the LAZ backend to use to handle decompression/compression
 
         By default available backends are detected, see LazBackend to see the
         preference order when multiple backends are available
@@ -171,8 +171,8 @@ def read_las(source, closefd=True, laz_backend=LazBackend.detect_available()):
         The source to read data from
 
     laz_backend: Optional, the backend to use when the file is as LAZ file.
-                 By default laspy will find the backend to use by himself.
-                 Use if you wan a specific backend to be used
+                 By default laspy will find the backend to use by itself.
+                 Use if you want a specific backend to be used
 
     closefd: bool
             if True and the source is a stream, the function will close it
@@ -181,7 +181,7 @@ def read_las(source, closefd=True, laz_backend=LazBackend.detect_available()):
 
     Returns
     -------
-    laspy.lasdatas.base.LasBase
+    laspy.LasData
         The object you can interact with to get access to the LAS points & VLRs
     """
     with open_las(source, closefd=closefd, laz_backend=laz_backend) as reader:

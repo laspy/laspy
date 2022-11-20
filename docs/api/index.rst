@@ -1,5 +1,5 @@
-laspy package
-=============
+API Documentation
+=================
 
 .. module:: laspy
 

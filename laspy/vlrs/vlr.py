@@ -31,22 +31,45 @@ class BaseVLR(IVLR, ABC):
 
     @property
     def user_id(self) -> str:
+        """
+        The user id
+        """
         return self._user_id
 
     @property
     def record_id(self) -> int:
+        """
+        The record id
+        """
         return self._record_id
 
     @property
     def description(self) -> Union[str, bytes]:
+        """
+        The description, cannot exceed 32 bytes
+        """
         return self._description
 
 
 class VLR(BaseVLR):
+    """
+    >>> import laspy
+    >>> my_vlr = laspy.VLR(
+    ... user_id="MyUserId",
+    ... record_id=0,
+    ... description="An Example VLR",
+    ... record_data=int(42).to_bytes(8, byteorder='little'),
+    ... )
+    >>> my_vlr.user_id
+    'MyUserId'
+    >>> int.from_bytes(my_vlr.record_data, byteorder='little')
+    42
+    """
+
     def __init__(self, user_id, record_id, description="", record_data=b""):
         super().__init__(user_id, record_id, description=description)
-        #: The record_data as bytes
-        self.record_data = record_data
+        #: The record_data as bytes, length cannot exceed 65_535
+        self.record_data: bytes = record_data
 
     def record_data_bytes(self) -> bytes:
         return self.record_data

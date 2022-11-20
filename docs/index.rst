@@ -60,6 +60,8 @@ User Guide
     lessbasic
     migration
     changelog
+    contributing
+
 
 API Documentation
 =================

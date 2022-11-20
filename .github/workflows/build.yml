@@ -69,7 +69,21 @@ jobs:
           python3 -m pip install black==22.3.0
 
       - name: Run black check
-        run: python3 -m black --check laspy tests
+        run: python3 -m black --check .
 
+  coverage:
+    runs-on: ubuntu-latest
 
+    steps:
+      - name: Clone
+        uses: actions/checkout@v2
 
+      - name: Install
+        run: |
+          python3 -m pip install .[dev]
+
+      - name: Run coverage
+        run: |
+          nox -s coverage
+          coverage combine
+          coverage report

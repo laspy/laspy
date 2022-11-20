@@ -73,6 +73,22 @@ SUPPORTED_EXTRA_BYTES_TYPE = (
 )
 
 
+class NonSeekableStream:
+    """
+    Fake non stream / file object which simulates a file object
+    on which we cannot seek
+    """
+
+    def __init__(self, inner):
+        self.inner = inner
+
+    def read(self, n):
+        return self.inner.read(n)
+
+    def seekable(self):
+        return False
+
+
 @pytest.fixture()
 def simple_las_path():
     return SIMPLE_LAS_FILE_PATH

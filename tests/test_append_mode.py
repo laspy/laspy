@@ -5,6 +5,7 @@ import pytest
 
 import laspy
 from tests.test_common import simple_laz
+from tests.conftest import NonSeekableStream
 
 
 def test_append(file_path):
@@ -71,3 +72,11 @@ def append_self_and_check(las_path_fixture):
     assert rlas.points[rlas.header.point_count // 2 :] == las.points
 
     return rlas
+
+
+def test_trying_to_append_in_non_seekable_raises():
+    with pytest.raises(TypeError):
+        with open(simple_laz, mode="rb") as f:
+            stream = NonSeekableStream(f)
+            with laspy.open(stream, mode="a") as lasf:
+                pass

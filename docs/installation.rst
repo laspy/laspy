@@ -4,21 +4,24 @@
 Installation
 ============
 
-Installing from PyPi
-====================
+Short Instructions
+==================
 
 Pip
 ____
 
 .. code-block:: shell
 
-    # To install with lazrs only
+    # Install _without_ LAZ support
+    pip install laspy
+
+    # Install with LAZ support via lazrs
     pip install laspy[lazrs]
 
-    # To install with laszip only
+    # Install with LAZ support via laszip
     pip install laspy[laszip]
 
-    # To install with both
+    # Install with LAZ support via both lazrs & laszip
     pip install laspy[lazrs,laszip]
 
 Conda
@@ -30,9 +33,14 @@ A conda build of laspy is available and maintained (but not by laspy)
 
     conda install -c conda-forge laspy
 
-However, ``lazrs`` and ``laszip`` [#f1]_ are not available via conda, so to have LAZ support, you will
-still need to install a LAZ backend via ``pip``
+``lazrs`` is also available on conda
 
+.. code-block:: shell
+
+    conda install -c conda-forge lazrs
+
+
+However, ``laszip`` [#f1]_ is not available via conda.
 
 
 Optional dependencies  / features
@@ -42,7 +50,7 @@ Optional dependencies  / features
 LAZ support
 ___________
 
-laspy does not support LAZ (.laz) file by itself but can use one of several optional dependencies
+laspy does not support LAZ (.laz) file by itself but can use one of two optional dependencies
 to support compressed LAZ files.
 
 The 2 supported options are:
@@ -65,23 +73,23 @@ with waveform but does not offer multi-threaded compression/decompression.
 
 Both the laszip bindings and lazrs are available on pip.
 
-To install laspy with one of its supported backend use one of the following commands
-
-
-CRS / SRS
-_________
-
-LAS files allows to define the CRS / SRS in which the points coordinates are.
-When `pyproj` is installed, you can use the :meth:`.LasHeader.add_crs` to add 
-CRS information to a file, or you can use :meth:`.LasHeader.parse_crs` to get 
-`pyproj.CRS`.
-
+To install laspy with one of its supported backend use one of the commands
+show in the section above.
 
 .. _lazrs: https://github.com/tmontaigu/laz-rs
 .. _laszip-python: https://github.com/tmontaigu/laszip-python
 .. _laszip: https://github.com/LASzip/LASzip
 .. _[lazrs PyPi]: https://pypi.org/project/lazrs/
 
+CRS / SRS
+_________
+
+LAS files allows to define the CRS / SRS in which the points coordinates are.
+When `pyproj`_ is installed, you can use the :meth:`.LasHeader.add_crs` to add
+CRS information to a file, or you can use :meth:`.LasHeader.parse_crs` to get 
+`pyproj.CRS`.
+
+.. _pyproj: https://pypi.org/project/pyproj/
 
 Cloud Optimized Point Cloud (COPC)
 __________________________________

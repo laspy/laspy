@@ -423,8 +423,10 @@ class LasHeader:
             This requires `pyproj`.
 
         .. warning::
-            Not all CRS are supported when adding GeoTiff tags. For example, custom
-            CRS. Typically, if the CRS has an EPSG code it will be supported.
+            Not all CRS are supported when adding GeoTiff tags.
+            For example, custom CRS.
+
+            Typically, if the CRS has an EPSG code it will be supported.
         """
         import pyproj
 

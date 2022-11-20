@@ -160,7 +160,7 @@ True
 Point Format
 ------------
 
-The dimensions available in a file are dictated by the point format id.
+The dimensions available in a file are dictated by the point format.
 The tables in the introduction section contains the list of dimensions for each of the
 point format.
 To get the point format of a file you have to access it through the las object:

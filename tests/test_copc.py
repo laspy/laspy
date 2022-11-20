@@ -1,3 +1,4 @@
+import io
 import subprocess
 
 import laspy
@@ -16,15 +17,6 @@ try:
     import RangeHTTPServer
 except ModuleNotFoundError:
     RangeHTTPServer = None
-
-
-@pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()")
-def test_querying_copc_local_file():
-    with laspy.CopcReader.open(SIMPLE_COPC_FILE) as copc_reader:
-        assert copc_reader.header.version == "1.4"
-        assert copc_reader.header.point_format == laspy.PointFormat(7)
-        points = copc_reader.query(resolution=50)
-        assert len(points) == 24
 
 
 @pytest.mark.parametrize(
@@ -57,6 +49,22 @@ def test_reading_copc_file_normal_laz_file(backend):
     assert len(las) == 1065
 
 
+@pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()")
+def test_querying_copc_local_file():
+    with laspy.CopcReader.open(SIMPLE_COPC_FILE) as copc_reader:
+        assert copc_reader.header.version == "1.4"
+        assert copc_reader.header.point_format == laspy.PointFormat(7)
+        points = copc_reader.query(resolution=50)
+        assert len(points) == 24
+
+
+@pytest.mark.skipif("laspy.LazBackend.Lazrs.is_available()")
+def test_querying_copc_local_file_proper_error_if_no_lazrs():
+    with pytest.raises(laspy.errors.LazError):
+        with laspy.CopcReader.open(SIMPLE_COPC_FILE) as _:
+            pass
+
+
 @pytest.mark.skipif(
     not (
         laspy.LazBackend.Lazrs.is_available()
@@ -79,3 +87,31 @@ def test_copc_over_http():
         assert len(points) == 24
 
     server_proc.terminate()
+
+
+@pytest.mark.parametrize(
+    "exc_type,backend",
+    [
+        pytest.param(
+            laspy.LaspyException,
+            laspy.LazBackend.Laszip,
+            marks=pytest.mark.skipif("not laspy.LazBackend.Laszip.is_available()"),
+        ),
+        pytest.param(
+            NotImplementedError,
+            laspy.LazBackend.Lazrs,
+            marks=pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()"),
+        ),
+        pytest.param(
+            NotImplementedError,
+            laspy.LazBackend.LazrsParallel,
+            marks=pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()"),
+        ),
+    ],
+)
+def test_writing_copc_file_fails(exc_type, backend):
+    las = laspy.read(SIMPLE_COPC_FILE, laz_backend=backend)
+
+    with pytest.raises(exc_type):
+        with io.BytesIO() as output:
+            las.write(output, laz_backend=backend)
