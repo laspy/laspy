@@ -1,4 +1,4 @@
-__version__ = "2.3.0-TAL"
+__version__ = "2.3.0"
 
 import logging
 
