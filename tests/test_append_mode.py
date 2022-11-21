@@ -5,7 +5,10 @@ import pytest
 
 import laspy
 from tests.test_common import simple_laz
+from typing import List, Tuple
 from tests.conftest import NonSeekableStream
+from laspy import LasHeader, ScaleAwarePointRecord, LasData
+from pathlib import Path
 
 
 def test_append(file_path):
@@ -80,3 +83,77 @@ def test_trying_to_append_in_non_seekable_raises():
             stream = NonSeekableStream(f)
             with laspy.open(stream, mode="a") as lasf:
                 pass
+
+
+@pytest.mark.parametrize(
+    "points_read_counts",
+    [
+        [-1],
+        [1, -1],
+        [49_999, -1],
+        [50_000, -1],
+        [50_001, -1],
+    ],
+)
+@pytest.mark.skipif(
+    not laspy.LazBackend.Lazrs.is_available(), reason="Lazrs is not installed"
+)
+def test_write_then_append_produces_valid_cloud(points_read_counts: List[int]) -> None:
+    """
+    In this test we read a LAZ file into chunks dictated by `points_read_counts`,
+    then we reconstruct it by first writting the first chunk into a new file using write mode
+    then we append the remaining chunks to that newly created file.
+
+    At the end the input file and the one we patchworked must be the same
+    """
+
+    def iter_points(
+        points_list: List[ScaleAwarePointRecord],
+    ) -> Tuple[ScaleAwarePointRecord, slice]:
+        """
+        Returns a tuple that associates each point record in the input list
+        with the slice to be used to recover the same chunk from
+        the input file.
+        """
+        offset: int = 0
+
+        for points in points_list:
+            yield points, slice(offset, offset + len(points))
+            offset += len(points)
+
+    def check_write_append_read(
+        points_list: List[ScaleAwarePointRecord], header: LasHeader
+    ) -> None:
+        """
+        Implements the logic of first using write mode for the first
+        chunk, then appending the remaining chunks.
+
+        Checks result at the end
+        """
+        with io.BytesIO() as tmp_output:
+            with laspy.open(
+                tmp_output, "w", header=header, closefd=False, do_compress=True
+            ) as las_writer:
+                las_writer.write_points(points_list[0])
+
+            for points in points_list[1:]:
+                tmp_output.seek(0)
+                if points:
+                    with laspy.open(tmp_output, "a", closefd=False) as las_appender:
+                        las_appender.append_points(points)
+
+            tmp_output.seek(0)
+            final_cloud: LasData = laspy.read(tmp_output)
+
+            for points, selector in iter_points(points_list):
+                assert final_cloud.points[selector] == points
+
+    input_cloud_path = Path(__file__).parent / "data" / "autzen_trim.laz"
+
+    with laspy.open(input_cloud_path) as las_reader:
+        points_list: List[ScaleAwarePointRecord] = [
+            las_reader.read_points(points_read_count)
+            for points_read_count in points_read_counts
+        ]
+
+    check_write_append_read(points_list, las_reader.header)

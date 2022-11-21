@@ -200,13 +200,17 @@ class LazrsAppender:
                 self.chunk_table.append(pos - start_of_chunk)
                 start_of_chunk = pos
         else:
-            self.chunk_table = chunk_table[:-1]
+            self.chunk_table = chunk_table[:number_of_complete_chunk]
             idx_first_point_of_last_chunk = number_of_complete_chunk * vlr.chunk_size()
             decompressor.seek(idx_first_point_of_last_chunk)
-
+        assert (
+            len(self.chunk_table) == len(chunk_table)
+            or len(self.chunk_table) == len(chunk_table) - 1
+        )
         num_points_in_last_chunk = header.point_count - (
             number_of_complete_chunk * vlr.chunk_size()
         )
+
         points_of_last_chunk = bytearray(num_points_in_last_chunk * vlr.item_size())
         decompressor.decompress_many(points_of_last_chunk)
 

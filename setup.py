@@ -35,7 +35,7 @@ setup(
             "m2r2",
             "rangehttpserver",
         ],
-        "lazrs": ["lazrs>=0.4.3, < 0.5.0"],
+        "lazrs": ["lazrs>=0.4.5, < 0.5.0"],
         "laszip": ["laszip >= 0.1.0, < 0.2.0"],
         "pyproj": ["pyproj"],
         "requests": ["requests"],
