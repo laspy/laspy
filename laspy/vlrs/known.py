@@ -512,10 +512,19 @@ class GeoKeyDirectoryVlr(BaseKnownVLR):
         # this should probably be fixed
         from .geotiff import ProjectedCSTypeGeoKey, GeographicTypeGeoKey
 
+        geographic_cs = None
+        projected_cs = None
         for key in self.geo_keys:
-            if key.id == ProjectedCSTypeGeoKey.id or key.id == GeographicTypeGeoKey.id:
-                return pyproj.CRS.from_epsg(key.value_offset)
-        return None
+            if key.id == ProjectedCSTypeGeoKey.id:
+                projected_cs = pyproj.CRS.from_epsg(key.value_offset)
+            elif key.id == GeographicTypeGeoKey.id:
+                geographic_cs = pyproj.CRS.from_epsg(key.value_offset)
+
+        # Projected Coordinate Systems take precedence since,
+        # if they are present, the Geographic CS is probably
+        # redundant and the positioning information in the LAS
+        # file is projected.
+        return projected_cs or geographic_cs
 
     def __repr__(self):
         return "<{}({} geo_keys)>".format(self.__class__.__name__, len(self.geo_keys))
