@@ -15,6 +15,7 @@ extra_bytes_las = conftest.EXTRA_BYTES_LAS_FILE_PATH
 extra_bytes_laz = conftest.EXTRA_BYTES_LAZ_FILE_PATH
 plane_laz = conftest.PLANE_LAZ_FILE_PATH
 autzen_las = conftest.AUTZEN_FILE_PATH
+autzen_geo_proj_las = conftest.AUTZEN_GEO_PROJ_FILE_PATH
 
 if not laspy.LazBackend.detect_available():
     do_compression = [False]

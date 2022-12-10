@@ -14,6 +14,7 @@ SIMPLE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "simple.laz"
 EXTRA_BYTES_LAZ_FILE_PATH = Path(__file__).parent / "data" / "extra.laz"
 PLANE_LAZ_FILE_PATH = Path(__file__).parent / "data" / "plane.laz"
 AUTZEN_FILE_PATH = Path(__file__).parent / "data" / "autzen.las"
+AUTZEN_GEO_PROJ_FILE_PATH = Path(__file__).parent / "data" / "autzen_geo_proj.las"
 LAZ_1_4_WITH_EVLRS_FILE_PATH = Path(__file__).parent / "data" / "1_4_w_evlr.laz"
 
 UNREGISTERED_EXTRA_BYTES_LAS = (

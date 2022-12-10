@@ -1,10 +1,14 @@
-import pytest
-import subprocess
-import os
 import json
+import os
+import subprocess
+from typing import Dict
+
+import pytest
 
 import laspy
-from tests.test_common import test1_4_las, autzen_las
+from laspy.vlrs.geotiff import GeographicTypeGeoKey, ProjectedCSTypeGeoKey
+from laspy.vlrs.known import GeoKeyDirectoryVlr
+from tests.test_common import autzen_geo_proj_las, autzen_las, test1_4_las
 
 try:
     import pyproj
@@ -22,6 +26,11 @@ def file_geotiff():
     return laspy.read(autzen_las)
 
 
+@pytest.fixture()
+def file_geotiff_geo_proj():
+    return laspy.read(autzen_geo_proj_las)
+
+
 def has_pyproj() -> bool:
     return pyproj is not None
 
@@ -32,8 +41,29 @@ def test_parse_crs_wkt(file_wkt):
 
 
 @pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
-def test_parse_crs_geotiff(file_geotiff):
+def test_parse_crs_geotiff(file_geotiff, file_geotiff_geo_proj):
     assert "Projected CRS" in file_geotiff.header.parse_crs().type_name
+    assert (
+        file_geotiff.header.parse_crs().to_epsg()
+        == file_geotiff_geo_proj.header.parse_crs().to_epsg()
+        == 2994
+    )
+
+    geokeys1 = get_geokeys(file_geotiff.header)
+    geokeys2 = get_geokeys(file_geotiff_geo_proj.header)
+
+    assert (
+        geokeys1[ProjectedCSTypeGeoKey.id] == geokeys2[ProjectedCSTypeGeoKey.id] == 2994
+    )
+    assert GeographicTypeGeoKey.id not in geokeys1
+    assert geokeys2[GeographicTypeGeoKey.id] == 4152
+
+
+def get_geokeys(header: laspy.LasHeader) -> Dict:
+    geo_vlr = header.vlrs.get_by_id("LASF_Projection")
+    for rec in geo_vlr:
+        if isinstance(rec, GeoKeyDirectoryVlr):
+            return {k.id: k.value_offset for k in rec.geo_keys}
 
 
 @pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
