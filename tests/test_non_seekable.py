@@ -39,7 +39,19 @@ def test_las_reading_non_seekable_stream(las_file_path):
 
 @pytest.mark.skipif(
     not laspy.LazBackend.Lazrs.is_available(),
-    reason="None seekable laz is only supported by lazrs",
+    reason="Non seekable laz is only supported by lazrs",
+)
+def test_laz_selective_decompression_reading_non_seekable_stream():
+    with open(LAZ_1_4_WITH_EVLRS_FILE_PATH, mode="rb") as f:
+        stream = NonSeekableStream(f)
+        selection = laspy.DecompressionSelection.base()
+        las = laspy.read(stream, closefd=False, decompression_selection=selection)
+        assert las.evlrs == EXPECTED_EVLRS
+
+
+@pytest.mark.skipif(
+    not laspy.LazBackend.Lazrs.is_available(),
+    reason="Non seekable laz is only supported by lazrs",
 )
 def test_laz_with_evlr_reading_non_seekable_stream():
     with open(LAZ_1_4_WITH_EVLRS_FILE_PATH, mode="rb") as f:
@@ -66,7 +78,7 @@ def test_non_seekable_chunked_las_reading(las_file_path):
 
 @pytest.mark.skipif(
     not laspy.LazBackend.Lazrs.is_available(),
-    reason="None seekable laz is only supported by lazrs",
+    reason="Non seekable laz is only supported by lazrs",
 )
 def test_non_seekable_chunked_laz_reading(laz_file_path):
     ground_truth = laspy.read(laz_file_path)

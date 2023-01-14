@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import pytest
 import os
@@ -182,3 +184,69 @@ def test_manually_reading_evlrs(file, backend):
             assert np.alltrue(
                 chunk == expected_points[(i + 1) * chunk_size : (i + 2) * chunk_size]
             )
+
+
+@pytest.mark.parametrize(
+    "backend",
+    [
+        pytest.param(
+            laspy.LazBackend.Laszip,
+            marks=pytest.mark.skipif(
+                not laspy.LazBackend.Laszip.is_available(),
+                reason="Laszip not installed",
+            ),
+        ),
+        pytest.param(
+            laspy.LazBackend.Lazrs,
+            marks=pytest.mark.skipif(
+                not laspy.LazBackend.Lazrs.is_available(), reason="lazrs not installed"
+            ),
+        ),
+        pytest.param(
+            laspy.LazBackend.LazrsParallel,
+            marks=pytest.mark.skipif(
+                not laspy.LazBackend.Lazrs.is_available(), reason="lazrs not installed"
+            ),
+        ),
+    ],
+)
+def test_selective_decompression(backend):
+    # We only decompress X,Y, return number, number of returns, intensity
+    selection = laspy.DecompressionSelection.base().decompress_intensity()
+
+    simple1_4 = Path(__file__).parent / "data" / "1_4_w_evlr.laz"
+
+    fully_decompressed_laz = laspy.read(simple1_4, laz_backend=backend)
+    partially_decompressed_laz = laspy.read(
+        simple1_4, laz_backend=backend, decompression_selection=selection
+    )
+
+    assert fully_decompressed_laz.point_format.id >= 6
+
+    assert np.all(fully_decompressed_laz.X == partially_decompressed_laz.X)
+    assert np.all(fully_decompressed_laz.Y == partially_decompressed_laz.Y)
+    assert np.all(
+        fully_decompressed_laz.return_number == partially_decompressed_laz.return_number
+    )
+    assert np.all(
+        fully_decompressed_laz.number_of_returns
+        == partially_decompressed_laz.number_of_returns
+    )
+    assert np.all(
+        fully_decompressed_laz.intensity == partially_decompressed_laz.intensity
+    )
+
+    # This is the chunk size of the chunks inside the .laz
+    chunk_size = 50_000
+    # In selective decompression, the bytes which are not decompressed are set to the value
+    # of the first point of the LAZ chunk
+    for i in range((len(fully_decompressed_laz) // chunk_size) + 1):
+        start, end = i, (i + 1) * chunk_size
+        assert np.all(
+            # 12
+            fully_decompressed_laz.classification[start]
+            == partially_decompressed_laz.classification[start:end]
+        )
+        assert np.all(
+            fully_decompressed_laz.Z[start] == partially_decompressed_laz.Z[start:end]
+        )

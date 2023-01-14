@@ -6,9 +6,24 @@ API Documentation
 Re-exported functions
 ---------------------
 
+laspy.read
+___________
+
 .. autofunction:: read
+
+laspy.open
+___________
+
 .. autofunction:: open
+
+laspy.create
+____________
+
 .. autofunction:: create
+
+laspy.convert
+_____________
+
 .. autofunction:: convert
 
 

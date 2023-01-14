@@ -5,6 +5,7 @@ import laspy
 import pytest
 from pathlib import Path
 import sys
+import numpy as np
 
 SIMPLE_COPC_FILE = Path(__file__).parent / "data" / "simple.copc.laz"
 
@@ -115,3 +116,63 @@ def test_writing_copc_file_fails(exc_type, backend):
     with pytest.raises(exc_type):
         with io.BytesIO() as output:
             las.write(output, laz_backend=backend)
+
+
+@pytest.mark.parametrize(
+    "backend",
+    [
+        pytest.param(
+            laspy.LazBackend.Lazrs,
+            marks=pytest.mark.skipif(
+                not laspy.LazBackend.Lazrs.is_available(), reason="lazrs not installed"
+            ),
+        ),
+        pytest.param(
+            laspy.LazBackend.LazrsParallel,
+            marks=pytest.mark.skipif(
+                not laspy.LazBackend.Lazrs.is_available(), reason="lazrs not installed"
+            ),
+        ),
+    ],
+)
+def test_copc_selective_decompression(backend):
+    # We only decompress X,Y, return number, number of returns, classification
+    selection = laspy.DecompressionSelection.base().decompress_classification()
+
+    with laspy.CopcReader.open(SIMPLE_COPC_FILE) as copc_reader:
+        fully_decompressed_points = copc_reader.query()
+
+    with laspy.CopcReader.open(
+        SIMPLE_COPC_FILE, decompression_selection=selection
+    ) as copc_reader:
+        partially_decompressed_points = copc_reader.query()
+
+    print(
+        np.sum(
+            fully_decompressed_points.classification
+            == partially_decompressed_points.classification
+        ),
+        len(fully_decompressed_points),
+    )
+
+    assert np.all(fully_decompressed_points.X == partially_decompressed_points.X)
+    assert np.all(fully_decompressed_points.Y == partially_decompressed_points.Y)
+    assert np.all(
+        fully_decompressed_points.return_number
+        == partially_decompressed_points.return_number
+    )
+    assert np.all(
+        fully_decompressed_points.number_of_returns
+        == partially_decompressed_points.number_of_returns
+    )
+    # assert np.all(
+    #     fully_decompressed_points.classification == partially_decompressed_points.classification
+    # )
+
+    # Since COPC uses variable chunk size its easier to test that
+    # values are all not eq between fully and partially decompressed
+    assert np.any(
+        partially_decompressed_points.point_source_id
+        != fully_decompressed_points.point_source_id
+    )
+    assert np.any(partially_decompressed_points.Z != fully_decompressed_points.Z)

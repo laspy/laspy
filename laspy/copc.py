@@ -26,9 +26,10 @@ except ModuleNotFoundError:
 import numpy as np
 
 from .errors import LaspyException, LazError
-from .header import LasHeader, LAS_HEADERS_SIZE
+from .header import LasHeader
 from .point.record import PackedPointRecord, ScaleAwarePointRecord
 from .vlrs.known import BaseKnownVLR
+from .compression import DecompressionSelection
 
 DEFAULT_HTTP_WORKERS_NUM = multiprocessing.cpu_count() * 5
 
@@ -547,6 +548,8 @@ class CopcReader:
     want to use the :meth:`.CopcReader.open` constructor
 
 
+    .. versionadded:: 2.2
+
     .. _COPC: https://github.com/copcio/copcio.github.io
     """
 
@@ -556,6 +559,7 @@ class CopcReader:
         close_fd: bool = True,
         http_num_threads: int = DEFAULT_HTTP_WORKERS_NUM,
         _http_strategy: str = "queue",
+        decompression_selection: DecompressionSelection = DecompressionSelection.all(),
     ):
         """
         Creates a CopcReader.
@@ -571,11 +575,17 @@ class CopcReader:
             Number of worker threads to do concurent HTTP requests,
             ignored when reading non-HTTP file
 
-
         close_fd: optional, default bool
             Whether the stream/file object shall be closed, this only work
             when using the CopcReader in a with statement.
 
+        decompression_selection: DecompressionSelection,
+            see :func:`laspy.open`
+
+
+
+        .. versionadded:: 2.4
+            The ``decompression_selection`` parameter.
         """
         if lazrs is None:
             raise LazError("COPC support requires the 'lazrs' backend")
@@ -583,6 +593,9 @@ class CopcReader:
         self.close_fd = close_fd
         self.http_num_threads = http_num_threads
         self.http_strategy = _http_strategy
+        self.decompression_selection: lazrs.DecompressionSelection = (
+            decompression_selection.to_lazrs()
+        )
 
         self.header = LasHeader.read_from(self.source)
 
@@ -630,6 +643,7 @@ class CopcReader:
         uri: str,
         http_num_threads: int = DEFAULT_HTTP_WORKERS_NUM,
         _http_strategy: str = "queue",
+        decompression_selection: DecompressionSelection = DecompressionSelection.all(),
     ) -> "CopcReader":
         """
         Opens the COPC file.
@@ -647,6 +661,9 @@ class CopcReader:
         http_num_threads: int, optional, default num cpu * 5
             Number of worker threads to do concurent HTTP requests,
             ignored when reading non-HTTP file
+
+        decompression_selection: DecompressionSelection,
+            see :func:`laspy.open`
 
 
         Opening a local file
@@ -669,6 +686,10 @@ class CopcReader:
             with CopcReader.open(url) as reader:
                 ...
 
+
+
+        .. versionadded:: 2.4
+            The ``decompression_selection`` parameter.
         """
         uri = str(uri)
         if uri.startswith("http"):
@@ -676,7 +697,11 @@ class CopcReader:
         else:
             source = open(uri, mode="rb")
 
-        return cls(source, http_num_threads=http_num_threads)
+        return cls(
+            source,
+            http_num_threads=http_num_threads,
+            decompression_selection=decompression_selection,
+        )
 
     def query(
         self,
@@ -796,8 +821,13 @@ class CopcReader:
             num_points * self.header.point_format.size, dtype=np.uint8
         )
 
+        print(self.decompression_selection)
         lazrs.decompress_points_with_chunk_table(
-            compressed_bytes, self.laszip_vlr.record_data, points_array, chunk_table
+            compressed_bytes,
+            self.laszip_vlr.record_data,
+            points_array,
+            chunk_table,
+            self.decompression_selection,
         )
         r = PackedPointRecord.from_buffer(points_array, self.header.point_format)
         points = ScaleAwarePointRecord(

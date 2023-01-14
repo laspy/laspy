@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import Union, Optional
 
-from .compression import LazBackend
+from .compression import LazBackend, DecompressionSelection
 from .errors import LaspyException
 from .header import LasHeader, Version
 from .lasappender import LasAppender
@@ -31,6 +31,7 @@ def open_las(
     do_compress=None,
     encoding_errors: str = "strict",
     read_evlrs: bool = True,
+    decompression_selection: DecompressionSelection = DecompressionSelection.all(),
 ) -> Union[LasReader, LasWriter, LasAppender]:
     """The laspy.open opens a LAS/LAZ file in one of the 3 supported
     mode:
@@ -112,6 +113,18 @@ def open_las(
 
             Does nothing if the input file does not support
             EVLRs
+
+    decompression_selection: DecompressionSelection, default All
+        Only applies to 'r' mode and for files which suport selective decompression
+        (version >= 1.4 and point format id >= 6), ignored otherwise.
+
+        Allows to select which fields should be decompressed or not, allowing to save time
+        by not decompressing unused fields.
+
+        By default all fields are decompressed
+
+    .. versionadded:: 2.4
+        The ``read_evlrs`` and ``decompression_selection`` parameters.
     """
     if mode == "r":
         if header is not None:
@@ -131,7 +144,11 @@ def open_las(
         else:
             stream = source
         return LasReader(
-            stream, closefd=closefd, laz_backend=laz_backend, read_evlrs=read_evlrs
+            stream,
+            closefd=closefd,
+            laz_backend=laz_backend,
+            read_evlrs=read_evlrs,
+            decompression_selection=decompression_selection,
         )
     elif mode == "w":
         if header is None:
@@ -173,7 +190,12 @@ def open_las(
         raise ValueError(f"Unknown mode '{mode}'")
 
 
-def read_las(source, closefd=True, laz_backend=LazBackend.detect_available()):
+def read_las(
+    source,
+    closefd=True,
+    laz_backend=LazBackend.detect_available(),
+    decompression_selection: DecompressionSelection = DecompressionSelection.all(),
+):
     """Entry point for reading las data in laspy
 
     Reads the whole file into memory.
@@ -195,13 +217,25 @@ def read_las(source, closefd=True, laz_backend=LazBackend.detect_available()):
             if True and the source is a stream, the function will close it
             after it is done reading
 
+    decompression_selection: DecompressionSelection,
+        see :func:`laspy.open`
+
 
     Returns
     -------
     laspy.LasData
         The object you can interact with to get access to the LAS points & VLRs
+
+
+    .. versionadded:: 2.4
+        The ``decompression_selection`` parameter.
     """
-    with open_las(source, closefd=closefd, laz_backend=laz_backend) as reader:
+    with open_las(
+        source,
+        closefd=closefd,
+        laz_backend=laz_backend,
+        decompression_selection=decompression_selection,
+    ) as reader:
         return reader.read()
 
 
