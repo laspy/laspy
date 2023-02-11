@@ -1,5 +1,23 @@
 # Changelog
 
+## Version 2.4.0 (11/02/2022)
+
+## Added
+- `read_evlrs` option (default true) to `laspy.open`, `laspy.LasReader.__init__` and `laspy.LasHeader.read_from`
+  Which allows to skip reading the EVLRs when opening a file. This can be useful when
+  opening a LAS file from a non seekable source / where seeking is expensive as reading
+  EVLRs requires seeking to the end of the file.
+- Selective decompression feature that allows to select in a LAS 1.4 (fmt >= 6 && <= 10)
+  which fields should be decompressed allowing to save time by decompressing only the fields
+  that are needed. Works with LAZ and COPC files.
+
+## Changed
+- The internal point reader is lazily created when the first point is actually read
+
+## Fixed
+- LasAppender when input file's last chunk is complete
+- Handle redundant CSs in GeoKeyDirectoryVlr
+
 ## Version 2.3.0 (25/10/2022)
 
 ### Changed
