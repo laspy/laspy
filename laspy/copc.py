@@ -821,7 +821,6 @@ class CopcReader:
             num_points * self.header.point_format.size, dtype=np.uint8
         )
 
-        print(self.decompression_selection)
         lazrs.decompress_points_with_chunk_table(
             compressed_bytes,
             self.laszip_vlr.record_data,

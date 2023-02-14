@@ -255,7 +255,6 @@ class DecompressionSelection(enum.IntFlag):
         for variant in DecompressionSelection:
             lazrs_selection |= variant_mapping[variant] if self.is_set(variant) else 0
 
-        print(lazrs_selection)
         return lazrs.DecompressionSelection(lazrs_selection)
 
     def to_laszip(self) -> int:
