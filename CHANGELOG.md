@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 2.4.1 (20/02/2022)
+
+### Fixed
+- Removed spurious `print` in copc.py and compression.py
+
 ## Version 2.4.0 (11/02/2022)
 
 ## Added
