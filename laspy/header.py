@@ -10,7 +10,7 @@ from uuid import UUID
 import numpy as np
 
 from . import extradims
-from .compression import (
+from ._compression.format import (
     compressed_id_to_uncompressed,
     is_point_format_compressed,
     uncompressed_id_to_compressed,

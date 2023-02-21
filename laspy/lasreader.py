@@ -1,25 +1,16 @@
-import abc
 import io
 import logging
-from typing import Optional, BinaryIO, Iterable, Union, List, Tuple
+from typing import Optional, BinaryIO, Iterable, Union
 
 from . import errors
-from .compression import LazBackend, DecompressionSelection
+from ._compression.backend import LazBackend
+from ._compression.lazrsbackend import LazrsPointReader
+from ._pointreader import IPointReader
+from .compression import DecompressionSelection
 from .header import LasHeader
 from .lasdata import LasData
 from .point import record
-from .vlrs.known import LasZipVlr
 from .vlrs.vlrlist import VLRList
-
-try:
-    import lazrs
-except ModuleNotFoundError:
-    pass
-
-try:
-    import laszip
-except ModuleNotFoundError:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +247,7 @@ class LasReader:
             else:
                 self._source.close()
 
-    def _create_laz_backend(self, source) -> Optional["IPointReader"]:
+    def _create_laz_backend(self, source) -> IPointReader:
         """Creates the laz backend to use according to `self.laz_backend`.
 
         If `self.laz_backend` contains mutilple backends, this functions will
@@ -274,45 +265,27 @@ class LasReader:
         except TypeError:
             backends = (self.laz_backend,)
 
-        laszip_vlr = self.header.vlrs.pop(self.header.vlrs.index("LasZipVlr"))
-        last_error = None
+        last_error: Optional[Exception] = None
         for backend in backends:
             try:
                 if not backend.is_available():
                     raise errors.LaspyException(f"The '{backend}' is not available")
 
-                if backend == LazBackend.LazrsParallel:
-                    return LazrsPointReader(
-                        source,
-                        laszip_vlr,
-                        parallel=True,
-                        decompression_selection=self.decompression_selection,
-                    )
-                elif backend == LazBackend.Lazrs:
-                    return LazrsPointReader(
-                        source,
-                        laszip_vlr,
-                        parallel=False,
-                        decompression_selection=self.decompression_selection,
-                    )
-                elif backend == LazBackend.Laszip:
-                    return LaszipPointReader(
-                        source,
-                        self.header,
-                        decompression_selection=self.decompression_selection,
-                    )
-                else:
-                    raise errors.LaspyException(
-                        "Unknown LazBackend: {}".format(backend)
-                    )
-
+                reader: IPointReader = backend.create_reader(
+                    source,
+                    self.header,
+                    decompression_selection=self.decompression_selection,
+                )
             except Exception as e:
                 last_error = e
                 logger.error(e)
+            else:
+                self.header.vlrs.pop(self.header.vlrs.index("LasZipVlr"))
+                return reader
 
         raise last_error
 
-    def _create_point_source(self, source) -> "IPointReader":
+    def _create_point_source(self, source) -> IPointReader:
         if self.header.point_count > 0:
             if self.header.are_points_compressed:
                 point_source = self._create_laz_backend(source)
@@ -348,32 +321,6 @@ class PointChunkIterator:
         return self
 
 
-class IPointReader(abc.ABC):
-    """The interface to be implemented by the class that actually reads
-    points from as LAS/LAZ file so that the LasReader can use it.
-
-    It is used to manipulate LAS/LAZ (with different LAZ backends) in the
-    reader
-    """
-
-    @property
-    @abc.abstractmethod
-    def source(self):
-        ...
-
-    @abc.abstractmethod
-    def read_n_points(self, n: int) -> bytearray:
-        ...
-
-    @abc.abstractmethod
-    def seek(self, point_index: int) -> None:
-        ...
-
-    @abc.abstractmethod
-    def close(self) -> None:
-        ...
-
-
 class UncompressedPointReader(IPointReader):
     """Implementation of IPointReader for the simple uncompressed case"""
 
@@ -406,96 +353,6 @@ class UncompressedPointReader(IPointReader):
 
     def close(self):
         self.source.close()
-
-
-class LaszipPointReader(IPointReader):
-    """Implementation for the laszip backend"""
-
-    def __init__(
-        self,
-        source: BinaryIO,
-        header: LasHeader,
-        decompression_selection: DecompressionSelection,
-    ) -> None:
-        self._source = source
-        self._source.seek(0)
-        selection = decompression_selection.to_laszip()
-        self.unzipper = laszip.LasUnZipper(source, selection)
-        unzipper_header = self.unzipper.header
-        assert unzipper_header.point_data_format == header.point_format.id
-        assert unzipper_header.point_data_record_length == header.point_format.size
-        self.point_size = header.point_format.size
-
-    @property
-    def source(self):
-        return self._source
-
-    def read_n_points(self, n: int) -> bytearray:
-        points_data = bytearray(n * self.point_size)
-        self.unzipper.decompress_into(points_data)
-        return points_data
-
-    def seek(self, point_index: int) -> None:
-        self.unzipper.seek(point_index)
-
-    def close(self) -> None:
-        self.source.close()
-
-
-class LazrsPointReader(IPointReader):
-    """Implementation for the laz-rs backend, supports single-threaded decompression
-    as well as multi-threaded decompression
-    """
-
-    def __init__(
-        self,
-        source,
-        laszip_vlr: LasZipVlr,
-        parallel: bool,
-        decompression_selection: DecompressionSelection,
-    ) -> None:
-        self._source = source
-        self.vlr = lazrs.LazVlr(laszip_vlr.record_data)
-        selection = decompression_selection.to_lazrs()
-        if parallel:
-            self.decompressor = lazrs.ParLasZipDecompressor(
-                source, laszip_vlr.record_data, selection
-            )
-        else:
-            self.decompressor = lazrs.LasZipDecompressor(
-                source, laszip_vlr.record_data, selection
-            )
-
-    @property
-    def source(self):
-        return self._source
-
-    def read_n_points(self, n: int) -> bytearray:
-        point_bytes = bytearray(n * self.vlr.item_size())
-        self.decompressor.decompress_many(point_bytes)
-        return point_bytes
-
-    def seek(self, point_index: int) -> None:
-        self.decompressor.seek(point_index)
-
-    def close(self) -> None:
-        self.source.close()
-
-    def read_chunk_table_only(self) -> List[Tuple[int, int]]:
-        """
-        This function requires the source to be at the start of the chunk table
-        """
-        assert isinstance(self.decompressor, lazrs.LasZipDecompressor)
-        return self.decompressor.read_chunk_table_only()
-
-    def read_raw_bytes(self, n: int) -> bytes:
-        """
-        reads and returns exactly `n` bytes from the source used by
-        this point reader.
-        """
-        b = bytearray(n)
-        self.decompressor.read_raw_bytes_into(b)
-        return bytes(b)
 
 
 class EmptyPointReader(IPointReader):

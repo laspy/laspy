@@ -1,21 +1,12 @@
 import io
-import math
-from typing import Union, Iterable, BinaryIO, Optional, cast
+from typing import Union, Iterable, BinaryIO, Optional
 
-import numpy as np
-
+from ._pointappender import IPointAppender
 from .compression import LazBackend
 from .errors import LaspyException
 from .header import LasHeader
-from .laswriter import UncompressedPointWriter
 from .point.record import PackedPointRecord
-from .vlrs.known import LasZipVlr
 from .vlrs.vlrlist import VLRList
-
-try:
-    import lazrs
-except ModuleNotFoundError:
-    pass
 
 
 class LasAppender:
@@ -36,23 +27,21 @@ class LasAppender:
         header = LasHeader.read_from(dest)
         if laz_backend is None:
             laz_backend = [
-                bck
-                for bck in LazBackend.detect_available()
-                if bck is not LazBackend.Laszip
+                bck for bck in LazBackend.detect_available() if bck.supports_append
             ]
 
         self.dest = dest
         self.header = header
 
         if not header.are_points_compressed:
-            self.points_writer = UncompressedPointWriter(self.dest)
+            self.points_appender = UncompressedPointAppender(self.dest)
             self.dest.seek(
                 (self.header.point_count * self.header.point_format.size)
                 + self.header.offset_to_point_data,
                 io.SEEK_SET,
             )
         else:
-            self.points_writer = self._create_laz_backend(laz_backend)
+            self.points_appender = self._create_laz_backend(laz_backend)
 
         if header.version.minor >= 4 and header.number_of_evlrs > 0:
             assert (
@@ -81,11 +70,11 @@ class LasAppender:
         if points.point_format != self.header.point_format:
             raise LaspyException("Point formats do not match")
 
-        self.points_writer.write_points(points)
+        self.points_appender.append_points(points)
         self.header.grow(points)
 
     def close(self) -> None:
-        self.points_writer.done()
+        self.points_appender.done()
         self._write_evlrs()
         self._write_updated_header()
 
@@ -116,27 +105,18 @@ class LasAppender:
             LazBackend.LazrsParallel,
             LazBackend.Lazrs,
         ),
-    ) -> "LazrsAppender":
+    ) -> IPointAppender:
         try:
             laz_backend = iter(laz_backend)
         except TypeError:
             laz_backend = (laz_backend,)
 
-        last_error = None
+        last_error: Optional[Exception] = None
         for backend in laz_backend:
-            if backend == LazBackend.Laszip:
-                raise LaspyException("Laszip backend does not support appending")
-            elif backend == LazBackend.LazrsParallel:
-                try:
-                    return LazrsAppender(self.dest, self.header, parallel=True)
-                except Exception as e:
-                    last_error = e
-            elif backend == LazBackend.Lazrs:
-                try:
-                    return LazrsAppender(self.dest, self.header, parallel=False)
-                except Exception as e:
-                    last_error = e
-
+            try:
+                return backend.create_appender(self.dest, self.header)
+            except Exception as e:
+                last_error = e
         if last_error is not None:
             raise LaspyException(f"Could not initialize a laz backend: {last_error}")
         else:
@@ -149,109 +129,16 @@ class LasAppender:
         self.close()
 
 
-class LazrsAppender:
-    """Appending in LAZ file
-    works by seeking to start of the last chunk
-    of compressed points, decompress it while keeping the points in
-    memory.
-
-    Then seek back to the start of the last chunk, and recompress
-    the points we just read, so that we have a compressor in the proper state
-    ready to compress new points.
+class UncompressedPointAppender(IPointAppender):
+    """
+    Appending points in the simple uncompressed case.
     """
 
-    def __init__(self, dest: BinaryIO, header: LasHeader, parallel: bool) -> None:
+    def __init__(self, dest: BinaryIO) -> None:
         self.dest = dest
-        self.offset_to_point_data = header.offset_to_point_data
-        laszip_vlr = cast(LasZipVlr, header.vlrs.get("LasZipVlr")[0])
 
-        self.dest.seek(header.offset_to_point_data, io.SEEK_SET)
-        decompressor = lazrs.LasZipDecompressor(self.dest, laszip_vlr.record_data)
-        vlr = decompressor.vlr()
-        number_of_complete_chunk = int(
-            math.floor(header.point_count / vlr.chunk_size())
-        )
-
-        if vlr.uses_variable_size_chunks():
-            # TODO: this is probably implementable but until its really needed,
-            #       or i'm bored, there is no point.
-            raise LaspyException(
-                "LazrsAppender does not support LAZ files with variable size chunks"
-            )
-
-        self.dest.seek(header.offset_to_point_data, io.SEEK_SET)
-        chunk_table = [
-            byte_count
-            for (point_count, byte_count) in lazrs.read_chunk_table(self.dest, vlr)
-        ]
-        if chunk_table is None:
-            # The file does not have a chunk table
-            # we cannot seek to the last chunk, so instead, we will
-            # decompress points (which is slower) and build the chunk table
-            # to write it later
-
-            self.chunk_table = []
-            start_of_chunk = self.dest.tell()
-            point_buf = bytearray(vlr.chunk_size() * vlr.item_size())
-
-            for _ in range(number_of_complete_chunk):
-                decompressor.decompress_many(point_buf)
-                pos = self.dest.tell()
-                self.chunk_table.append(pos - start_of_chunk)
-                start_of_chunk = pos
-        else:
-            self.chunk_table = chunk_table[:number_of_complete_chunk]
-            idx_first_point_of_last_chunk = number_of_complete_chunk * vlr.chunk_size()
-            decompressor.seek(idx_first_point_of_last_chunk)
-        assert (
-            len(self.chunk_table) == len(chunk_table)
-            or len(self.chunk_table) == len(chunk_table) - 1
-        )
-        num_points_in_last_chunk = header.point_count - (
-            number_of_complete_chunk * vlr.chunk_size()
-        )
-
-        points_of_last_chunk = bytearray(num_points_in_last_chunk * vlr.item_size())
-        decompressor.decompress_many(points_of_last_chunk)
-
-        self.dest.seek(header.offset_to_point_data, io.SEEK_SET)
-        if parallel:
-            self.compressor = lazrs.ParLasZipCompressor(self.dest, vlr)
-        else:
-            self.compressor = lazrs.LasZipCompressor(self.dest, vlr)
-        # This effectively overwrites the old offset value.
-        # But, more importantly, it makes the compressor aware of where to
-        # write the offset value when its done.
-        self.compressor.reserve_offset_to_chunk_table()
-        assert self.dest.tell() == header.offset_to_point_data + 8
-        self.dest.seek(sum(self.chunk_table), io.SEEK_CUR)
-        self.compressor.compress_many(points_of_last_chunk)
-        self.vlr = vlr
-
-    def write_points(self, points: PackedPointRecord) -> None:
-        points_bytes = np.frombuffer(points.array, np.uint8)
-        self.compressor.compress_many(points_bytes)
+    def append_points(self, points: PackedPointRecord) -> None:
+        self.dest.write(points.memoryview())
 
     def done(self) -> None:
-        # The chunk table written is at the good position
-        # but it is incomplete (it's missing the chunk_table of
-        # chunks before the one we appended)
-        self.compressor.done()
-
-        # Read the chunk table corresponding to our appended chunks
-        self.dest.seek(self.offset_to_point_data, io.SEEK_SET)
-        appended_chunk_table = [
-            byte_count
-            for (point_count, byte_count) in lazrs.read_chunk_table(self.dest, self.vlr)
-        ]
-        chunk_table = self.chunk_table + appended_chunk_table
-
-        # Rewrite the fully complete chunk table.
-        self.dest.seek(self.offset_to_point_data, io.SEEK_SET)
-        offset_to_chunk_table = int.from_bytes(self.dest.read(8), "little", signed=True)
-        self.dest.seek(offset_to_chunk_table, io.SEEK_SET)
-        lazrs.write_chunk_table(
-            self.dest,
-            [(self.vlr.chunk_size(), byte_count) for byte_count in chunk_table],
-            self.vlr,
-        )
+        pass
