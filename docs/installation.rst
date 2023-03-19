@@ -37,7 +37,7 @@ A conda build of laspy is available and maintained (but not by laspy)
 
 .. code-block:: shell
 
-    conda install -c conda-forge lazrs
+    conda install -c conda-forge lazrs-python
 
 
 However, ``laszip`` [#f1]_ is not available via conda.
