@@ -120,7 +120,7 @@ DIMENSIONS_TO_TYPE: Dict[str, np.dtype] = {
     "wavepacket_index": np.dtype("u1"),
     "wavepacket_offset": np.dtype("u8"),
     "wavepacket_size": np.dtype("u4"),
-    "return_point_wave_location": np.dtype("u4"),
+    "return_point_wave_location": np.dtype("f4"),
     "x_t": np.dtype("f4"),
     "y_t": np.dtype("f4"),
     "z_t": np.dtype("f4"),
