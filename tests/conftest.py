@@ -89,6 +89,9 @@ class NonSeekableStream:
     def seekable(self):
         return False
 
+    def close(self):
+        pass
+
 
 @pytest.fixture()
 def simple_las_path():

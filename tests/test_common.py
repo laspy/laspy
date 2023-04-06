@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import io
 
 import laspy
 from laspy.lib import write_then_read_again
@@ -400,3 +401,25 @@ def test_setting_xyz_on_las_data():
     assert np.all(new_las.Y == las.Y)
     assert np.all(new_las.z == las.z)
     assert np.all(new_las.Z == las.Z)
+
+
+def test_input_is_properly_closed_if_opening_fails():
+    data = io.BytesIO()
+    assert data.closed is False
+
+    # This failed because file is empty
+    # so its the LasReader.__init__ that fails to read the header
+    # We should still close the input in that case
+    with pytest.raises(laspy.errors.LaspyException):
+        _ = laspy.read(data)
+
+    assert data.closed is True
+
+    # Same but with closefd = False, meaning we should not close
+    data = io.BytesIO()
+    assert data.closed is False
+
+    with pytest.raises(laspy.errors.LaspyException):
+        _ = laspy.read(data, closefd=False)
+
+    assert data.closed is False

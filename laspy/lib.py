@@ -143,13 +143,18 @@ def open_las(
             stream = io.BytesIO(source)
         else:
             stream = source
-        return LasReader(
-            stream,
-            closefd=closefd,
-            laz_backend=laz_backend,
-            read_evlrs=read_evlrs,
-            decompression_selection=decompression_selection,
-        )
+        try:
+            return LasReader(
+                stream,
+                closefd=closefd,
+                laz_backend=laz_backend,
+                read_evlrs=read_evlrs,
+                decompression_selection=decompression_selection,
+            )
+        except:
+            if closefd:
+                stream.close()
+            raise
     elif mode == "w":
         if header is None:
             raise ValueError("A header is needed when opening a file for writing")
@@ -164,14 +169,19 @@ def open_las(
             assert source.seekable()
             stream = source
 
-        return LasWriter(
-            stream,
-            header=header,
-            do_compress=do_compress,
-            laz_backend=laz_backend,
-            closefd=closefd,
-            encoding_errors=encoding_errors,
-        )
+        try:
+            return LasWriter(
+                stream,
+                header=header,
+                do_compress=do_compress,
+                laz_backend=laz_backend,
+                closefd=closefd,
+                encoding_errors=encoding_errors,
+            )
+        except:
+            if closefd:
+                stream.close()
+            raise
     elif mode == "a":
         if isinstance(source, (str, Path)):
             stream = open(source, mode="rb+", closefd=closefd)
@@ -179,13 +189,18 @@ def open_las(
             stream = io.BytesIO(source)
         else:
             stream = source
-        return LasAppender(
-            stream,
-            closefd=closefd,
-            laz_backend=laz_backend,
-            encoding_errors=encoding_errors,
-        )
 
+        try:
+            return LasAppender(
+                stream,
+                closefd=closefd,
+                laz_backend=laz_backend,
+                encoding_errors=encoding_errors,
+            )
+        except:
+            if closefd:
+                stream.close()
+            raise
     else:
         raise ValueError(f"Unknown mode '{mode}'")
 
