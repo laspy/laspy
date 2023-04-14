@@ -5,6 +5,7 @@ from .selection import DecompressionSelection
 from .._pointappender import IPointAppender
 from .._pointreader import IPointReader
 from .._pointwriter import IPointWriter
+from ..header import LasHeader
 
 
 class ILazBackend(ABC):
@@ -18,14 +19,14 @@ class ILazBackend(ABC):
         ...
 
     @abstractmethod
-    def create_appender(self, dest: BinaryIO, header: "LasHeader") -> IPointAppender:
+    def create_appender(self, dest: BinaryIO, header: LasHeader) -> IPointAppender:
         ...
 
     @abstractmethod
     def create_reader(
         self,
         source: Any,
-        header: "LasHeader",
+        header: LasHeader,
         decompression_selection: Optional[DecompressionSelection] = None,
     ) -> IPointReader:
         ...
@@ -34,6 +35,6 @@ class ILazBackend(ABC):
     def create_writer(
         self,
         dest: Any,
-        header: "LasHeader",
+        header: LasHeader,
     ) -> IPointWriter:
         ...
