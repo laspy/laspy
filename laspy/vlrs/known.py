@@ -516,9 +516,15 @@ class GeoKeyDirectoryVlr(BaseKnownVLR):
         projected_cs = None
         for key in self.geo_keys:
             if key.id == ProjectedCSTypeGeoKey.id:
-                projected_cs = pyproj.CRS.from_epsg(key.value_offset)
+                if 1024 <= key.value_offset <= 32766:
+                    # http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_requirements_class_projectedcrsgeokey
+                    # "ProjectedCRSGeoKey values in the range 1024-32766 SHALL be EPSG Projected CRS Codes"
+                    projected_cs = pyproj.CRS.from_epsg(key.value_offset)
             elif key.id == GeographicTypeGeoKey.id:
-                geographic_cs = pyproj.CRS.from_epsg(key.value_offset)
+                # http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_requirements_class_geodeticcrsgeokey
+                # GeodeticCRSGeoKey values in the range 1024-32766 SHALL be EPSG geographic 2D or geocentric CRS codes
+                if 1024 <= key.value_offset <= 32766:
+                    geographic_cs = pyproj.CRS.from_epsg(key.value_offset)
 
         # Projected Coordinate Systems take precedence since,
         # if they are present, the Geographic CS is probably

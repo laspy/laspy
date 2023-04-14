@@ -810,6 +810,9 @@ class LasHeader:
         """
         Method to parse OGC WKT or GeoTiff VLR keys into a pyproj CRS object
 
+        Returns None if no CRS VLR is present, or if the CRS specified
+        in the VLRS is not understood.
+
         .. warning::
             This requires `pyproj`.
         """
