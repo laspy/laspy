@@ -1,11 +1,12 @@
+import io
 from pathlib import Path
 
 import numpy as np
 import pytest
-import io
 
 import laspy
 from laspy.lib import write_then_read_again
+
 from . import conftest
 
 simple_las = conftest.SIMPLE_LAS_FILE_PATH

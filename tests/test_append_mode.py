@@ -1,14 +1,14 @@
 import io
 import os
+from pathlib import Path
+from typing import List, Tuple
 
 import pytest
 
 import laspy
-from tests.test_common import simple_laz
-from typing import List, Tuple
+from laspy import LasData, LasHeader, ScaleAwarePointRecord
 from tests.conftest import NonSeekableStream
-from laspy import LasHeader, ScaleAwarePointRecord, LasData
-from pathlib import Path
+from tests.test_common import simple_laz
 
 
 def test_append(file_path):

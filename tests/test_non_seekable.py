@@ -1,15 +1,16 @@
 import pytest
+
 import laspy
-from .conftest import (
-    laz_file_path,
-    las_file_path,
-    LAZ_1_4_WITH_EVLRS_FILE_PATH,
-    LAS_1_4_WITH_EVLRS_FILE_PATH,
-    NonSeekableStream,
-)
-from .test_chunk_read_write import check_chunked_reading_gives_expected_points
 from laspy import VLR
 
+from .conftest import (
+    LAS_1_4_WITH_EVLRS_FILE_PATH,
+    LAZ_1_4_WITH_EVLRS_FILE_PATH,
+    NonSeekableStream,
+    las_file_path,
+    laz_file_path,
+)
+from .test_chunk_read_write import check_chunked_reading_gives_expected_points
 
 EXPECTED_EVLRS = [
     VLR(

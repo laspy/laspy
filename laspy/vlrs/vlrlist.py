@@ -3,9 +3,9 @@ from typing import BinaryIO, List
 
 import numpy as np
 
-from .known import vlr_factory, IKnownVLR
-from .vlr import VLR
 from ..utils import read_string, write_as_c_string
+from .known import IKnownVLR, vlr_factory
+from .vlr import VLR
 
 logger = logging.getLogger(__name__)
 

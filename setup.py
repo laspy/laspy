@@ -34,6 +34,7 @@ setup(
             "pytest-benchmark",
             "m2r2",
             "rangehttpserver",
+            "isort==5.11.5",
         ],
         "lazrs": ["lazrs>=0.5.0, < 0.6.0"],
         "laszip": ["laszip >= 0.2.1, < 0.3.0"],

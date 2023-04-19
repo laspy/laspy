@@ -8,9 +8,9 @@ import pytest
 import laspy
 from laspy.lib import write_then_read_again
 from tests.conftest import (
-    UNREGISTERED_EXTRA_BYTES_LAS,
     EXTRA_BYTES_LAS_FILE_PATH,
     SIMPLE_LAS_FILE_PATH,
+    UNREGISTERED_EXTRA_BYTES_LAS,
 )
 
 

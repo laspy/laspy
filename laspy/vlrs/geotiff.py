@@ -2,14 +2,14 @@ import logging
 import warnings
 from collections import namedtuple
 from copy import copy
-from typing import Tuple, Optional, List
+from typing import List, Optional, Tuple
 
 from . import vlrlist
 from .known import (
     GeoAsciiParamsVlr,
+    GeoDoubleParamsVlr,
     GeoKeyDirectoryVlr,
     GeoKeyEntryStruct,
-    GeoDoubleParamsVlr,
 )
 
 try:

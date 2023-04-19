@@ -1,8 +1,8 @@
+import os
 from pathlib import Path
 
 import numpy as np
 import pytest
-import os
 
 import laspy
 from laspy import LazBackend

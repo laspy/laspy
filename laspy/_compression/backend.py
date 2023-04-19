@@ -1,14 +1,14 @@
 import enum
 from abc import ABCMeta
-from typing import Tuple, BinaryIO, Any, Optional
+from typing import Any, BinaryIO, Optional, Tuple
 
+from .._pointappender import IPointAppender
+from .._pointreader import IPointReader
+from .._pointwriter import IPointWriter
 from .laszipbackend import LaszipBackend
 from .lazbackend import ILazBackend
 from .lazrsbackend import LazrsBackend
 from .selection import DecompressionSelection
-from .._pointappender import IPointAppender
-from .._pointreader import IPointReader
-from .._pointwriter import IPointWriter
 
 _DEFAULT_BACKENDS: Tuple[ILazBackend, ...] = (
     LazrsBackend(parallel=True),

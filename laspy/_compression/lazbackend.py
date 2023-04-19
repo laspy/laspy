@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import BinaryIO, Any, Optional
+from typing import Any, BinaryIO, Optional
 
-from .selection import DecompressionSelection
 from .._pointappender import IPointAppender
 from .._pointreader import IPointReader
 from .._pointwriter import IPointWriter
 from ..header import LasHeader
+from .selection import DecompressionSelection
 
 
 class ILazBackend(ABC):

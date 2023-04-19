@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import laspy
-from laspy.point.dims import SubFieldView, ScaledArrayView
+from laspy.point.dims import ScaledArrayView, SubFieldView
 
 
 def test_sub_field_view_behaves_like_array():

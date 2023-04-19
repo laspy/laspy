@@ -5,14 +5,14 @@ in the context of Las point data
 """
 import logging
 from copy import deepcopy
+from enum import Enum, auto
+from typing import Optional
 
 import numpy as np
-from enum import Enum, auto
 
-from . import dims
-from .dims import ScaledArrayView, OLD_LASPY_NAMES
 from ..point import PointFormat
-from typing import Optional
+from . import dims
+from .dims import OLD_LASPY_NAMES, ScaledArrayView
 
 logger = logging.getLogger(__name__)
 

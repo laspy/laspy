@@ -8,25 +8,25 @@ import operator
 from collections import UserDict
 from enum import Enum
 from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Mapping,
     NamedTuple,
     Optional,
-    Dict,
-    Tuple,
     Set,
-    Iterable,
-    Mapping,
-    TypeVar,
-    Generic,
-    List,
-    Union,
-    Any,
+    Tuple,
     Type,
+    TypeVar,
+    Union,
 )
 
 import numpy as np
 
-from . import packing
 from .. import errors
+from . import packing
 
 ValueType = TypeVar("ValueType")
 

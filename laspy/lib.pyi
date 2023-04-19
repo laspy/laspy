@@ -1,7 +1,7 @@
-from typing import Union, BinaryIO, Iterable, Optional, overload, Literal
+from typing import BinaryIO, Iterable, Literal, Optional, Union, overload
 
 from . import LasWriter, PointFormat
-from .compression import LazBackend, DecompressionSelection
+from .compression import DecompressionSelection, LazBackend
 from .header import LasHeader
 from .lasappender import LasAppender
 from .lasdata import LasData

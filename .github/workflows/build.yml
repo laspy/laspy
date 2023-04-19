@@ -56,20 +56,23 @@ jobs:
 
 
 
-  formatting:
+  linting:
     runs-on: ubuntu-latest
 
     steps:
       - name: Clone
         uses: actions/checkout@v2
 
-      - name: Install black
+      - name: Install black & isort
         run: |
           python3 -m pip install setuptools
-          python3 -m pip install black==22.3.0
+          python3 -m pip install black==22.3.0 isort==5.11.5
 
       - name: Run black check
         run: python3 -m black --check .
+
+      - name: Run isort check
+        run: python3 -m isort --check laspy tests
 
   coverage:
     runs-on: ubuntu-latest

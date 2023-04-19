@@ -1,11 +1,9 @@
 import io
 import math
-from typing import BinaryIO, cast, Any, List, Tuple, Optional, Union
+from typing import Any, BinaryIO, List, Optional, Tuple, Union, cast
 
 import numpy as np
 
-from .lazbackend import ILazBackend
-from .selection import DecompressionSelection
 from .._pointappender import IPointAppender
 from .._pointreader import IPointReader
 from .._pointwriter import IPointWriter
@@ -14,6 +12,8 @@ from ..header import LasHeader
 from ..point.format import PointFormat
 from ..point.record import PackedPointRecord
 from ..vlrs.known import LasZipVlr
+from .lazbackend import ILazBackend
+from .selection import DecompressionSelection
 
 try:
     import lazrs

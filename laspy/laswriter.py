@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import BinaryIO, Optional, Union, Iterable
+from typing import BinaryIO, Iterable, Optional, Union
 
 from ._pointwriter import IPointWriter
 from .compression import LazBackend

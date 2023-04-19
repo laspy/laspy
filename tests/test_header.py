@@ -1,8 +1,8 @@
 import io
 from datetime import date
 
-import pytest
 import numpy as np
+import pytest
 
 import laspy
 from laspy import LasHeader

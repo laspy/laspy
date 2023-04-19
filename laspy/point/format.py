@@ -1,10 +1,10 @@
-from itertools import zip_longest, takewhile
-from typing import Optional, Iterable, Union, Type, List
+from itertools import takewhile, zip_longest
+from typing import Iterable, List, Optional, Type, Union
 
 import numpy as np
 
-from . import dims
 from ..errors import LaspyException
+from . import dims
 
 Number = Union[np.number, float, int]
 

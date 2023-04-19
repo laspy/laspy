@@ -1,2 +1,2 @@
-from .dims import DimensionKind, DimensionInfo
-from .format import PointFormat, ExtraBytesParams
+from .dims import DimensionInfo, DimensionKind
+from .format import ExtraBytesParams, PointFormat

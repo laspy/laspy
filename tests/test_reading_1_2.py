@@ -5,10 +5,7 @@ import numpy as np
 import pytest
 
 import laspy
-from tests.test_common import (
-    simple_las,
-    simple_laz,
-)
+from tests.test_common import simple_las, simple_laz
 
 
 @pytest.fixture(

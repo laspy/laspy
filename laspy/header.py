@@ -4,12 +4,12 @@ import logging
 import struct
 import typing
 from datetime import date, timedelta
-from typing import NamedTuple, BinaryIO, Optional, List, Union, Iterable
+from typing import BinaryIO, Iterable, List, NamedTuple, Optional, Union
 from uuid import UUID
 
 import numpy as np
 
-from . import extradims
+from . import __version__, extradims
 from ._compression.format import (
     compressed_id_to_uncompressed,
     is_point_format_compressed,
@@ -17,7 +17,7 @@ from ._compression.format import (
 )
 from .errors import LaspyException
 from .point import dims
-from .point.format import PointFormat, ExtraBytesParams
+from .point.format import ExtraBytesParams, PointFormat
 from .point.record import PackedPointRecord
 from .utils import read_string, write_string
 from .vlrs import VLR
@@ -25,12 +25,11 @@ from .vlrs.geotiff import create_geotiff_projection_vlrs
 from .vlrs.known import (
     ExtraBytesStruct,
     ExtraBytesVlr,
-    WktCoordinateSystemVlr,
-    GeoKeyDirectoryVlr,
     GeoAsciiParamsVlr,
+    GeoKeyDirectoryVlr,
+    WktCoordinateSystemVlr,
 )
 from .vlrs.vlrlist import VLRList
-from . import __version__
 
 logger = logging.getLogger(__name__)
 

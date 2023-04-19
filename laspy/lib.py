@@ -6,9 +6,9 @@ import io
 import logging
 import os
 from pathlib import Path
-from typing import Union, Optional
+from typing import Optional, Union
 
-from .compression import LazBackend, DecompressionSelection
+from .compression import DecompressionSelection, LazBackend
 from .errors import LaspyException
 from .header import LasHeader, Version
 from .lasappender import LasAppender
@@ -16,7 +16,7 @@ from .lasdata import LasData
 from .lasmmap import LasMMAP
 from .lasreader import LasReader
 from .laswriter import LasWriter
-from .point import dims, record, PointFormat
+from .point import PointFormat, dims, record
 from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)

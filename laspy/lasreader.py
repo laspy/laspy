@@ -1,6 +1,6 @@
 import io
 import logging
-from typing import Optional, BinaryIO, Iterable, Union
+from typing import BinaryIO, Iterable, Optional, Union
 
 from . import errors
 from ._compression.backend import LazBackend

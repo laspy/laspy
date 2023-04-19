@@ -7,17 +7,15 @@ import abc
 import ctypes
 import logging
 import struct
-from typing import List, Optional, Any, Tuple, Dict, TypeVar, Type
 from copy import copy
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
 import numpy as np
 
-from .vlr import BaseVLR, VLR
-from ..extradims import (
-    get_dtype_for_extra_dim,
-)
+from ..extradims import get_dtype_for_extra_dim
 from ..point.format import ExtraBytesParams
 from ..utils import encode_to_null_terminated
+from .vlr import VLR, BaseVLR
 
 abstractmethod = abc.abstractmethod
 
@@ -510,7 +508,7 @@ class GeoKeyDirectoryVlr(BaseKnownVLR):
 
         # TODO import is done here to avoid cyclic import,
         # this should probably be fixed
-        from .geotiff import ProjectedCSTypeGeoKey, GeographicTypeGeoKey
+        from .geotiff import GeographicTypeGeoKey, ProjectedCSTypeGeoKey
 
         geographic_cs = None
         projected_cs = None

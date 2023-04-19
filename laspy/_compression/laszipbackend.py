@@ -1,16 +1,16 @@
 import io
-from typing import BinaryIO, Any, Optional
+from typing import Any, BinaryIO, Optional
 
 import numpy as np
 
-from .lazbackend import ILazBackend
-from .selection import DecompressionSelection
 from .._pointappender import IPointAppender
 from .._pointreader import IPointReader
 from .._pointwriter import IPointWriter
 from ..errors import LaspyException
 from ..header import LasHeader
 from ..point.record import PackedPointRecord
+from .lazbackend import ILazBackend
+from .selection import DecompressionSelection
 
 try:
     import laszip

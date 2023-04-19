@@ -1,5 +1,5 @@
 import io
-from typing import Union, Iterable, BinaryIO, Optional
+from typing import BinaryIO, Iterable, Optional, Union
 
 from ._pointappender import IPointAppender
 from .compression import LazBackend

@@ -2,12 +2,12 @@ import io
 import multiprocessing
 import struct
 from concurrent.futures import ThreadPoolExecutor
-from math import ceil, log2
 from dataclasses import dataclass
+from math import ceil, log2
 from operator import attrgetter
 from queue import Queue, SimpleQueue
 from threading import Thread
-from typing import List, Union, Dict, Optional, Tuple, Iterator
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 
 try:
     import requests
@@ -25,11 +25,11 @@ except ModuleNotFoundError:
 
 import numpy as np
 
+from .compression import DecompressionSelection
 from .errors import LaspyException, LazError
 from .header import LasHeader
 from .point.record import PackedPointRecord, ScaleAwarePointRecord
 from .vlrs.known import BaseKnownVLR
-from .compression import DecompressionSelection
 
 DEFAULT_HTTP_WORKERS_NUM = multiprocessing.cpu_count() * 5
 

@@ -1,11 +1,12 @@
 import io
 import subprocess
+import sys
+from pathlib import Path
+
+import numpy as np
+import pytest
 
 import laspy
-import pytest
-from pathlib import Path
-import sys
-import numpy as np
 
 SIMPLE_COPC_FILE = Path(__file__).parent / "data" / "simple.copc.laz"
 
