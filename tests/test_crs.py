@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+from pathlib import Path
 from typing import Dict
 
 import pytest
@@ -29,6 +30,12 @@ def file_geotiff():
 @pytest.fixture()
 def file_geotiff_geo_proj():
     return laspy.read(autzen_geo_proj_las)
+
+
+@pytest.fixture()
+def file_with_both_wkt_and_geotiff_vlrs():
+    path = Path(__file__).parent / "data" / "file_with_both_wkt_and_geotiff_vlrs.las"
+    return laspy.read(path)
 
 
 def has_pyproj() -> bool:
@@ -175,3 +182,20 @@ def test_pdal_understands_our_geotiff_geographic_cs():
 def test_pdal_understands_our_geotiff_projected_cs():
     crs = pyproj.CRS.from_epsg(6432)
     geotiff_crs_pdal_test(crs)
+
+
+@pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
+def test_preference_option(file_with_both_wkt_and_geotiff_vlrs):
+    header = file_with_both_wkt_and_geotiff_vlrs.header
+
+    expected_wkt_crs = """PROJCS["NAD83_2011_Nebraska_ft",GEOGCS["GCS_NAD_1983_2011",DATUM["D_NAD83_NATIONAL_SPATIAL_REFERENCE_SYSTEM_2011",SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",0.017453292519943295]],PROJECTION["Lambert_Conformal_Conic"],PARAMETER["scale_factor",1],PARAMETER["standard_parallel_1",40],PARAMETER["standard_parallel_2",43],PARAMETER["central_meridian",-100],PARAMETER["latitude_of_origin",39.83333333333334],PARAMETER["false_easting",1640416.666666667],PARAMETER["false_northing",0],UNIT["Foot_US",0.30480060960121924]]"""
+    expected_geotiff_crs = "epsg:32104"
+
+    crs = header.parse_crs()
+    assert str(crs) == expected_wkt_crs
+
+    crs = header.parse_crs(prefer_wkt=True)
+    assert str(crs) == expected_wkt_crs
+
+    crs = header.parse_crs(prefer_wkt=False)
+    assert str(crs).lower() == expected_geotiff_crs

@@ -1,6 +1,7 @@
-from laspy import CopcReader, Bounds
 import time
+
 import laspy
+from laspy import Bounds, CopcReader
 
 
 def create_query(header):

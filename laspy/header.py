@@ -805,15 +805,25 @@ class LasHeader:
         stream.write(vlr_bytes)
         stream.write(self.extra_vlr_bytes)
 
-    def parse_crs(self) -> Optional["pyproj.CRS"]:
+    def parse_crs(self, prefer_wkt=True) -> Optional["pyproj.CRS"]:
         """
         Method to parse OGC WKT or GeoTiff VLR keys into a pyproj CRS object
 
         Returns None if no CRS VLR is present, or if the CRS specified
         in the VLRS is not understood.
 
+
+        Parameters
+        ----------
+        prefer_wkt: Optional, default True,
+            If True the WKT VLR will be preferred in case
+            both the WKT and Geotiff VLR are present
+
         .. warning::
             This requires `pyproj`.
+
+        .. versionadded:: 2.5
+            The ``prefer_wkt`` parameters.
         """
 
         geo_vlr = self._vlrs.get_by_id("LASF_Projection")
@@ -821,13 +831,26 @@ class LasHeader:
         if self.evlrs is not None:
             geo_vlr.extend(self.evlrs.get_by_id("LASF_Projection"))
 
+        parsed_crs = {}
         for rec in geo_vlr:
             if isinstance(rec, (WktCoordinateSystemVlr, GeoKeyDirectoryVlr)):
                 crs = rec.parse_crs()
                 if crs is not None:
-                    return crs
+                    parsed_crs[type(rec)] = crs
 
-        return None
+        # Could not parse anything / there was nothing to parse
+        if not parsed_crs:
+            return None
+
+        if prefer_wkt:
+            preferred, other = WktCoordinateSystemVlr, GeoKeyDirectoryVlr
+        else:
+            preferred, other = GeoKeyDirectoryVlr, WktCoordinateSystemVlr
+
+        try:
+            return parsed_crs[preferred]
+        except KeyError:
+            return parsed_crs[other]
 
     def read_evlrs(self, stream):
         """
