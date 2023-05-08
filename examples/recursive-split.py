@@ -1,8 +1,7 @@
 import argparse
 import sys
 from pathlib import Path
-from typing import List
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 
