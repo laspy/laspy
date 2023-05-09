@@ -309,6 +309,7 @@ class CopcHierarchyVlr(BaseKnownVLR):
     """
 
     def __init__(self) -> None:
+        super().__init__()
         self.data: bytes = b""
         self.root_page = HierarchyPage()
 
