@@ -62,7 +62,7 @@ def test_querying_copc_local_file():
 
 @pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()")
 def test_querying_copc_local_file_with_page():
-    path = SIMPLE_COPC_FILE.with_stem("simple_with_page.copc")
+    path = SIMPLE_COPC_FILE.with_name("simple_with_page.copc.laz")
     point_count = laspy.read(path).header.point_count
     with laspy.CopcReader.open(path) as copc_reader:
         points = copc_reader.query()
