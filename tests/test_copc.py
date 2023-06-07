@@ -60,6 +60,15 @@ def test_querying_copc_local_file():
         assert len(points) == 24
 
 
+@pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()")
+def test_querying_copc_local_file_with_page():
+    path = SIMPLE_COPC_FILE.with_stem("simple_with_page.copc")
+    point_count = laspy.read(path).header.point_count
+    with laspy.CopcReader.open(path) as copc_reader:
+        points = copc_reader.query()
+        assert point_count == 1065 == len(points)
+
+
 @pytest.mark.skipif("laspy.LazBackend.Lazrs.is_available()")
 def test_querying_copc_local_file_proper_error_if_no_lazrs():
     with pytest.raises(laspy.errors.LazError):
