@@ -278,7 +278,7 @@ class Entry:
         return entry
 
     def __repr__(self) -> str:
-        return f"Entry(key={self.key}, offset={self.offset}, byte_size={self.byte_size}, point_count={self.point_count}"
+        return f"Entry(key={self.key}, offset={self.offset}, byte_size={self.byte_size}, point_count={self.point_count})"
 
 
 class HierarchyPage:
