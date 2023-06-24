@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("README.md") as f:
     readme = f.read()
@@ -40,6 +40,10 @@ setup(
         "laszip": ["laszip >= 0.2.1, < 0.3.0"],
         "pyproj": ["pyproj"],
         "requests": ["requests"],
+        "cli": ["typer[all] >= 0.8.0 "],
+    },
+    entry_points={
+        "console_scripts": ["laspy=laspy.cli.main:main"],
     },
     include_package_data=True,
     zip_safe=False,
