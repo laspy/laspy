@@ -160,9 +160,11 @@ def info(
         with laspy.open(file_path) as reader:
             if header:
                 print_header(reader.header)
-                rich.print(50 * "-")
 
             if vlrs:
+                if header:
+                    rich.print(50 * "-")
+
                 table = Table(title=f"VLRs", show_header=True, box=None)
                 table.add_column("User ID")
                 table.add_column("Record ID")
@@ -174,11 +176,11 @@ def info(
 
                 if table.rows:
                     console.print(table)
-                rich.print(50 * "-")
 
             if points:
+                if vlrs:
+                    rich.print(50 * "-")
                 print_points_stats(reader)
-                rich.print(50 * "-")
 
             if evlrs and reader.header.evlrs is not None:
                 table = Table(title=f"EVLRs", show_header=True, box=None)
