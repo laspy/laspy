@@ -4,7 +4,7 @@ try:
     from typer.testing import CliRunner
 
     runner = CliRunner()
-    from laspy.cli.main import app
+    from laspy.cli.core import app
 
     HAS_CLI = True
 except ModuleNotFoundError:
