@@ -217,7 +217,7 @@ class LasHeader:
         #: Initialized to 'laspy'
         self.generating_software: Union[str, bytes] = DEFAULT_GENERATING_SOFTWARE
         self._point_format: PointFormat = point_format
-        #: Day the file was created, initialized to date.today()
+        #: Day the file was created, initialized to date.today
         self.creation_date: Optional[date] = date.today()
         #: The number of points in the file
         self.point_count: int = 0
@@ -466,8 +466,6 @@ class LasHeader:
         self.point_format = point_format
 
     def partial_reset(self) -> None:
-        self.creation_date = date.today()
-
         f64info = np.finfo(np.float64)
         self.maxs = np.ones(3, dtype=np.float64) * f64info.min
         self.mins = np.ones(3, dtype=np.float64) * f64info.max

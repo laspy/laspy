@@ -1,3 +1,4 @@
+import copy
 import io
 from datetime import date
 
@@ -52,8 +53,6 @@ def test_nb_points_return_1_4():
 
 
 def test_header_copy():
-    import copy
-
     las = laspy.read(test_common.simple_las)
     header_copy = copy.copy(las.header)
 
@@ -248,6 +247,60 @@ def test_header_update_setting_points_on_new_las():
         new_las.header.number_of_points_by_return
         == las.header.number_of_points_by_return
     )
+
+
+def test_writing_does_not_reset_customly_set_data():
+    """If the user does set a data in a LasHeader,
+    the writer should not change it to date.today
+    """
+
+    DATE = date(year=1990, month=11, day=21)
+
+    las = laspy.read(test_common.simple_las)
+    assert las.header.creation_date != DATE
+
+    new_header = laspy.LasHeader(
+        version=las.header.version, point_format=las.header.point_format
+    )
+
+    assert new_header.creation_date == date.today()
+    new_header.creation_date = DATE
+    assert new_header.creation_date == DATE
+
+    new_las = laspy.LasData(header=new_header, points=las.points)
+    read_new_las = write_then_read_again(new_las)
+    assert read_new_las.header.date == DATE
+    assert new_las.header.date == DATE
+
+
+def test_not_setting_date_in_new_header_resets_to_date_today():
+    las = laspy.read(test_common.simple_las)
+
+    new_header = laspy.LasHeader(
+        version=las.header.version, point_format=las.header.point_format
+    )
+    assert new_header.creation_date == date.today()
+
+    new_las = laspy.LasData(header=new_header, points=las.points)
+    read_new_las = write_then_read_again(new_las)
+    assert read_new_las.header.date == date.today()
+    assert new_header.creation_date == date.today()
+
+
+def test_writing_when_creation_date_is_None():
+    las = laspy.read(test_common.simple_las)
+
+    new_header = laspy.LasHeader(
+        version=las.header.version, point_format=las.header.point_format
+    )
+    assert new_header.creation_date == date.today()
+    new_header.creation_date = None
+    assert new_header.creation_date is None
+
+    new_las = laspy.LasData(header=new_header, points=las.points)
+    read_new_las = write_then_read_again(new_las)
+    assert read_new_las.header.creation_date == date.today()
+    assert new_header.creation_date is None
 
 
 def test_header_min_max_chunk_mode():
