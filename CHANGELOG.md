@@ -1,5 +1,30 @@
 # Changelog
 
+## Unreleased
+
+## Added
+- Added optional CLI. It can be installed using the `cli` extra
+(`pip install laspy[cli]`). It has `info`, `compress`, `decompress`, `convert`
+and `copc query` commands.
+- Added a `prefer_wkt` option to `LasHeader.parse_crs`
+(true by default) to prefer (or not) WKT VLR over Geotiff VLR
+in case both are present in the file.
+
+## Fixed
+- laspy.open will now properly close the opened file
+if an exception is raised.
+- Wavepackets's `return_point_wave_location` is now
+properly returned as as float32 and not an uint32.
+- `parse_crs` properly checks that ProjectedCRSGeoKey/GeodeticCRSGeoKey
+is in range of EPSG code before using pyproj to parse it.
+- Missing `super.__init__()` in `CopcHierarchyVlr`.
+- Copc no longer include the hierarchy page twice
+- A LasHeader with a custom `creation_date`/`date` will
+no longer be reset to `date.today` upon writing.
+
+---
+
+
 ## Version 2.4.1 (20/02/2022)
 
 ### Fixed
