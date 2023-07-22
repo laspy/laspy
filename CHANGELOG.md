@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## Version 2.5.0 (23/07/2023)
 
 ## Added
 - Added optional CLI. It can be installed using the `cli` extra
