@@ -353,11 +353,17 @@ backend_to_cli_name: Dict[laspy.LazBackend, str] = {
     laspy.LazBackend.Lazrs: "lazrs",
     laspy.LazBackend.Laszip: "laszip",
 }
+# Create and use a different enum for LAZ backend management in the CLI
+# as typer only supports enum where variants value are str,
+# Changing the laspy.LazBackend would be technically breaking.
+#
+# Having an Enum(str) allows to have --laz-backend=lazrs or laz-backend=laszip
+# and not --laz-backend=1 --laz-backend=0 as command line arguments
 CliLazBackend = Enum(
     "CliLazBackend",
     {
         str(variant).split(".")[-1]: backend_to_cli_name[variant]
-        for variant in laspy.LazBackend.detect_available()
+        for variant in laspy.LazBackend
     },
 )
 cli_name_to_backend: Dict[CliLazBackend, Optional[laspy.LazBackend]] = {

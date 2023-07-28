@@ -78,4 +78,8 @@ def test_info_non_existant_file():
         == """Error:
 [Errno 2] No such file or directory: 'tests/data/this_does_not_exist.las'
 """
+        or result.output  # Windows paths...
+        == """Error:
+[Errno 2] No such file or directory: 'tests\\\\data\\\\this_does_not_exist.las'
+"""
     )

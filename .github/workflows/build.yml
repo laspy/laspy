@@ -33,16 +33,16 @@ jobs:
 
     - name: Install With LAZ backend
       if: matrix.laz-backend != 'None'
-      run: pip install .[${{ matrix.laz-backend }},dev]
+      run: pip install .[${{ matrix.laz-backend }},dev,pyproj,cliS]
 
     - name: Install Without LAZ backend
       if: matrix.laz-backend == 'None'
-      run: pip install .[dev]
+      run: pip install .[dev,pyproj,cli]
 
     # Install dependencies which are optional
     # so that the tests corresponding to them runs.
     - name: Install Optional depencencies
-      run: pip install pyproj requests rangehttpserver
+      run: pip install requests rangehttpserver
 
     # Some crs tests require pdal
     # and its easier to install it on ubuntu
