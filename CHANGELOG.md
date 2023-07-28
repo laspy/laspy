@@ -1,8 +1,13 @@
 # Changelog
 
+## Version 2.5.1 (28/07/2023)
+
+### Fixed
+- Fixed bug in laz backend handling in the CLI
+
 ## Version 2.5.0 (23/07/2023)
 
-## Added
+### Added
 - Added optional CLI. It can be installed using the `cli` extra
 (`pip install laspy[cli]`). It has `info`, `compress`, `decompress`, `convert`
 and `copc query` commands.
@@ -10,7 +15,7 @@ and `copc query` commands.
 (true by default) to prefer (or not) WKT VLR over Geotiff VLR
 in case both are present in the file.
 
-## Fixed
+### Fixed
 - laspy.open will now properly close the opened file
 if an exception is raised.
 - Wavepackets's `return_point_wave_location` is now
