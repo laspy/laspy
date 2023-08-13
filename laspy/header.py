@@ -522,6 +522,12 @@ class LasHeader:
     def set_compressed(self, state: bool) -> None:
         self.are_points_compressed = state
 
+    def max_point_count(self) -> int:
+        if self.version <= Version(1, 3):
+            return np.iinfo(np.uint32).max
+        else:
+            return np.iinfo(np.uint64).max
+
     @classmethod
     def read_from(
         cls, original_stream: BinaryIO, read_evlrs: bool = False
@@ -685,6 +691,12 @@ class LasHeader:
         it originally had (meaning the file could become broken),
         Used when rewriting a header to update the file (new point count, mins, maxs, etc)
         """
+        if self.point_count > self.max_point_count():
+            raise LaspyException(
+                f"Version {self.version} cannot save clouds with more than"
+                f" {self.max_point_count()} points (current: {self.point_count})"
+            )
+
         little_endian = "little"
         with io.BytesIO() as tmp:
             self._vlrs.write_to(tmp, encoding_errors=encoding_errors)
@@ -758,12 +770,6 @@ class LasHeader:
             for i in range(5):
                 stream.write(int(0).to_bytes(4, little_endian, signed=False))
         else:
-            if self.point_count > np.iinfo(np.uint32).max:
-                raise LaspyException(
-                    f"Version {self.version} cannot save clouds with more than"
-                    f" {np.iinfo(np.uint32).max} points"
-                )
-
             stream.write(self.point_count.to_bytes(4, little_endian, signed=False))
             for i in range(5):
                 stream.write(

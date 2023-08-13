@@ -122,6 +122,14 @@ class LasWriter:
         if points.point_format != self.header.point_format:
             raise LaspyException("Incompatible point formats")
 
+        if self.header.max_point_count() - self.header.point_count < len(points):
+            raise LaspyException(
+                "Cannot write {} points as it would exceed the maximum number of points the file"
+                "can store. Current point count: {}, max point count: {}".format(
+                    len(points), self.header.point_count, self.header.max_point_count()
+                )
+            )
+
         self.header.grow(points)
         self.point_writer.write_points(points)
 

@@ -70,6 +70,14 @@ class LasAppender:
         if points.point_format != self.header.point_format:
             raise LaspyException("Point formats do not match")
 
+        if self.header.max_point_count() - self.header.point_count < len(points):
+            raise LaspyException(
+                "Cannot write {} points as it would exceed the maximum number of points the file"
+                "can store. Current point count: {}, max point count: {}".format(
+                    len(points), self.header.point_count, self.header.max_point_count()
+                )
+            )
+
         self.points_appender.append_points(points)
         self.header.grow(points)
 
