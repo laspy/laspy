@@ -1,5 +1,6 @@
 import io
 import multiprocessing
+import os
 import struct
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -642,7 +643,7 @@ class CopcReader:
     @classmethod
     def open(
         cls,
-        uri: str,
+        source: Union[str, os.PathLike, io.IOBase],
         http_num_threads: int = DEFAULT_HTTP_WORKERS_NUM,
         _http_strategy: str = "queue",
         decompression_selection: DecompressionSelection = DecompressionSelection.all(),
@@ -653,12 +654,13 @@ class CopcReader:
 
         Parameters
         ----------
-        uri: str, uri of the COPC file.
-            Supported uri are:
+        source: str, io.IOBase, uri or file-like object of the COPC file.
+            Supported sources are:
 
                 - 'local' files accesible with a path.
                 - HTTP / HTTPS endpoints. The pyhon package ``requests`` is
                   required in order to be able to work with HTTP endpoints.
+                - file-like objects, e.g. fsspec io.IOBase objects.
 
         http_num_threads: int, optional, default num cpu * 5
             Number of worker threads to do concurent HTTP requests,
@@ -693,11 +695,12 @@ class CopcReader:
         .. versionadded:: 2.4
             The ``decompression_selection`` parameter.
         """
-        uri = str(uri)
-        if uri.startswith("http"):
-            source = HttpRangeStream(uri)
-        else:
-            source = open(uri, mode="rb")
+        if isinstance(source, (str, os.PathLike)):
+            source = str(source)
+            if source.startswith("http"):
+                source = HttpRangeStream(source)
+            else:
+                source = open(source, mode="rb")
 
         return cls(
             source,

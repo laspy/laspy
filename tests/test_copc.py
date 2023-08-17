@@ -76,6 +76,34 @@ def test_querying_copc_local_file_proper_error_if_no_lazrs():
             pass
 
 
+@pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()")
+def test_querying_copc_local_file_object():
+    with open(SIMPLE_COPC_FILE, "rb") as fh:
+        with laspy.CopcReader.open(fh) as copc_reader:
+            assert copc_reader.header.version == "1.4"
+            assert copc_reader.header.point_format == laspy.PointFormat(7)
+            points = copc_reader.query(resolution=50)
+            assert len(points) == 24
+
+
+@pytest.mark.skipif("not laspy.LazBackend.Lazrs.is_available()")
+def test_querying_copc_local_file_object_with_page():
+    path = SIMPLE_COPC_FILE.with_name("simple_with_page.copc.laz")
+    point_count = laspy.read(path).header.point_count
+    with open(path, "rb") as fh:
+        with laspy.CopcReader.open(fh) as copc_reader:
+            points = copc_reader.query()
+            assert point_count == 1065 == len(points)
+
+
+@pytest.mark.skipif("laspy.LazBackend.Lazrs.is_available()")
+def test_querying_copc_local_file_object_proper_error_if_no_lazrs():
+    with pytest.raises(laspy.errors.LazError):
+        with open(SIMPLE_COPC_FILE, "rb") as fh:
+            with laspy.CopcReader.open(fh) as _:
+                pass
+
+
 @pytest.mark.skipif(
     not (
         laspy.LazBackend.Lazrs.is_available()
