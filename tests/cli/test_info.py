@@ -1,20 +1,16 @@
 import pytest
 
-try:
-    from typer.testing import CliRunner
+from . import skip_if_cli_deps_are_not_installed
 
-    runner = CliRunner()
-    from laspy.cli.core import app
+skip_if_cli_deps_are_not_installed()
 
-    HAS_CLI = True
-except ModuleNotFoundError:
-    HAS_CLI = False
+from typer.testing import CliRunner
+
+from laspy.cli.core import app
+
+runner = CliRunner()
 
 
-@pytest.mark.skipif(
-    not HAS_CLI,
-    reason="Dependencies for CLI are not installed",
-)
 def test_header_info():
     result = runner.invoke(app, ["info", "--header", "tests/data/simple.las"])
     assert result.exit_code == 0
@@ -42,10 +38,6 @@ def test_header_info():
     assert output == expected
 
 
-@pytest.mark.skipif(
-    not HAS_CLI,
-    reason="Dependencies for CLI are not installed",
-)
 def test_vlr_info():
     result = runner.invoke(app, ["info", "--vlrs", "tests/data/simple.las"])
     assert result.exit_code == 0
@@ -64,10 +56,6 @@ def test_vlr_info():
     assert result.stdout == expected
 
 
-@pytest.mark.skipif(
-    not HAS_CLI,
-    reason="Dependencies for CLI are not installed",
-)
 def test_info_non_existant_file():
     result = runner.invoke(
         app, ["info", "--header", "tests/data/this_does_not_exist.las"]

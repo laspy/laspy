@@ -1,9 +1,25 @@
 import copy
+import enum
 import sys
+import typing
+from collections import deque
 from contextlib import ExitStack
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import numpy as np
 import rich
@@ -270,7 +286,7 @@ def _list_input_and_ouput_files(
         output_files = [
             input_path.with_suffix(output_ext) for input_path in input_files
         ]
-    return (input_files, output_files)
+    return input_files, output_files
 
 
 def _copy_files(
@@ -510,7 +526,7 @@ def convert(
     ),
     output_path: Path = typer.Argument(
         ...,
-        help="Directory where converted file will be written, or filename of the converted file",
+        help="Directory where converted file will be written, or filename of the converted file(s)",
     ),
     point_format_id: Optional[int] = typer.Option(
         None,
@@ -566,6 +582,668 @@ def convert(
                     output_path,
                     point_format_id,
                     version,
+                    laz_backend,
+                    iter_chunk_size,
+                    file_progress,
+                    task,
+                )
+            except Exception as e:
+                file_progress.update(
+                    task,
+                    description=f"[bold red]{input_path.name}",
+                )
+                file_progress.console.print(
+                    f"[bold red]{input_path} -> Failed with error: '{e}'"
+                )
+                num_fails += 1
+
+        if num_fails == len(input_paths):
+            overall_progress.update(overall_task, description=f"[red] Failed all tasks")
+        elif num_fails == 0:
+            overall_progress.update(
+                overall_task,
+                description=f"[green]Completed {len(input_paths)} with success",
+            )
+        else:
+            overall_progress.update(
+                overall_task,
+                description=f"[dark_orange]Completed {len(input_paths) - num_fails} with success, {num_fails} failed",
+            )
+
+
+def parse_float_or_int(string: str) -> Union[float, int]:
+    """
+    Parses an string as either an int or float.
+    """
+    value = None
+    try:
+        value = int(string)
+    except ValueError:
+        pass
+
+    if value is None:
+        try:
+            value = float(string)
+        except ValueError:
+            pass
+
+    if value is None:
+        raise ValueError(f"string '{string}' is neither an int nor a float")
+    return value
+
+
+def parse_list_of_numbers(string: str) -> List[Union[float, int]]:
+    """
+    Parses a string representing a list of number in the form
+    "[1, 2]" or "(1, 2)".
+    """
+    string = string.strip()
+    first_char = string[0]
+    last_char = string[-1]
+
+    if (first_char, last_char) not in (("[", "]"), ("(", ")")):
+        raise ValueError(
+            f"'{string}' does not represent a list (missing '[' and/or ']')"
+        )
+
+    string = string[1:-1]
+    values = []
+    for value_str in string.split(","):
+        values.append(parse_float_or_int(value_str))
+    return values
+
+
+T = TypeVar("T")
+
+
+class PeekIterator(Generic[T]):
+    """
+    Iterator that allows to 'peek' values, that is,
+    get the next value without advancing the iterator
+    """
+
+    def __init__(self, iterable: Iterable[T]):
+        self.iterator = iter(iterable)
+        self.peeked = deque()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> T:
+        if self.peeked:
+            return self.peeked.popleft()
+        return next(self.iterator)
+
+    def peek(self, ahead=0) -> T:
+        while len(self.peeked) <= ahead:
+            self.peeked.append(next(self.iterator))
+        return self.peeked[ahead]
+
+    def peek_safe(self, default, ahead=0) -> T:
+        try:
+            return self.peek()
+        except StopIteration:
+            return default
+
+
+@dataclass
+class Token:
+    """
+    Token for our mini expression filter language
+    """
+
+    class Kind(enum.IntEnum):
+        OpenParen = enum.auto()
+        CloseParen = enum.auto()
+        Bang = enum.auto()  # `!`
+        EqEq = enum.auto()
+        NotEq = enum.auto()
+        Less = enum.auto()
+        LessEq = enum.auto()
+        Greater = enum.auto()
+        GreaterEq = enum.auto()
+        In = enum.auto()
+        AmpAmp = enum.auto()  # `&&`
+        PipePipe = enum.auto()  # `||`
+        And = enum.auto()  # `and` keyword
+        Or = enum.auto()  # `or` keyword
+        Not = enum.auto()  # `not` keyword
+        LiteralStr = enum.auto()
+
+    kind: Kind
+    value: str
+
+    def is_comparator(self) -> bool:
+        return {
+            Token.Kind.OpenParen: False,
+            Token.Kind.CloseParen: False,
+            Token.Kind.Bang: False,
+            Token.Kind.EqEq: True,
+            Token.Kind.NotEq: True,
+            Token.Kind.Less: True,
+            Token.Kind.LessEq: True,
+            Token.Kind.Greater: True,
+            Token.Kind.GreaterEq: True,
+            Token.Kind.In: True,
+            Token.Kind.AmpAmp: True,
+            Token.Kind.PipePipe: True,
+            Token.Kind.And: False,
+            Token.Kind.Or: False,
+            Token.Kind.LiteralStr: False,
+        }[self.kind]
+
+    def is_binary_logical_operator(self) -> bool:
+        return {
+            Token.Kind.OpenParen: False,
+            Token.Kind.CloseParen: False,
+            Token.Kind.Bang: False,
+            Token.Kind.EqEq: False,
+            Token.Kind.NotEq: False,
+            Token.Kind.Less: False,
+            Token.Kind.LessEq: False,
+            Token.Kind.Greater: False,
+            Token.Kind.GreaterEq: False,
+            Token.Kind.In: False,
+            Token.Kind.AmpAmp: True,
+            Token.Kind.PipePipe: True,
+            Token.Kind.And: True,
+            Token.Kind.Or: True,
+            Token.Kind.LiteralStr: False,
+        }[self.kind]
+
+
+class Lexer:
+    """
+    The lexer that transform a string that is a represent a
+    filter expression into a list of tokens
+    """
+
+    _keywords: Dict[str, Token] = {
+        "and": Token(Token.Kind.And, "and"),
+        "or": Token(Token.Kind.Or, "or"),
+        "in": Token(Token.Kind.In, "in"),
+        "not": Token(Token.Kind.Not, "not"),
+    }
+
+    def __init__(self, char_iter: PeekIterator[str]):
+        self.char_iter: PeekIterator[str] = char_iter
+        self.tokens: List[Token] = []
+        self.current_literal: str = ""
+
+    @staticmethod
+    def tokenize_string(string: str) -> List[Token]:
+        lexer = Lexer(PeekIterator(string))
+        return lexer.tokenize()
+
+    def tokenize(self) -> List[Token]:
+        new_token: Optional[Token] = None
+        while (char := next(self.char_iter, None)) is not None:
+            if char == " ":
+                self._flush_current_literal()
+                continue
+
+            if char == "(":
+                new_token = Token(Token.Kind.OpenParen, "(")
+            elif char == ")":
+                new_token = Token(Token.Kind.CloseParen, ")")
+            elif char == "[":
+                # This is a bit of a hack but works for our simplistic
+                # language. It is made to still consider things like "[1,2 ,3]"
+                # as a single literal token.
+                # And not have to have it considered as:
+                # OpenBracket, LiteralInt, Comma, LiteralInt, Comma, LiteralInt, CloseBracket
+                self.current_literal += char
+                while True:
+                    nc = next(self.char_iter, None)
+                    if nc is None:
+                        break
+                    self.current_literal += nc
+                    if nc == "]":
+                        break
+            elif char == "!":
+                nchar = self.char_iter.peek()
+                if nchar == "=":
+                    _ = next(self.char_iter)
+                    new_token = Token(Token.Kind.NotEq, "!=")
+                else:
+                    new_token = Token(Token.Kind.Bang, "!")
+            elif char == "=" and self.char_iter.peek() == "=":
+                _ = next(self.char_iter)
+                new_token = Token(Token.Kind.EqEq, "==")
+            elif char == "&" and self.char_iter.peek() == "&":
+                _ = next(self.char_iter)
+                new_token = Token(Token.Kind.AmpAmp, "&&")
+            elif char == "|" and self.char_iter.peek() == "|":
+                _ = next(self.char_iter)
+                new_token = Token(Token.Kind.PipePipe, "||")
+            elif char == "<":
+                nchar = self.char_iter.peek()
+                if nchar == "=":
+                    _ = next(self.char_iter)
+                    new_token = Token(Token.Kind.LessEq, "<=")
+                else:
+                    new_token = Token(Token.Kind.Less, "<")
+            elif char == ">":
+                nchar = self.char_iter.peek()
+                if nchar == "=":
+                    _ = next(self.char_iter)
+                    new_token = Token(Token.Kind.GreaterEq, ">=")
+                else:
+                    new_token = Token(Token.Kind.Greater, ">")
+            else:
+                self.current_literal += char
+
+            if new_token is not None:
+                self._flush_current_literal()
+                self.tokens.append(new_token)
+                new_token = None
+
+        self._flush_current_literal()
+
+        return self.tokens
+
+    def _flush_current_literal(self) -> None:
+        if not self.current_literal:
+            return
+        current_literal = self.current_literal.strip()
+
+        try:
+            token = self._keywords[current_literal]
+        except KeyError:
+            token = Token(Token.Kind.LiteralStr, current_literal)
+
+        self.current_literal = ""
+        self.tokens.append(token)
+
+
+def tokenize(string: str) -> List[Token]:
+    return Lexer.tokenize_string(string)
+
+
+class Condition(enum.Enum):
+    """
+    Possible conditions to 'merge' results
+    from two filter action
+    """
+
+    And = "and"
+    Or = "or"
+
+
+# enum.StrEnum exists only since 3.11
+class Comparator(enum.Enum):
+    """
+    The different comparators that can be used to filter points
+    depending on field values
+    """
+
+    # Note that order of these is important,
+    # >= and <= must be before < and >
+
+    Equality = "=="
+    Difference = "!="
+    GreaterOrEqual = ">="
+    LessOrEqual = "<="
+    LessThan = "<"
+    GreaterThan = ">"
+    In = "in"
+
+
+@dataclass
+class FilteringAction:
+    """
+    An applicable filtering action.
+
+    It containts the name of the field used in the comparison
+    the comparator to apply and the value(s) to compare with
+    """
+
+    field_name: str
+    comparator: Comparator
+    value: str  # Parsed to a concrete type when actually used
+
+    # Translate some pdal names to laspy names
+    _pdal_name_to_laspy: ClassVar[Dict[str, str]] = {
+        "Classification": "classification",
+        "Intensity": "intensity",
+        "PointSourceId": "point_source_id",
+        "ReturnNumber": "return_number",
+        "NumberOfReturns": "number_of_returns",
+        "ScanDirectionFlag": "scan_direction_flag",
+        "EdgeOfFlightLine": "edge_of_flight_line",
+        "ScanAngleRank": "scan_angle_rank",
+        "UserData": "user_data",
+        "Red": "red",
+        "Green": "green",
+        "Blue": "blue",
+        "GpsTime": "gps_time",
+        "Infrared": "nir",
+        "ClassFlags": "classification_flags",
+    }
+
+    # Translate a comparator token into the corresponding Comparator
+    _comparator_token_to_comparator: ClassVar[Dict[Token.Kind, Comparator]] = {
+        Token.Kind.EqEq: Comparator.Equality,
+        Token.Kind.NotEq: Comparator.Difference,
+        Token.Kind.Less: Comparator.LessThan,
+        Token.Kind.LessEq: Comparator.LessOrEqual,
+        Token.Kind.Greater: Comparator.GreaterThan,
+        Token.Kind.GreaterEq: Comparator.GreaterOrEqual,
+        Token.Kind.In: Comparator.In,
+    }
+
+    @classmethod
+    def parse_string(cls, string: str) -> "FilteringAction":
+        tokens = tokenize(string)
+        return cls.parse_tokens(PeekIterator(tokens))
+
+    @classmethod
+    def parse_tokens(cls, tokens: PeekIterator[Token]) -> "FilteringAction":
+        try:
+            field_name_tok = next(tokens)
+            cmp_tok = next(tokens)
+            value_tok = next(tokens)
+        except StopIteration:
+            raise ValueError(f"'could not be parsed as a filtering action") from None
+
+        if field_name_tok.kind != Token.Kind.LiteralStr:
+            raise ValueError(f"expected field_name found '{field_name_tok.value}'")
+
+        if not cmp_tok.is_comparator():
+            raise ValueError(f"'{cmp_tok.value}' is not a comparator")
+
+        if value_tok.kind != Token.Kind.LiteralStr:
+            raise ValueError(f"expected value found '{value_tok.value}'")
+
+        comparator = cls._comparator_token_to_comparator.get(cmp_tok.kind, None)
+        assert (
+            comparator is not None
+        ), "Internal error: unhandled token to comparator conversion"
+
+        return cls(
+            field_name=field_name_tok.value,
+            comparator=comparator,
+            value=value_tok.value,
+        )
+
+    def apply(self, points: laspy.ScaleAwarePointRecord) -> np.array:
+        """
+        Computes the filtering.
+
+        Returns a numpy array of boolean values.
+        """
+
+        field_name = self._pdal_name_to_laspy.get(self.field_name, self.field_name)
+
+        try:
+            field_values = points[field_name]
+        except ValueError:
+            print(f"No field named '{field_name}' in the file")
+            print(f"Available fields are {list(points.point_format.dimension_names)}")
+            raise typer.Abort()
+
+        comparator_to_processing: Dict[Comparator, Callable[[Any, Any], np.array]] = {
+            Comparator.Equality: np.equal,
+            Comparator.Difference: np.not_equal,
+            Comparator.LessThan: np.less,
+            Comparator.LessOrEqual: np.less_equal,
+            Comparator.GreaterThan: np.greater,
+            Comparator.GreaterOrEqual: np.greater_equal,
+            Comparator.In: np.isin,
+        }
+        comparator_to_parse_func: Dict[Comparator, Callable[[str], Any]] = {
+            Comparator.Equality: parse_float_or_int,
+            Comparator.Difference: parse_float_or_int,
+            Comparator.LessThan: parse_float_or_int,
+            Comparator.LessOrEqual: parse_float_or_int,
+            Comparator.GreaterThan: parse_float_or_int,
+            Comparator.GreaterOrEqual: parse_float_or_int,
+            Comparator.In: parse_list_of_numbers,
+        }
+        try:
+            cmp_func = comparator_to_processing[self.comparator]
+            parse_func = comparator_to_parse_func[self.comparator]
+        except KeyError:
+            raise RuntimeError(
+                f"Internal error: invalid comparator: {self.comparator}"
+            ) from None
+
+        cmp_value = parse_func(self.value)
+        return cmp_func(field_values, cmp_value)
+
+
+# This could have been a UnaryExpression class
+# But the only unary operator we have is `not`
+@dataclass
+class NegatedFilteringExpression:
+    expr: "FilteringExpression"
+
+
+@dataclass
+class BinaryFilteringExpression:
+    condition: Condition
+    lhs: "FilteringExpression"
+    rhs: "FilteringExpression"
+
+
+class FilteringExpressionKind(enum.IntEnum):
+    Action = enum.auto()
+    Negated = enum.auto()
+    Binary = enum.auto()
+
+
+@dataclass
+class FilteringExpression:
+    kind: FilteringExpressionKind
+    data: Union[FilteringAction, NegatedFilteringExpression, BinaryFilteringExpression]
+
+    @classmethod
+    def parse_string(cls, string: str) -> "FilteringExpression":
+        tokens = tokenize(string)
+        tokens = PeekIterator(tokens)
+        return cls.parse_tokens(tokens)
+
+    @classmethod
+    def parse_tokens(cls, tokens: PeekIterator[Token]) -> "FilteringExpression":
+        condition_tok_to_condition: Dict[Token.Kind, Condition] = {
+            Token.Kind.AmpAmp: Condition.And,
+            Token.Kind.PipePipe: Condition.Or,
+            Token.Kind.And: Condition.And,
+            Token.Kind.Or: Condition.Or,
+        }
+
+        tok = tokens.peek()
+
+        if tok.kind == Token.Kind.OpenParen:
+            _ = next(tokens)
+            expr = cls.parse_tokens(tokens)
+            tok = next(tokens)
+            if tok.kind != Token.Kind.CloseParen:
+                raise ValueError("Unmatched Open Paren")
+
+            tok = next(tokens, None)
+            if tok is None:
+                return expr
+
+            if not tok.is_binary_logical_operator():
+                raise ValueError(
+                    f"Failed to parse expresion, expected a logical operator found {tok.value}"
+                )
+
+            condition = condition_tok_to_condition.get(tok.kind, None)
+            assert (
+                condition is not None
+            ), "Internal error: unhandled convertion from token to condition"
+
+            rhs = cls.parse_tokens(tokens)
+            return cls(
+                kind=FilteringExpressionKind.Binary,
+                data=BinaryFilteringExpression(condition, expr, rhs),
+            )
+
+        if tok.kind == Token.Kind.Not or tok.kind == tok.kind.Bang:
+            _ = next(tokens)  # consume the not token
+            expr = cls.parse_tokens(tokens)
+            return cls(
+                kind=FilteringExpressionKind.Negated,
+                data=NegatedFilteringExpression(expr),
+            )
+
+        lhs = FilteringAction.parse_tokens(tokens)
+        tok = tokens.peek_safe(default=None)
+        if tok is None:
+            return cls(kind=FilteringExpressionKind.Action, data=lhs)
+        if tok.kind == Token.Kind.CloseParen:
+            # TODO this feels dirty, needs better grammar definition
+            return cls(kind=FilteringExpressionKind.Action, data=lhs)
+
+        tok = next(tokens)  # now we can consumme the token
+        if not tok.is_binary_logical_operator():
+            raise ValueError(
+                f"Failed to parse expresion, expected a logical operator found {tok.value}"
+            )
+
+        condition = condition_tok_to_condition.get(tok.kind, None)
+        assert (
+            condition is not None
+        ), "Internal error: unhandled convertion from token to condition"
+
+        rhs = cls.parse_tokens(tokens)
+
+        expr = cls(
+            kind=FilteringExpressionKind.Binary,
+            data=BinaryFilteringExpression(
+                condition=condition,
+                lhs=FilteringExpression(kind=FilteringExpressionKind.Action, data=lhs),
+                rhs=rhs,
+            ),
+        )
+        return expr
+
+    def apply(self, points: laspy.ScaleAwarePointRecord) -> np.array:
+        """Recursively applies the expression and returns an array of bool"""
+
+        if self.kind == FilteringExpressionKind.Action:
+            action = typing.cast(FilteringAction, self.data)
+            return action.apply(points)
+        elif self.kind == FilteringExpressionKind.Negated:
+            data = typing.cast(NegatedFilteringExpression, self.data)
+            return np.logical_not(data.expr.apply(points))
+        elif self.kind == FilteringExpressionKind.Binary:
+            data = typing.cast(BinaryFilteringExpression, self.data)
+            lhs_result = data.lhs.apply(points)
+            rhs_result = data.rhs.apply(points)
+            if data.condition == Condition.And:
+                return np.logical_and(lhs_result, rhs_result)
+            elif data.condition == Condition.Or:
+                return np.logical_or(lhs_result, rhs_result)
+            else:
+                raise RuntimeError("Internal error: invalid condition")
+        else:
+            raise RuntimeError(f"Internal error: invalid kind {self.kind}")
+
+
+def _filter_file_at_path(
+    input_path: Path,
+    output_path: Path,
+    filter_expression: FilteringExpression,
+    laz_backend: Optional[CliLazBackend],
+    iter_chunk_size: int,
+    progress: Progress,
+    task: TaskID,
+):
+    with ExitStack() as stack:
+        reader = laspy.open(input_path, laz_backend=cli_name_to_backend[laz_backend])
+        reader = stack.enter_context(reader)
+
+        progress.update(task, total=reader.header.point_count)
+
+        header = copy.deepcopy(reader.header)
+
+        writer = laspy.open(
+            output_path, mode="w", laz_backend=laz_backend, header=header
+        )
+        writer = stack.enter_context(writer)
+
+        for chunk in reader.chunk_iterator(iter_chunk_size):
+            mask = filter_expression.apply(chunk)
+            writer.write_points(chunk[mask])
+            progress.update(task, advance=len(chunk))
+
+
+@app.command()
+def filter(
+    input_path: Path = typer.Argument(
+        ...,
+        help="Path to file or directory of files to filter",
+    ),
+    output_path: Path = typer.Argument(
+        ...,
+        help="Directory where converted file will be written, or filename of the filtered file(s)",
+    ),
+    filter_expression: str = typer.Argument(
+        ..., help="The expresion to use as the filter"
+    ),
+    laz_backend: Optional[CliLazBackend] = typer.Option(
+        None, help="The Laz backend to use."
+    ),
+    iter_chunk_size: int = ITER_CHUNK_SIZE_OPTION,
+):
+    """
+    Filters LAS/LAZ file(s)
+
+    Examples:
+
+
+    laspy filter file.las ground.las "classification == 2"
+
+    ---
+
+    laspy filter file.las filtered.las "classification in [2, 3] and x > 10.0"
+
+    ___
+
+    laspy filter file.las filtered.las "(intensity >= 128 and intensity <= 256) and classification == 2"
+    """
+    try:
+        filter_expression = FilteringExpression.parse_string(filter_expression)
+    except Exception as e:
+        print(str(e))
+        print(f"Failed to parse filter expression")
+        raise typer.Abort()
+
+    laz_backend = cli_name_to_backend[laz_backend] if laz_backend is not None else None
+    input_paths, output_paths = _list_input_and_ouput_files(input_path, output_path)
+
+    if len(input_paths) > len(output_paths):
+        rich.print(f"[bold red]Cannot filter many files into one")
+        raise typer.Exit(code=1)
+
+    if len(input_paths) == 1 and input_paths[0] == output_paths[0]:
+        rich.print("[bold red]Cannot have same file as input and output")
+        raise typer.Exit(code=1)
+
+    overall_progress = Progress(
+        *Progress.get_default_columns(), MofNCompleteColumn(), transient=False
+    )
+    file_progress = Progress(
+        *Progress.get_default_columns(), MofNCompleteColumn(), transient=False
+    )
+    group = Group(file_progress, overall_progress)
+
+    num_fails = 0
+    with Live(group):
+        overall_task = overall_progress.add_task(
+            "Processing files...", total=len(input_paths)
+        )
+
+        for input_path, output_path in zip(input_paths, output_paths):
+            task = file_progress.add_task(f"[cyan]{input_path.name}")
+            try:
+                _filter_file_at_path(
+                    input_path,
+                    output_path,
+                    filter_expression,
                     laz_backend,
                     iter_chunk_size,
                     file_progress,
