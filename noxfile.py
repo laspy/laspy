@@ -14,7 +14,8 @@ def tests(session, laz_backend):
 
 @nox.session
 @nox.parametrize(
-    "optional_dependencies", [None, "laszip", "lazrs", "pyproj", "requests,lazrs"]
+    "optional_dependencies",
+    [None, "laszip", "lazrs", "pyproj", "requests,lazrs", "cli"],
 )
 def coverage(session, optional_dependencies):
     if optional_dependencies is None:
