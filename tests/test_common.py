@@ -19,6 +19,10 @@ plane_laz = conftest.PLANE_LAZ_FILE_PATH
 autzen_las = conftest.AUTZEN_FILE_PATH
 autzen_geo_proj_las = conftest.AUTZEN_GEO_PROJ_FILE_PATH
 
+skip_if_no_laz_backend = pytest.mark.skipif(
+    len(laspy.LazBackend.detect_available()) == 0, reason="No Laz Backend installed"
+)
+
 if not laspy.LazBackend.detect_available():
     do_compression = [False]
     all_file_paths = [simple_las, vegetation1_3_las, test1_4_las, extra_bytes_las]

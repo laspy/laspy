@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 import laspy
-from tests.test_common import simple_las, simple_laz
+from tests.test_common import simple_las, simple_laz, skip_if_no_laz_backend
 
 
 @pytest.fixture(
@@ -178,9 +178,7 @@ def test_blue(read_simple):
     assert f.blue.min() == 56
 
 
-@pytest.mark.skipif(
-    len(laspy.LazBackend.detect_available()) == 0, reason="No Laz Backend installed"
-)
+@skip_if_no_laz_backend
 def test_decompression_is_same_as_uncompressed():
     u_las = laspy.read(simple_las)
     c_las = laspy.read(simple_laz)

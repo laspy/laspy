@@ -352,6 +352,7 @@ def _copy_files(
 
         if num_fails == len(input_files):
             overall_progress.update(overall_task, description=f"[red] Failed all tasks")
+            raise typer.Abort()
         elif num_fails == 0:
             overall_progress.update(
                 overall_task,
