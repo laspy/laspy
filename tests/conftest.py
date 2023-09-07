@@ -141,10 +141,6 @@ def laz_backend(request):
     return request.param
 
 
-def all_las_file_path():
-    return all_las_file_path()
-
-
 @pytest.fixture()
 def mmapped_file_path(tmp_path):
     import shutil
