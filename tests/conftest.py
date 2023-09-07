@@ -127,7 +127,7 @@ def laz_file_path(request):
 
 @pytest.fixture(params=ALL_LAS_FILE_PATH + ALL_LAZ_FILE_PATH, ids=repr)
 def file_path(request):
-    if len(laspy.LazBackend.detect_available()) == 0:
+    if request.param.suffix == ".laz" and len(laspy.LazBackend.detect_available()) == 0:
         return pytest.skip("No Laz Backend")
     return request.param
 
