@@ -402,10 +402,8 @@ class WaveformPacketVlr(BaseKnownVLR):
 
     @classmethod
     def from_raw(cls, raw_vlr):
-        vlr = cls(
-            raw_vlr.header.record_id, description=raw_vlr.header.description.decode()
-        )
-        vlr.description = raw_vlr.header.description
+        vlr = cls(raw_vlr.record_id, description=raw_vlr.description)
+        vlr._description = raw_vlr.description
         vlr.parse_record_data(raw_vlr.record_data)
         return vlr
 
