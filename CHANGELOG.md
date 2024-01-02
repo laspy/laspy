@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 2.5.2 (2/01/2024)
+
+### Fixed
+- When trying to write more points than what is possible, now a 
+  proper error is raised.
+
+### Added
+- `CopcReader.open` now accepts file-like objects.
+- Add `filter` command to CLI
+
 ## Version 2.5.1 (28/07/2023)
 
 ### Fixed
