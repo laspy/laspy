@@ -20,7 +20,7 @@ setup(
     url="https://github.com/laspy/laspy",
     long_description=readme,
     long_description_content_type="text/markdown",
-    packages=find_packages(exclude=("tests",)),
+    packages=find_packages(exclude=("tests", "tests.cli")),
     python_requires=">=3.8",
     install_requires=["numpy"],
     extras_require={
