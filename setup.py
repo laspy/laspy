@@ -40,7 +40,10 @@ setup(
         "laszip": ["laszip >= 0.2.1, < 0.3.0"],
         "pyproj": ["pyproj"],
         "requests": ["requests"],
-        "cli": ["typer[all] >= 0.8.0 "],
+        "cli": [
+            "typer[all] >= 0.8.0 ",
+            "rich >= 10.11.0",
+        ],
     },
     entry_points={
         "console_scripts": ["laspy=laspy.cli.main:main"],
