@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 2.5.3 (4/01/2024)
+
+### Fixed
+- Properly install laspy/cli/core.py file
+- Don't install CLI tests as part of the package (tests/cli/*)
+- Explicitly added 'rich' as a dependency of CLI feature
+
 ## Version 2.5.2 (2/01/2024)
 
 ### Fixed
