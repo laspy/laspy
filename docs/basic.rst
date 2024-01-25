@@ -66,7 +66,7 @@ use its method :meth:`.LasData.write` to write to a file or a stream.
     import laspy
 
     las = laspy.read("some_file.laz")
-    las.points[las.classification == 2]
+    las.points = las.points[las.classification == 2]
     las.write("ground.laz")
 
 Chunked Writing
