@@ -65,7 +65,6 @@ def append_self_and_check(las_path_fixture):
     with open(las_path_fixture, mode="rb") as f:
         file = io.BytesIO(f.read())
     las = laspy.read(las_path_fixture)
-    print(las.vlrs)
     with laspy.open(file, mode="a", closefd=False) as laz_file:
         laz_file.append_points(las.points)
     file.seek(0, io.SEEK_SET)
