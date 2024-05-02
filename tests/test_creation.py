@@ -28,9 +28,9 @@ def test_xyz():
 
     las = write_then_read_again(las)
 
-    assert np.alltrue(las.X == 0)
-    assert np.alltrue(las.Y == 1)
-    assert np.alltrue(las.Z == -152)
+    assert np.all(las.X == 0)
+    assert np.all(las.Y == 1)
+    assert np.all(las.Z == -152)
 
 
 def test_wrong_version():
