@@ -33,7 +33,7 @@ jobs:
 
     - name: Install With LAZ backend
       if: matrix.laz-backend != 'None'
-      run: pip install .[${{ matrix.laz-backend }},dev,pyproj,cliS]
+      run: pip install .[${{ matrix.laz-backend }},dev,pyproj,cli]
 
     - name: Install Without LAZ backend
       if: matrix.laz-backend == 'None'
