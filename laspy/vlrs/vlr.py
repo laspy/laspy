@@ -5,22 +5,18 @@ from typing import Union
 class IVLR(ABC):
     @property
     @abstractmethod
-    def user_id(self) -> str:
-        ...
+    def user_id(self) -> str: ...
 
     @property
     @abstractmethod
-    def record_id(self) -> int:
-        ...
+    def record_id(self) -> int: ...
 
     @property
     @abstractmethod
-    def description(self) -> Union[str, bytes]:
-        ...
+    def description(self) -> Union[str, bytes]: ...
 
     @abstractmethod
-    def record_data_bytes(self) -> bytes:
-        ...
+    def record_data_bytes(self) -> bytes: ...
 
 
 class BaseVLR(IVLR, ABC):

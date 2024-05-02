@@ -3,6 +3,7 @@
 
  A KnownVLR is a VLR for which we know how to parse its record_data
 """
+
 import abc
 import ctypes
 import logging

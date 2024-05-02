@@ -10,17 +10,14 @@ from .selection import DecompressionSelection
 
 class ILazBackend(ABC):
     @abstractmethod
-    def is_available(self) -> bool:
-        ...
+    def is_available(self) -> bool: ...
 
     @property
     @abstractmethod
-    def supports_append(self) -> bool:
-        ...
+    def supports_append(self) -> bool: ...
 
     @abstractmethod
-    def create_appender(self, dest: BinaryIO, header: LasHeader) -> IPointAppender:
-        ...
+    def create_appender(self, dest: BinaryIO, header: LasHeader) -> IPointAppender: ...
 
     @abstractmethod
     def create_reader(
@@ -28,13 +25,11 @@ class ILazBackend(ABC):
         source: Any,
         header: LasHeader,
         decompression_selection: Optional[DecompressionSelection] = None,
-    ) -> IPointReader:
-        ...
+    ) -> IPointReader: ...
 
     @abstractmethod
     def create_writer(
         self,
         dest: Any,
         header: LasHeader,
-    ) -> IPointWriter:
-        ...
+    ) -> IPointWriter: ...

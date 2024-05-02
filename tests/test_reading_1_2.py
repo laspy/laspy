@@ -9,9 +9,11 @@ from tests.test_common import simple_las, simple_laz, skip_if_no_laz_backend
 
 
 @pytest.fixture(
-    params=[simple_las, simple_laz]
-    if laspy.LazBackend.detect_available()
-    else [simple_las],
+    params=(
+        [simple_las, simple_laz]
+        if laspy.LazBackend.detect_available()
+        else [simple_las]
+    ),
     scope="session",
 )
 def read_simple(request):

@@ -145,9 +145,7 @@ def test_rw_all_set_one(las):
     las2 = write_then_read_again(las)
 
     for dim_name in las.point_format.dimension_names:
-        assert np.all(las[dim_name] == las2[dim_name]), "{} not equal".format(
-            dim_name
-        )
+        assert np.all(las[dim_name] == las2[dim_name]), "{} not equal".format(dim_name)
 
 
 def test_coords_do_not_break(las):

@@ -14,16 +14,13 @@ class IPointWriter(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def destination(self) -> BinaryIO:
-        ...
+    def destination(self) -> BinaryIO: ...
 
     @abc.abstractmethod
-    def write_points(self, points: PackedPointRecord) -> None:
-        ...
+    def write_points(self, points: PackedPointRecord) -> None: ...
 
     @abc.abstractmethod
-    def done(self) -> None:
-        ...
+    def done(self) -> None: ...
 
     def write_initial_header_and_vlrs(
         self, header: LasHeader, encoding_errors: str

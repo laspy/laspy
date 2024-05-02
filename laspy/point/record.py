@@ -3,6 +3,7 @@ Las PointRecords are represented using Numpy's structured arrays,
 The PointRecord classes provide a few extra things to manage these arrays
 in the context of Las point data
 """
+
 import logging
 from copy import deepcopy
 from enum import Enum, auto
