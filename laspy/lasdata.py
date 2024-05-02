@@ -231,7 +231,8 @@ class LasData:
         self,
         destination: str,
         laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     @overload
     def write(
@@ -239,7 +240,8 @@ class LasData:
         destination: BinaryIO,
         do_compress: Optional[bool] = ...,
         laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
-    ) -> None: ...
+    ) -> None:
+        ...
 
     def write(self, destination, do_compress=None, laz_backend=None):
         """Writes to a stream or file
@@ -409,12 +411,12 @@ class LasData:
     @typing.overload
     def __getitem__(
         self, item: Union[str, List[str]]
-    ) -> Union[np.ndarray, ScaledArrayView, SubFieldView]: ...
+    ) -> Union[np.ndarray, ScaledArrayView, SubFieldView]:
+        ...
 
     @typing.overload
-    def __getitem__(
-        self, item: Union[int, typing.Iterable[int], slice]
-    ) -> "LasData": ...
+    def __getitem__(self, item: Union[int, typing.Iterable[int], slice]) -> "LasData":
+        ...
 
     def __getitem__(self, item):
         try:
