@@ -1,6 +1,7 @@
 """ 'Entry point' of the library, Contains the various functions meant to be
 used directly by a user
 """
+
 import copy
 import io
 import logging

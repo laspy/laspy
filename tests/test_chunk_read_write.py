@@ -1,6 +1,7 @@
 """
 Tests related to the 'chunked' reading and writing
 """
+
 import io
 import math
 

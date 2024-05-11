@@ -18,19 +18,19 @@ def laz_backend(request):
 
 def test_classification(las):
     las.classification[:] = 234
-    assert np.alltrue(las.classification == 234)
+    assert np.all(las.classification == 234)
 
     res = write_then_read_again(las)
 
-    assert np.alltrue(las.classification == res.classification)
+    assert np.all(las.classification == res.classification)
 
 
 def test_intensity(las):
     las.intensity[:] = 89
-    assert np.alltrue(las.intensity == 89)
+    assert np.all(las.intensity == 89)
     res = write_then_read_again(las)
 
-    assert np.alltrue(las.intensity == res.intensity)
+    assert np.all(las.intensity == res.intensity)
 
 
 def test_writing_las_with_evlrs():

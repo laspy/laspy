@@ -11,9 +11,11 @@ from tests.test_common import (
 
 
 @pytest.fixture(
-    params=[simple_las, simple_laz]
-    if laspy.LazBackend.detect_available()
-    else [simple_las]
+    params=(
+        [simple_las, simple_laz]
+        if laspy.LazBackend.detect_available()
+        else [simple_las]
+    )
 )
 def las(request):
     return laspy.read(request.param)

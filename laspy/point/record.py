@@ -3,6 +3,7 @@ Las PointRecords are represented using Numpy's structured arrays,
 The PointRecord classes provide a few extra things to manage these arrays
 in the context of Las point data
 """
+
 import logging
 from copy import deepcopy
 from enum import Enum, auto
@@ -52,7 +53,7 @@ class PackedPointRecord:
     >>> return_number
     <SubFieldView([0 0 0 0 0 0 0 0 0 0])>
     >>> return_number[:] = 1
-    >>> np.alltrue(packed_point_record['return_number'] == 1)
+    >>> np.all(packed_point_record['return_number'] == 1)
     True
     """
 

@@ -133,9 +133,11 @@ def file_path(request):
 
 
 @pytest.fixture(
-    params=ALL_LAZ_BACKEND
-    if ALL_LAZ_BACKEND
-    else [pytest.mark.skip("No Laz Backend installed")]
+    params=(
+        ALL_LAZ_BACKEND
+        if ALL_LAZ_BACKEND
+        else [pytest.mark.skip("No Laz Backend installed")]
+    )
 )
 def laz_backend(request):
     return request.param

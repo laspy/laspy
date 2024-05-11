@@ -2,6 +2,7 @@
 the mapping between dimension names and their type, mapping between point format and
 compatible file version
 """
+
 import abc
 import collections
 import operator

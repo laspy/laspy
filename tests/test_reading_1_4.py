@@ -175,13 +175,13 @@ def test_manually_reading_evlrs(file, backend):
 
         iter = reader.chunk_iterator(chunk_size)
         chunk1 = next(iter)
-        assert np.alltrue(chunk1 == expected_points[:chunk_size])
+        assert np.all(chunk1 == expected_points[:chunk_size])
 
         reader.read_evlrs()
         assert reader.evlrs == expected_evlrs
 
         for i, chunk in enumerate(iter):
-            assert np.alltrue(
+            assert np.all(
                 chunk == expected_points[(i + 1) * chunk_size : (i + 2) * chunk_size]
             )
 

@@ -158,11 +158,11 @@ def test_extra_bytes_with_spaces_in_name(simple_las_path):
     las = laspy.read(simple_las_path)
     las.add_extra_dim(laspy.ExtraBytesParams(name="Name With Spaces", type="int32"))
 
-    assert np.alltrue(las["Name With Spaces"] == 0)
+    assert np.all(las["Name With Spaces"] == 0)
     las["Name With Spaces"][:] = 789_464
 
     las = write_then_read_again(las)
-    np.alltrue(las["Name With Spaces"] == 789_464)
+    np.all(las["Name With Spaces"] == 789_464)
 
 
 def test_conversion_keeps_eb(las_file_path_with_extra_bytes):
