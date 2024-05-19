@@ -53,7 +53,7 @@ class PackedPointRecord:
     >>> return_number
     <SubFieldView([0 0 0 0 0 0 0 0 0 0])>
     >>> return_number[:] = 1
-    >>> np.all(packed_point_record['return_number'] == 1)
+    >>> bool(np.all(packed_point_record['return_number'] == 1))
     True
     """
 

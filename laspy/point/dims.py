@@ -677,9 +677,15 @@ class SubFieldView(ArrayView):
             raise OverflowError(
                 f"value {np.max(value)} is greater than allowed (max: {self.max_value_allowed})"
             )
-        value = np.array(value, copy=False).astype(self.array.dtype)
+        # value = np.array(value, copy=False).astype(self.array.dtype)
+        value = np.asarray(value)
         self.array[key] &= ~self.bit_mask
-        self.array[key] |= value << self.lsb
+
+        # This is not allowed without a casting="unsafe" argument
+        # in Numpy 2.0
+        # self.array[key] |= shifted
+        shifted = value << self.lsb
+        self.array[key] = np.bitwise_or(self.array[key], shifted, casting="unsafe")
 
     def __getitem__(self, item):
         sliced = SubFieldView(self.array[item], int(self.bit_mask))

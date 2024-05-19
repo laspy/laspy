@@ -154,7 +154,7 @@ To access point records using the dimension name, you have 2 options:
 
 >>> import numpy as np
 >>> las = laspy.read('tests/data/simple.las')
->>> np.all(las.user_data == las['user_data'])
+>>> bool(np.all(las.user_data == las['user_data']))
 True
 
 Point Format

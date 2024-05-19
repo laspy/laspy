@@ -76,7 +76,7 @@ class LasData:
         2
         >>> xyz.shape
         (1065, 3)
-        >>> np.all(xyz[..., 0] == las.x)
+        >>> bool(np.all(xyz[..., 0] == las.x))
         True
         """
         return np.vstack((self.x, self.y, self.z)).transpose()
