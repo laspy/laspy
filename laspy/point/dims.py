@@ -677,7 +677,6 @@ class SubFieldView(ArrayView):
             raise OverflowError(
                 f"value {np.max(value)} is greater than allowed (max: {self.max_value_allowed})"
             )
-        # value = np.array(value, copy=False).astype(self.array.dtype)
         value = np.asarray(value)
         self.array[key] &= ~self.bit_mask
 
