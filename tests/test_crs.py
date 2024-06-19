@@ -72,6 +72,8 @@ def get_geokeys(header: laspy.LasHeader) -> Dict:
         if isinstance(rec, GeoKeyDirectoryVlr):
             return {k.id: k.value_offset for k in rec.geo_keys}
 
+    return {}
+
 
 @pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
 def test_add_crs_wkt():
@@ -85,6 +87,16 @@ def test_add_crs_wkt():
     assert hasattr(lasf_proj[0], "string")
     assert lasf_proj[0].string == crs.to_wkt()
     assert header.global_encoding.wkt
+
+
+@pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
+def test_handle_empty_crs_wkt_string():
+    header = laspy.LasHeader(point_format=6, version="1.4")
+    empty_wkt_crs = laspy.vlrs.known.WktCoordinateSystemVlr(wkt_string="")
+    header.vlrs.append(empty_wkt_crs)
+
+    crs = header.parse_crs()
+    assert crs is None
 
 
 @pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")

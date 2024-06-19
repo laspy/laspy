@@ -1,7 +1,7 @@
-""" The definition of the VLR Header, VLR, the KnownVLRs
- are in this module.
+"""The definition of the VLR Header, VLR, the KnownVLRs
+are in this module.
 
- A KnownVLR is a VLR for which we know how to parse its record_data
+A KnownVLR is a VLR for which we know how to parse its record_data
 """
 
 import abc
@@ -662,6 +662,9 @@ class WktCoordinateSystemVlr(BaseKnownVLR):
 
     def parse_crs(self):
         import pyproj
+
+        if not self.string:
+            return None
 
         return pyproj.CRS.from_wkt(self.string)
 
