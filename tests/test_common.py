@@ -426,3 +426,11 @@ def test_input_is_properly_closed_if_opening_fails():
         _ = laspy.read(data, closefd=False)
 
     assert data.closed is False
+
+
+@pytest.mark.parametrize("backend", laspy.LazBackend.detect_available())
+def test_create_and_write_compressed_wavepackets_formats(backend):
+    for fmt in (4, 5, 9, 10):
+        las = laspy.create(point_format=fmt)
+
+        _ = write_then_read_again(las, do_compress=True, laz_backend=backend)
