@@ -367,7 +367,7 @@ def test_cli_filtering_classification_in(tmp_path):
     assert result.exit_code == 0
 
     las = laspy.read(path)
-    assert np.alltrue(np.isin(las.classification, [2, 3, 4]))
+    assert np.all(np.isin(las.classification, [2, 3, 4]))
 
 
 def test_cli_filtering_classification_intensity(tmp_path):
