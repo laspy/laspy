@@ -406,7 +406,7 @@ def load_octree_for_query(
             hierarchy_page.entries.update(page.entries)
             nodes_to_load.insert(0, current_node)
             continue
-        elif entry.point_count != 0:
+        elif entry.point_count >= 0:
             current_node.offset = entry.offset
             current_node.byte_size = entry.byte_size
             current_node.point_count = entry.point_count
