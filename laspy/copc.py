@@ -766,7 +766,7 @@ class CopcReader:
             level_range=level,
         )
         # print("num nodes to query:", len(nodes));
-        points = self._fetch_and_decrompress_points_of_nodes(nodes)
+        points = self._fetch_and_decompress_points_of_nodes(nodes)
 
         if bounds is not None:
             MINS = np.round(
@@ -795,7 +795,7 @@ class CopcReader:
     def level_query(self, level: Union[int, range]) -> ScaleAwarePointRecord:
         return self.query(bounds=None, level=level)
 
-    def _fetch_and_decrompress_points_of_nodes(
+    def _fetch_and_decompress_points_of_nodes(
         self, nodes_to_read: List[OctreeNode]
     ) -> ScaleAwarePointRecord:
         if not nodes_to_read:
