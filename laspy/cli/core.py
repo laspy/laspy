@@ -97,6 +97,19 @@ def print_points_stats(reader: laspy.LasReader):
     Computes and prints stats about dimensions in the file
     """
     stats_record = laspy.PackedPointRecord.zeros(2, reader.header.point_format)
+    for dimension_name in reader.header.point_format.dimension_names:
+        dtype = stats_record[dimension_name].dtype
+        if np.issubdtype(dtype, np.integer):
+            if hasattr(stats_record[dimension_name], "max_value_allowed"):
+                stats_record[dimension_name][0] = stats_record[
+                    dimension_name
+                ].max_value_allowed
+            else:
+                stats_record[dimension_name][0] = np.iinfo(dtype).max
+            stats_record[dimension_name][1] = np.iinfo(dtype).min
+        else:
+            stats_record[dimension_name][0] = np.inf
+            stats_record[dimension_name][1] = -np.inf
 
     with Progress(transient=True) as progress:
         task = progress.add_task(
