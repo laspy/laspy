@@ -232,7 +232,7 @@ class LasHeader:
 
         #: Number of points by return
         #: for las <= 1.2 only the first 5 elements matters
-        self.number_of_points_by_return: np.ndarray = np.zeros(15, dtype=np.uint32)
+        self.number_of_points_by_return: np.ndarray = np.zeros(15, dtype=np.uint64)
 
         #: The VLRS
         self._vlrs: VLRList = VLRList()
@@ -473,7 +473,7 @@ class LasHeader:
         self.start_of_first_evlr = 0
         self.number_of_evlrs = 0
         self.point_count = 0
-        self.number_of_points_by_return = np.zeros(15, dtype=np.uint32)
+        self.number_of_points_by_return = np.zeros(15, dtype=np.uint64)
 
     def update(self, points: PackedPointRecord) -> None:
         self.partial_reset()
