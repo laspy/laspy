@@ -21,7 +21,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests", "tests.cli")),
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=["numpy"],
     extras_require={
         "dev": [
