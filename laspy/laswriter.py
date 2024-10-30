@@ -2,12 +2,14 @@ import logging
 from copy import deepcopy
 from typing import BinaryIO, Iterable, Optional, Union
 
+import numpy as np
+
 from ._pointwriter import IPointWriter
 from .compression import LazBackend
 from .errors import LaspyException
 from .header import LasHeader
 from .point import dims
-from .point.record import PackedPointRecord
+from .point.record import PackedPointRecord, ScaleAwarePointRecord
 from .vlrs.vlrlist import VLRList
 
 logger = logging.getLogger(__name__)
@@ -56,7 +58,7 @@ class LasWriter:
         self.closefd = closefd
         self.encoding_errors = encoding_errors
         self.header = deepcopy(header)
-        # The point writer will take take of creating and writing
+        # The point writer will take care of creating and writing
         # the correct laszip vlr, however we have to make sure
         # no prior laszip vlr exists
         try:
@@ -95,12 +97,16 @@ class LasWriter:
         """
         .. note ::
 
-            If you are writing points coming from multiple different input files
-            into one output file, you have to make sure the point record
-            you write all use the same scales and offset of the writer.
 
-            You can use :meth:`.LasData.change_scaling` or :meth:`.ScaleAwarePointRecord.change_scaling`
-            to do that.
+            If the points type is PackedPointRecord, then you need to make sure
+            the points are expressed in the same scales and offsets 'system' than
+            this writer.
+
+            You can use :meth:`.LasData.change_scaling` before getting the points
+            to ensure that.
+
+            If the points type is ScaleAwarePointsRecord, then points will automatically
+            re-scaled.
 
         Parameters
         ----------
@@ -130,8 +136,28 @@ class LasWriter:
                 )
             )
 
+        restore_needed = False
+        if isinstance(points, ScaleAwarePointRecord) and (
+            np.any(points.scales != self.header.scales)
+            or np.any(points.offsets != self.header.offsets)
+        ):
+            saved_offsets, saved_scales = points.offsets, points.scales
+            saved_X, saved_Y, saved_Z = (
+                points.X.copy(),
+                points.Y.copy(),
+                points.Z.copy(),
+            )
+            points.change_scaling(
+                scales=self.header.scales, offsets=self.header.offsets
+            )
+            restore_needed = True
+
         self.header.grow(points)
         self.point_writer.write_points(points)
+
+        if restore_needed:
+            points.offsets, points.scales = saved_offsets, saved_scales
+            points.X, points.Y, points.Z = saved_X, saved_Y, saved_Z
 
     def write_evlrs(self, evlrs: VLRList) -> None:
         """Writes the EVLRs to the file
