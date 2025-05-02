@@ -1,5 +1,6 @@
 import io
 import os
+import tempfile
 from pathlib import Path
 from typing import List, Tuple
 
@@ -7,7 +8,7 @@ import pytest
 
 import laspy
 from laspy import LasData, LasHeader, ScaleAwarePointRecord
-from tests.conftest import NonSeekableStream
+from tests.conftest import SIMPLE_LAZ_FILE_PATH, NonSeekableStream
 from tests.test_common import simple_laz
 
 
@@ -156,3 +157,55 @@ def test_write_then_append_produces_valid_cloud(points_read_counts: List[int]) -
         ]
 
     check_write_append_read(points_list, las_reader.header)
+
+
+@pytest.mark.parametrize(
+    "input_file",
+    [SIMPLE_LAZ_FILE_PATH, Path(__file__).parent / "data" / "simple1_4.las"],
+)
+@pytest.mark.skipif(
+    not laspy.LazBackend.Lazrs.is_available(), reason="Lazrs is not installed"
+)
+def test_append_to_empty_file(input_file: Path) -> None:
+    """
+    Test that one can create an empty LAZ file, and then re-open it to append to it
+    """
+    laz_backends = laspy.LazBackend.detect_available()
+    input_las = laspy.read(input_file)
+
+    for creating_backend in laz_backends:
+        for appending_backend in laz_backends:
+            if appending_backend == laspy.LazBackend.Laszip:
+                continue
+
+            for checking_backend in laz_backends:
+                print(
+                    f"Creating Backend: {creating_backend},",
+                    f"Appending Backend: {appending_backend},",
+                    f"Checking Backend: {checking_backend}",
+                )
+                with tempfile.TemporaryDirectory() as dir_path:
+                    dir_path = Path(dir_path)
+                    las_path = dir_path / "to_be_appended.laz"
+
+                    header = input_las.header.copy()
+
+                    # Create empty laz
+                    with laspy.open(
+                        las_path, "w", header=header, laz_backend=creating_backend
+                    ) as las_writer:
+                        pass
+
+                    # Append points to empty laz
+                    with laspy.open(
+                        las_path, "a", laz_backend=appending_backend
+                    ) as las_appender:
+                        las_appender.append_points(input_las.points)
+
+                    # Try to read laz
+                    with laspy.open(
+                        las_path, "r", laz_backend=checking_backend
+                    ) as las_reader:
+                        point_count = las_reader.header.point_count
+                        points = las_reader.read_points(point_count)
+                        assert points == input_las.points
