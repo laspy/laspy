@@ -3,6 +3,7 @@ import io
 import logging
 import struct
 import typing
+from copy import deepcopy
 from datetime import date, timedelta
 from typing import BinaryIO, Iterable, List, NamedTuple, Optional, Union
 from uuid import UUID
@@ -527,6 +528,9 @@ class LasHeader:
             return np.iinfo(np.uint32).max
         else:
             return np.iinfo(np.uint64).max
+
+    def copy(self):
+        return deepcopy(self)
 
     @classmethod
     def read_from(
