@@ -22,10 +22,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - uses: conda-incubator/setup-miniconda@v3
       with:
         python-version: ${{ matrix.python-version }}
+
+    - shell: bash -l {0}
+      run: |
+        conda info
+        conda list
 
     - name: Display Python version
       run: |
@@ -45,12 +49,22 @@ jobs:
       run: pip install requests rangehttpserver
 
     # Some crs tests require pdal
-    # and its easier to install it on ubuntu
     - name: Install pdal
-      if: matrix.laz-backend == 'None' && matrix.os == 'ubuntu-latest'
-      run: sudo apt install -y pdal
+      if: matrix.python-version != '3.13'
+      shell: bash -l {0}
+      run: | 
+        conda install -c conda-forge pdal "gdal<=3.8"
+        pdal --version
+
+    - name: Install pdal
+      if: matrix.python-version == '3.13'
+      shell: bash -l {0}
+      run: | 
+        conda install -c conda-forge pdal "gdal>=3.9"
+        pdal --version
 
     - name: Run Tests
+      shell: bash -l {0}
       run: |
         pytest -v
 
