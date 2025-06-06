@@ -36,7 +36,7 @@ setup(
             "rangehttpserver",
             "isort==5.11.5",
         ],
-        "lazrs": ["lazrs>=0.6.0, < 0.7.0"],
+        "lazrs": ["lazrs>=0.7.0, < 0.8.0"],
         "laszip": ["laszip >= 0.2.1, < 0.3.0"],
         "pyproj": ["pyproj"],
         "requests": ["requests"],

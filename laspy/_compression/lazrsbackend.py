@@ -177,9 +177,21 @@ class LazrsAppender(IPointAppender):
         self.offset_to_point_data = header.offset_to_point_data
         laszip_vlr = cast(LasZipVlr, header.vlrs.get("LasZipVlr")[0])
         if parallel:
-            self.appender = lazrs.ParLasZipAppender(dest, laszip_vlr.record_data)
+            try:
+                self.appender = lazrs.ParLasZipAppender(
+                    dest, laszip_vlr.record_data, header.point_count
+                )
+            except TypeError:
+                # This is a fallback for when lazrs <= 0.7.0
+                self.appender = lazrs.ParLasZipAppender(dest, laszip_vlr.record_data)
         else:
-            self.appender = lazrs.LasZipAppender(dest, laszip_vlr.record_data)
+            try:
+                self.appender = lazrs.LasZipAppender(
+                    dest, laszip_vlr.record_data, header.point_count
+                )
+            except TypeError:
+                # This is a fallback for when lazrs <= 0.7.0
+                self.appender = lazrs.LasZipAppender(dest, laszip_vlr.record_data)
 
     def append_points(self, points: PackedPointRecord) -> None:
         points_bytes = np.frombuffer(points.array, np.uint8)
