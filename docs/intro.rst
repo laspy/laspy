@@ -104,7 +104,7 @@ Point Format 0
 +----------------------+-----------+--------------+
 | user_data            | unsigned  |      8       |
 +----------------------+-----------+--------------+
-| point_source_id      | unsigned  |      8       |
+| point_source_id      | unsigned  |      16      |
 +----------------------+-----------+--------------+
 
 
@@ -246,7 +246,7 @@ and some fields takes more bits, for example the classification is now stored on
 +----------------------+-----------+--------------+
 | scan_angle           | signed    |      16      |
 +----------------------+-----------+--------------+
-| point_source_id      | unsigned  |      8       |
+| point_source_id      | unsigned  |      16      |
 +----------------------+-----------+--------------+
 | gps_time             | Floating  |      64      |
 +----------------------+-----------+--------------+
