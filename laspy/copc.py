@@ -539,7 +539,7 @@ class CopcReader:
     (Octree) making it possible to do spatial queries
     as well as queries with a level of details.
 
-    CopcReader **requires** the ``lazrz`` backend to work.
+    CopcReader **requires** the ``lazrs`` backend to work.
 
     Optionaly, if ``requests`` is installed, CopcReader can handle
     Copc files that are on a remote HTTP server
