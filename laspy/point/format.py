@@ -19,6 +19,7 @@ class ExtraBytesParams:
         description: str = "",
         offsets: Optional[Iterable[Number]] = None,
         scales: Optional[Iterable[Number]] = None,
+        no_data: Optional[Iterable[Number]] = None,
     ) -> None:
         self.name = name
         """ The name of the extra dimension """
@@ -37,6 +38,8 @@ class ExtraBytesParams:
         """ The offsets to use if its a 'scaled dimension', can be none """
         self.scales = np.array(scales) if scales is not None else scales
         """ The scales to use if its a 'scaled dimension', can be none """
+        self.no_data = np.array(no_data) if no_data is not None else no_data
+        """ The no data values, can be none """
 
 
 class PointFormat:

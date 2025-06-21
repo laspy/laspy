@@ -337,6 +337,7 @@ class DimensionInfo(NamedTuple):
     description: str = ""
     offsets: Optional[np.ndarray] = None
     scales: Optional[np.ndarray] = None
+    no_data: Optional[np.ndarray] = None
 
     @classmethod
     def from_extra_bytes_param(cls, params):
@@ -349,6 +350,7 @@ class DimensionInfo(NamedTuple):
             params.description,
             params.offsets,
             params.scales,
+            params.no_data,
         )
         me._validate()
         return me
@@ -474,6 +476,11 @@ class DimensionInfo(NamedTuple):
         if self.scales is not None and len(self.scales) != self.num_elements:
             raise ValueError(
                 f"len(scales) ({len(self.scales)}) is not the same as the number of elements ({self.num_elements})"
+            )
+
+        if self.no_data is not None and len(self.no_data) != self.num_elements:
+            raise ValueError(
+                f"len(no_data) ({len(self.no_data)}) is not the same as the number of elements ({self.num_elements})"
             )
 
 

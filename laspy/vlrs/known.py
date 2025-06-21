@@ -9,12 +9,15 @@ import ctypes
 import logging
 import struct
 from copy import copy
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import numpy as np
+from m2r2 import options
 
 from ..extradims import get_dtype_for_extra_dim
+from ..point.dims import ScaledArrayView
 from ..point.format import ExtraBytesParams
+from ..point.record import PackedPointRecord
 from ..utils import encode_to_null_terminated
 from .vlr import VLR, BaseVLR
 
@@ -23,7 +26,6 @@ abstractmethod = abc.abstractmethod
 logger = logging.getLogger(__name__)
 
 NULL_BYTE = b"\0"
-
 
 GeoKeyDirectoryType = TypeVar("GeoKeyDirectoryType", bound="GeoKeyDirectoryVlr")
 GeoAsciiParamsType = TypeVar("GeoAsciiParamsType", bound="GeoAsciiParamsVlr")
@@ -219,25 +221,116 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
     SCALE_BIT_MASK = 0b000_1000
     OFFSET_BIT_MASK = 0b0001_0000
 
+    def __init__(
+        self,
+        name: bytes,
+        data_type: Union[int, Tuple[int, int]],
+        description: bytes = b"",
+        scale: Optional[np.ndarray] = None,
+        offset: Optional[np.ndarray] = None,
+        no_data: Optional[np.ndarray] = None,
+    ) -> None:
+
+        if isinstance(data_type, Tuple):
+            options = data_type[1]
+            data_type = data_type[0]
+        else:
+            options = 0
+
+        super().__init__(
+            name=name, description=description, data_type=data_type, options=options
+        )
+
+        if self.data_type != 0:
+            self.scale = scale
+            self.offset = offset
+            self.no_data = no_data
+
+            self.options |= self.MIN_BIT_MASK
+            self.options |= self.MAX_BIT_MASK
+
+            self.partial_reset()
+
+    def _long_type(self):
+        data_type = ((self.data_type - 1) % 10) + 1
+        if data_type in [2, 4, 6, 8]:
+            long_type = np.int64
+        elif data_type in [9, 10]:
+            long_type = np.float64
+        elif data_type in [1, 3, 5, 7]:
+            long_type = np.uint64
+        else:
+            raise NotImplementedError
+
+        return long_type
+
     def _parse_special_property(self, name) -> np.ndarray:
-        return np.frombuffer(getattr(self, name), dtype=self.dtype())
+        dtype = self.dtype().base
+        long_type = self._long_type()
+        return np.frombuffer(getattr(self, name), dtype=long_type)[
+            : self.num_elements()
+        ].astype(dtype)
 
     @property
     def no_data(self):
-        return self._parse_special_property("_no_data")
+        if self.options & self.NO_DATA_BIT_MASK != 0:
+            return self._parse_special_property("_no_data")
+        return None
+
+    @no_data.setter
+    def no_data(self, value):
+        if value is None:
+            self.options &= ~self.NO_DATA_BIT_MASK
+        else:
+            dtype = self._long_type()
+            num_elements = self.num_elements()
+            ptrs = [
+                np.array([v])
+                .astype(dtype)
+                .ctypes.data_as(ctypes.POINTER((ctypes.c_byte * 8)))[0]
+                for v in value[:num_elements]
+            ]
+            self._no_data[:num_elements] = ptrs
+            self.options |= self.NO_DATA_BIT_MASK
 
     @property
     def min(self):
-        return self._parse_special_property("_min")
+        if not self.min_is_relevant():
+            return None
+
+        min = self._parse_special_property("_min")
+
+        scale = self.scale
+        if scale is not None:
+            min = min * scale
+
+        offset = self.offset
+        if offset is not None:
+            min = min + offset
+
+        return min
 
     @property
     def max(self):
-        return self._parse_special_property("_max")
+        if not self.max_is_relevant():
+            return None
+
+        max = self._parse_special_property("_max")
+
+        scale = self.scale
+        if scale is not None:
+            max = max * scale
+
+        offset = self.offset
+        if offset is not None:
+            max = max + offset
+
+        return max
 
     @property
     def offset(self) -> Optional[Any]:
         if self.options & self.OFFSET_BIT_MASK != 0:
-            return self._offset
+            return self._offset[: self.num_elements()]
         return None
 
     @offset.setter
@@ -252,7 +345,7 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
     @property
     def scale(self):
         if self.options & self.SCALE_BIT_MASK != 0:
-            return self._scale
+            return self._scale[: self.num_elements()]
         return None
 
     @scale.setter
@@ -284,6 +377,91 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
             return 2
         else:
             return 3
+
+    def min_is_relevant(self):
+        return self.options & self.MIN_BIT_MASK != 0
+
+    def max_is_relevant(self):
+        return self.options & self.MAX_BIT_MASK != 0
+
+    def _raw_min(self):
+        if self.min_is_relevant():
+            return np.frombuffer(self._min, dtype=self._long_type())[
+                : self.num_elements()
+            ]
+        return None
+
+    def _raw_max(self):
+        if self.max_is_relevant():
+            return np.frombuffer(self._max, dtype=self._long_type())[
+                : self.num_elements()
+            ]
+        return None
+
+    def grow(self, points: PackedPointRecord):
+        if self.data_type == 0:
+            # The data type is not specified (treated as raw bytes)
+            # So we don't try to track min / max
+            return
+
+        if not self.min_is_relevant() and not self.max_is_relevant():
+            return
+
+        try:
+            pts = points[self.format_name()]
+        except ValueError:
+            # The points did not contain the field
+            return
+
+        num_elements = self.num_elements()
+        long_type = self._long_type()
+        no_data = self.no_data
+
+        local_min = np.zeros(num_elements, dtype=long_type)
+        local_max = np.zeros(num_elements, dtype=long_type)
+
+        for i in range(num_elements):
+            if no_data is not None:
+                valid_indices = pts[..., i] != no_data[i]
+                if valid_indices.ndim == 0:
+                    return
+                sub_pts = pts[valid_indices, i]
+            else:
+                sub_pts = pts[..., i]
+
+            if self.min_is_relevant():
+                if isinstance(sub_pts, ScaledArrayView):
+                    local_min[i] = sub_pts.array.min()
+                else:
+                    local_min[i] = sub_pts.min()
+
+            if self.max_is_relevant():
+                if isinstance(sub_pts, ScaledArrayView):
+                    local_max[i] = sub_pts.array.max()
+                else:
+                    local_max[i] = sub_pts.max()
+
+        if self.min_is_relevant():
+            raw_min = self._raw_min()
+            v = np.min([raw_min, local_min], axis=0)
+            raw_min[:] = v.astype(long_type)[:]
+
+        if self.max_is_relevant():
+            raw_max = self._raw_max()
+            v = np.max([raw_max, local_max], axis=0)
+            raw_max[:] = v.astype(long_type)[:]
+
+    def partial_reset(self):
+        long_type = self._long_type()
+
+        if long_type == np.float64 or long_type == np.float32:
+            info = np.finfo(long_type)
+        else:
+            info = np.iinfo(long_type)
+
+        num_elements = self.num_elements()
+        np.frombuffer(self._min, dtype=long_type)[:num_elements] = info.max
+        np.frombuffer(self._max, dtype=long_type)[:num_elements] = info.min
 
     @staticmethod
     def size():
@@ -351,6 +529,14 @@ class ExtraBytesVlr(BaseKnownVLR):
                 )
             )
         return dim_info_list
+
+    def grow(self, points: PackedPointRecord):
+        for eb_struct in self.extra_bytes_structs:
+            eb_struct.grow(points)
+
+    def partial_reset(self):
+        for eb_struct in self.extra_bytes_structs:
+            eb_struct.partial_reset()
 
     def __repr__(self):
         return "<ExtraBytesVlr(extra bytes structs: {})>".format(
