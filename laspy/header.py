@@ -520,6 +520,13 @@ class LasHeader:
             self.number_of_points_by_return[return_number - 1] += count
         self.point_count += len(points)
 
+        # grow extra bytes
+        if len(self.vlrs) > 0:
+            for vlr in self.vlrs:
+                if vlr.record_id == 4:
+                    for eb in vlr.extra_bytes_structs:
+                        eb.grow(points)
+
     def set_compressed(self, state: bool) -> None:
         self.are_points_compressed = state
 

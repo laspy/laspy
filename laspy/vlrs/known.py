@@ -15,6 +15,7 @@ import numpy as np
 
 from ..extradims import get_dtype_for_extra_dim
 from ..point.format import ExtraBytesParams
+from ..point.record import PackedPointRecord
 from ..utils import encode_to_null_terminated
 from .vlr import VLR, BaseVLR
 
@@ -219,20 +220,54 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
     SCALE_BIT_MASK = 0b000_1000
     OFFSET_BIT_MASK = 0b0001_0000
 
+    def _long_type(self):
+        data_type = ((self.data_type - 1) % 10) + 1
+        if data_type in [2, 4, 6, 8]:
+            long_type = np.int64
+        elif data_type in [9, 10]:
+            long_type = np.float64
+        elif data_type in [1, 3, 5, 7]:
+            long_type = np.uint64
+        else:
+            raise NotImplementedError
+
+        return long_type
+
     def _parse_special_property(self, name) -> np.ndarray:
-        return np.frombuffer(getattr(self, name), dtype=self.dtype())
+        dtype = self.dtype().base
+        long_type = self._long_type()
+        return np.frombuffer(getattr(self, name), dtype=long_type).astype(dtype)
 
     @property
     def no_data(self):
-        return self._parse_special_property("_no_data")
+        if self.options & self.NO_DATA_BIT_MASK != 0:
+            return self._parse_special_property("_no_data")
+
+    @no_data.setter
+    def no_data(self, value):
+        if value is None:
+            self.options &= ~self.NO_DATA_BIT_MASK
+        else:
+            dtype = self._long_type()
+            num_elements = self.num_elements()
+            ptrs = [
+                np.array([v])
+                .astype(dtype)
+                .ctypes.data_as(ctypes.POINTER((ctypes.c_byte * 8)))[0]
+                for v in value[:num_elements]
+            ]
+            self._no_data[:num_elements] = ptrs
+            self.options |= self.NO_DATA_BIT_MASK
 
     @property
     def min(self):
-        return self._parse_special_property("_min")
+        if self.options & self.MIN_BIT_MASK != 0:
+            return self._parse_special_property("_min")
 
     @property
     def max(self):
-        return self._parse_special_property("_max")
+        if self.options & self.MAX_BIT_MASK != 0:
+            return self._parse_special_property("_max")
 
     @property
     def offset(self) -> Optional[Any]:
@@ -284,6 +319,29 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
             return 2
         else:
             return 3
+
+    def grow(self, points: PackedPointRecord):
+        num_elements = self.num_elements()
+        long_type = self._long_type()
+        pts = points[self.format_name()].array.reshape(-1, num_elements)
+        for i in range(num_elements):
+            pts_i = pts[:, i]
+            if self.no_data is not None:
+                pts_i = pts_i[pts_i != self.no_data[i]]
+            if self.min is not None:
+                v = min(self.min[i], pts_i.min())
+                self._min[i] = (
+                    np.array([v])
+                    .astype(long_type)
+                    .ctypes.data_as(ctypes.POINTER((ctypes.c_byte * 8)))[0]
+                )
+            if self.max is not None:
+                v = max(self.max[i], pts_i.max())
+                self._max[i] = (
+                    np.array([v])
+                    .astype(long_type)
+                    .ctypes.data_as(ctypes.POINTER((ctypes.c_byte * 8)))[0]
+                )
 
     @staticmethod
     def size():

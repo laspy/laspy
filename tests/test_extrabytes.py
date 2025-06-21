@@ -130,6 +130,71 @@ def test_scaled_extra_byte_array_type(simple_las_path):
     assert np.allclose(las.test_dim[..., 1], 82.0)
     assert np.allclose(las.test_dim[..., 2], 123.0)
 
+def test_scaled_extra_byte_min_max(simple_las_path):
+    """
+    To make sure we handle scaled extra bytes
+    """
+    MIN = -10
+    MAX = 1000
+    NODATA = -10000
+    SCALE = np.array([1.0, 2.0, 3.0])
+    OFFSET = np.array([10.0, 20.0, 30.0])
+    las = laspy.read(simple_las_path)
+
+    las.add_extra_dim(
+        laspy.ExtraBytesParams(
+            name="test_dim",
+            type="3int32",
+            scales=np.array(SCALE, np.float64),
+            offsets=np.array(OFFSET, np.float64),
+        )
+    )
+    
+    assert np.allclose(las.test_dim[..., 0], 10.0)
+    assert np.allclose(las.test_dim[..., 1], 20.0)
+    assert np.allclose(las.test_dim[..., 2], 30.0)
+
+    las.test_dim[..., 0][:] = 42.0
+    las.test_dim[..., 1][:] = 82.0
+    las.test_dim[..., 2][:] = 123.0
+
+    las.test_dim[..., 0][0] = MIN
+    las.test_dim[..., 1][0] = MIN
+    las.test_dim[..., 2][0] = MIN
+
+    las.test_dim[..., 0][1] = MAX
+    las.test_dim[..., 1][1] = MAX
+    las.test_dim[..., 2][1] = MAX
+
+    las.test_dim[..., 0][2] = NODATA * SCALE[0] + OFFSET[0]
+    las.test_dim[..., 1][2] = NODATA * SCALE[1] + OFFSET[1]
+    las.test_dim[..., 2][2] = NODATA * SCALE[2] + OFFSET[2]
+
+    las.header.vlrs[0].extra_bytes_structs[0].options |= (
+        laspy.vlrs.known.ExtraBytesStruct.MIN_BIT_MASK
+        | laspy.vlrs.known.ExtraBytesStruct.MAX_BIT_MASK
+        | laspy.vlrs.known.ExtraBytesStruct.NO_DATA_BIT_MASK
+    )
+
+    las.header.vlrs[0].extra_bytes_structs[0].no_data = [NODATA, NODATA, NODATA]
+
+    las.update_header()
+
+    assert las.header.vlrs[0].extra_bytes_structs[0].data_type == 26 # 3*int32
+    assert len(las.header.vlrs[0].extra_bytes_structs[0].min) == 3 # 3 values for LAS v1.4 r13
+
+    ebs = las.header.vlrs[0].extra_bytes_structs[0]
+    assert np.allclose(ebs.min[:], (MIN - OFFSET) / SCALE, atol=1)
+    assert np.allclose(ebs.max[:], (MAX - OFFSET) / SCALE, atol=1)
+
+    las = write_then_read_again(las)
+    assert np.allclose(las.test_dim[..., 0][3:], 42.0)
+    assert np.allclose(las.test_dim[..., 1][3:], 82.0)
+    assert np.allclose(las.test_dim[..., 2][3:], 123.0)
+    
+    ebs = las.header.vlrs[0].extra_bytes_structs[0]
+    assert np.allclose(ebs.min[:], (MIN - OFFSET) / SCALE, atol=1)
+    assert np.allclose(ebs.max[:], (MAX - OFFSET) / SCALE, atol=1)
 
 def test_extra_bytes_description_is_ok(extra_bytes_params, simple_las_path):
     """
