@@ -713,8 +713,11 @@ class ScaledArrayView(ArrayView):
     def _apply_scale(self, value):
         return (value * self.scale) + self.offset
 
-    def _remove_scale(self, value):
-        return np.round((value - self.offset) / self.scale)
+    def _remove_scale(self, value, sub=None):
+        if sub is None:
+            return np.round((value - self.offset) / self.scale)
+        else:
+            return np.round((value - self.offset[sub]) / self.scale[sub])
 
     def max(self, *args, **kwargs):
         return self._apply_scale(self.array.max(*args, **kwargs))
@@ -765,8 +768,8 @@ class ScaledArrayView(ArrayView):
                     # item is (index, ...), it queries for all the dimensions
                     # of a point or set of point, so we don't slice the scales/offsets
                     return self.__class__(sliced_array, self.scale, self.offset)
-                elif item[0] is Ellipsis:
-                    # item is something like (..., index)
+                else:
+                    # item is something like (something, index)
                     # it queries for one dimension or set of dimension
                     # for all the points, so we need to slice the scales/offsets
                     return self.__class__(
@@ -796,7 +799,16 @@ class ScaledArrayView(ArrayView):
             )
         if isinstance(value, ScaledArrayView):
             value = np.array(value)
-        self.array[key] = self._remove_scale(value)
+
+        try:
+            key_len = len(key)
+        except TypeError:
+            key_len = 1
+
+        if key_len == 2:
+            self.array[key] = self._remove_scale(value, sub=key[1])
+        else:
+            self.array[key] = self._remove_scale(value)
 
     def __repr__(self):
         return f"<ScaledArrayView({self.scaled_array()})>"
