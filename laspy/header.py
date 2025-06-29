@@ -476,6 +476,12 @@ class LasHeader:
         self.point_count = 0
         self.number_of_points_by_return = np.zeros(15, dtype=np.uint64)
 
+        try:
+            eb_vlr = self.vlrs.get("ExtraBytesVlr")[0]
+            eb_vlr.partial_reset()
+        except IndexError:
+            pass
+
     def update(self, points: PackedPointRecord) -> None:
         self.partial_reset()
         if not points:
@@ -519,6 +525,11 @@ class LasHeader:
                 break  # np.unique sorts unique values
             self.number_of_points_by_return[return_number - 1] += count
         self.point_count += len(points)
+
+        # grow extra bytes
+        vlrs = self.vlrs.get("ExtraBytesVlr")
+        if vlrs:
+            vlrs[0].grow(points)
 
     def set_compressed(self, state: bool) -> None:
         self.are_points_compressed = state
@@ -936,21 +947,19 @@ class LasHeader:
             dtype = extra_dimension.dtype
             assert dtype is not None
 
+            if extra_dimension.num_elements > 3 and dtype.base == np.uint8:
+                data_type = (0, extra_dimension.num_elements)
+            else:
+                data_type = extradims.get_id_for_extra_dim_type(dtype)
+
             eb_struct = ExtraBytesStruct(
                 name=extra_dimension.name.encode(),
                 description=extra_dimension.description.encode(),
+                data_type=data_type,
+                scale=extra_dimension.scales,
+                offset=extra_dimension.offsets,
+                no_data=extra_dimension.no_data,
             )
-
-            if extra_dimension.num_elements > 3 and dtype.base == np.uint8:
-                type_id = 0
-                eb_struct.options = extra_dimension.num_elements
-            else:
-                type_id = extradims.get_id_for_extra_dim_type(dtype)
-
-            eb_struct.data_type = type_id
-            eb_struct.scale = extra_dimension.scales
-            eb_struct.offset = extra_dimension.offsets
-
             eb_vlr.extra_bytes_structs.append(eb_struct)
 
         self._vlrs.append(eb_vlr)
