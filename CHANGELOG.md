@@ -1,5 +1,28 @@
 # Changelog
 
+## Version 2.6.0 (06/07/2025)
+
+### Fixed
+
+- Bump lazrs to fix a bug that could happen in append mode
+  (compatibility with older lazrs preserved, but without the fix)
+- Bug in COPC where node with 0 points where not respected
+- Fixed minimum values computed by laspy info
+- The number of points by return is now correctly 64-bit and not 32-bit
+- ScaledArrayView setitem/getitem whe index is in the form of [something, index] 
+
+### Added
+
+- Add copy method to LasHeader
+- When the points given to the LasWriter.write_points
+  are of type ScaleAwarePointRecord laspy now automatically rescale
+  the points.
+- ExtraBytesParams have a no_data attribute to specify which value is the no_data value
+- min and max of extra bytes are now 'tracked' when writing, and their respective fields in the
+  extra-bytes struct are populated
+- laspy.open 'encoding_error' argument is also available to laspy.read
+  (This argument can be used to how text encoding errors should be handled)
+
 ## Version 2.5.4 (19/06/2024)
 
 ### Fixed
