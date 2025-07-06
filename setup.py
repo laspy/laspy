@@ -30,6 +30,7 @@ setup(
             "sphinx",
             "sphinx-rtd-theme",
             "nox",
+            "attrs>=24.1",  # Needed for nox <= 2025.05.01 to work
             "black==22.3.0",
             "pytest-benchmark",
             "m2r2",
