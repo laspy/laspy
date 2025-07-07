@@ -69,6 +69,46 @@ jobs:
         pytest -v
 
 
+  # Check that we can import laspy in an environment that does
+  # not have dev deps installed to make sure there are no wrong imports
+  import:
+    name: Python ${{ matrix.python-version }} - ${{ matrix.os }} - laz=${{ matrix.laz-backend }}
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ 'ubuntu-latest', 'macos-latest', 'windows-latest' ]
+        python-version: [ "3.13" ]
+        laz-backend: [ None, lazrs, laszip ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+
+      - name: Display Python version
+        run: |
+          python -c "import sys; print(sys.version)"
+
+      - name: Install With LAZ backend
+        if: matrix.laz-backend != 'None'
+        run: pip install .[${{ matrix.laz-backend }},pyproj,cli]
+
+      - name: Install Without LAZ backend
+        if: matrix.laz-backend == 'None'
+        run: pip install .[pyproj,cli]
+
+      - name: Import laspy
+        run: |
+          python -c "import laspy"
 
   linting:
     runs-on: ubuntu-latest
