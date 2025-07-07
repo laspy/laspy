@@ -12,7 +12,6 @@ from copy import copy
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import numpy as np
-from m2r2 import options
 
 from ..extradims import get_dtype_for_extra_dim
 from ..point.dims import ScaledArrayView
