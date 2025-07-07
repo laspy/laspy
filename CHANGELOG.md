@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 2.6.1 (07/07/2025)
+
+### Fixed
+
+- Removed invalid import that prevented users from importing laspy
+
 ## Version 2.6.0 (06/07/2025)
 
 ### Fixed
