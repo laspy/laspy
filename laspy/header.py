@@ -195,7 +195,7 @@ class LasHeader:
 
         if version is None and point_format is None:
             version = LasHeader.DEFAULT_VERSION
-            point_format = LasHeader.DEFAULT_POINT_FORMAT
+            point_format = deepcopy(LasHeader.DEFAULT_POINT_FORMAT)
         elif version is not None and point_format is None:
             point_format = PointFormat(dims.min_point_format_for_version(str(version)))
         elif version is None and point_format is not None:
