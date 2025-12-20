@@ -1,5 +1,4 @@
-""" All the custom exceptions types
-"""
+"""All the custom exceptions types"""
 
 
 class LaspyException(Exception):

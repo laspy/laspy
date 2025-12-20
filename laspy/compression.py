@@ -1,5 +1,4 @@
-""" The functions related to the LAZ format (compressed LAS)
-"""
+"""The functions related to the LAZ format (compressed LAS)"""
 
 from ._compression.backend import *
 from ._compression.format import *

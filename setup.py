@@ -31,11 +31,11 @@ setup(
             "sphinx-rtd-theme",
             "nox",
             "attrs>=24.1",  # Needed for nox <= 2025.05.01 to work
-            "black==22.3.0",
+            "black==25.12.0",
             "pytest-benchmark",
             "m2r2",
             "rangehttpserver",
-            "isort==5.11.5",
+            "isort==7.0.0",
         ],
         "lazrs": ["lazrs>=0.7.0, < 0.8.0"],
         "laszip": ["laszip >= 0.2.1, < 0.3.0"],

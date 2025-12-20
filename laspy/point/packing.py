@@ -1,5 +1,4 @@
-""" This module contains functions to pack and unpack point dimensions
-"""
+"""This module contains functions to pack and unpack point dimensions"""
 
 import numpy as np
 
