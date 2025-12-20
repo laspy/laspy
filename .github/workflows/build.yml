@@ -3,7 +3,7 @@ name: Build
 on:
   push:
     branches:
-    - '*'
+    - 'main'
   pull_request:
     branches:
     - '*'
@@ -25,46 +25,46 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v3
       with:
         python-version: ${{ matrix.python-version }}
-
-    - shell: bash -l {0}
-      run: |
-        conda info
-        conda list
+        auto-activate: true
 
     - name: Display Python version
+      shell: bash -el {0}
       run: |
           python -c "import sys; print(sys.version)"
 
     - name: Install With LAZ backend
       if: matrix.laz-backend != 'None'
+      shell: bash -el {0}
       run: pip install .[${{ matrix.laz-backend }},dev,pyproj,cli]
 
     - name: Install Without LAZ backend
       if: matrix.laz-backend == 'None'
+      shell: bash -el {0}
       run: pip install .[dev,pyproj,cli]
 
     # Install dependencies which are optional
     # so that the tests corresponding to them runs.
     - name: Install Optional depencencies
+      shell: bash -el {0}
       run: pip install requests rangehttpserver
 
     # Some crs tests require pdal
     - name: Install pdal
       if: matrix.python-version != '3.13'
-      shell: bash -l {0}
+      shell: bash -el {0}
       run: | 
         conda install -c conda-forge pdal "gdal<=3.8"
         pdal --version
 
     - name: Install pdal
       if: matrix.python-version == '3.13'
-      shell: bash -l {0}
+      shell: bash -el {0}
       run: | 
         conda install -c conda-forge pdal "gdal>=3.9"
         pdal --version
 
     - name: Run Tests
-      shell: bash -l {0}
+      shell: bash -el {0}
       run: |
         pytest -v
 
@@ -89,24 +89,23 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-
       - name: Display Python version
+        shell: bash -el {0}
         run: |
           python -c "import sys; print(sys.version)"
 
       - name: Install With LAZ backend
         if: matrix.laz-backend != 'None'
+        shell: bash -el {0}
         run: pip install .[${{ matrix.laz-backend }},pyproj,cli]
 
       - name: Install Without LAZ backend
         if: matrix.laz-backend == 'None'
+        shell: bash -el {0}
         run: pip install .[pyproj,cli]
 
       - name: Import laspy
+        shell: bash -el {0}
         run: |
           python -c "import laspy"
 
