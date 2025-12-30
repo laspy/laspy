@@ -552,6 +552,12 @@ class ExtraBytesVlr(BaseKnownVLR):
 
 
 class WaveformPacketStruct(ctypes.LittleEndianStructure):
+    bits_per_sample: int
+    waveform_compression_type: int
+    number_of_samples: int
+    temporal_sample_spacing: int
+    digitizer_gain: float
+    digitizer_offset: float
     _pack_ = 1
     _fields_ = [
         ("bits_per_sample", ctypes.c_ubyte),
@@ -570,13 +576,13 @@ class WaveformPacketStruct(ctypes.LittleEndianStructure):
 class WaveformPacketVlr(BaseKnownVLR):
     def __init__(self, record_id, description=""):
         super().__init__(record_id=record_id, description=description)
-        self.parsed_record = None
+        self.parsed_record: WaveformPacketStruct | None = None
 
     def parse_record_data(self, record_data):
         self.parsed_record = WaveformPacketStruct.from_buffer_copy(record_data)
 
     def record_data_bytes(self):
-        return bytes(self.parsed_record)
+        return bytes(self.parsed_record) if self.parsed_record is not None else b""
 
     @staticmethod
     def official_record_ids():
