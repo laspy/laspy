@@ -6,12 +6,14 @@ in the context of Las point data
 
 import logging
 from copy import deepcopy
+from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Optional
+from typing import Any
 
 import numpy as np
 
 from ..point import PointFormat
+from ..waveform.record import IWaveformReader, WaveformRecord
 from . import dims
 from .dims import OLD_LASPY_NAMES, ScaledArrayView
 
@@ -39,6 +41,21 @@ class DimensionNameValidity(Enum):
     Invalid = auto()
 
 
+@dataclass(frozen=True, slots=True)
+class LazyWaveformState:
+    reader: IWaveformReader
+
+
+@dataclass(frozen=True, slots=True)
+class EagerWaveformState:
+    reader: IWaveformReader
+    waveforms: WaveformRecord
+    points_waveform_index: np.ndarray[Any, np.dtype[np.int64]]
+
+
+WaveformState = LazyWaveformState | EagerWaveformState
+
+
 class PackedPointRecord:
     """
     In the PackedPointRecord, fields that are a combinations of many sub-fields (fields stored on less than a byte)
@@ -57,10 +74,69 @@ class PackedPointRecord:
     True
     """
 
-    def __init__(self, data: np.ndarray, point_format: PointFormat):
+    array: np.ndarray
+    point_format: PointFormat
+    sub_fields_dict: dict[str, tuple[str, dims.SubField]]
+    _waveform_state: WaveformState | None
+
+    def __init__(
+        self,
+        data: np.ndarray,
+        point_format: PointFormat,
+        *,
+        waveform_state: WaveformState | None = None,
+    ):
         self.__dict__["array"] = data
         self.__dict__["point_format"] = point_format
         self.__dict__["sub_fields_dict"] = dims.get_sub_fields_dict(point_format.id)
+        self.__dict__["_waveform_state"] = None
+        self._set_waveform_state(waveform_state)
+
+    @staticmethod
+    def _normalize_waveform_state(
+        waveform_state: WaveformState | None,
+    ) -> WaveformState | None:
+        match waveform_state:
+            case EagerWaveformState(
+                reader=reader,
+                waveforms=waveforms,
+                points_waveform_index=points_waveform_index,
+            ):
+                return EagerWaveformState(
+                    reader,
+                    waveforms,
+                    np.asarray(points_waveform_index, dtype=np.int64),
+                )
+            case LazyWaveformState() | None:
+                return waveform_state
+            case _:
+                raise TypeError(
+                    "waveform_state must be None, LazyWaveformState, or EagerWaveformState"
+                )
+
+    def _set_waveform_state(self, waveform_state: WaveformState | None) -> None:
+        self.__dict__["_waveform_state"] = self._normalize_waveform_state(
+            waveform_state
+        )
+
+    def _load_waveforms_from_source(self) -> None:
+        match self._waveform_state:
+            case EagerWaveformState():
+                return
+            case LazyWaveformState(reader=reader):
+                waveforms, points_waveform_index = WaveformRecord.from_points(
+                    self.array,
+                    reader,
+                )
+                self._set_waveform_state(
+                    EagerWaveformState(
+                        reader,
+                        waveforms,
+                        points_waveform_index,
+                    )
+                )
+            case None:
+                raise ValueError("No waveform data available")
 
     @property
     def point_size(self):
@@ -136,13 +212,72 @@ class PackedPointRecord:
             except ValueError:
                 pass
 
+    def _copy_waveform_state(self) -> WaveformState | None:
+        match self._waveform_state:
+            case EagerWaveformState(
+                reader=reader,
+                waveforms=waveforms,
+                points_waveform_index=points_waveform_index,
+            ):
+                return EagerWaveformState(
+                    reader,
+                    WaveformRecord(
+                        waveforms.samples.copy(), waveforms.sample_spacing_ps
+                    ),
+                    points_waveform_index.copy(),
+                )
+            case LazyWaveformState():
+                return self._waveform_state
+            case None:
+                return None
+
     def copy(self) -> "PackedPointRecord":
-        return PackedPointRecord(self.array.copy(), deepcopy(self.point_format))
+        return PackedPointRecord(
+            self.array.copy(),
+            deepcopy(self.point_format),
+            waveform_state=self._copy_waveform_state(),
+        )
 
     def memoryview(self) -> memoryview:
         return memoryview(self.array)
 
+    def _resize_waveform_state(self, new_size: int) -> WaveformState | None:
+        current_size = len(self.array)
+        match self._waveform_state:
+            case EagerWaveformState(
+                reader=reader,
+                waveforms=waveforms,
+                points_waveform_index=points_waveform_index,
+            ):
+                if new_size < current_size:
+                    subset = self._subset(slice(0, new_size))
+                    eager_state = subset._waveform_state
+                    assert isinstance(eager_state, EagerWaveformState)
+                    return eager_state
+
+                if new_size > current_size:
+                    resized_samples = np.zeros(
+                        (len(waveforms) + 1,), dtype=waveforms.samples.dtype
+                    )
+                    if len(waveforms):
+                        resized_samples[:-1] = waveforms.samples
+
+                    resized_index = np.empty((new_size,), dtype=np.int64)
+                    resized_index[:current_size] = points_waveform_index
+                    resized_index[current_size:] = len(waveforms)
+
+                    return EagerWaveformState(
+                        reader,
+                        WaveformRecord(resized_samples, waveforms.sample_spacing_ps),
+                        resized_index,
+                    )
+
+                return self._waveform_state
+            case LazyWaveformState() | None:
+                return self._waveform_state
+
     def resize(self, new_size: int) -> None:
+        resized_waveform_state = self._resize_waveform_state(new_size)
         size_diff = new_size - len(self.array)
         if size_diff > 0:
             self.array = np.append(
@@ -150,6 +285,7 @@ class PackedPointRecord:
             )
         elif size_diff < 0:
             self.array = self.array[:new_size].copy()
+        self._set_waveform_state(resized_waveform_state)
 
     def _append_zeros_if_too_small(self, value):
         """Appends zeros to the points stored if the value we are trying to
@@ -168,12 +304,61 @@ class PackedPointRecord:
             return 1
         return self.array.shape[0]
 
+    def _subset(
+        self,
+        point_indexer: int | slice | np.ndarray[Any, np.dtype[Any]] | tuple[Any, ...],
+    ):
+        match self._waveform_state:
+            case EagerWaveformState(
+                reader=reader,
+                waveforms=waveforms,
+                points_waveform_index=points_waveform_index,
+            ):
+                points_waveform_index_subset = points_waveform_index[point_indexer]
+                unique_waves_indices, inverse_indices = np.unique(
+                    points_waveform_index_subset, return_inverse=True
+                )
+                waveforms_subset = WaveformRecord(
+                    waveforms.samples[unique_waves_indices],
+                    waveforms.sample_spacing_ps,
+                )
+                waveform_state = EagerWaveformState(
+                    reader,
+                    waveforms_subset,
+                    inverse_indices,
+                )
+            case LazyWaveformState():
+                waveform_state = self._waveform_state
+            case None:
+                waveform_state = None
+        return PackedPointRecord(
+            self.array[point_indexer],
+            self.point_format,
+            waveform_state=waveform_state,
+        )
+
     def __getitem__(self, item):
         """Gives access to the underlying numpy array
         Unpack the dimension if item is the name a sub-field
         """
-        if isinstance(item, (int, slice, np.ndarray, list, tuple)):
-            return PackedPointRecord(self.array[item], self.point_format)
+        if isinstance(item, (int, slice, np.ndarray)):
+            return self._subset(item)
+
+        if isinstance(item, tuple):
+            if len(item) > 0 and all(isinstance(el, str) for el in item):
+                return PackedPointRecord(self.array[list(item)], self.point_format)
+            if len(item) > 0 and all(
+                np.isscalar(el) and not isinstance(el, str) for el in item
+            ):
+                return self._subset(np.asarray(item))
+            return self._subset(item)
+
+        if isinstance(item, list):
+            if len(item) > 0 and all(isinstance(el, str) for el in item):
+                return PackedPointRecord(self.array[item], self.point_format)
+            if len(item) == 0:
+                return self._subset(np.asarray(item, dtype=np.intp))
+            return self._subset(np.asarray(item))
 
         try:
             item = OLD_LASPY_NAMES[item]
@@ -197,6 +382,19 @@ class PackedPointRecord:
                 )
         except ValueError:
             pass
+
+        # 3) Is it waveform ?
+        if item == "waveform":
+            self._load_waveforms_from_source()
+            match self._waveform_state:
+                case EagerWaveformState() as waveform_state:
+                    return waveform_state.waveforms.samples["waveform"][
+                        waveform_state.points_waveform_index
+                    ]
+                case _:
+                    raise RuntimeError(
+                        "Internal error: waveforms should be eager after loading"
+                    )
 
         return self.array[item]
 
@@ -278,8 +476,20 @@ class ScaleAwarePointRecord(PackedPointRecord):
 
     """
 
-    def __init__(self, array, point_format, scales, offsets):
-        super().__init__(array, point_format)
+    def __init__(
+        self,
+        array,
+        point_format,
+        scales,
+        offsets,
+        *,
+        waveform_state: WaveformState | None = None,
+    ):
+        super().__init__(
+            array,
+            point_format,
+            waveform_state=waveform_state,
+        )
         self.scales = np.array(scales)
         self.offsets = np.array(offsets)
 
@@ -331,7 +541,7 @@ class ScaleAwarePointRecord(PackedPointRecord):
         else:
             if any(arg is None for arg in first_set):
                 raise ValueError(
-                    "You have to provide all 3: " "point_format, scale and offsets"
+                    "You have to provide all 3: point_format, scale and offsets"
                 )
 
         data = np.zeros(point_count, point_format.dtype())
@@ -361,15 +571,46 @@ class ScaleAwarePointRecord(PackedPointRecord):
         self.offsets = offsets
 
     def __getitem__(self, item):
-        if isinstance(item, (int, slice, np.ndarray, list, tuple)):
-            if isinstance(item, (list, tuple)):
-                # x, y ,z do not really exists in the array, but they are computed from X, Y, Z
-                item = [
-                    item if item not in ("x", "y", "z") else item.upper()
-                    for item in item
-                ]
+        point_indexer = None
+        if isinstance(item, (int, slice, np.ndarray)):
+            point_indexer = item
+        elif isinstance(item, (list, tuple)):
+            # x, y, z do not really exists in the array, but they are computed from X, Y, Z
+            normalized_item = [
+                name if name not in ("x", "y", "z") else name.upper() for name in item
+            ]
+            if len(normalized_item) > 0 and all(
+                isinstance(name, str) for name in normalized_item
+            ):
+                projected_record = PackedPointRecord(
+                    self.array[normalized_item], self.point_format
+                )
+                return ScaleAwarePointRecord(
+                    projected_record.array,
+                    projected_record.point_format,
+                    self.scales,
+                    self.offsets,
+                    waveform_state=projected_record._waveform_state,
+                )
+            elif isinstance(item, tuple):
+                if len(item) > 0 and all(
+                    np.isscalar(el) and not isinstance(el, str) for el in item
+                ):
+                    point_indexer = np.asarray(item)
+                else:
+                    point_indexer = item
+            elif len(normalized_item) == 0:
+                point_indexer = np.asarray(normalized_item, dtype=np.intp)
+            else:
+                point_indexer = np.asarray(normalized_item)
+        if point_indexer is not None:
+            point_subset_record = self._subset(point_indexer)
             return ScaleAwarePointRecord(
-                self.array[item], self.point_format, self.scales, self.offsets
+                point_subset_record.array,
+                point_subset_record.point_format,
+                self.scales,
+                self.offsets,
+                waveform_state=point_subset_record._waveform_state,
             )
 
         if item == "x":

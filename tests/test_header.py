@@ -367,3 +367,9 @@ def test_global_encoding_gps_time_type():
     assert encoding.gps_time_type is GpsTimeType.WEEK_TIME
     encoding.gps_time_type = GpsTimeType.WEEK_TIME
     assert encoding.gps_time_type is GpsTimeType.WEEK_TIME
+
+
+def test_global_encoding_unset_bit_bug():
+    encoding = GlobalEncoding()
+    encoding.waveform_data_packets_external = False
+    assert encoding.waveform_data_packets_external is False

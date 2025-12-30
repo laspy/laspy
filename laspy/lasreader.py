@@ -1,6 +1,10 @@
 import io
 import logging
+import os
+from pathlib import Path
 from typing import BinaryIO, Iterable, Optional, Union
+
+import numpy as np
 
 from . import errors
 from ._compression.backend import LazBackend
@@ -11,6 +15,13 @@ from .header import LasHeader
 from .lasdata import LasData
 from .point import record
 from .vlrs.vlrlist import VLRList
+from .waveform import WaveformRecord
+from .waveform.descriptor import (
+    WaveformPacketDescriptorRegistry,
+    WavePacketDescriptorRecordId,
+)
+from .waveform.mode import WaveformMode
+from .waveform.record import IWaveformReader
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +36,7 @@ class LasReader:
         laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
         read_evlrs: bool = True,
         decompression_selection: DecompressionSelection = DecompressionSelection.all(),
+        waveform_mode: WaveformMode = WaveformMode.NEVER,
     ):
         """
         Initialize the LasReader
@@ -60,6 +72,9 @@ class LasReader:
         self._source = source
 
         self.points_read = 0
+        self._waveform_mode = WaveformMode(waveform_mode)
+        self._waveform_source: Optional[WaveReader] = None
+        self._waveform_descriptors_registry = WaveformPacketDescriptorRegistry()
 
     @property
     def evlrs(self) -> Optional[VLRList]:
@@ -75,7 +90,7 @@ class LasReader:
             self._point_source = self._create_point_source(self._source)
         return self._point_source
 
-    def read_points(self, n: int) -> record.ScaleAwarePointRecord:
+    def _read_points(self, n: int) -> record.ScaleAwarePointRecord:
         """Read n points from the file
 
 
@@ -116,14 +131,152 @@ class LasReader:
         self.points_read += n
         return points
 
-    def read(self) -> LasData:
+    def _ensure_waveform_source(self) -> bool:
+        if self._waveform_source is not None:
+            return True
+
+        if not self.header.point_format.has_waveform_packet:
+            return False
+
+        if not self.header.global_encoding.waveform_data_packets_external:
+            raise ValueError(
+                "This reader expects waveform data to live in an external .wdp file"
+            )
+
+        source_name = getattr(self._source, "name", None)
+        if source_name is None:
+            raise ValueError(
+                "Cannot locate the external waveform .wdp file from this source."
+            )
+
+        self._waveform_descriptors_registry = (
+            WaveformPacketDescriptorRegistry.from_vlrs(self.header.vlrs)
+        )
+        wave_dtype = self._waveform_descriptors_registry.dtype()
+
+        las_path = Path(source_name)
+        wdp_path = las_path.with_suffix(".wdp")
+        waveform_file = wdp_path.open("rb")
+        if wave_dtype is None:
+            waveform_file.close()
+            raise ValueError("No waveform packet descriptors found in VLRs")
+
+        self._waveform_source = WaveReader(
+            waveform_file,
+            bits_per_sample=self._waveform_descriptors_registry.bits_per_sample,
+            number_of_samples=self._waveform_descriptors_registry.number_of_samples,
+            temporal_sample_spacing=self._waveform_descriptors_registry.temporal_sample_spacing,
+            wave_dtype=wave_dtype,
+            closefd=True,
+            source_path=wdp_path,
+        )
+        waveform_file.seek(0, os.SEEK_SET)
+        return True
+
+    def _ensure_points_have_valid_waveform_descriptors(
+        self, points: record.ScaleAwarePointRecord
+    ) -> None:
+        descriptor_indices = points.array["wavepacket_index"]
+        no_waveform_mask = descriptor_indices == 0
+
+        valid_descriptor_indices = np.array(
+            [
+                record_id - WavePacketDescriptorRecordId.RECORD_ID_OFFSET
+                for record_id in self._waveform_descriptors_registry.data.keys()
+            ],
+            dtype=descriptor_indices.dtype,
+        )
+        known_descriptor_mask = np.isin(descriptor_indices, valid_descriptor_indices)
+        unknown_descriptor_mask = ~known_descriptor_mask & ~no_waveform_mask
+        missing_descriptors = bool(np.any(unknown_descriptor_mask))
+
+        if missing_descriptors:
+            if valid_descriptor_indices.size == 0:
+                raise ValueError("No waveform packet descriptors found in VLRs")
+            first_missing_point = int(np.flatnonzero(unknown_descriptor_mask)[0])
+            missing_descriptor_index = int(descriptor_indices[first_missing_point])
+            raise ValueError(
+                f"No matching descriptor found for point {first_missing_point}.\n"
+                f" Available waveform descriptors record IDs: {list(self._waveform_descriptors_registry.data.keys())}\n"
+                f" Waveform descriptor record ID found: {WavePacketDescriptorRecordId.from_index(missing_descriptor_index)}"
+            )
+
+    def read_points(
+        self,
+        n: int,
+        *,
+        waveform_mode: WaveformMode | None = None,
+    ) -> record.ScaleAwarePointRecord:
+        """Read n points from the file, and their associated waveforms.
+
+
+        Will only read as many points as the header advertise.
+        That is, if you ask to read 50 points and there are only 45 points left
+        this function will only read 45 points.
+
+        If there are no points left to read, returns an empty point record.
+
+        Parameters
+        ----------
+        n: The number of points to read
+           if n is less than 0, this function will read the remaining points
+        """
+        if waveform_mode is None:
+            waveform_mode = self._waveform_mode
+        else:
+            waveform_mode = WaveformMode(waveform_mode)
+
+        waveform_available = False
+        if waveform_mode is not WaveformMode.NEVER:
+            waveform_available = self._ensure_waveform_source()
+
+        points = self._read_points(n)
+        if (
+            len(points) == 0
+            or waveform_mode is WaveformMode.NEVER
+            or not waveform_available
+            or self._waveform_source is None
+        ):
+            points._set_waveform_state(None)
+            return points
+
+        self._ensure_points_have_valid_waveform_descriptors(points)
+
+        if waveform_mode is WaveformMode.LAZY:
+            points._set_waveform_state(record.LazyWaveformState(self._waveform_source))
+            return points
+
+        waveforms_record, points_waveform_index = WaveformRecord.from_points(
+            points.array,
+            self._waveform_source,
+        )
+
+        points._set_waveform_state(
+            record.EagerWaveformState(
+                self._waveform_source,
+                waveforms_record,
+                points_waveform_index,
+            )
+        )
+        return points
+
+    def read(
+        self,
+        *,
+        waveform_mode: WaveformMode | None = None,
+    ) -> LasData:
         """
         Reads all the points that are not read and returns a LasData object
 
         This will also read EVLRS
 
         """
-        points = self.read_points(-1)
+        if self._waveform_source is not None:
+            self._waveform_source.source.seek(0, os.SEEK_SET)
+        points = self.read_points(
+            -1,
+            waveform_mode=waveform_mode,
+        )
         las_data = LasData(header=self.header, points=points)
 
         shall_read_evlr = (
@@ -238,6 +391,9 @@ class LasReader:
 
     def close(self) -> None:
         """closes the file object used by the reader"""
+        if self._waveform_source is not None:
+            self._waveform_source.close()
+            self._waveform_source = None
 
         if self.closefd:
             # We check the actual source,
@@ -312,7 +468,7 @@ class PointChunkIterator:
         self.points_per_iteration = points_per_iteration
 
     def __next__(self) -> record.ScaleAwarePointRecord:
-        points = self.reader.read_points(self.points_per_iteration)
+        points = self.reader._read_points(self.points_per_iteration)
         if not points:
             raise StopIteration
         return points
@@ -372,3 +528,69 @@ class EmptyPointReader(IPointReader):
 
     def seek(self, point_index: int) -> None:
         pass
+
+
+class WaveReader(IWaveformReader):
+    def __init__(
+        self,
+        source: BinaryIO,
+        bits_per_sample: int,
+        number_of_samples: int,
+        temporal_sample_spacing: int,
+        wave_dtype: np.dtype,
+        closefd: bool = True,
+        source_path: Path | None = None,
+    ):
+        self._source = source
+        self.bits_per_sample = bits_per_sample
+        self.number_of_samples = number_of_samples
+        self._temporal_sample_spacing = temporal_sample_spacing
+        self._wave_dtype = wave_dtype
+        self._closefd = closefd
+        self._source_path = source_path
+        self._wave_size_bytes = (self.bits_per_sample // 8) * self.number_of_samples
+
+    @property
+    def source(self) -> BinaryIO:
+        return self._source
+
+    @property
+    def temporal_sample_spacing(self) -> int:
+        return self._temporal_sample_spacing
+
+    @property
+    def wave_dtype(self) -> np.dtype:
+        return self._wave_dtype
+
+    @property
+    def wave_size_bytes(self) -> int:
+        return self._wave_size_bytes
+
+    def _ensure_open(self) -> None:
+        if self._source.closed:
+            if self._source_path is None:
+                raise ValueError(
+                    "Waveform source is closed and cannot be reopened; "
+                    "keep the reader open or use fullwave='eager'."
+                )
+            self._source = self._source_path.open("rb")
+            self._closefd = True
+
+    def read_n_waveforms(self, n: int) -> bytearray:
+        self._ensure_open()
+        total_size = n * self.wave_size_bytes
+        data = self._source.read(total_size)
+        if len(data) != total_size:
+            raise ValueError(
+                f"failed to fill whole waveform buffer: requested {total_size} bytes, got {len(data)}"
+            )
+        return bytearray(data)
+
+    def seek(self, waveform_index: int) -> None:
+        self._ensure_open()
+        offset = waveform_index * self.wave_size_bytes
+        self._source.seek(offset)
+
+    def close(self) -> None:
+        if self._closefd:
+            self._source.close()

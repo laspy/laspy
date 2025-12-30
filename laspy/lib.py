@@ -19,6 +19,7 @@ from .lasreader import LasReader
 from .laswriter import LasWriter
 from .point import PointFormat, dims, record
 from .vlrs.vlrlist import VLRList
+from .waveform.mode import WaveformMode
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,7 @@ def open_las(
     encoding_errors: str = "strict",
     read_evlrs: bool = True,
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
+    fullwave: str = "never",
 ) -> Union[LasReader, LasWriter, LasAppender]:
     """The laspy.open opens a LAS/LAZ file in one of the 3 supported
     mode:
@@ -127,6 +129,8 @@ def open_las(
     .. versionadded:: 2.4
         The ``read_evlrs`` and ``decompression_selection`` parameters.
     """
+    waveform_mode = WaveformMode(fullwave)
+
     if mode == "r":
         if header is not None:
             raise LaspyException(
@@ -151,6 +155,7 @@ def open_las(
                 laz_backend=laz_backend,
                 read_evlrs=read_evlrs,
                 decompression_selection=decompression_selection,
+                waveform_mode=waveform_mode,
             )
         except:
             if closefd:
@@ -212,6 +217,7 @@ def read_las(
     laz_backend=LazBackend.detect_available(),
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
     encoding_errors: str = "strict",
+    fullwave: str = "never",
 ):
     """Entry point for reading las data in laspy
 
@@ -261,6 +267,7 @@ def read_las(
         laz_backend=laz_backend,
         decompression_selection=decompression_selection,
         encoding_errors=encoding_errors,
+        fullwave=fullwave,
     ) as reader:
         return reader.read()
 

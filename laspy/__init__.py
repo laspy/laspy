@@ -19,5 +19,6 @@ from .point.dims import supported_point_formats, supported_versions
 from .point.format import lost_dimensions
 from .point.record import PackedPointRecord, ScaleAwarePointRecord
 from .vlrs import VLR
+from .waveform.mode import WaveformMode
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())

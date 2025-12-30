@@ -54,6 +54,7 @@ User Guide
 
     installation
     intro
+    waveform
     basic
     examples
     complete_tutorial

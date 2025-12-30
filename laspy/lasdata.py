@@ -2,18 +2,21 @@ import logging
 import pathlib
 import typing
 from copy import deepcopy
-from typing import BinaryIO, Iterable, List, Optional, Sequence, Union, overload
+from typing import Any, BinaryIO, Iterable, List, Optional, Sequence, Union, overload
 
 import numpy as np
+from numpy.typing import NDArray
 
 from . import errors
 from .compression import LazBackend
 from .header import LasHeader
 from .laswriter import LasWriter
-from .point import ExtraBytesParams, PointFormat, dims, record
-from .point.dims import OLD_LASPY_NAMES, ScaledArrayView, SubFieldView
+from .point import ExtraBytesParams, PointFormat, record
+from .point.dims import ScaledArrayView, SubFieldView
 from .point.record import DimensionNameValidity
 from .vlrs.vlrlist import VLRList
+from .waveform import WaveformRecord
+from .waveform.utils import deduplicate_waveform_indices, iter_runs
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +55,7 @@ class LasData:
                 header.point_format,
                 scales=header.scales,
                 offsets=header.offsets,
+                waveform_state=points._waveform_state,
             )
         else:
             assert np.all(header.scales, points.scales)
@@ -230,7 +234,11 @@ class LasData:
     def write(
         self,
         destination: str,
+        do_compress: Optional[bool] = ...,
         laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+        *,
+        waveform_chunksize: int = ...,
+        waveforms: bool = ...,
     ) -> None: ...
 
     @overload
@@ -239,9 +247,20 @@ class LasData:
         destination: BinaryIO,
         do_compress: Optional[bool] = ...,
         laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+        *,
+        waveform_chunksize: int = ...,
+        waveforms: bool = ...,
     ) -> None: ...
 
-    def write(self, destination, do_compress=None, laz_backend=None):
+    def write(
+        self,
+        destination,
+        do_compress=None,
+        laz_backend=None,
+        *,
+        waveform_chunksize: int = 64 * 1024 * 1024,
+        waveforms: bool = True,
+    ):
         """Writes to a stream or file
 
         .. note::
@@ -264,15 +283,197 @@ class LasData:
         laz_backend: optional, the laz backend to use
             By default, laspy detect available backends
         """
+        should_write_waveforms = waveforms and self.points._waveform_state is not None
         if isinstance(destination, (str, pathlib.Path)):
-            do_compress = pathlib.Path(destination).suffix.lower() == ".laz"
+            destination_path = pathlib.Path(destination)
+            if should_write_waveforms:
+                self._write_waveforms(
+                    destination_path,
+                    waveform_chunksize=waveform_chunksize,
+                )
+            do_compress = destination_path.suffix.lower() == ".laz"
 
-            with open(destination, mode="wb+") as out:
+            with destination_path.open(mode="wb+") as out:
                 self._write_to(out, do_compress=do_compress, laz_backend=laz_backend)
         else:
+            if should_write_waveforms:
+                raise NotImplementedError(
+                    "Writing to file-like objects is not supported for waveform LAS/LAZ files"
+                )
             self._write_to(
                 destination, do_compress=do_compress, laz_backend=laz_backend
             )
+
+    def _write_waveforms(
+        self,
+        destination_path: pathlib.Path,
+        *,
+        waveform_chunksize: int,
+    ) -> None:
+        if "wavepacket_index" not in self.points.array.dtype.names:
+            raise ValueError(
+                "Point data has no 'wavepacket_index' dimension, cannot write waveforms"
+            )
+
+        point_count = len(self.points)
+        has_waveform_mask = np.asarray(
+            self.points.array["wavepacket_index"] != 0, dtype=bool
+        )
+        offsets = np.zeros(point_count, dtype=np.uint64)
+        sizes = np.zeros(point_count, dtype=self.points.array["wavepacket_size"].dtype)
+        if not has_waveform_mask.any():
+            self.points.array["wavepacket_offset"] = offsets
+            self.points.array["wavepacket_size"] = sizes
+            self._set_waveform_storage_flags(False)
+            return
+
+        match self.points._waveform_state:
+            case record.LazyWaveformState() as lazy_state:
+                self._write_wdp_lazy(
+                    destination=destination_path,
+                    lazy_state=lazy_state,
+                    has_waveform_mask=has_waveform_mask,
+                    waveform_size=lazy_state.reader.wave_size_bytes,
+                    chunksize=waveform_chunksize,
+                )
+            case record.EagerWaveformState() as eager_state:
+                self._write_wdp_eager(
+                    destination_path,
+                    has_waveform_mask,
+                    eager_state=eager_state,
+                )
+            case None:
+                raise RuntimeError(
+                    "Internal error: _write_waveforms called without waveform state"
+                )
+
+    def _write_wdp_eager(
+        self,
+        destination_path: pathlib.Path,
+        has_waveform_mask: NDArray[np.bool],
+        *,
+        eager_state: record.EagerWaveformState,
+    ) -> None:
+        waveform_reader = eager_state.reader
+        waveforms = eager_state.waveforms
+        points_waveform_index = eager_state.points_waveform_index
+
+        point_count = len(self.points)
+        wave_size_bytes = waveform_reader.wave_size_bytes
+        offsets = np.zeros(point_count, dtype=np.uint64)
+        offsets[has_waveform_mask] = (
+            np.asarray(points_waveform_index[has_waveform_mask], dtype=np.uint64)
+            * wave_size_bytes
+        )
+        self.points.array["wavepacket_offset"] = offsets
+        self._finalize_waveform_write(has_waveform_mask, wave_size_bytes)
+        self._write_wdp(destination_path.with_suffix(".wdp"), waveforms)
+
+    @staticmethod
+    def _write_wdp(path: pathlib.Path, waveforms: WaveformRecord | None) -> None:
+        if waveforms is None:
+            return
+        samples = np.ascontiguousarray(waveforms.samples)
+        with path.open("wb") as out_wdp:
+            out_wdp.write(memoryview(samples))
+
+    def _write_wdp_lazy(
+        self,
+        *,
+        destination: pathlib.Path,
+        lazy_state: record.LazyWaveformState,
+        has_waveform_mask: NDArray[np.bool],
+        waveform_size: int,
+        chunksize: int,
+    ) -> None:
+        self._validate_waveform_sizes(has_waveform_mask, waveform_size)
+
+        point_count = len(self.points)
+        if point_count == 0:
+            destination.with_suffix(".wdp").open("wb").close()
+            return
+
+        points_per_chunk = self._points_per_chunk(waveform_size, chunksize)
+
+        wdp_path = destination.with_suffix(".wdp")
+        self._write_wdp_lazy_dedup(
+            wdp_path,
+            lazy_state.reader,
+            has_waveform_mask,
+            waveform_size,
+            points_per_chunk,
+        )
+        self._finalize_waveform_write(has_waveform_mask, waveform_size)
+
+    def _validate_waveform_sizes(
+        self,
+        has_waveform_mask: NDArray[np.bool],
+        waveform_size: int,
+    ) -> None:
+        sizes = np.asarray(self.points.array["wavepacket_size"], dtype=np.uint64)
+        sizes_to_check = sizes[has_waveform_mask]
+
+        actual = set(sizes_to_check)
+        if actual - {waveform_size}:
+            raise ValueError(
+                f"Inconsistent waveform sizes in point data: {actual} but descriptor size is {waveform_size}"
+            )
+
+    @staticmethod
+    def _points_per_chunk(waveform_size: int, chunksize: int) -> int:
+        if chunksize <= 0:
+            raise ValueError("waveform_chunksize must be > 0")
+        return max(1, int(chunksize // waveform_size))
+
+    def _write_wdp_lazy_dedup(
+        self,
+        wdp_path: pathlib.Path,
+        waveform_reader: record.IWaveformReader,
+        has_waveform_mask: NDArray[np.bool],
+        waveform_size: int,
+        points_per_chunk: int,
+    ) -> None:
+        point_count = len(self.points)
+        offsets = np.asarray(self.points.array["wavepacket_offset"], dtype=np.uint64)
+        unique_indices, inverse_indices = deduplicate_waveform_indices(
+            offsets, has_waveform_mask, waveform_size
+        )
+
+        with wdp_path.open("wb") as dst:
+            for run_start, run_end in iter_runs(unique_indices):
+                count = int(run_end - run_start + 1)
+                waveform_reader.seek(run_start)
+                while count > 0:
+                    chunk_count = min(points_per_chunk, count)
+                    dst.write(waveform_reader.read_n_waveforms(int(chunk_count)))
+                    count -= chunk_count
+
+        offset_dtype = self.points.array["wavepacket_offset"].dtype
+        new_offsets = np.zeros(point_count, dtype=offset_dtype)
+        if has_waveform_mask.any():
+            new_offsets[has_waveform_mask] = (
+                inverse_indices.astype(np.uint64) * waveform_size
+            ).astype(offset_dtype, copy=False)
+        self.points.array["wavepacket_offset"] = new_offsets
+
+    def _finalize_waveform_write(
+        self,
+        has_waveform_mask: NDArray[np.bool],
+        waveform_size: int,
+    ) -> None:
+        size_dtype = self.points.array["wavepacket_size"].dtype
+        sizes = np.zeros(len(self.points), dtype=size_dtype)
+        sizes[has_waveform_mask] = waveform_size
+        self.points.array["wavepacket_size"] = sizes
+
+        self._set_waveform_storage_flags(bool(has_waveform_mask.any()))
+
+    def _set_waveform_storage_flags(self, has_waveforms: bool) -> None:
+        self.header.global_encoding.waveform_data_packets_external = has_waveforms
+        if self.header.global_encoding.waveform_data_packets_internal:
+            self.header.global_encoding.waveform_data_packets_internal = False
+        if self.header.version.minor >= 3:
+            self.header.start_of_waveform_data_packet_record = 0
 
     def _write_to(
         self,

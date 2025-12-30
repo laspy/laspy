@@ -293,6 +293,17 @@ def test_las_data_getitem_slice():
     assert np.all(las.classification[10:] == 0)
 
 
+def test_las_data_getitem_scalar_returns_lasdata():
+    las = laspy.read(simple_las)
+    same_points = laspy.LasData(las.header, las.points)
+
+    assert same_points["X"].shape[0] == len(las.points)
+
+    subset = same_points[0]
+    assert isinstance(subset, laspy.LasData)
+    assert len(subset.points) == 1
+
+
 def test_change_scaling():
     """Check our change scaling method.
 

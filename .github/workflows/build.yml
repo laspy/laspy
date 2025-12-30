@@ -30,7 +30,7 @@ jobs:
       run: python -c "import sys; print(sys.version)"
 
     - name: Install hatch
-      run: pip install hatch
+      run: pip install "virtualenv<21" hatch
 
     - name: Run Tests
       run: |
