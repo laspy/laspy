@@ -42,7 +42,7 @@ setup(
         "pyproj": ["pyproj"],
         "requests": ["requests"],
         "cli": [
-            "typer[all] >= 0.8.0 ",
+            "typer >= 0.16.0 ",
             "rich >= 10.11.0",
         ],
     },
