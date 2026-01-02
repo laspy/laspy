@@ -21,7 +21,7 @@ setup(
     long_description=readme,
     long_description_content_type="text/markdown",
     packages=find_packages(exclude=("tests", "tests.cli")),
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     install_requires=["numpy"],
     extras_require={
         "dev": [
@@ -38,7 +38,7 @@ setup(
             "isort==7.0.0",
         ],
         "lazrs": ["lazrs>=0.7.0, < 0.8.0"],
-        "laszip": ["laszip >= 0.2.1, < 0.3.0"],
+        "laszip": ["laszip >= 0.3.0, < 0.4.0"],
         "pyproj": ["pyproj"],
         "requests": ["requests"],
         "cli": [

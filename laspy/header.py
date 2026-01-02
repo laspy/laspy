@@ -72,6 +72,8 @@ class GlobalEncoding:
     WAVEFORM_EXTERNAL_MASK = 0b0000_0000_0000_0100  # 1.3
     SYNTHETIC_RETURN_NUMBERS_MASK = 0b0000_0000_0000_1000  # 1.3
     WKT_MASK = 0b0000_0000_0001_0000  # 1.4
+    RESERVED = 0b0000_0000_0010_0000
+    GPS_TIME_OFFSET_MASK = 0b0000_0000_0100_0000
 
     def __init__(self, value=0):
         self.value = value
@@ -128,6 +130,18 @@ class GlobalEncoding:
     @wkt.setter
     def wkt(self, value):
         self._set_if_true(self.WKT_MASK, value)
+
+    @property
+    def gps_time_offset(self) -> bool:
+        return bool(self.value & self.GPS_TIME_OFFSET_MASK)
+
+    @gps_time_offset.setter
+    def gps_time_offset(self, value):
+        self._set_if_true(self.GPS_TIME_OFFSET_MASK, value)
+        if value:
+            # Standard says that of the offset mask is true,
+            # then the gps time type must also be
+            self._set_if_true(self.GPS_TIME_TYPE_MASK, value)
 
     @classmethod
     def read_from(cls, stream: BinaryIO) -> "GlobalEncoding":
@@ -251,6 +265,14 @@ class LasHeader:
         self.start_of_first_evlr: int = 0
         #: The number of evlrs in the file
         self.number_of_evlrs: int = 0
+
+        #: Las >= 1.5
+        #: Max value of GPS Time
+        self.max_gps_time: float = 0.0
+        #: Min value of GPS Time
+        self.min_gps_time: float = 0.0
+        #: Used to optimize GPS Time precision
+        self.gps_time_offset: int = 0
 
         #: EVLRs, even though they are not stored in the 'header'
         #: part of the file we keep them in this class
@@ -471,6 +493,9 @@ class LasHeader:
         self.maxs = np.ones(3, dtype=np.float64) * f64info.min
         self.mins = np.ones(3, dtype=np.float64) * f64info.max
 
+        self.max_gps_time = float(f64info.min)
+        self.min_gps_time = float(f64info.max)
+
         self.start_of_first_evlr = 0
         self.number_of_evlrs = 0
         self.point_count = 0
@@ -515,6 +540,13 @@ class LasHeader:
             self.z_min,
             (points["Z"].min() * self.z_scale) + self.z_offset,
         )
+
+        try:
+            gps_time = points["gps_time"]
+            self.max_gps_time = max(self.max_gps_time, gps_time.max())
+            self.min_gps_time = min(self.min_gps_time, gps_time.min())
+        except ValueError:
+            pass
 
         for return_number, count in zip(
             *np.unique(points.return_number, return_counts=True)
@@ -631,6 +663,12 @@ class LasHeader:
                 header.number_of_points_by_return[i] = int.from_bytes(
                     stream.read(8), little_endian, signed=False
                 )
+        if header.version.minor >= 5:
+            header.max_gps_time = struct.unpack("<d", stream.read(8))[0]
+            header.min_gps_time = struct.unpack("<d", stream.read(8))[0]
+            header.gps_time_offset = int.from_bytes(
+                stream.read(2), little_endian, signed=False
+            )
 
         current_pos = stream.tell()
         if current_pos < header_size:
@@ -820,6 +858,12 @@ class LasHeader:
                         8, little_endian, signed=False
                     )
                 )
+
+        if self.version.minor >= 5:
+            stream.write(struct.pack("<d", self.max_gps_time))
+            stream.write(struct.pack("<d", self.min_gps_time))
+            stream.write(self.gps_time_offset.to_bytes(2, little_endian, signed=False))
+
         stream.write(self.extra_header_bytes)
         stream.write(vlr_bytes)
         stream.write(self.extra_vlr_bytes)
@@ -994,4 +1038,5 @@ LAS_HEADERS_SIZE = {
     "1.2": 227,
     "1.3": 235,
     "1.4": 375,
+    "1.5": 393,
 }
