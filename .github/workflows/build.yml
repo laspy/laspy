@@ -17,62 +17,31 @@ jobs:
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
         python-version: [ "3.10", "3.11", "3.12", "3.13" ]
-        laz-backend: [ None, lazrs, laszip ]
+        env: [ dev, dev-laszip, dev-lazrs, dev-all ]
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
-    - uses: conda-incubator/setup-miniconda@v3
+    - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
-        auto-activate: true
 
     - name: Display Python version
-      shell: bash -el {0}
-      run: |
-          python -c "import sys; print(sys.version)"
+      run: python -c "import sys; print(sys.version)"
 
-    - name: Install With LAZ backend
-      if: matrix.laz-backend != 'None'
-      shell: bash -el {0}
-      run: pip install .[${{ matrix.laz-backend }},dev,pyproj,cli]
-
-    - name: Install Without LAZ backend
-      if: matrix.laz-backend == 'None'
-      shell: bash -el {0}
-      run: pip install .[dev,pyproj,cli]
-
-    # Install dependencies which are optional
-    # so that the tests corresponding to them runs.
-    - name: Install Optional depencencies
-      shell: bash -el {0}
-      run: pip install requests rangehttpserver
-
-    # Some crs tests require pdal
-    - name: Install pdal
-      if: matrix.python-version != '3.13'
-      shell: bash -el {0}
-      run: | 
-        conda install -c conda-forge pdal "gdal<=3.8"
-        pdal --version
-
-    - name: Install pdal
-      if: matrix.python-version == '3.13'
-      shell: bash -el {0}
-      run: | 
-        conda install -c conda-forge pdal "gdal>=3.9"
-        pdal --version
+    - name: Install hatch
+      run: pip install hatch
 
     - name: Run Tests
-      shell: bash -el {0}
       run: |
-        pytest -v
+        hatch run ${{matrix.env}}:python --version
+        hatch run ${{matrix.env}}:test
 
 
   # Check that we can import laspy in an environment that does
   # not have dev deps installed to make sure there are no wrong imports
   import:
-    name: Python ${{ matrix.python-version }} - ${{ matrix.os }} - laz=${{ matrix.laz-backend }}
+    name: Python ${{ matrix.python-version }} - ${{ matrix.os }} - ${{ matrix.env }}
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -83,29 +52,25 @@ jobs:
         laz-backend: [ None, lazrs, laszip ]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: conda-incubator/setup-miniconda@v3
+      - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Display Python version
-        shell: bash -el {0}
         run: |
           python -c "import sys; print(sys.version)"
 
       - name: Install With LAZ backend
         if: matrix.laz-backend != 'None'
-        shell: bash -el {0}
         run: pip install .[${{ matrix.laz-backend }},pyproj,cli]
 
       - name: Install Without LAZ backend
         if: matrix.laz-backend == 'None'
-        shell: bash -el {0}
         run: pip install .[pyproj,cli]
 
       - name: Import laspy
-        shell: bash -el {0}
         run: |
           python -c "import laspy"
 
@@ -114,25 +79,24 @@ jobs:
 
     steps:
       - name: Clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Install black & isort
-        run: |
-          python3 -m pip install setuptools
-          python3 -m pip install black==25.12.0 isort==7.0.0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.13
 
-      - name: Run black check
-        run: python3 -m black --check .
+      - name: Install hatch
+        run: pip install hatch
 
-      - name: Run isort check
-        run: python3 -m isort --check laspy tests
+      - name: Run lints
+        run: hatch fmt --check
 
   coverage:
     runs-on: ubuntu-latest
 
     steps:
       - name: Clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install
         run: |

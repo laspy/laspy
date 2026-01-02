@@ -51,7 +51,7 @@ def test_convert_1_5_write_read_laz(laz_backend):
             converted.write(stream, do_compress=True, laz_backend=laz_backend)
             stream.seek(0)
 
-            las2 = laspy.read(stream, closefd=False)
+            las2 = laspy.read(stream, closefd=False, laz_backend=laz_backend)
             assert np.allclose(las2.header.max_gps_time, las.gps_time.max())
             assert np.allclose(las2.header.min_gps_time, las.gps_time.min())
 
