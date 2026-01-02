@@ -1,6 +1,94 @@
 [build-system]
-requires = [ "wheel", "setuptools" ]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "laspy"
+dynamic = ["version"]
+description = "Native Python ASPRS LAS read/write library"
+readme = "README.md"
+license = "BSD-2-Clause"
+requires-python = ">=3.10"
+authors = [
+  { name = "Grant Brown", email = "grant.brown73@gmail.com" },
+  { name = "Thomas Montaigu", email = "thomas.montaigu@laposte.net" },
+]
+keywords = ["gis", "las", "lidar"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Topic :: Scientific/Engineering :: GIS",
+]
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+cli = ["rich >= 10.11.0", "typer >= 0.16.0"]
+dev = [
+  "coverage",
+  "m2r2",
+  "nox",
+  "pytest",
+  "pytest-benchmark",
+  "rangehttpserver",
+  "sphinx",
+  "sphinx-rtd-theme",
+]
+laszip = ["laszip >= 0.3.0, < 0.4.0"]
+lazrs = ["lazrs>=0.8.0, < 0.9.0"]
+pyproj = ["pyproj"]
+requests = ["requests"]
+
+[project.scripts]
+laspy = "laspy.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/laspy/laspy"
+
+[tool.hatch.version]
+path = "laspy/__init__.py"
+
+# Change the location of virtual envs to be in the project folder
+[tool.hatch.envs.default]
+path = ".venv"
+
+[tool.hatch.envs.hatch-static-analysis]
+dependencies = ["black==25.12.0", "isort==7.0.0"]
+
+[tool.hatch.envs.hatch-static-analysis.scripts]
+format-check = [
+  "black --check --diff {args:.}",
+  "isort --check-only --diff {args:laspy tests}",
+]
+format-fix = ["isort {args:laspy tests}", "black {args:.}"]
+lint-check = ""
+lint-fix = "lint-check"
+
+[tool.hatch.build.targets.sdist]
+include = ["/laspy"]
 
 [tool.isort]
 profile = "black"
+
+[tool.hatch.envs.dev]
+features = ["dev"]
+
+[tool.hatch.envs.dev.scripts]
+check-fmt = ["black --check .", "isort --check laspy tests"]
+fmt = ["black .", "isort laspy tests"]
+test = ["pytest laspy", "pytest tests"]
+
+[tool.hatch.envs.dev-laszip]
+template = "dev"
+features = ["dev", "laszip"]
+
+[tool.hatch.envs.dev-lazrs]
+template = "dev"
+features = ["dev", "lazrs"]
+
+[tool.hatch.envs.dev-all]
+template = "dev"
+features = ["dev", "lazrs", "laszip", "cli", "pyproj", "requests"]
