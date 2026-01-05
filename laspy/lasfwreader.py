@@ -232,7 +232,6 @@ class LasFWReader(LasReader):
                 start = offset
                 last = offset
         runs.append((start, last))
-        print(f"runs: {runs}")
 
         # Read the waveforms in runs
         waveform_data = bytearray()
@@ -248,20 +247,12 @@ class LasFWReader(LasReader):
             self._waveform_descriptors_registry.temporal_sample_spacing,
             count=len(unique_offsets),
         )
-        print(f"Read {len(waveforms)} waveforms")
 
-        points_waveform_index = np.empty(len(points), dtype=np.int64)
-        # sorted_unique_offsets[None] == waveform_offsets  # N_points x N_waves -> OOM, N_points ~ 1e7, N_waves ~ 1e6, N_points x N_waves ~ 1e13 -> ~1TB RAM
-        # we do a loop on waves instead
-        # This part is very slow because of the np.where call
-        for wave_idx, wave_offset in tqdm.tqdm(enumerate(sorted_unique_offsets), total=len(sorted_unique_offsets)):
-            point_indices = np.where(waveform_offsets == wave_offset)[0]
-            points_waveform_index[point_indices] = wave_idx
-        # this is the alternative when looping over points (which is slower)
-        # for original_idx, unique_offset in enumerate(waveform_offsets):
-        #     unique_idx = np.where(sorted_unique_offsets == unique_offset)[0][0]
-        #     points_waveform_index[original_idx] = unique_idx
-        print("Mapped points to waveforms")
+        # Map each point to its waveform index in sorted_unique_offsets without per-wave scans.
+        # np.unique gives indices into unique_offsets; remap those to sorted indices.
+        unique_to_sorted = np.empty_like(sorted_indices)
+        unique_to_sorted[sorted_indices] = np.arange(len(sorted_indices))
+        points_waveform_index = unique_to_sorted[inverse_indices]
 
         waveforms = WaveformPointRecord(
             points.array,
@@ -271,7 +262,6 @@ class LasFWReader(LasReader):
             waveforms,
             np.asarray(points_waveform_index, dtype=np.int64),
         )
-        print("read_points_waveforms done")
         return points, waveforms
 
     def read(self) -> WaveformLasData:
