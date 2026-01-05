@@ -1,3 +1,4 @@
+import tqdm
 import logging
 import os
 from .waveform import WaveformPacketDescriptorRegistry, WaveformRecord
@@ -5,11 +6,86 @@ from pathlib import Path
 from ._compression.selection import DecompressionSelection
 from collections.abc import Iterable
 from ._compression.backend import LazBackend
-from typing import BinaryIO, Optional, Union
+from typing import BinaryIO, Optional, Union, Any
 from .lasreader import LasReader
+from .lasdata import LasData
+from .point import record
+import numpy as np
 
 
 logger = logging.getLogger(__name__)
+
+
+class WaveformPointRecord(record.ScaleAwarePointRecord):
+    def __init__(
+        self,
+        array: np.ndarray,
+        point_format,
+        scales: np.ndarray,
+        offsets: np.ndarray,
+        waveforms: WaveformRecord,
+        points_waveform_index: np.ndarray[Any, np.dtype[np.int64]],
+    ):
+        super().__init__(array, point_format, scales, offsets)
+        self._waveforms = waveforms
+        self._points_waveform_index = points_waveform_index
+        old = array.dtype.descr
+        new = old + waveforms.samples.dtype.descr
+        self._array = np.empty(array.shape, dtype=new)
+        for name in array.dtype.names:  # ty:ignore[not-iterable]
+            self._array[name] = array[name]
+        self._array["wave"] = waveforms.samples["wave"][self._points_waveform_index]
+    
+    @classmethod
+    def merge_points_waveforms(
+        cls,
+        points: record.ScaleAwarePointRecord,
+        waveforms: WaveformRecord,
+        points_waveform_index: np.ndarray[Any, np.dtype[np.int64]],
+    ) -> "WaveformPointRecord":
+        return cls(
+            points.array,
+            points.point_format,
+            points.scales,
+            points.offsets,
+            waveforms,
+            points_waveform_index,
+        )
+
+    def __getitem__(self, item):
+        if isinstance(item, (int, slice, np.ndarray, list, tuple)):
+            if isinstance(item, (list, tuple)):
+                item = [
+                    item if item not in ("x", "y", "z") else item.upper()
+                    for item in item
+                ]
+            return WaveformPointRecord(
+                self.array[item],
+                self.point_format,
+                self.scales,
+                self.offsets,
+                self._waveforms,
+                self._points_waveform_index[item],
+            )
+        if item == "wave":
+            return self._array["wave"]
+        return super().__getitem__(item)
+
+
+class WaveformLasData(LasData):
+    def __init__(
+        self,
+        header,
+        points: record.ScaleAwarePointRecord,
+        waveform_points: WaveformPointRecord,
+    ) -> None:
+        super().__init__(header=header, points=points)
+        self._waveform_points = waveform_points
+
+    @property
+    def waveform_points(self) -> WaveformPointRecord:
+        return self._waveform_points
+
 
 class WaveReader:
     def __init__(
@@ -23,20 +99,19 @@ class WaveReader:
         self.bits_per_sample = bits_per_sample
         self.number_of_samples = number_of_samples
         self._closefd = closefd
+        self.wave_size_bytes = (self.bits_per_sample // 8) * self.number_of_samples
 
     @property
     def source(self) -> BinaryIO:
         return self._source
 
     def read_n_waveforms(self, n: int) -> bytearray:
-        wave_size_bytes = (self.bits_per_sample // 8) * self.number_of_samples
-        total_size = n * wave_size_bytes
+        total_size = n * self.wave_size_bytes
         data = self._source.read(total_size)
         return bytearray(data)
 
     def seek(self, waveform_index: int) -> None:
-        wave_size_bytes = (self.bits_per_sample // 8) * self.number_of_samples
-        offset = waveform_index * wave_size_bytes
+        offset = waveform_index * self.wave_size_bytes
         self._source.seek(offset)
 
     def close(self) -> None:
@@ -80,32 +155,132 @@ class LasFWReader(LasReader):
             closefd=True,
         )
         self.waves_read = 0
-        self.total_waves = waveform_file.seek(0, os.SEEK_END) // (
-            (self._waveform_descriptors_registry.bits_per_sample // 8)
-            * self._waveform_descriptors_registry.number_of_samples
-        )
         waveform_file.seek(0, os.SEEK_SET)
 
-    def read_waveforms(self, n: int) -> WaveformRecord:
-        waves_left = self.total_waves - self.waves_read
-        if waves_left <= 0:
-            return WaveformRecord.empty(
-                self._waveform_descriptors_registry.dtype(),
-                self._waveform_descriptors_registry.number_of_samples,
-                self._waveform_descriptors_registry.temporal_sample_spacing,
+    def read_points_waveforms(
+        self, n: int
+    ) -> tuple[record.ScaleAwarePointRecord, WaveformPointRecord]:
+        """Read n points from the file, and their associated waveforms.
+
+
+        Will only read as many points as the header advertise.
+        That is, if you ask to read 50 points and there are only 45 points left
+        this function will only read 45 points.
+
+        If there are no points left to read, returns an empty point record.
+
+        Parameters
+        ----------
+        n: The number of points to read
+           if n is less than 0, this function will read the remaining points
+        """
+        points_left = self.header.point_count - self.points_read
+        if points_left <= 0:
+            return record.ScaleAwarePointRecord.empty(
+                self.header.point_format,
+                self.header.scales,
+                self.header.offsets,
             )
-        
+
         if n < 0:
-            n = waves_left
+            n = points_left
         else:
-            n = min(n, waves_left)
-        record = WaveformRecord.from_buffer(
-            self._waveform_source.read_n_waveforms(n),
+            n = min(n, points_left)
+
+        r = record.PackedPointRecord.from_buffer(
+            self.point_source.read_n_points(n), self.header.point_format
+        )
+        if len(r) < n:
+            logger.error(f"Could only read {len(r)} of the requested {n} points")
+
+        points = record.ScaleAwarePointRecord(
+            r.array, r.point_format, self.header.scales, self.header.offsets
+        )
+
+        self.points_read += n
+
+        # Extract waveform offsets and sizes
+        waveform_offsets = points.array["wavepacket_offset"]
+        waveform_sizes = points.array["wavepacket_size"]
+        if set(waveform_sizes) - {self._waveform_source.wave_size_bytes}:
+            raise ValueError(
+                f"Inconsistent waveform sizes in point data: {set(waveform_sizes)} but descriptor size is {self._waveform_source.wave_size_bytes}"
+            )
+        waveform_size = self._waveform_source.wave_size_bytes
+
+        # So here we have a lot of offsets, duplicated, potentially not sorted
+        # and with potential gaps.
+        # We want to minimize the number reads from disk.
+        # So we will sort the offsets, read the waveforms in order
+        # and then reassemble the waveforms in the original order.
+        # When N offsets are adjacent, we can read them in a single read with self.point_source.read_n_points(N)
+        unique_offsets, inverse_indices = np.unique(
+            waveform_offsets, return_inverse=True
+        )
+        # sort the unique offsets
+        sorted_indices = np.argsort(unique_offsets)
+        sorted_unique_offsets = unique_offsets[sorted_indices]
+        # Find runs of adjacent offsets
+        runs = []
+        start = sorted_unique_offsets[0]
+        last = start
+        for offset in sorted_unique_offsets[1:]:
+            if offset == last + waveform_size:
+                last = offset
+            else:
+                runs.append((start, last))
+                start = offset
+                last = offset
+        runs.append((start, last))
+        print(f"runs: {runs}")
+
+        # Read the waveforms in runs
+        waveform_data = bytearray()
+        for start, end in runs:
+            count = (end - start) // waveform_size + 1
+            self._waveform_source.seek(start // waveform_size)
+            data = self._waveform_source.read_n_waveforms(count)
+            waveform_data.extend(data)
+        waveforms = WaveformRecord.from_buffer(
+            waveform_data,
             self._waveform_descriptors_registry.dtype(),
             self._waveform_descriptors_registry.number_of_samples,
             self._waveform_descriptors_registry.temporal_sample_spacing,
+            count=len(unique_offsets),
         )
-        if len(record) < n:
-            logger.warning(f"Could only read {len(record)} waveforms, requested {n}")
-        self.waves_read += len(record)
-        return record
+        print(f"Read {len(waveforms)} waveforms")
+
+        points_waveform_index = np.empty(len(points), dtype=np.int64)
+        # sorted_unique_offsets[None] == waveform_offsets  # N_points x N_waves -> OOM, N_points ~ 1e7, N_waves ~ 1e6, N_points x N_waves ~ 1e13 -> ~1TB RAM
+        # we do a loop on waves instead
+        # This part is very slow because of the np.where call
+        for wave_idx, wave_offset in tqdm.tqdm(enumerate(sorted_unique_offsets), total=len(sorted_unique_offsets)):
+            point_indices = np.where(waveform_offsets == wave_offset)[0]
+            points_waveform_index[point_indices] = wave_idx
+        # this is the alternative when looping over points (which is slower)
+        # for original_idx, unique_offset in enumerate(waveform_offsets):
+        #     unique_idx = np.where(sorted_unique_offsets == unique_offset)[0][0]
+        #     points_waveform_index[original_idx] = unique_idx
+        print("Mapped points to waveforms")
+
+        waveforms = WaveformPointRecord(
+            points.array,
+            points.point_format,
+            points.scales,
+            points.offsets,
+            waveforms,
+            np.asarray(points_waveform_index, dtype=np.int64),
+        )
+        print("read_points_waveforms done")
+        return points, waveforms
+
+    def read(self) -> WaveformLasData:
+        self._waveform_source.source.seek(0, os.SEEK_SET)
+        self.waves_read = 0
+        points, waveform_points = self.read_points_waveforms(-1)
+
+        return WaveformLasData(
+            header=self.header,
+            points=points,
+            waveform_points=waveform_points,
+        )
