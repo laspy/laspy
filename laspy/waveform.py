@@ -82,7 +82,7 @@ class WaveformPacketDescriptorRegistry(
             if vlr.record_id in WaveformPacketVlr.official_record_ids()
         ]
         if not waveform_vlrs:
-            raise ValueError("LAS header does not carry waveform packet descriptors")
+            return registry
 
         waveform_vlrs.sort(key=lambda vlr: vlr.record_id)
 
@@ -137,8 +137,11 @@ class WaveformPacketDescriptorRegistry(
             )
         return bits_per_sample_set.pop(), number_of_samples_set.pop(), temporal_sample_spacing_set.pop()
     
-    def dtype(self) -> np.dtype:
-        descriptor: WaveformPacketDescriptor = next(iter(self.data.values()))
+    def dtype(self) -> np.dtype | None:
+        try:
+            descriptor: WaveformPacketDescriptor = next(iter(self.data.values()))
+        except StopIteration:
+            return None
         return descriptor.dtype()
 
 
