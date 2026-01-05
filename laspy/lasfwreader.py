@@ -1,3 +1,4 @@
+from copy import deepcopy
 import logging
 import os
 from .waveform import WaveformPacketDescriptorRegistry, WaveformRecord
@@ -27,7 +28,7 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
     ):
         super().__init__(array, point_format, scales, offsets)
         self._waveforms = waveforms
-        self._points_waveform_index = points_waveform_index
+        self._points_waveform_index = points_waveform_index # maps each point to its waveform index in waveforms
         old = array.dtype.descr
         new = old + waveforms.samples.dtype.descr
         self._array = np.empty(array.shape, dtype=new)
@@ -58,14 +59,25 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
                     item if item not in ("x", "y", "z") else item.upper()
                     for item in item
                 ]
-            return WaveformPointRecord(
-                self.array[item],
-                self.point_format,
-                self.scales,
-                self.offsets,
-                self._waveforms,
-                self._points_waveform_index[item],
-            )
+            elif isinstance(item, (int, slice, np.ndarray)):
+                # we want to subset the waveforms as well
+                points_waveform_index_subset = self._points_waveform_index[item]
+                unique_waves_indices, inverse_indices = np.unique(
+                    points_waveform_index_subset, return_inverse=True
+                )
+                waveforms_subset = WaveformRecord(
+                    self._waveforms.samples[unique_waves_indices],
+                    self._waveforms.sample_spacing_ps,
+                )
+                points_waveform_index = np.asarray(inverse_indices, dtype=np.int64)
+                return WaveformPointRecord(
+                    self.array[item],
+                    self.point_format,
+                    self.scales,
+                    self.offsets,
+                    waveforms_subset,
+                    points_waveform_index,
+                )
         if item == "wave":
             return self._array["wave"]
         return super().__getitem__(item)
@@ -84,6 +96,19 @@ class WaveformLasData(LasData):
     @property
     def waveform_points(self) -> WaveformPointRecord:
         return self._waveform_points
+    
+    def __getitem__(self, item):
+        try:
+            item_is_list_of_str = all(isinstance(el, str) for el in iter(item))
+        except TypeError:
+            item_is_list_of_str = False
+
+        if isinstance(item, str) or item_is_list_of_str:
+            return self.points[item]
+        else:
+            las = WaveformLasData(deepcopy(self.header), points=self.points[item], waveform_points=self.waveform_points[item])
+            las.update_header()
+            return las
     
     def __repr__(self) -> str:
         return "<WaveformLasData({}.{}, point fmt: {}, {} points, {} vlrs, {} waveforms)>".format(
