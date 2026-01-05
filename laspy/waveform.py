@@ -23,32 +23,6 @@ class WavePacketDescriptorRecordId(int):
 
 
 @dataclass(frozen=True)
-class PointData:
-    """Point data for waveform (LAS specification)."""
-
-    classification: int
-    wave_packet_descriptor_index: WavePacketDescriptorIndex
-    byte_offset_to_waveform_data: int
-    waveform_packet_size_bytes: int
-    return_point_waveform_location: float
-
-    @classmethod
-    def from_point_record(
-        cls,
-        record: np.void,
-    ) -> "PointData":
-        return cls(
-            classification=int(record["classification"]),
-            wave_packet_descriptor_index=WavePacketDescriptorIndex(
-                int(record["wavepacket_index"])
-            ),
-            byte_offset_to_waveform_data=int(record["wavepacket_offset"]),
-            waveform_packet_size_bytes=int(record["wavepacket_size"]),
-            return_point_waveform_location=float(record["return_point_wave_location"]),
-        )
-
-
-@dataclass(frozen=True)
 class WaveformPacketDescriptor:
     bits_per_sample: int
     waveform_compression_type: int
@@ -135,10 +109,6 @@ class WaveformPacketDescriptorRegistry(
         registry.temporal_sample_spacing = temporal_sample_spacing
         return registry
 
-    def get_from_point(self, point: PointData) -> WaveformPacketDescriptor:
-        return self.data[
-            WavePacketDescriptorRecordId.from_index(point.wave_packet_descriptor_index)
-        ]
 
     def ensure_supported(self) -> tuple[int, int, int]:
         """Ensure that all descriptors in the registry are compatible.
@@ -177,15 +147,6 @@ class WaveformKey:
     descriptor_index: WavePacketDescriptorIndex
     offset: int
     size: int
-
-    @classmethod
-    def from_pointdata(cls, point: PointData) -> "WaveformKey":
-        descriptor_index = WavePacketDescriptorIndex(point.wave_packet_descriptor_index)
-        return cls(
-            descriptor_index=descriptor_index,
-            offset=point.byte_offset_to_waveform_data,
-            size=point.waveform_packet_size_bytes,
-        )
 
 
 class WaveformRecord:
