@@ -383,7 +383,7 @@ class LasFWReader(LasReader):
         )
 
     def read_points_waveforms(
-        self, n: int, allow_missing_descriptors: bool = False
+        self, n: int, allow_missing_descriptors: bool = True
     ) -> tuple[record.ScaleAwarePointRecord, WaveformPointRecord]:
         """Read n points from the file, and their associated waveforms.
 
@@ -453,7 +453,7 @@ class LasFWReader(LasReader):
         )
         return points, waveforms
 
-    def read(self, allow_missing_descriptors: bool = False) -> WaveformLasData:
+    def read(self, allow_missing_descriptors: bool = True) -> WaveformLasData:
         self._waveform_source.source.seek(0, os.SEEK_SET)
         self.waves_read = 0
         points, waveform_points = self.read_points_waveforms(
