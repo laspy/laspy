@@ -161,21 +161,6 @@ class WaveformRecord:
         self.samples = data
         self.sample_spacing_ps = sample_spacing_ps
 
-    @staticmethod
-    def zeros(
-        wave_count: int, wave_dtype: np.dtype, number_of_samples: int, temporal_sample_spacing: int
-    ) -> "WaveformRecord":
-        data = np.zeros(
-            (wave_count, number_of_samples), dtype=wave_dtype
-        )
-        return WaveformRecord(data, temporal_sample_spacing)
-
-    @staticmethod
-    def empty(
-        wave_dtype: np.dtype, number_of_samples: int, temporal_sample_spacing: int
-    ) -> "WaveformRecord":
-        return WaveformRecord.zeros(0, wave_dtype, number_of_samples, temporal_sample_spacing)
-
     @classmethod
     def from_buffer(
         cls,
