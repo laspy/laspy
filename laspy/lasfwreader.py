@@ -1,7 +1,7 @@
 from copy import deepcopy
 import logging
 import os
-from .waveform import WaveformPacketDescriptorRegistry, WaveformRecord
+from .waveform import WaveformPacketDescriptorRegistry, WaveformRecord, WavePacketDescriptorRecordId
 from pathlib import Path
 from ._compression.selection import DecompressionSelection
 from collections.abc import Iterable, Sequence
@@ -285,6 +285,17 @@ class LasFWReader(LasReader):
         )
 
         self.points_read += n
+
+        # Check if all points have a matching waveform descriptor
+        descriptor_indices = points.array["wavepacket_index"]
+        unique_descriptors_indices, first_index = np.unique(descriptor_indices, return_index=True)
+        for idx in unique_descriptors_indices:
+            if WavePacketDescriptorRecordId.from_index(idx) not in self._waveform_descriptors_registry:
+                raise ValueError(
+                    f"No matching descriptor found for point {first_index[idx]}.\n"
+                    f" Available waveform descriptors record IDs: {list(self._waveform_descriptors_registry.data.keys())}\n"
+                    f" Waveform descriptor record ID found: {WavePacketDescriptorRecordId.from_index(idx)}"
+                )
 
         # Extract waveform offsets and sizes
         waveform_offsets = points.array["wavepacket_offset"]
