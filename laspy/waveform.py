@@ -168,7 +168,7 @@ class WaveformPacketDescriptorRegistry(
         return bits_per_sample_set.pop(), number_of_samples_set.pop(), temporal_sample_spacing_set.pop()
     
     def dtype(self) -> np.dtype:
-        descriptor = next(iter(self.data.values()))
+        descriptor: WaveformPacketDescriptor = next(iter(self.data.values()))
         return descriptor.dtype()
 
 
