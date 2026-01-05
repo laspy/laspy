@@ -35,22 +35,6 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
         for name in array.dtype.names:  # ty:ignore[not-iterable]
             self._array[name] = array[name]
         self._array["wave"] = waveforms.samples["wave"][self._points_waveform_index]
-    
-    @classmethod
-    def merge_points_waveforms(
-        cls,
-        points: record.ScaleAwarePointRecord,
-        waveforms: WaveformRecord,
-        points_waveform_index: np.ndarray[Any, np.dtype[np.int64]],
-    ) -> "WaveformPointRecord":
-        return cls(
-            points.array,
-            points.point_format,
-            points.scales,
-            points.offsets,
-            waveforms,
-            points_waveform_index,
-        )
 
     def __getitem__(self, item):
         if isinstance(item, (int, slice, np.ndarray, list, tuple)):
