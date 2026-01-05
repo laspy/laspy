@@ -4,9 +4,9 @@ import os
 from .waveform import WaveformPacketDescriptorRegistry, WaveformRecord
 from pathlib import Path
 from ._compression.selection import DecompressionSelection
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from ._compression.backend import LazBackend
-from typing import BinaryIO, Optional, Union, Any
+from typing import BinaryIO, Optional, Union, Any, overload
 from .lasreader import LasReader
 from .lasdata import LasData
 from .point import record
@@ -119,6 +119,79 @@ class WaveformLasData(LasData):
             len(self.vlrs),
             len(self.waveform_points._waveforms),
         )
+    
+    @overload
+    def write(
+        self,
+        destination: str,
+        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+    ) -> None: ...
+    @overload
+    def write(
+        self,
+        destination: BinaryIO,
+        do_compress: Optional[bool] = ...,
+        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+    ) -> None: ...
+
+    def write(self, destination: Union[str, BinaryIO], do_compress: Optional[bool] = None, laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = None):
+        if not self.header.point_format.has_waveform_packet:
+            raise ValueError("Point format does not carry waveform attributes")
+
+        registry = WaveformPacketDescriptorRegistry.from_vlrs(self.header.vlrs)
+        waveforms = self.waveform_points._waveforms
+        points_waveform_index = self.waveform_points._points_waveform_index
+
+        if len(points_waveform_index) != len(self.points):
+            raise ValueError(
+                "Waveform index mapping size does not match number of points"
+            )
+
+        wave_size_bytes = waveforms.wave_size
+        expected_wave_size = registry.dtype().itemsize
+        if wave_size_bytes != expected_wave_size:
+            raise ValueError(
+                f"Inconsistent waveform sizes: wave record size is {wave_size_bytes} bytes but descriptor expects {expected_wave_size} bytes"
+            )
+
+        if len(self.points) and len(waveforms) == 0:
+            raise ValueError("Waveform data is missing for points")
+
+        if len(points_waveform_index) > 0:
+            if points_waveform_index.min() < 0 or points_waveform_index.max() >= len(
+                waveforms
+            ):
+                raise ValueError("Waveform index mapping is out of bounds")
+
+        offsets = np.asarray(points_waveform_index, dtype=np.uint64) * wave_size_bytes
+        self.points.array["wavepacket_offset"] = offsets
+        size_dtype = self.points.array["wavepacket_size"].dtype
+        self.points.array["wavepacket_size"] = np.full(
+            len(self.points), wave_size_bytes, dtype=size_dtype
+        )
+
+        self.header.global_encoding.waveform_data_packets_external = True
+        if self.header.global_encoding.waveform_data_packets_internal:
+            self.header.global_encoding.waveform_data_packets_internal = False
+        if self.header.version.minor >= 3:
+            self.header.start_of_waveform_data_packet_record = 0
+
+        if isinstance(destination, str):
+            destination_path = Path(destination)
+            do_compress = destination_path.suffix.lower() == ".laz"
+            with destination_path.open(mode="wb+") as out_stream:
+                self._write_wdp(destination_path.with_suffix(".wdp"), waveforms)
+                self._write_to(
+                    out_stream, do_compress=do_compress, laz_backend=laz_backend
+                )
+        else:
+            raise NotImplementedError("Writing to file-like objects is not supported for waveform LAS/LAZ files")
+
+    @staticmethod
+    def _write_wdp(path: Path, waveforms: WaveformRecord) -> None:
+        samples = np.ascontiguousarray(waveforms.samples)
+        with path.open("wb") as out_wdp:
+            out_wdp.write(memoryview(samples))
 
 
 class WaveReader:
