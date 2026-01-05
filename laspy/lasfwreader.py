@@ -84,6 +84,16 @@ class WaveformLasData(LasData):
     @property
     def waveform_points(self) -> WaveformPointRecord:
         return self._waveform_points
+    
+    def __repr__(self) -> str:
+        return "<WaveformLasData({}.{}, point fmt: {}, {} points, {} vlrs, {} waveforms)>".format(
+            self.header.version.major,
+            self.header.version.minor,
+            self.points.point_format,
+            len(self.points),
+            len(self.vlrs),
+            len(self.waveform_points._waveforms),
+        )
 
 
 class WaveReader:
