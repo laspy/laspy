@@ -29,12 +29,19 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
         offsets: np.ndarray,
         waveforms: WaveformRecord | None,
         points_waveform_index: np.ndarray[Any, np.dtype[np.int64]] | None,
+        *,
+        waveform_reader: Optional["WaveReader"] = None,
+        valid_descriptor_mask: np.ndarray[Any, np.dtype[np.bool_]] | None = None,
+        allow_missing_descriptors: bool = True,
     ):
         super().__init__(array, point_format, scales, offsets)
         self._waveforms = waveforms
         self._points_waveform_index = (
             points_waveform_index  # maps each point to its waveform index in waveforms
         )
+        self._waveform_reader = waveform_reader
+        self._valid_descriptor_mask = valid_descriptor_mask
+        self._allow_missing_descriptors = allow_missing_descriptors
 
     def __getitem__(self, item):
         if isinstance(item, (int, slice, np.ndarray, list, tuple)):
@@ -58,6 +65,11 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
                         self._waveforms.sample_spacing_ps,
                     )
                     points_waveform_index = np.asarray(inverse_indices, dtype=np.int64)
+                valid_descriptor_mask = (
+                    self._valid_descriptor_mask[item]
+                    if self._valid_descriptor_mask is not None
+                    else None
+                )
                 return WaveformPointRecord(
                     self.array[item],
                     self.point_format,
@@ -65,12 +77,28 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
                     self.offsets,
                     waveforms_subset,
                     points_waveform_index,
+                    waveform_reader=self._waveform_reader,
+                    valid_descriptor_mask=valid_descriptor_mask,
+                    allow_missing_descriptors=self._allow_missing_descriptors,
                 )
         if item == "wave":
             if self._waveforms is None or self._points_waveform_index is None:
-                raise ValueError("No waveform data available")
+                self._load_waveforms_from_source()
             return self._waveforms.samples["wave"][self._points_waveform_index]
         return super().__getitem__(item)
+
+    def _load_waveforms_from_source(self) -> None:
+        if self._waveforms is not None and self._points_waveform_index is not None:
+            return
+        if self._waveform_reader is None:
+            raise ValueError("No waveform data available")
+
+        self._waveforms, self._points_waveform_index = WaveformRecord.from_points(
+            self.array,
+            self._waveform_reader,
+            self._valid_descriptor_mask,
+            self._allow_missing_descriptors,
+        )
 
 
 class WaveformLasData(LasData):
@@ -135,39 +163,18 @@ class WaveformLasData(LasData):
         destination: Union[str, BinaryIO],
         do_compress: Optional[bool] = None,
         laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = None,
+        *,
+        waveform_chunksize: int = 64 * 1024 * 1024,
+        waveform_dedup: bool = False,
     ):
-        registry = WaveformPacketDescriptorRegistry.from_vlrs(self.header.vlrs)
+        if isinstance(destination, BinaryIO):
+            raise NotImplementedError
+
         waveforms = self.waveform_points._waveforms
         points_waveform_index = self.waveform_points._points_waveform_index
-
+        destination_path = Path(destination)
         if points_waveform_index is not None and waveforms is not None:
-            if len(points_waveform_index) != len(self.points):
-                raise ValueError(
-                    "Waveform index mapping size does not match number of points"
-                )
-
             wave_size_bytes = waveforms.wave_size
-            dtype = registry.dtype()
-            expected_wave_size = dtype.itemsize if dtype is not None else None
-            if (
-                wave_size_bytes is not None
-                and expected_wave_size is not None
-                and wave_size_bytes != expected_wave_size
-            ):
-                raise ValueError(
-                    f"Inconsistent waveform sizes: wave record size is {wave_size_bytes} bytes but descriptor expects {expected_wave_size} bytes"
-                )
-
-            if len(self.points) and len(waveforms) == 0:
-                raise ValueError("Waveform data is missing for points")
-
-            if len(points_waveform_index) > 0:
-                if (
-                    points_waveform_index.min() < 0
-                    or points_waveform_index.max() >= len(waveforms)
-                ):
-                    raise ValueError("Waveform index mapping is out of bounds")
-
             offsets = (
                 np.asarray(points_waveform_index, dtype=np.uint64) * wave_size_bytes
             )
@@ -176,25 +183,28 @@ class WaveformLasData(LasData):
             self.points.array["wavepacket_size"] = np.full(
                 len(self.points), wave_size_bytes, dtype=size_dtype
             )
-
             self.header.global_encoding.waveform_data_packets_external = True
             if self.header.global_encoding.waveform_data_packets_internal:
                 self.header.global_encoding.waveform_data_packets_internal = False
             if self.header.version.minor >= 3:
                 self.header.start_of_waveform_data_packet_record = 0
+            self._write_wdp(destination_path.with_suffix(".wdp"), waveforms)
 
-        if isinstance(destination, str):
-            destination_path = Path(destination)
-            do_compress = destination_path.suffix.lower() == ".laz"
-            with destination_path.open(mode="wb+") as out_stream:
-                self._write_wdp(destination_path.with_suffix(".wdp"), waveforms)
-                self._write_to(
-                    out_stream, do_compress=do_compress, laz_backend=laz_backend
-                )
-        else:
-            raise NotImplementedError(
-                "Writing to file-like objects is not supported for waveform LAS/LAZ files"
+        elif waveforms is None and self.waveform_points._waveform_reader is not None:
+            self._write_wdp_from_source(
+                destination=destination_path,
+                waveform_size=self.waveform_points._waveform_reader.wave_size_bytes,
+                chunksize=waveform_chunksize,
+                dedup=waveform_dedup,
             )
+
+        else:
+            raise ValueError("No waveform data available for writing")
+
+        # Now write the las/laz file
+        do_compress = destination_path.suffix.lower() == ".laz"
+        with destination_path.open(mode="wb+") as out_stream:
+            self._write_to(out_stream, do_compress=do_compress, laz_backend=laz_backend)
 
     @staticmethod
     def _write_wdp(path: Path, waveforms: WaveformRecord | None) -> None:
@@ -204,6 +214,65 @@ class WaveformLasData(LasData):
         with path.open("wb") as out_wdp:
             out_wdp.write(memoryview(samples))
 
+    def _write_wdp_from_source(
+        self,
+        *,
+        destination: Path | None,
+        waveform_size: int,
+        chunksize: int,
+        dedup: bool,
+    ) -> None:
+        if destination is None:
+            raise NotImplementedError(
+                "Writing to file-like objects is not supported for waveform LAS/LAZ files"
+            )
+        if dedup:
+            raise NotImplementedError(
+                "Waveform deduplication is not supported in lazy write mode"
+            )
+        sizes = np.asarray(self.points.array["wavepacket_size"], dtype=np.uint64)
+        actual = set(sizes)
+        if actual - {waveform_size}:
+            raise ValueError(
+                f"Inconsistent waveform sizes in point data: {actual} but descriptor size is {waveform_size}"
+            )
+
+        point_count = len(self.points)
+        if point_count == 0:
+            destination.with_suffix(".wdp").open("wb").close()
+            return
+
+        if chunksize <= 0:
+            raise ValueError("waveform_chunksize must be > 0")
+        points_per_chunk = max(1, int(chunksize // waveform_size))
+
+        wdp_path = destination.with_suffix(".wdp")
+        offset_cursor = 0
+        with wdp_path.open("wb") as dst:
+            for start in range(0, point_count, points_per_chunk):
+                end = min(point_count, start + points_per_chunk)
+                wf_chunk = self.waveform_points[start:end]
+                waves = wf_chunk["wave"]
+                waves_array = np.ascontiguousarray(waves)
+                dst.write(memoryview(waves_array))
+
+                count = end - start
+                new_offsets = (
+                    np.arange(count, dtype=np.uint64) * waveform_size + offset_cursor
+                )
+                self.points.array["wavepacket_offset"][start:end] = new_offsets
+                offset_cursor += count * waveform_size
+        size_dtype = self.points.array["wavepacket_size"].dtype
+        self.points.array["wavepacket_size"] = np.full(
+            len(self.points), waveform_size, dtype=size_dtype
+        )
+
+        self.header.global_encoding.waveform_data_packets_external = True
+        if self.header.global_encoding.waveform_data_packets_internal:
+            self.header.global_encoding.waveform_data_packets_internal = False
+        if self.header.version.minor >= 3:
+            self.header.start_of_waveform_data_packet_record = 0
+
 
 class WaveReader:
     def __init__(
@@ -211,11 +280,15 @@ class WaveReader:
         source: BinaryIO,
         bits_per_sample: int,
         number_of_samples: int,
+        temporal_sample_spacing: int,
+        wave_dtype: np.dtype,
         closefd: bool = True,
     ):
         self._source = source
         self.bits_per_sample = bits_per_sample
         self.number_of_samples = number_of_samples
+        self.temporal_sample_spacing = temporal_sample_spacing
+        self.wave_dtype = wave_dtype
         self._closefd = closefd
         self.wave_size_bytes = (self.bits_per_sample // 8) * self.number_of_samples
 
@@ -249,6 +322,7 @@ class LasFWReader(LasReader):
         laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
         read_evlrs: bool = True,
         decompression_selection: DecompressionSelection = DecompressionSelection.all(),
+        read_waveforms: bool = True,
     ):
         super().__init__(
             source,
@@ -257,6 +331,7 @@ class LasFWReader(LasReader):
             read_evlrs=read_evlrs,
             decompression_selection=decompression_selection,
         )
+        self._read_waveforms_default = read_waveforms
         if not self.header.point_format.has_waveform_packet:
             self._waveform_descriptors_registry = WaveformPacketDescriptorRegistry()
             self._waveform_source = None
@@ -273,10 +348,15 @@ class LasFWReader(LasReader):
         self._waveform_descriptors_registry = (
             WaveformPacketDescriptorRegistry.from_vlrs(self.header.vlrs)
         )
+        wave_dtype = self._waveform_descriptors_registry.dtype()
+        if wave_dtype is None:
+            raise ValueError("No waveform packet descriptors found in VLRs")
         self._waveform_source = WaveReader(
             waveform_file,
             bits_per_sample=self._waveform_descriptors_registry.bits_per_sample,
             number_of_samples=self._waveform_descriptors_registry.number_of_samples,
+            temporal_sample_spacing=self._waveform_descriptors_registry.temporal_sample_spacing,
+            wave_dtype=wave_dtype,
             closefd=True,
         )
         self.waves_read = 0
@@ -333,98 +413,12 @@ class LasFWReader(LasReader):
 
         return valid_mask, missing
 
-    def _validate_waveform_sizes(
-        self, waveform_sizes: np.ndarray, valid_mask: np.ndarray
-    ) -> None:
-        if self._waveform_source is None:
-            return
-        if not valid_mask.any():
-            return
-        expected = self._waveform_source.wave_size_bytes
-        actual = set(waveform_sizes[valid_mask])
-        if actual - {expected}:
-            raise ValueError(
-                f"Inconsistent waveform sizes in point data: {actual} but descriptor size is {expected}"
-            )
-
-    def _runs_for_sorted_offsets(
-        self, sorted_offsets: np.ndarray, waveform_size: int
-    ) -> list[tuple[int, int]]:
-        runs: list[tuple[int, int]] = []
-        if sorted_offsets.size == 0:
-            return runs
-
-        start = int(sorted_offsets[0])
-        last = start
-        for offset in sorted_offsets[1:]:
-            offset_int = int(offset)
-            if offset_int == last + waveform_size:
-                last = offset_int
-            else:
-                runs.append((start, last))
-                start = offset_int
-                last = offset_int
-        runs.append((start, last))
-        return runs
-
-    def _read_waveforms_by_runs(
-        self, runs: list[tuple[int, int]], waveform_size: int
-    ) -> bytearray:
-        if self._waveform_source is None:
-            return bytearray()
-        waveform_data = bytearray()
-        for start, end in runs:
-            count = (end - start) // waveform_size + 1
-            self._waveform_source.seek(start // waveform_size)
-            waveform_data.extend(self._waveform_source.read_n_waveforms(count))
-        return waveform_data
-
-    def _read_waveforms_for_offsets(
-        self, offsets: np.ndarray
-    ) -> tuple[WaveformRecord, np.ndarray[Any, np.dtype[np.int64]]] | tuple[None, None]:
-        dtype = self._waveform_descriptors_registry.dtype()
-        if self._waveform_source is None or dtype is None:
-            return None, None
-        waveform_size = self._waveform_source.wave_size_bytes
-        unique_offsets, inverse_indices = np.unique(offsets, return_inverse=True)
-
-        sorted_indices = np.argsort(unique_offsets)
-        sorted_unique_offsets = unique_offsets[sorted_indices]
-        runs = self._runs_for_sorted_offsets(sorted_unique_offsets, waveform_size)
-        waveform_data = self._read_waveforms_by_runs(runs, waveform_size)
-
-        waveforms = WaveformRecord.from_buffer(
-            waveform_data,
-            dtype,
-            self._waveform_descriptors_registry.number_of_samples,
-            self._waveform_descriptors_registry.temporal_sample_spacing,
-            count=len(unique_offsets),
-        )
-
-        # np.unique gives indices into unique_offsets; remap those to sorted indices.
-        unique_to_sorted = np.empty_like(sorted_indices)
-        unique_to_sorted[sorted_indices] = np.arange(len(sorted_indices))
-        points_waveform_index = unique_to_sorted[inverse_indices]
-        return waveforms, np.asarray(points_waveform_index, dtype=np.int64)
-
-    def _append_zero_waveform(
-        self, waveforms: WaveformRecord
-    ) -> tuple[WaveformRecord, int]:
-        wave_dtype = self._waveform_descriptors_registry.dtype()
-        missing_wave_index = len(waveforms)
-        new_samples = np.empty((missing_wave_index + 1,), dtype=wave_dtype)
-        if len(waveforms):
-            new_samples[:-1] = waveforms.samples
-        new_samples["wave"][-1] = 0
-        return (
-            WaveformRecord(
-                new_samples, self._waveform_descriptors_registry.temporal_sample_spacing
-            ),
-            missing_wave_index,
-        )
-
     def read_points_waveforms(
-        self, n: int, allow_missing_descriptors: bool = True
+        self,
+        n: int,
+        allow_missing_descriptors: bool = True,
+        *,
+        read_waveforms: bool | None = None,
     ) -> tuple[record.ScaleAwarePointRecord, WaveformPointRecord]:
         """Read n points from the file, and their associated waveforms.
 
@@ -463,6 +457,9 @@ class LasFWReader(LasReader):
 
         self.points_read += n
 
+        if read_waveforms is None:
+            read_waveforms = self._read_waveforms_default
+
         if self._waveform_source is None:
             waveform_points = WaveformPointRecord(
                 points.array,
@@ -471,23 +468,16 @@ class LasFWReader(LasReader):
                 points.offsets,
                 None,
                 None,
+                waveform_reader=None,
+                allow_missing_descriptors=allow_missing_descriptors,
             )
             return points, waveform_points
 
-        valid_mask, has_missing_descriptors = self._compute_valid_descriptor_mask(
+        valid_mask, _ = self._compute_valid_descriptor_mask(
             points, allow_missing_descriptors
         )
 
-        # Extract waveform offsets and sizes
-        waveform_offsets = points.array["wavepacket_offset"]
-        waveform_sizes = points.array["wavepacket_size"]
-        self._validate_waveform_sizes(waveform_sizes, valid_mask)
-
-        valid_offsets = waveform_offsets[valid_mask]
-        waveforms, valid_points_waveform_index = self._read_waveforms_for_offsets(
-            valid_offsets
-        )
-        if waveforms is None or valid_points_waveform_index is None:
+        if not read_waveforms:
             waveform_points = WaveformPointRecord(
                 points.array,
                 points.point_format,
@@ -495,15 +485,18 @@ class LasFWReader(LasReader):
                 points.offsets,
                 None,
                 None,
+                waveform_reader=self._waveform_source,
+                valid_descriptor_mask=np.asarray(valid_mask, dtype=bool),
+                allow_missing_descriptors=allow_missing_descriptors,
             )
             return points, waveform_points
 
-        points_waveform_index = np.full(len(points), -1, dtype=np.int64)
-        points_waveform_index[valid_mask] = valid_points_waveform_index
-
-        if allow_missing_descriptors and has_missing_descriptors:
-            waveforms, missing_wave_index = self._append_zero_waveform(waveforms)
-            points_waveform_index[~valid_mask] = missing_wave_index
+        waveforms, points_waveform_index = WaveformRecord.from_points(
+            points.array,
+            self._waveform_source,
+            valid_mask,
+            allow_missing_descriptors,
+        )
 
         waveforms = WaveformPointRecord(
             points.array,
@@ -512,15 +505,25 @@ class LasFWReader(LasReader):
             points.offsets,
             waveforms,
             np.asarray(points_waveform_index, dtype=np.int64),
+            waveform_reader=self._waveform_source,
+            valid_descriptor_mask=np.asarray(valid_mask, dtype=bool),
+            allow_missing_descriptors=allow_missing_descriptors,
         )
         return points, waveforms
 
-    def read(self, allow_missing_descriptors: bool = True) -> WaveformLasData:
+    def read(
+        self,
+        allow_missing_descriptors: bool = True,
+        *,
+        read_waveforms: bool | None = None,
+    ) -> WaveformLasData:
         if self._waveform_source is not None:
             self._waveform_source.source.seek(0, os.SEEK_SET)
         self.waves_read = 0
         points, waveform_points = self.read_points_waveforms(
-            -1, allow_missing_descriptors=allow_missing_descriptors
+            -1,
+            allow_missing_descriptors=allow_missing_descriptors,
+            read_waveforms=read_waveforms,
         )
 
         return WaveformLasData(

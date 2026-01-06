@@ -1,7 +1,6 @@
 """'Entry point' of the library, Contains the various functions meant to be
 used directly by a user
 """
-
 import copy
 import io
 import logging
@@ -147,6 +146,15 @@ def open_las(
         else:
             stream = source
         try:
+            if fullwave == "eager":
+                return LasFWReader(
+                    stream,
+                    closefd=closefd,
+                    laz_backend=laz_backend,
+                    read_evlrs=read_evlrs,
+                    decompression_selection=decompression_selection,
+                    read_waveforms=True,
+                )
             if fullwave:
                 return LasFWReader(
                     stream,
@@ -154,6 +162,7 @@ def open_las(
                     laz_backend=laz_backend,
                     read_evlrs=read_evlrs,
                     decompression_selection=decompression_selection,
+                    read_waveforms=False,
                 )
             else:
                 return LasReader(

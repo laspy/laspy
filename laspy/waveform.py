@@ -1,7 +1,7 @@
 from collections import UserDict
 from collections.abc import Buffer
 from dataclasses import dataclass
-from typing import Iterable, NewType, cast
+from typing import Any, Iterable, NewType, cast
 
 import numpy as np
 
@@ -176,6 +176,90 @@ class WaveformRecord:
     ) -> "WaveformRecord":
         data = np.frombuffer(buffer, dtype=wave_dtype, offset=offset, count=count)
         return cls(data, temporal_sample_spacing)
+
+    @classmethod
+    def from_points(
+        cls,
+        points_array: np.ndarray,
+        waveform_reader: Any,
+        valid_mask: np.ndarray | None = None,
+        allow_missing_descriptors: bool = True,
+    ) -> tuple["WaveformRecord", np.ndarray[Any, np.dtype[np.int64]]]:
+        wave_dtype = waveform_reader.wave_dtype
+        number_of_samples = waveform_reader.number_of_samples
+        temporal_sample_spacing = waveform_reader.temporal_sample_spacing
+        waveform_size = waveform_reader.wave_size_bytes
+
+        sizes = np.asarray(points_array["wavepacket_size"], dtype=np.uint64)
+        if valid_mask is None:
+            valid_mask = np.ones(len(points_array), dtype=bool)
+        else:
+            valid_mask = np.asarray(valid_mask, dtype=bool)
+            if len(valid_mask) != len(points_array):
+                raise ValueError(
+                    "Waveform descriptor mask size does not match number of points"
+                )
+
+        if not allow_missing_descriptors and not np.all(valid_mask):
+            raise ValueError("Missing waveform descriptors are not allowed")
+
+        if valid_mask.any():
+            actual = set(sizes[valid_mask])
+            if actual - {waveform_size}:
+                raise ValueError(
+                    f"Inconsistent waveform sizes in point data: {actual} but descriptor size is {waveform_size}"
+                )
+
+        offsets = np.asarray(points_array["wavepacket_offset"], dtype=np.uint64)
+        valid_offsets = offsets[valid_mask]
+        valid_indices = valid_offsets // waveform_size
+        unique_indices, inverse_indices = np.unique(valid_indices, return_inverse=True)
+        sorted_indices = np.argsort(unique_indices)
+        sorted_unique_indices = unique_indices[sorted_indices]
+
+        runs: list[tuple[int, int]] = []
+        if sorted_unique_indices.size:
+            start = int(sorted_unique_indices[0])
+            last = start
+            for idx in sorted_unique_indices[1:]:
+                idx_int = int(idx)
+                if idx_int == last + 1:
+                    last = idx_int
+                else:
+                    runs.append((start, last))
+                    start = idx_int
+                    last = idx_int
+            runs.append((start, last))
+
+        waveform_data = bytearray()
+        for start, end in runs:
+            count = int(end - start + 1)
+            waveform_reader.seek(int(start))
+            waveform_data.extend(waveform_reader.read_n_waveforms(count))
+
+        waveforms = cls.from_buffer(
+            waveform_data,
+            wave_dtype,
+            number_of_samples,
+            temporal_sample_spacing,
+            count=len(unique_indices),
+        )
+
+        unique_to_sorted = np.empty_like(sorted_indices)
+        unique_to_sorted[sorted_indices] = np.arange(len(sorted_indices))
+        points_waveform_index = np.full(len(points_array), -1, dtype=np.int64)
+        points_waveform_index[valid_mask] = unique_to_sorted[inverse_indices]
+
+        if allow_missing_descriptors and not np.all(valid_mask):
+            missing_wave_index = len(waveforms)
+            new_samples = np.empty((missing_wave_index + 1,), dtype=wave_dtype)
+            if len(waveforms):
+                new_samples[:-1] = waveforms.samples
+            new_samples["wave"][-1] = 0
+            waveforms = cls(new_samples, temporal_sample_spacing)
+            points_waveform_index[~valid_mask] = missing_wave_index
+
+        return waveforms, np.asarray(points_waveform_index, dtype=np.int64)
 
     def __len__(self):
         if self.samples.ndim == 0:
