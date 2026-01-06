@@ -231,7 +231,17 @@ class WaveformLasData(LasData):
                 "Waveform deduplication is not supported in lazy write mode"
             )
         sizes = np.asarray(self.points.array["wavepacket_size"], dtype=np.uint64)
-        actual = set(sizes)
+        valid_mask = self.waveform_points._valid_descriptor_mask
+        if (
+            valid_mask is not None
+            and self.waveform_points._allow_missing_descriptors
+        ):
+            valid_mask = np.asarray(valid_mask, dtype=bool)
+            sizes_to_check = sizes[valid_mask]
+        else:
+            sizes_to_check = sizes
+
+        actual = set(sizes_to_check)
         if actual - {waveform_size}:
             raise ValueError(
                 f"Inconsistent waveform sizes in point data: {actual} but descriptor size is {waveform_size}"
