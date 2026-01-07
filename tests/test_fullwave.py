@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from pathlib import Path
 import io
 import logging
@@ -132,6 +133,182 @@ def test_lazy_write_roundtrip(fullwave_path: Path) -> None:
     )
 
 
+def test_lazy_write_dedup_roundtrip(fullwave_path: Path, tmp_path: Path) -> None:
+    n = 2048
+    with laspy.open(fullwave_path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(n)
+        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
+        las.update_header()
+        las.waveform_points._valid_descriptor_mask = None
+
+        wave_size = las.waveform_points._waveform_reader.wave_size_bytes
+        unique_offsets = np.unique(las.points.array["wavepacket_offset"])
+        expected_wdp_size = int(unique_offsets.size * wave_size)
+
+        out_path = tmp_path / "dedup_fullwave.laz"
+        las.write(str(out_path), waveform_dedup=True)
+
+        out_wdp = out_path.with_suffix(".wdp")
+        assert out_wdp.exists()
+        assert out_wdp.stat().st_size == expected_wdp_size
+        written_points = las.points.array.copy()
+
+    with laspy.open(out_path, fullwave="eager") as roundtrip_reader:
+        roundtrip_points, roundtrip_wf_points = roundtrip_reader.read_points_waveforms(
+            n
+        )
+        roundtrip_waves = roundtrip_wf_points["wave"]
+
+    with laspy.open(fullwave_path, fullwave="eager") as expected_reader:
+        _, expected_wf_points = expected_reader.read_points_waveforms(n)
+        expected_waves = expected_wf_points["wave"]
+
+    assert np.array_equal(roundtrip_points.array, written_points)
+    assert np.array_equal(roundtrip_waves, expected_waves)
+
+
+def test_lazy_write_dedup_missing_descriptor(
+    fullwave_path: Path, tmp_path: Path
+) -> None:
+    n = 256
+    with laspy.open(fullwave_path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(n)
+        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
+        las.update_header()
+
+        valid_mask = np.ones(len(points), dtype=bool)
+        valid_mask[0] = False
+        las.waveform_points._valid_descriptor_mask = valid_mask
+
+        wave_size = las.waveform_points._waveform_reader.wave_size_bytes
+        unique_offsets = np.unique(las.points.array["wavepacket_offset"][valid_mask])
+        expected_wdp_size = int((unique_offsets.size + 1) * wave_size)
+
+        out_path = tmp_path / "dedup_missing.laz"
+        las.write(str(out_path), waveform_dedup=True)
+
+        out_wdp = out_path.with_suffix(".wdp")
+        assert out_wdp.exists()
+        assert out_wdp.stat().st_size == expected_wdp_size
+        assert (
+            las.points.array["wavepacket_offset"][0]
+            == unique_offsets.size * wave_size
+        )
+
+    with laspy.open(out_path, fullwave="eager") as roundtrip_reader:
+        _, roundtrip_wf_points = roundtrip_reader.read_points_waveforms(n)
+        waves = roundtrip_wf_points["wave"]
+
+    assert np.all(waves[0] == 0)
+
+
+def test_lazy_write_dedup_all_invalid_mask(
+    fullwave_path: Path, tmp_path: Path
+) -> None:
+    n = 8
+    with laspy.open(fullwave_path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(n)
+        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
+        las.update_header()
+
+        las.waveform_points._valid_descriptor_mask = np.zeros(len(points), dtype=bool)
+        wave_size = las.waveform_points._waveform_reader.wave_size_bytes
+
+        out_path = tmp_path / "dedup_all_invalid.laz"
+        las._write_wdp_lazy(
+            destination=out_path,
+            waveform_size=wave_size,
+            chunksize=1024,
+            dedup=True,
+        )
+
+    out_wdp = out_path.with_suffix(".wdp")
+    assert out_wdp.exists()
+    assert out_wdp.stat().st_size == wave_size
+    assert np.all(las.points.array["wavepacket_offset"] == 0)
+
+
+def test_waveform_point_record_load_returns_early(fullwave_path: Path) -> None:
+    with laspy.open(fullwave_path, fullwave="eager") as reader:
+        _, wf_points = reader.read_points_waveforms(4)
+
+    waveforms_id = id(wf_points._waveforms)
+    index_id = id(wf_points._points_waveform_index)
+    wf_points._load_waveforms_from_source()
+
+    assert id(wf_points._waveforms) == waveforms_id
+    assert id(wf_points._points_waveform_index) == index_id
+
+
+def test_waveform_iter_runs_handles_empty_and_gaps() -> None:
+    empty = WaveformLasData._iter_runs(np.array([], dtype=np.uint64))
+    assert empty == []
+
+    runs = WaveformLasData._iter_runs(np.array([0, 1, 3, 4, 6], dtype=np.uint64))
+    assert runs == [(0, 1), (3, 4), (6, 6)]
+
+
+def test_write_wdp_lazy_dedup_requires_reader(
+    fullwave_path: Path, tmp_path: Path
+) -> None:
+    with laspy.open(fullwave_path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(8)
+        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
+        las.update_header()
+        wave_size = las.waveform_points._waveform_reader.wave_size_bytes
+        las.waveform_points._waveform_reader = None
+
+        with pytest.raises(ValueError, match="waveform reader"):
+            las._write_wdp_lazy(
+                destination=tmp_path / "no_reader.laz",
+                waveform_size=wave_size,
+                chunksize=1024,
+                dedup=True,
+            )
+
+
+def test_write_wdp_lazy_dedup_rejects_bad_mask(
+    fullwave_path: Path, tmp_path: Path
+) -> None:
+    with laspy.open(fullwave_path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(8)
+        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
+        las.update_header()
+        wave_size = las.waveform_points._waveform_reader.wave_size_bytes
+        las.waveform_points._allow_missing_descriptors = False
+        las.waveform_points._valid_descriptor_mask = np.ones(len(points) + 1, dtype=bool)
+
+        with pytest.raises(ValueError, match="mask size"):
+            las._write_wdp_lazy(
+                destination=tmp_path / "bad_mask.laz",
+                waveform_size=wave_size,
+                chunksize=1024,
+                dedup=True,
+            )
+
+
+def test_write_wdp_lazy_dedup_rejects_missing_descriptors(
+    fullwave_path: Path, tmp_path: Path
+) -> None:
+    with laspy.open(fullwave_path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(8)
+        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
+        las.update_header()
+        wave_size = las.waveform_points._waveform_reader.wave_size_bytes
+        las.waveform_points._allow_missing_descriptors = False
+        valid_mask = np.ones(len(points), dtype=bool)
+        valid_mask[0] = False
+        las.waveform_points._valid_descriptor_mask = valid_mask
+
+        with pytest.raises(ValueError, match="Missing waveform descriptors"):
+            las._write_wdp_lazy(
+                destination=tmp_path / "missing_descriptor.laz",
+                waveform_size=wave_size,
+                chunksize=1024,
+                dedup=True,
+            )
+
+
 def test_waveform_point_record_getitem_and_subset(fullwave_path: Path) -> None:
     with laspy.open(fullwave_path, fullwave="eager") as reader:
         points, wf_points = reader.read_points_waveforms(32)
@@ -242,29 +419,21 @@ def test_write_wdp_no_waveforms_noop(tmp_path: Path) -> None:
     assert not path.exists()
 
 
-def test_write_wdp_from_source_errors(fullwave_path: Path, tmp_path: Path) -> None:
+def test_write_wdp_lazy_errors(fullwave_path: Path, tmp_path: Path) -> None:
     with laspy.open(fullwave_path, fullwave="lazy") as reader:
         las = reader.read()
         wave_size = las.waveform_points._waveform_reader.wave_size_bytes
 
         with pytest.raises(NotImplementedError):
-            las._write_wdp_from_source(
+            las._write_wdp_lazy(
                 destination=None,
                 waveform_size=wave_size,
                 chunksize=1024,
                 dedup=False,
             )
 
-        with pytest.raises(NotImplementedError):
-            las._write_wdp_from_source(
-                destination=tmp_path / "dedup.laz",
-                waveform_size=wave_size,
-                chunksize=1024,
-                dedup=True,
-            )
-
         with pytest.raises(ValueError):
-            las._write_wdp_from_source(
+            las._write_wdp_lazy(
                 destination=tmp_path / "bad_chunk.laz",
                 waveform_size=wave_size,
                 chunksize=0,
@@ -272,7 +441,7 @@ def test_write_wdp_from_source_errors(fullwave_path: Path, tmp_path: Path) -> No
             )
 
 
-def test_write_wdp_from_source_inconsistent_sizes(
+def test_write_wdp_lazy_inconsistent_sizes(
     fullwave_path: Path, tmp_path: Path
 ) -> None:
     with laspy.open(fullwave_path, fullwave="lazy") as reader:
@@ -281,7 +450,7 @@ def test_write_wdp_from_source_inconsistent_sizes(
         las.waveform_points._valid_descriptor_mask = None
         las.points.array["wavepacket_size"][0] = wave_size + 1
         with pytest.raises(ValueError):
-            las._write_wdp_from_source(
+            las._write_wdp_lazy(
                 destination=tmp_path / "bad_size.laz",
                 waveform_size=wave_size,
                 chunksize=1024,
@@ -289,7 +458,7 @@ def test_write_wdp_from_source_inconsistent_sizes(
             )
 
 
-def test_write_wdp_from_source_empty_points(
+def test_write_wdp_lazy_empty_points(
     fullwave_path: Path, tmp_path: Path
 ) -> None:
     with laspy.open(fullwave_path, fullwave="lazy") as reader:
@@ -298,7 +467,7 @@ def test_write_wdp_from_source_empty_points(
         wave_size = empty.waveform_points._waveform_reader.wave_size_bytes
 
         out_path = tmp_path / "empty.laz"
-        empty._write_wdp_from_source(
+        empty._write_wdp_lazy(
             destination=out_path,
             waveform_size=wave_size,
             chunksize=1024,
@@ -310,7 +479,7 @@ def test_write_wdp_from_source_empty_points(
     assert out_wdp.stat().st_size == 0
 
 
-def test_write_wdp_from_source_updates_encoding_flags(
+def test_write_wdp_lazy_updates_encoding_flags(
     fullwave_path: Path, tmp_path: Path
 ) -> None:
     with laspy.open(fullwave_path, fullwave="lazy") as reader:
@@ -318,7 +487,7 @@ def test_write_wdp_from_source_updates_encoding_flags(
         las.header.global_encoding.waveform_data_packets_internal = True
         wave_size = las.waveform_points._waveform_reader.wave_size_bytes
         out_path = tmp_path / "flags.laz"
-        las._write_wdp_from_source(
+        las._write_wdp_lazy(
             destination=out_path,
             waveform_size=wave_size,
             chunksize=1024,

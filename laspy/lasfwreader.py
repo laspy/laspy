@@ -191,7 +191,7 @@ class WaveformLasData(LasData):
             self._write_wdp(destination_path.with_suffix(".wdp"), waveforms)
 
         elif waveforms is None and self.waveform_points._waveform_reader is not None:
-            self._write_wdp_from_source(
+            self._write_wdp_lazy(
                 destination=destination_path,
                 waveform_size=self.waveform_points._waveform_reader.wave_size_bytes,
                 chunksize=waveform_chunksize,
@@ -214,7 +214,7 @@ class WaveformLasData(LasData):
         with path.open("wb") as out_wdp:
             out_wdp.write(memoryview(samples))
 
-    def _write_wdp_from_source(
+    def _write_wdp_lazy(
         self,
         *,
         destination: Path | None,
@@ -226,18 +226,37 @@ class WaveformLasData(LasData):
             raise NotImplementedError(
                 "Writing to file-like objects is not supported for waveform LAS/LAZ files"
             )
+        self._validate_waveform_sizes(waveform_size, self.waveform_points._valid_descriptor_mask)
+
+        point_count = len(self.points)
+        if point_count == 0:
+            destination.with_suffix(".wdp").open("wb").close()
+            return
+
+        points_per_chunk = self._points_per_chunk(waveform_size, chunksize)
+
+        wdp_path = destination.with_suffix(".wdp")
         if dedup:
-            raise NotImplementedError(
-                "Waveform deduplication is not supported in lazy write mode"
+            self._write_wdp_lazy_dedup(
+                wdp_path,
+                waveform_size,
+                points_per_chunk,
             )
+        else:
+            self._write_wdp_lazy_no_dedup(
+                wdp_path,
+                waveform_size,
+                points_per_chunk,
+            )
+        self._finalize_waveform_write(waveform_size)
+
+    def _validate_waveform_sizes(
+        self, waveform_size: int, valid_mask: np.ndarray[Any, np.dtype[np.bool_]] | None
+    ) -> None:
         sizes = np.asarray(self.points.array["wavepacket_size"], dtype=np.uint64)
-        valid_mask = self.waveform_points._valid_descriptor_mask
-        if (
-            valid_mask is not None
-            and self.waveform_points._allow_missing_descriptors
-        ):
-            valid_mask = np.asarray(valid_mask, dtype=bool)
-            sizes_to_check = sizes[valid_mask]
+        if valid_mask is not None and self.waveform_points._allow_missing_descriptors:
+            mask = np.asarray(valid_mask, dtype=bool)
+            sizes_to_check = sizes[mask]
         else:
             sizes_to_check = sizes
 
@@ -247,16 +266,102 @@ class WaveformLasData(LasData):
                 f"Inconsistent waveform sizes in point data: {actual} but descriptor size is {waveform_size}"
             )
 
-        point_count = len(self.points)
-        if point_count == 0:
-            destination.with_suffix(".wdp").open("wb").close()
-            return
-
+    @staticmethod
+    def _points_per_chunk(waveform_size: int, chunksize: int) -> int:
         if chunksize <= 0:
             raise ValueError("waveform_chunksize must be > 0")
-        points_per_chunk = max(1, int(chunksize // waveform_size))
+        return max(1, int(chunksize // waveform_size))
 
-        wdp_path = destination.with_suffix(".wdp")
+    def _resolve_valid_mask(
+        self, point_count: int
+    ) -> tuple[np.ndarray, bool]:
+        valid_mask = self.waveform_points._valid_descriptor_mask
+        if valid_mask is None:
+            mask = np.ones(point_count, dtype=bool)
+        else:
+            mask = np.asarray(valid_mask, dtype=bool)
+            if len(mask) != point_count:
+                raise ValueError(
+                    "Waveform descriptor mask size does not match number of points"
+                )
+            if (
+                not self.waveform_points._allow_missing_descriptors
+                and not np.all(mask)
+            ):
+                raise ValueError("Missing waveform descriptors are not allowed")
+        missing = self.waveform_points._allow_missing_descriptors and not np.all(mask)
+        return mask, missing
+
+    @staticmethod
+    def _iter_runs(indices: np.ndarray) -> list[tuple[int, int]]:
+        if indices.size == 0:
+            return []
+        runs: list[tuple[int, int]] = []
+        start = int(indices[0])
+        last = start
+        for idx in indices[1:]:
+            idx_int = int(idx)
+            if idx_int == last + 1:
+                last = idx_int
+            else:
+                runs.append((start, last))
+                start = idx_int
+                last = idx_int
+        runs.append((start, last))
+        return runs
+
+    def _write_wdp_lazy_dedup(
+        self,
+        wdp_path: Path,
+        waveform_size: int,
+        points_per_chunk: int,
+    ) -> None:
+        waveform_reader = self.waveform_points._waveform_reader
+        if waveform_reader is None:
+            raise ValueError("No waveform reader available for deduplication")
+
+        point_count = len(self.points)
+        valid_mask, missing = self._resolve_valid_mask(point_count)
+        offsets = np.asarray(self.points.array["wavepacket_offset"], dtype=np.uint64)
+        if valid_mask.any():
+            valid_indices = offsets[valid_mask] // waveform_size
+            unique_indices, inverse_indices = np.unique(
+                valid_indices, return_inverse=True
+            )
+        else:
+            unique_indices = np.array([], dtype=np.uint64)
+            inverse_indices = np.array([], dtype=np.int64)
+
+        with wdp_path.open("wb") as dst:
+            for run_start, run_end in self._iter_runs(unique_indices):
+                count = int(run_end - run_start + 1)
+                waveform_reader.seek(run_start)
+                while count > 0:
+                    chunk_count = min(points_per_chunk, count)
+                    dst.write(waveform_reader.read_n_waveforms(int(chunk_count)))
+                    count -= chunk_count
+            if missing:
+                dst.write(bytes(waveform_size))
+
+        offset_dtype = self.points.array["wavepacket_offset"].dtype
+        new_offsets = np.zeros(point_count, dtype=offset_dtype)
+        if valid_mask.any():
+            new_offsets[valid_mask] = (
+                inverse_indices.astype(np.uint64) * waveform_size
+            ).astype(offset_dtype, copy=False)
+        if missing:
+            new_offsets[~valid_mask] = np.array(
+                len(unique_indices) * waveform_size, dtype=offset_dtype
+            )
+        self.points.array["wavepacket_offset"] = new_offsets
+
+    def _write_wdp_lazy_no_dedup(
+        self,
+        wdp_path: Path,
+        waveform_size: int,
+        points_per_chunk: int,
+    ) -> None:
+        point_count = len(self.points)
         offset_cursor = 0
         with wdp_path.open("wb") as dst:
             for start in range(0, point_count, points_per_chunk):
@@ -272,6 +377,8 @@ class WaveformLasData(LasData):
                 )
                 self.points.array["wavepacket_offset"][start:end] = new_offsets
                 offset_cursor += count * waveform_size
+
+    def _finalize_waveform_write(self, waveform_size: int) -> None:
         size_dtype = self.points.array["wavepacket_size"].dtype
         self.points.array["wavepacket_size"] = np.full(
             len(self.points), waveform_size, dtype=size_dtype
