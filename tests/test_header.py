@@ -7,7 +7,7 @@ import pytest
 
 import laspy
 from laspy import LasHeader
-from laspy.header import GlobalEncoding
+from laspy.header import GlobalEncoding, GpsTimeType
 from laspy.lib import write_then_read_again
 from tests import test_common
 
@@ -355,3 +355,15 @@ def test_global_encoding_waveform_external():
     encoding = GlobalEncoding()
     encoding.waveform_data_packets_external = False
     assert encoding.waveform_data_packets_external is False
+
+
+def test_global_encoding_gps_time_type():
+    encoding = GlobalEncoding()
+    encoding.gps_time_type = GpsTimeType.STANDARD
+    assert encoding.gps_time_type is GpsTimeType.STANDARD
+
+    # Checking the setting is idempotent
+    encoding.gps_time_type = GpsTimeType.WEEK_TIME
+    assert encoding.gps_time_type is GpsTimeType.WEEK_TIME
+    encoding.gps_time_type = GpsTimeType.WEEK_TIME
+    assert encoding.gps_time_type is GpsTimeType.WEEK_TIME

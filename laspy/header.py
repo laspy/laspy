@@ -96,7 +96,7 @@ class GlobalEncoding:
 
     @gps_time_type.setter
     def gps_time_type(self, value: GpsTimeType):
-        self.value ^= self.GPS_TIME_TYPE_MASK
+        self.value &= ~self.GPS_TIME_TYPE_MASK
         self.value |= int(value) & self.GPS_TIME_TYPE_MASK
 
     @property
