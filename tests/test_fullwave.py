@@ -556,8 +556,35 @@ def test_compute_valid_descriptor_mask_all_valid(fullwave_path: Path) -> None:
 def test_read_points_waveforms_after_exhaustion(fullwave_path: Path) -> None:
     with laspy.open(fullwave_path, fullwave="lazy") as reader:
         reader.read_points_waveforms(-1)
-        with pytest.raises(NotImplementedError):  # FIXME: Should be something else
-            reader.read_points_waveforms(1)
+        points, wf_points = reader.read_points_waveforms(1)
+        assert len(points) == 0
+        assert len(wf_points) == 0
+
+
+def test_read_points_waveforms_empty_file(tmp_path: Path) -> None:
+    las = laspy.create(point_format=10, file_version="1.4")
+    las.header.global_encoding.waveform_data_packets_external = True
+    las.header.global_encoding.waveform_data_packets_internal = False
+
+    vlr = WaveformPacketVlr(100)
+    vlr.parsed_record = laspy.vlrs.known.WaveformPacketStruct(
+        bits_per_sample=16,
+        waveform_compression_type=0,
+        number_of_samples=1,
+        temporal_sample_spacing=1,
+        digitizer_gain=1.0,
+        digitizer_offset=0.0,
+    )
+    las.header.vlrs.append(vlr)
+
+    path = tmp_path / "empty_fullwave.las"
+    las.write(path)
+    path.with_suffix(".wdp").write_bytes(b"")
+
+    with laspy.open(path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(1)
+        assert len(points) == 0
+        assert len(wf_points) == 0
 
 
 def test_read_points_waveforms_logs_short_read(

@@ -505,7 +505,22 @@ class LasFWReader(LasReader):
         """
         points_left = self.header.point_count - self.points_read
         if points_left <= 0:
-            raise NotImplementedError
+            empty_points = record.ScaleAwarePointRecord.empty(
+                self.header.point_format,
+                self.header.scales,
+                self.header.offsets,
+            )
+            waveform_points = WaveformPointRecord(
+                empty_points.array,
+                empty_points.point_format,
+                empty_points.scales,
+                empty_points.offsets,
+                None,
+                None,
+                waveform_reader=None,
+                allow_missing_descriptors=allow_missing_descriptors,
+            )
+            return empty_points, waveform_points
 
         if n < 0:
             n = points_left
