@@ -7,11 +7,28 @@ from .lasappender import LasAppender
 from .lasdata import LasData
 from .lasmmap import LasMMAP
 from .lasreader import LasReader
+from .lasfwreader import LasFWReader
 from .typehints import PathLike
 
 LazBackend = LazBackend
 DecompressionSelection = DecompressionSelection
 
+@overload
+def open_las(
+    source: Union[BinaryIO, PathLike],
+    mode: Literal["r"] = ...,
+    closefd: bool = ...,
+    laz_backend: Union[LazBackend, Iterable[LazBackend]] = ...,
+    fullwave: Literal["lazy", "eager", True] = ...,
+) -> LasFWReader: ...
+@overload
+def open_las(
+    source: Union[BinaryIO, PathLike],
+    mode: Literal["r"] = ...,
+    closefd: bool = ...,
+    laz_backend: Union[LazBackend, Iterable[LazBackend]] = ...,
+    fullwave: Literal[False] = ...,
+) -> LasReader: ...
 @overload
 def open_las(
     source: PathLike,
