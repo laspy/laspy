@@ -144,20 +144,6 @@ class WaveformLasData(LasData):
             else 0,
         )
 
-    @overload
-    def write(
-        self,
-        destination: str,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
-    ) -> None: ...
-    @overload
-    def write(
-        self,
-        destination: BinaryIO,
-        do_compress: Optional[bool] = ...,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
-    ) -> None: ...
-
     def write(
         self,
         destination: Union[str, BinaryIO],
