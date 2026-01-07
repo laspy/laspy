@@ -7,7 +7,7 @@ from .lasappender import LasAppender
 from .lasdata import LasData
 from .lasmmap import LasMMAP
 from .lasreader import LasReader
-from .lasfwreader import LasFWReader
+from .lasfwreader import LasFWReader, WaveformLasData
 from .typehints import PathLike
 
 LazBackend = LazBackend
@@ -78,6 +78,7 @@ def open_las(
     laz_backend: Union[LazBackend, Iterable[LazBackend]] = ...,
     fullwave: bool | Literal["lazy", "eager"] = ...,
 ) -> LasAppender: ...
+@overload
 def read_las(
     source: Union[BinaryIO, PathLike],
     closefd: bool = True,
@@ -85,7 +86,16 @@ def read_las(
         LazBackend, Iterable[LazBackend]
     ] = LazBackend.detect_available(),
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
-    fullwave: bool = ...,
+    fullwave: Literal["lazy", "eager", True] = ...,
+) -> WaveformLasData: ...
+def read_las(
+    source: Union[BinaryIO, PathLike],
+    closefd: bool = True,
+    laz_backend: Union[
+        LazBackend, Iterable[LazBackend]
+    ] = LazBackend.detect_available(),
+    decompression_selection: DecompressionSelection = DecompressionSelection.all(),
+    fullwave: Union[bool, Literal["lazy", "eager"]] = ...,
 ) -> LasData: ...
 def mmap_las(filename: PathLike) -> LasMMAP: ...
 def merge_las(las_files: Union[Iterable[LasData], LasData]) -> LasData: ...
