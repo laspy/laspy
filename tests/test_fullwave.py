@@ -46,8 +46,8 @@ def test_waveform_descriptor_registry_matches_points(fullwave_path: Path) -> Non
     wave_dtype = registry.dtype()
     assert wave_dtype is not None
 
-    wave_samples = wave_dtype["wave"].shape[0]
-    wave_sample_size = wave_dtype["wave"].base.itemsize
+    wave_samples = wave_dtype["waveform"].shape[0]
+    wave_sample_size = wave_dtype["waveform"].base.itemsize
 
     wavepacket_size = int(np.unique(points["wavepacket_size"])[0])
     wavepacket_index = int(points["wavepacket_index"][0])
@@ -69,13 +69,13 @@ def test_fullwave_lazy_load_matches_eager(fullwave_path: Path) -> None:
         lazy_points, lazy_wf_points = lazy_reader.read_points_waveforms(n)
         assert lazy_wf_points._waveforms is None
         assert lazy_wf_points._points_waveform_index is None
-        lazy_waves = lazy_wf_points["wave"]
+        lazy_waves = lazy_wf_points["waveform"]
         assert lazy_wf_points._waveforms is not None
         assert lazy_wf_points._points_waveform_index is not None
 
     with laspy.open(fullwave_path, fullwave="eager") as eager_reader:
         eager_points, eager_wf_points = eager_reader.read_points_waveforms(n)
-        eager_waves = eager_wf_points["wave"]
+        eager_waves = eager_wf_points["waveform"]
 
     assert np.array_equal(lazy_points.array, eager_points.array)
     assert np.array_equal(lazy_waves, eager_waves)
@@ -131,7 +131,7 @@ def test_lazy_write_roundtrip(fullwave_path: Path) -> None:
 
     assert np.array_equal(roundtrip.points.array, subset.points.array)
     assert np.array_equal(
-        roundtrip.waveform_points["wave"], expected.waveform_points["wave"][indices]
+        roundtrip.waveform_points["waveform"], expected.waveform_points["waveform"][indices]
     )
 
 
@@ -159,11 +159,11 @@ def test_lazy_write_dedup_roundtrip(fullwave_path: Path, tmp_path: Path) -> None
         roundtrip_points, roundtrip_wf_points = roundtrip_reader.read_points_waveforms(
             n
         )
-        roundtrip_waves = roundtrip_wf_points["wave"]
+        roundtrip_waves = roundtrip_wf_points["waveform"]
 
     with laspy.open(fullwave_path, fullwave="eager") as expected_reader:
         _, expected_wf_points = expected_reader.read_points_waveforms(n)
-        expected_waves = expected_wf_points["wave"]
+        expected_waves = expected_wf_points["waveform"]
 
     assert np.array_equal(roundtrip_points.array, written_points)
     assert np.array_equal(roundtrip_waves, expected_waves)
@@ -199,7 +199,7 @@ def test_lazy_write_dedup_missing_descriptor(
 
     with laspy.open(out_path, fullwave="eager") as roundtrip_reader:
         _, roundtrip_wf_points = roundtrip_reader.read_points_waveforms(n)
-        waves = roundtrip_wf_points["wave"]
+        waves = roundtrip_wf_points["waveform"]
 
     assert np.all(waves[0] == 0)
 
@@ -322,7 +322,7 @@ def test_waveform_point_record_getitem_and_subset(fullwave_path: Path) -> None:
     x_values = wf_points["X"]
     assert len(x_values) == len(points)
 
-    wf_points["wave"]
+    wf_points["waveform"]
 
 
 def test_waveform_point_record_no_waveforms_raises(simple_las_path: Path) -> None:
@@ -337,7 +337,7 @@ def test_waveform_point_record_no_waveforms_raises(simple_las_path: Path) -> Non
         waveform_reader=None,
     )
     with pytest.raises(ValueError):
-        wf_points["wave"]
+        wf_points["waveform"]
 
 
 def test_waveform_lasdata_getitem_and_write_no_waveforms(
@@ -495,7 +495,7 @@ def test_write_wdp_lazy_updates_encoding_flags(
 
 def test_wave_reader_close_closes_source() -> None:
     buffer = io.BytesIO(b"abcd")
-    wave_dtype = np.dtype([("wave", np.uint8, (1,))])
+    wave_dtype = np.dtype([("waveform", np.uint8, (1,))])
     reader = WaveReader(
         buffer,
         bits_per_sample=8,

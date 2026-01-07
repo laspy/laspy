@@ -59,7 +59,7 @@ class WaveformPacketDescriptor:
                 raise NotImplementedError(
                     f"Unsupported waveform sample width: {self.bits_per_sample} bits"
                 )
-        return np.dtype([('wave',(base_dtype, (self.number_of_samples,)))])
+        return np.dtype([("waveform",(base_dtype, (self.number_of_samples,)))])
 
 
 class WaveformPacketDescriptorRegistry(
@@ -255,7 +255,7 @@ class WaveformRecord:
             new_samples = np.empty((missing_wave_index + 1,), dtype=wave_dtype)
             if len(waveforms):
                 new_samples[:-1] = waveforms.samples
-            new_samples["wave"][-1] = 0
+            new_samples["waveform"][-1] = 0
             waveforms = cls(new_samples, temporal_sample_spacing)
             points_waveform_index[~valid_mask] = missing_wave_index
 
@@ -267,7 +267,7 @@ class WaveformRecord:
         return self.samples.shape[0]
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}(len: {len(self)}, num samples: {self.samples.dtype['wave'].shape[0]}, type: {self.samples.dtype['wave'].base}, size: {self.wave_size} bytes)>"
+        return f"<{self.__class__.__name__}(len: {len(self)}, num samples: {self.samples.dtype["waveform"].shape[0]}, type: {self.samples.dtype["waveform"].base}, size: {self.wave_size} bytes)>"
 
     def __getitem__(self, item):
         """Gives access to the underlying numpy array

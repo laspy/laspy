@@ -81,10 +81,10 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
                     valid_descriptor_mask=valid_descriptor_mask,
                     allow_missing_descriptors=self._allow_missing_descriptors,
                 )
-        if item == "wave":
+        if item == "waveform":
             if self._waveforms is None or self._points_waveform_index is None:
                 self._load_waveforms_from_source()
-            return self._waveforms.samples["wave"][self._points_waveform_index]
+            return self._waveforms.samples["waveform"][self._points_waveform_index]
         return super().__getitem__(item)
 
     def _load_waveforms_from_source(self) -> None:
