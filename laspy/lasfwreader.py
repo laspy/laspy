@@ -10,7 +10,7 @@ from pathlib import Path
 from ._compression.selection import DecompressionSelection
 from collections.abc import Iterable, Sequence
 from ._compression.backend import LazBackend
-from typing import BinaryIO, Optional, Union, Any, overload
+from typing import BinaryIO, Optional, Union, Any
 from .lasreader import LasReader
 from .lasdata import LasData
 from .point import record
@@ -209,7 +209,9 @@ class WaveformLasData(LasData):
             raise NotImplementedError(
                 "Writing to file-like objects is not supported for waveform LAS/LAZ files"
             )
-        self._validate_waveform_sizes(waveform_size, self.waveform_points._valid_descriptor_mask)
+        self._validate_waveform_sizes(
+            waveform_size, self.waveform_points._valid_descriptor_mask
+        )
 
         point_count = len(self.points)
         if point_count == 0:
@@ -248,9 +250,7 @@ class WaveformLasData(LasData):
             raise ValueError("waveform_chunksize must be > 0")
         return max(1, int(chunksize // waveform_size))
 
-    def _resolve_valid_mask(
-        self, point_count: int
-    ) -> tuple[np.ndarray, bool]:
+    def _resolve_valid_mask(self, point_count: int) -> tuple[np.ndarray, bool]:
         valid_mask = self.waveform_points._valid_descriptor_mask
         if valid_mask is None:
             mask = np.ones(point_count, dtype=bool)
@@ -260,10 +260,7 @@ class WaveformLasData(LasData):
                 raise ValueError(
                     "Waveform descriptor mask size does not match number of points"
                 )
-            if (
-                not self.waveform_points._allow_missing_descriptors
-                and not np.all(mask)
-            ):
+            if not self.waveform_points._allow_missing_descriptors and not np.all(mask):
                 raise ValueError("Missing waveform descriptors are not allowed")
         missing = self.waveform_points._allow_missing_descriptors and not np.all(mask)
         return mask, missing
