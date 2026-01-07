@@ -7,6 +7,7 @@ import pytest
 
 import laspy
 from laspy import LasHeader
+from laspy.header import GlobalEncoding
 from laspy.lib import write_then_read_again
 from tests import test_common
 
@@ -348,3 +349,9 @@ def test_update_header_empty_las_data():
         assert np.all(new_las.header.mins == [0.0, 0.0, 0.0])
         assert np.all(new_las.header.maxs == [0.0, 0.0, 0.0])
         assert np.sum(new_las.header.number_of_points_by_return) == 0
+
+
+def test_global_encoding_waveform_external():
+    encoding = GlobalEncoding()
+    encoding.waveform_data_packets_external = False
+    assert encoding.waveform_data_packets_external is False

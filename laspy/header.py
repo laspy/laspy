@@ -82,7 +82,7 @@ class GlobalEncoding:
         self.value |= mask
 
     def _unset_bit(self, mask):
-        self.value ^= mask
+        self.value &= ~mask
 
     def _set_if_true(self, mask, value):
         if bool(value) is True:
