@@ -199,7 +199,7 @@ class WaveformLasData(LasData):
             )
 
         else:
-            raise ValueError("No waveform data available for writing")
+            pass  # no waveform data to write
 
         # Now write the las/laz file
         do_compress = destination_path.suffix.lower() == ".laz"
