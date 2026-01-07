@@ -151,7 +151,6 @@ class WaveformLasData(LasData):
         laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = None,
         *,
         waveform_chunksize: int = 64 * 1024 * 1024,
-        waveform_dedup: bool = False,
     ):
         if isinstance(destination, BinaryIO):
             raise NotImplementedError
@@ -181,7 +180,6 @@ class WaveformLasData(LasData):
                 destination=destination_path,
                 waveform_size=self.waveform_points._waveform_reader.wave_size_bytes,
                 chunksize=waveform_chunksize,
-                dedup=waveform_dedup,
             )
 
         else:
@@ -206,7 +204,6 @@ class WaveformLasData(LasData):
         destination: Path | None,
         waveform_size: int,
         chunksize: int,
-        dedup: bool,
     ) -> None:
         if destination is None:
             raise NotImplementedError(
@@ -222,18 +219,11 @@ class WaveformLasData(LasData):
         points_per_chunk = self._points_per_chunk(waveform_size, chunksize)
 
         wdp_path = destination.with_suffix(".wdp")
-        if dedup:
-            self._write_wdp_lazy_dedup(
-                wdp_path,
-                waveform_size,
-                points_per_chunk,
-            )
-        else:
-            self._write_wdp_lazy_no_dedup(
-                wdp_path,
-                waveform_size,
-                points_per_chunk,
-            )
+        self._write_wdp_lazy_dedup(
+            wdp_path,
+            waveform_size,
+            points_per_chunk,
+        )
         self._finalize_waveform_write(waveform_size)
 
     def _validate_waveform_sizes(
@@ -340,29 +330,6 @@ class WaveformLasData(LasData):
                 len(unique_indices) * waveform_size, dtype=offset_dtype
             )
         self.points.array["wavepacket_offset"] = new_offsets
-
-    def _write_wdp_lazy_no_dedup(
-        self,
-        wdp_path: Path,
-        waveform_size: int,
-        points_per_chunk: int,
-    ) -> None:
-        point_count = len(self.points)
-        offset_cursor = 0
-        with wdp_path.open("wb") as dst:
-            for start in range(0, point_count, points_per_chunk):
-                end = min(point_count, start + points_per_chunk)
-                wf_chunk = self.waveform_points[start:end]
-                waves = wf_chunk["wave"]
-                waves_array = np.ascontiguousarray(waves)
-                dst.write(memoryview(waves_array))
-
-                count = end - start
-                new_offsets = (
-                    np.arange(count, dtype=np.uint64) * waveform_size + offset_cursor
-                )
-                self.points.array["wavepacket_offset"][start:end] = new_offsets
-                offset_cursor += count * waveform_size
 
     def _finalize_waveform_write(self, waveform_size: int) -> None:
         size_dtype = self.points.array["wavepacket_size"].dtype

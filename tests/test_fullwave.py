@@ -110,7 +110,9 @@ def test_lazy_write_roundtrip(fullwave_path: Path) -> None:
         registry = WaveformPacketDescriptorRegistry.from_vlrs(subset.header.vlrs)
         wave_dtype = registry.dtype()
         assert wave_dtype is not None
-        expected_wdp_size = len(subset.points) * wave_dtype.itemsize
+        expected_wdp_size = (
+            np.unique(subset.points.array["wavepacket_offset"]).size * wave_dtype.itemsize
+        )
 
         with tempfile.TemporaryDirectory() as td:
             out_path = Path(td) / "subset_fullwave.laz"
@@ -146,7 +148,7 @@ def test_lazy_write_dedup_roundtrip(fullwave_path: Path, tmp_path: Path) -> None
         expected_wdp_size = int(unique_offsets.size * wave_size)
 
         out_path = tmp_path / "dedup_fullwave.laz"
-        las.write(str(out_path), waveform_dedup=True)
+        las.write(str(out_path))
 
         out_wdp = out_path.with_suffix(".wdp")
         assert out_wdp.exists()
@@ -185,7 +187,7 @@ def test_lazy_write_dedup_missing_descriptor(
         expected_wdp_size = int((unique_offsets.size + 1) * wave_size)
 
         out_path = tmp_path / "dedup_missing.laz"
-        las.write(str(out_path), waveform_dedup=True)
+        las.write(str(out_path))
 
         out_wdp = out_path.with_suffix(".wdp")
         assert out_wdp.exists()
@@ -219,7 +221,6 @@ def test_lazy_write_dedup_all_invalid_mask(
             destination=out_path,
             waveform_size=wave_size,
             chunksize=1024,
-            dedup=True,
         )
 
     out_wdp = out_path.with_suffix(".wdp")
@@ -263,7 +264,6 @@ def test_write_wdp_lazy_dedup_requires_reader(
                 destination=tmp_path / "no_reader.laz",
                 waveform_size=wave_size,
                 chunksize=1024,
-                dedup=True,
             )
 
 
@@ -283,7 +283,6 @@ def test_write_wdp_lazy_dedup_rejects_bad_mask(
                 destination=tmp_path / "bad_mask.laz",
                 waveform_size=wave_size,
                 chunksize=1024,
-                dedup=True,
             )
 
 
@@ -305,7 +304,6 @@ def test_write_wdp_lazy_dedup_rejects_missing_descriptors(
                 destination=tmp_path / "missing_descriptor.laz",
                 waveform_size=wave_size,
                 chunksize=1024,
-                dedup=True,
             )
 
 
@@ -429,7 +427,6 @@ def test_write_wdp_lazy_errors(fullwave_path: Path, tmp_path: Path) -> None:
                 destination=None,
                 waveform_size=wave_size,
                 chunksize=1024,
-                dedup=False,
             )
 
         with pytest.raises(ValueError):
@@ -437,7 +434,6 @@ def test_write_wdp_lazy_errors(fullwave_path: Path, tmp_path: Path) -> None:
                 destination=tmp_path / "bad_chunk.laz",
                 waveform_size=wave_size,
                 chunksize=0,
-                dedup=False,
             )
 
 
@@ -454,7 +450,6 @@ def test_write_wdp_lazy_inconsistent_sizes(
                 destination=tmp_path / "bad_size.laz",
                 waveform_size=wave_size,
                 chunksize=1024,
-                dedup=False,
             )
 
 
@@ -471,7 +466,6 @@ def test_write_wdp_lazy_empty_points(
             destination=out_path,
             waveform_size=wave_size,
             chunksize=1024,
-            dedup=False,
         )
 
     out_wdp = out_path.with_suffix(".wdp")
@@ -491,7 +485,6 @@ def test_write_wdp_lazy_updates_encoding_flags(
             destination=out_path,
             waveform_size=wave_size,
             chunksize=1024,
-            dedup=False,
         )
 
     assert las.header.global_encoding.waveform_data_packets_external is True
