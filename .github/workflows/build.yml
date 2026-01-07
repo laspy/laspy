@@ -9,7 +9,7 @@ on:
     - '*'
 jobs:
   build:
-    name: Python ${{ matrix.python-version }} - ${{ matrix.os }} - laz=${{ matrix.laz-backend }}
+    name: Python ${{ matrix.python-version }} - ${{ matrix.os }} - ${{ matrix.env }}
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -41,7 +41,7 @@ jobs:
   # Check that we can import laspy in an environment that does
   # not have dev deps installed to make sure there are no wrong imports
   import:
-    name: Python ${{ matrix.python-version }} - ${{ matrix.os }} - ${{ matrix.env }}
+    name: Python ${{ matrix.python-version }} - ${{ matrix.os }} - laz=${{ matrix.laz-backend }}
 
     runs-on: ${{ matrix.os }}
     strategy:
