@@ -605,3 +605,12 @@ class LasFWReader(LasReader):
             points=points,
             waveform_points=waveform_points,
         )
+
+    def close(self) -> None:
+        """Close the LAS reader and any waveform resources."""
+        try:
+            if self._waveform_source is not None:
+                self._waveform_source.close()
+                self._waveform_source = None
+        finally:
+            super().close()
