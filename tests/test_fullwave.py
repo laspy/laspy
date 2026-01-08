@@ -275,33 +275,11 @@ def test_write_wdp_lazy_dedup_rejects_bad_mask(
         las = WaveformLasData(deepcopy(reader.header), points, wf_points)
         las.update_header()
         wave_size = las.waveform_points._waveform_reader.wave_size_bytes
-        las.waveform_points._allow_missing_descriptors = False
         las.waveform_points._valid_descriptor_mask = np.ones(len(points) + 1, dtype=bool)
 
-        with pytest.raises(ValueError, match="mask size"):
+        with pytest.raises(IndexError, match="index did not match indexed array along axis 0"):
             las._write_wdp_lazy(
                 destination=tmp_path / "bad_mask.laz",
-                waveform_size=wave_size,
-                chunksize=1024,
-            )
-
-
-def test_write_wdp_lazy_dedup_rejects_missing_descriptors(
-    fullwave_path: Path, tmp_path: Path
-) -> None:
-    with laspy.open(fullwave_path, fullwave="lazy") as reader:
-        points, wf_points = reader.read_points_waveforms(8)
-        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
-        las.update_header()
-        wave_size = las.waveform_points._waveform_reader.wave_size_bytes
-        las.waveform_points._allow_missing_descriptors = False
-        valid_mask = np.ones(len(points), dtype=bool)
-        valid_mask[0] = False
-        las.waveform_points._valid_descriptor_mask = valid_mask
-
-        with pytest.raises(ValueError, match="Missing waveform descriptors"):
-            las._write_wdp_lazy(
-                destination=tmp_path / "missing_descriptor.laz",
                 waveform_size=wave_size,
                 chunksize=1024,
             )

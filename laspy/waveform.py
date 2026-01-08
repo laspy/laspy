@@ -162,7 +162,6 @@ class WaveformRecord:
         cls,
         buffer: Buffer,
         wave_dtype: np.dtype,
-        number_of_samples: int,
         temporal_sample_spacing: int,
         count=-1,
         offset=0,
@@ -175,36 +174,31 @@ class WaveformRecord:
         cls,
         points_array: np.ndarray,
         waveform_reader: Any,
-        valid_mask: np.ndarray | None = None,
-        allow_missing_descriptors: bool = True,
+        valid_descriptor_mask: np.ndarray | None = None,
     ) -> tuple["WaveformRecord", np.ndarray[Any, np.dtype[np.int64]]]:
         wave_dtype = waveform_reader.wave_dtype
-        number_of_samples = waveform_reader.number_of_samples
         temporal_sample_spacing = waveform_reader.temporal_sample_spacing
         waveform_size = waveform_reader.wave_size_bytes
 
         sizes = np.asarray(points_array["wavepacket_size"], dtype=np.uint64)
-        if valid_mask is None:
-            valid_mask = np.ones(len(points_array), dtype=bool)
+        if valid_descriptor_mask is None:
+            valid_descriptor_mask = np.ones(len(points_array), dtype=bool)
         else:
-            valid_mask = np.asarray(valid_mask, dtype=bool)
-            if len(valid_mask) != len(points_array):
+            valid_descriptor_mask = np.asarray(valid_descriptor_mask, dtype=bool)
+            if len(valid_descriptor_mask) != len(points_array):
                 raise ValueError(
                     "Waveform descriptor mask size does not match number of points"
                 )
 
-        if not allow_missing_descriptors and not np.all(valid_mask):
-            raise ValueError("Missing waveform descriptors are not allowed")
-
-        if valid_mask.any():
-            actual = set(sizes[valid_mask])
+        if valid_descriptor_mask.any():
+            actual = set(sizes[valid_descriptor_mask])
             if actual - {waveform_size}:
                 raise ValueError(
                     f"Inconsistent waveform sizes in point data: {actual} but descriptor size is {waveform_size}"
                 )
 
         offsets = np.asarray(points_array["wavepacket_offset"], dtype=np.uint64)
-        valid_offsets = offsets[valid_mask]
+        valid_offsets = offsets[valid_descriptor_mask]
         valid_indices = valid_offsets // waveform_size
         unique_indices, inverse_indices = np.unique(valid_indices, return_inverse=True)
         sorted_indices = np.argsort(unique_indices)
@@ -233,7 +227,6 @@ class WaveformRecord:
         waveforms = cls.from_buffer(
             waveform_data,
             wave_dtype,
-            number_of_samples,
             temporal_sample_spacing,
             count=len(unique_indices),
         )
@@ -241,16 +234,16 @@ class WaveformRecord:
         unique_to_sorted = np.empty_like(sorted_indices)
         unique_to_sorted[sorted_indices] = np.arange(len(sorted_indices))
         points_waveform_index = np.full(len(points_array), -1, dtype=np.int64)
-        points_waveform_index[valid_mask] = unique_to_sorted[inverse_indices]
+        points_waveform_index[valid_descriptor_mask] = unique_to_sorted[inverse_indices]
 
-        if allow_missing_descriptors and not np.all(valid_mask):
+        if not np.all(valid_descriptor_mask):
             missing_wave_index = len(waveforms)
             new_samples = np.empty((missing_wave_index + 1,), dtype=wave_dtype)
             if len(waveforms):
                 new_samples[:-1] = waveforms.samples
             new_samples["waveform"][-1] = 0
             waveforms = cls(new_samples, temporal_sample_spacing)
-            points_waveform_index[~valid_mask] = missing_wave_index
+            points_waveform_index[~valid_descriptor_mask] = missing_wave_index
 
         return waveforms, np.asarray(points_waveform_index, dtype=np.int64)
 

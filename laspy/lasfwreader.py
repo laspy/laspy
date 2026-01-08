@@ -32,7 +32,6 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
         *,
         waveform_reader: Optional["WaveReader"] = None,
         valid_descriptor_mask: np.ndarray[Any, np.dtype[np.bool_]] | None = None,
-        allow_missing_descriptors: bool = True,
     ):
         super().__init__(array, point_format, scales, offsets)
         self._waveforms = waveforms
@@ -41,7 +40,6 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
         )
         self._waveform_reader = waveform_reader
         self._valid_descriptor_mask = valid_descriptor_mask
-        self._allow_missing_descriptors = allow_missing_descriptors
 
     def __getitem__(self, item):
         if isinstance(item, (int, slice, np.ndarray, list, tuple)):
@@ -79,7 +77,6 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
                     points_waveform_index,
                     waveform_reader=self._waveform_reader,
                     valid_descriptor_mask=valid_descriptor_mask,
-                    allow_missing_descriptors=self._allow_missing_descriptors,
                 )
         if item == "waveform":
             if self._waveforms is None or self._points_waveform_index is None:
@@ -96,8 +93,7 @@ class WaveformPointRecord(record.ScaleAwarePointRecord):
         self._waveforms, self._points_waveform_index = WaveformRecord.from_points(
             self.array,
             self._waveform_reader,
-            self._valid_descriptor_mask,
-            self._allow_missing_descriptors,
+            valid_descriptor_mask=self._valid_descriptor_mask,
         )
 
 
@@ -232,7 +228,7 @@ class WaveformLasData(LasData):
         self, waveform_size: int, valid_mask: np.ndarray[Any, np.dtype[np.bool_]] | None
     ) -> None:
         sizes = np.asarray(self.points.array["wavepacket_size"], dtype=np.uint64)
-        if valid_mask is not None and self.waveform_points._allow_missing_descriptors:
+        if valid_mask is not None:
             mask = np.asarray(valid_mask, dtype=bool)
             sizes_to_check = sizes[mask]
         else:
@@ -260,9 +256,7 @@ class WaveformLasData(LasData):
                 raise ValueError(
                     "Waveform descriptor mask size does not match number of points"
                 )
-            if not self.waveform_points._allow_missing_descriptors and not np.all(mask):
-                raise ValueError("Missing waveform descriptors are not allowed")
-        missing = self.waveform_points._allow_missing_descriptors and not np.all(mask)
+        missing = not np.all(mask)
         return mask, missing
 
     @staticmethod
@@ -518,7 +512,6 @@ class LasFWReader(LasReader):
                 None,
                 None,
                 waveform_reader=None,
-                allow_missing_descriptors=allow_missing_descriptors,
             )
             return empty_points, waveform_points
 
@@ -551,7 +544,6 @@ class LasFWReader(LasReader):
                 None,
                 None,
                 waveform_reader=None,
-                allow_missing_descriptors=allow_missing_descriptors,
             )
             return points, waveform_points
 
@@ -569,15 +561,13 @@ class LasFWReader(LasReader):
                 None,
                 waveform_reader=self._waveform_source,
                 valid_descriptor_mask=np.asarray(valid_mask, dtype=bool),
-                allow_missing_descriptors=allow_missing_descriptors,
             )
             return points, waveform_points
 
         waveforms, points_waveform_index = WaveformRecord.from_points(
             points.array,
             self._waveform_source,
-            valid_mask,
-            allow_missing_descriptors,
+            valid_descriptor_mask=valid_mask,
         )
 
         waveforms = WaveformPointRecord(
@@ -589,7 +579,6 @@ class LasFWReader(LasReader):
             np.asarray(points_waveform_index, dtype=np.int64),
             waveform_reader=self._waveform_source,
             valid_descriptor_mask=np.asarray(valid_mask, dtype=bool),
-            allow_missing_descriptors=allow_missing_descriptors,
         )
         return points, waveforms
 
