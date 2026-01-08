@@ -1,6 +1,6 @@
 from collections import UserDict
 from dataclasses import dataclass
-from typing import Any, Iterable, NewType, Protocol, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, Iterable, NewType, Protocol, cast
 
 if TYPE_CHECKING:
     from collections.abc import Buffer
@@ -8,16 +8,17 @@ else:
     try:
         from collections.abc import Buffer
     except ImportError:  # Python < 3.12
+
         class Buffer(Protocol):
             """Fallback typing stub for Python < 3.12."""
 
             ...
 
+
 import numpy as np
 
 from .vlrs import VLR
 from .vlrs.known import WaveformPacketVlr
-
 
 WavePacketDescriptorIndex = NewType("WavePacketDescriptorIndex", int)
 
@@ -69,7 +70,7 @@ class WaveformPacketDescriptor:
                 raise NotImplementedError(
                     f"Unsupported waveform sample width: {self.bits_per_sample} bits"
                 )
-        return np.dtype([("waveform",(base_dtype, (self.number_of_samples,)))])
+        return np.dtype([("waveform", (base_dtype, (self.number_of_samples,)))])
 
 
 class WaveformPacketDescriptorRegistry(
@@ -82,9 +83,7 @@ class WaveformPacketDescriptorRegistry(
     temporal_sample_spacing: int
 
     @classmethod
-    def from_vlrs(
-        cls, vlrs: Iterable[VLR]
-    ) -> "WaveformPacketDescriptorRegistry":
+    def from_vlrs(cls, vlrs: Iterable[VLR]) -> "WaveformPacketDescriptorRegistry":
         registry = cls()
         waveform_vlrs: list[WaveformPacketVlr] = [
             cast(WaveformPacketVlr, vlr)
@@ -113,12 +112,13 @@ class WaveformPacketDescriptorRegistry(
             descriptor.ensure_supported()
             record_id = WavePacketDescriptorRecordId(vlr.record_id)
             registry.data[record_id] = descriptor
-        bits_per_sample, number_of_samples, temporal_sample_spacing = registry.ensure_supported()
+        bits_per_sample, number_of_samples, temporal_sample_spacing = (
+            registry.ensure_supported()
+        )
         registry.bits_per_sample = bits_per_sample
         registry.number_of_samples = number_of_samples
         registry.temporal_sample_spacing = temporal_sample_spacing
         return registry
-
 
     def ensure_supported(self) -> tuple[int, int, int]:
         """Ensure that all descriptors in the registry are compatible.
@@ -145,8 +145,12 @@ class WaveformPacketDescriptorRegistry(
             raise NotImplementedError(
                 "All waveform packet descriptors must have the same temporal_sample_spacing"
             )
-        return bits_per_sample_set.pop(), number_of_samples_set.pop(), temporal_sample_spacing_set.pop()
-    
+        return (
+            bits_per_sample_set.pop(),
+            number_of_samples_set.pop(),
+            temporal_sample_spacing_set.pop(),
+        )
+
     def dtype(self) -> np.dtype | None:
         try:
             descriptor: WaveformPacketDescriptor = next(iter(self.data.values()))
@@ -271,6 +275,5 @@ class WaveformRecord:
         """
         if isinstance(item, (int, slice, np.ndarray, list, tuple)):
             return WaveformRecord(self.samples[item], self.sample_spacing_ps)
-
 
         return self.samples[item]

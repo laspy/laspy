@@ -5,11 +5,11 @@ import pytest
 
 from laspy.vlrs.known import WaveformPacketStruct, WaveformPacketVlr
 from laspy.waveform import (
-    WavePacketDescriptorIndex,
-    WavePacketDescriptorRecordId,
     WaveformPacketDescriptor,
     WaveformPacketDescriptorRegistry,
     WaveformRecord,
+    WavePacketDescriptorIndex,
+    WavePacketDescriptorRecordId,
 )
 
 
@@ -42,7 +42,9 @@ def make_waveforms(base: np.dtype, samples: int, count: int) -> np.ndarray:
 
 
 def make_points(waveform_size: int, offsets: np.ndarray) -> np.ndarray:
-    points_dtype = np.dtype([("wavepacket_size", np.uint32), ("wavepacket_offset", np.uint64)])
+    points_dtype = np.dtype(
+        [("wavepacket_size", np.uint32), ("wavepacket_offset", np.uint64)]
+    )
     points = np.zeros((len(offsets),), dtype=points_dtype)
     points["wavepacket_size"] = waveform_size
     points["wavepacket_offset"] = offsets
@@ -55,7 +57,9 @@ def test_wave_packet_descriptor_record_id_from_index() -> None:
     assert int(record_id) == 100
 
 
-def test_waveform_packet_descriptor_ensure_supported_checks_compression_and_bits() -> None:
+def test_waveform_packet_descriptor_ensure_supported_checks_compression_and_bits() -> (
+    None
+):
     descriptor = WaveformPacketDescriptor(
         bits_per_sample=8,
         waveform_compression_type=1,
@@ -88,7 +92,9 @@ def test_waveform_packet_descriptor_ensure_supported_checks_compression_and_bits
         (64, np.uint64),
     ],
 )
-def test_waveform_packet_descriptor_dtype_supported(bits_per_sample: int, expected_base: np.dtype) -> None:
+def test_waveform_packet_descriptor_dtype_supported(
+    bits_per_sample: int, expected_base: np.dtype
+) -> None:
     descriptor = WaveformPacketDescriptor(
         bits_per_sample=bits_per_sample,
         waveform_compression_type=0,
@@ -282,9 +288,7 @@ def test_waveform_record_from_points_reads_runs_and_indexes() -> None:
     reader = DummyWaveformReader(waveforms, wave_dtype, spacing=10)
     waveform_size = wave_dtype.itemsize
 
-    offsets = np.array(
-        [0, waveform_size * 2, waveform_size * 3, 0], dtype=np.uint64
-    )
+    offsets = np.array([0, waveform_size * 2, waveform_size * 3, 0], dtype=np.uint64)
     points = make_points(waveform_size, offsets)
 
     wave_record, index = WaveformRecord.from_points(points, reader)
@@ -339,7 +343,9 @@ def test_waveform_record_from_points_missing_descriptors_appends_zero() -> None:
         valid_descriptor_mask=valid_descriptor_mask,
     )
     assert len(wave_record) == 2
-    assert np.array_equal(wave_record.samples["waveform"][-1], np.zeros(2, dtype=np.uint8))
+    assert np.array_equal(
+        wave_record.samples["waveform"][-1], np.zeros(2, dtype=np.uint8)
+    )
     assert np.array_equal(index, np.array([0, 1, 0], dtype=np.int64))
 
 
@@ -358,5 +364,7 @@ def test_waveform_record_from_points_all_missing_descriptors() -> None:
         valid_descriptor_mask=valid_descriptor_mask,
     )
     assert len(wave_record) == 1
-    assert np.array_equal(wave_record.samples["waveform"][0], np.zeros(2, dtype=np.uint8))
+    assert np.array_equal(
+        wave_record.samples["waveform"][0], np.zeros(2, dtype=np.uint8)
+    )
     assert np.array_equal(index, np.array([0, 0], dtype=np.int64))

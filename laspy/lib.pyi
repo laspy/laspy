@@ -5,9 +5,9 @@ from .compression import DecompressionSelection, LazBackend
 from .header import LasHeader
 from .lasappender import LasAppender
 from .lasdata import LasData
+from .lasfwreader import LasFWReader, WaveformLasData
 from .lasmmap import LasMMAP
 from .lasreader import LasReader
-from .lasfwreader import LasFWReader, WaveformLasData
 from .typehints import PathLike
 
 LazBackend = LazBackend

@@ -1,21 +1,22 @@
-from copy import deepcopy
 import logging
 import os
+from collections.abc import Iterable, Sequence
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, BinaryIO, Optional, Union
+
+import numpy as np
+
+from ._compression.backend import LazBackend
+from ._compression.selection import DecompressionSelection
+from .lasdata import LasData
+from .lasreader import LasReader
+from .point import record
 from .waveform import (
     WaveformPacketDescriptorRegistry,
     WaveformRecord,
     WavePacketDescriptorRecordId,
 )
-from pathlib import Path
-from ._compression.selection import DecompressionSelection
-from collections.abc import Iterable, Sequence
-from ._compression.backend import LazBackend
-from typing import BinaryIO, Optional, Union, Any
-from .lasreader import LasReader
-from .lasdata import LasData
-from .point import record
-import numpy as np
-
 
 logger = logging.getLogger(__name__)
 
@@ -135,9 +136,11 @@ class WaveformLasData(LasData):
             self.points.point_format,
             len(self.points),
             len(self.vlrs),
-            len(self.waveform_points._waveforms)
-            if self.waveform_points._waveforms is not None
-            else 0,
+            (
+                len(self.waveform_points._waveforms)
+                if self.waveform_points._waveforms is not None
+                else 0
+            ),
         )
 
     def write(
