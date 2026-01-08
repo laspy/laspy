@@ -1,7 +1,17 @@
 from collections import UserDict
-from collections.abc import Buffer
 from dataclasses import dataclass
-from typing import Any, Iterable, NewType, cast
+from typing import Any, Iterable, NewType, Protocol, TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Buffer
+else:
+    try:
+        from collections.abc import Buffer
+    except ImportError:  # Python < 3.12
+        class Buffer(Protocol):
+            """Fallback typing stub for Python < 3.12."""
+
+            ...
 
 import numpy as np
 
