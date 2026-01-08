@@ -285,6 +285,16 @@ def test_write_wdp_lazy_dedup_rejects_bad_mask(
             )
 
 
+def test_resolve_valid_mask_rejects_length_mismatch(fullwave_path: Path) -> None:
+    with laspy.open(fullwave_path, fullwave="lazy") as reader:
+        points, wf_points = reader.read_points_waveforms(8)
+        las = WaveformLasData(deepcopy(reader.header), points, wf_points)
+        las.waveform_points._valid_descriptor_mask = np.ones(len(points) + 1, dtype=bool)
+
+        with pytest.raises(ValueError, match="Waveform descriptor mask size"):
+            las._resolve_valid_mask(len(points))
+
+
 def test_waveform_point_record_getitem_and_subset(fullwave_path: Path) -> None:
     with laspy.open(fullwave_path, fullwave="eager") as reader:
         points, wf_points = reader.read_points_waveforms(32)
