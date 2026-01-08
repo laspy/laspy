@@ -260,7 +260,7 @@ class WaveformRecord:
         return self.samples.shape[0]
 
     def __repr__(self):
-        return f"<{self.__class__.__name__}(len: {len(self)}, num samples: {self.samples.dtype["waveform"].shape[0]}, type: {self.samples.dtype["waveform"].base}, size: {self.wave_size} bytes)>"
+        return f"<{self.__class__.__name__}(len: {len(self)}, num samples: {self.samples.dtype['waveform'].shape[0]}, type: {self.samples.dtype['waveform'].base}, size: {self.wave_size} bytes)>"
 
     def __getitem__(self, item):
         """Gives access to the underlying numpy array
