@@ -14,6 +14,7 @@ from .errors import LaspyException
 from .header import LasHeader, Version
 from .lasappender import LasAppender
 from .lasdata import LasData
+from .lasfwreader import LasFWReader
 from .lasmmap import LasMMAP
 from .lasreader import LasReader
 from .laswriter import LasWriter
@@ -33,6 +34,7 @@ def open_las(
     encoding_errors: str = "strict",
     read_evlrs: bool = True,
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
+    fullwave=False,
 ) -> Union[LasReader, LasWriter, LasAppender]:
     """The laspy.open opens a LAS/LAZ file in one of the 3 supported
     mode:
@@ -145,13 +147,32 @@ def open_las(
         else:
             stream = source
         try:
-            return LasReader(
-                stream,
-                closefd=closefd,
-                laz_backend=laz_backend,
-                read_evlrs=read_evlrs,
-                decompression_selection=decompression_selection,
-            )
+            if fullwave == "eager":
+                return LasFWReader(
+                    stream,
+                    closefd=closefd,
+                    laz_backend=laz_backend,
+                    read_evlrs=read_evlrs,
+                    decompression_selection=decompression_selection,
+                    read_waveforms=True,
+                )
+            if fullwave:
+                return LasFWReader(
+                    stream,
+                    closefd=closefd,
+                    laz_backend=laz_backend,
+                    read_evlrs=read_evlrs,
+                    decompression_selection=decompression_selection,
+                    read_waveforms=False,
+                )
+            else:
+                return LasReader(
+                    stream,
+                    closefd=closefd,
+                    laz_backend=laz_backend,
+                    read_evlrs=read_evlrs,
+                    decompression_selection=decompression_selection,
+                )
         except:
             if closefd:
                 stream.close()
@@ -212,6 +233,7 @@ def read_las(
     laz_backend=LazBackend.detect_available(),
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
     encoding_errors: str = "strict",
+    fullwave: bool = False,
 ):
     """Entry point for reading las data in laspy
 
@@ -261,6 +283,7 @@ def read_las(
         laz_backend=laz_backend,
         decompression_selection=decompression_selection,
         encoding_errors=encoding_errors,
+        fullwave=fullwave,
     ) as reader:
         return reader.read()
 
