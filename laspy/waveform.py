@@ -145,13 +145,6 @@ class WaveformPacketDescriptorRegistry(
         return descriptor.dtype()
 
 
-@dataclass(frozen=True)
-class WaveformKey:
-    descriptor_index: WavePacketDescriptorIndex
-    offset: int
-    size: int
-
-
 class WaveformRecord:
     samples: np.ndarray
     sample_spacing_ps: int
