@@ -68,7 +68,7 @@ lint-check = ""
 lint-fix = "lint-check"
 
 [tool.hatch.build.targets.sdist]
-include = ["/laspy"]
+include = ["/laspy", "/tests"]
 
 [tool.isort]
 profile = "black"
