@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 2.7.0 (14/01/2026)
+
+### Added
+
+- LAS 1.5 support
+  * laszip-python update required for users of this backed (bumped in dependencies)
+- Python 3.14 support (bump of laszip-python and lazrs required)
+
+### Fixed
+
+- Fix some fields of GlobalField not being properly unset/set to 0 after it was set to 1
+- Fix a missing deepcopy of default LasHeader.DEFAULT_POINT_FORMAT
+
 ## Version 2.6.1 (07/07/2025)
 
 ### Fixed
