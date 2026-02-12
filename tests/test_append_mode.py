@@ -216,7 +216,7 @@ def test_append_to_empty_file(input_file: Path) -> None:
 @pytest.mark.skipif(
     not laspy.LazBackend.Lazrs.is_available(), reason="Lazrs is not installed"
 )
-def test_append_issue_that_requires_passing_point_count():
+def test_append_issue_that_requires_passing_point_count(tmp_path: Path):
     """The input file in this test is composed of only one LAZ chunk.
 
     LazAppend from used to decompress the last chunk until reaching the end
@@ -238,7 +238,7 @@ def test_append_issue_that_requires_passing_point_count():
     when doing the appender initialization
     """
     input_las = Path(__file__).parent / "data" / "append-bug.laz"
-    output_las = Path(__file__).parent / "data" / "append-bug-cpy.laz"
+    output_las = tmp_path / "append-bug-cpy.laz"
 
     # check ini
     las_input = laspy.read(input_las)
