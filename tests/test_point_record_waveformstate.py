@@ -33,16 +33,13 @@ def test_packed_point_record_waveform_state_accessors_and_mutators() -> None:
     record = PackedPointRecord(array, pf, waveform_state=LazyWaveformState(reader))
     assert isinstance(record._waveform_state, LazyWaveformState)
 
-    record._set_waveform_state(
-        EagerWaveformState(reader, waveforms, points_waveform_index)
-    )
+    record._set_waveform_state(EagerWaveformState(waveforms, points_waveform_index))
     assert isinstance(record._waveform_state, EagerWaveformState)
     eager_state = record._waveform_state
     assert np.array_equal(eager_state.points_waveform_index, points_waveform_index)
 
     record._set_waveform_state(
         EagerWaveformState(
-            replacement_reader,
             replacement_waveforms,
             replacement_index,
         )
@@ -61,14 +58,13 @@ def test_packed_point_record_waveform_state_accessors_and_mutators() -> None:
 def test_packed_point_record_normalizes_eager_waveform_state_index() -> None:
     pf = PointFormat(0)
     array = np.zeros(2, pf.dtype())
-    reader = DummyWaveformReader()
     waveforms = make_waveform_record([[1, 2], [3, 4]])
     points_waveform_index = np.array([0, 1], dtype=np.int32)
 
     record = PackedPointRecord(
         array,
         pf,
-        waveform_state=EagerWaveformState(reader, waveforms, points_waveform_index),
+        waveform_state=EagerWaveformState(waveforms, points_waveform_index),
     )
 
     eager_state = record._waveform_state
@@ -79,10 +75,8 @@ def test_packed_point_record_normalizes_eager_waveform_state_index() -> None:
 def test_packed_point_record_rejects_invalid_waveform_state_assignment() -> None:
     pf = PointFormat(0)
     array = np.zeros(2, pf.dtype())
-    reader = DummyWaveformReader()
     waveforms = make_waveform_record([[1, 2], [3, 4]])
     valid_state = EagerWaveformState(
-        reader,
         waveforms,
         np.array([0, 1], dtype=np.int64),
     )

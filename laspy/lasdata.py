@@ -354,12 +354,11 @@ class LasData:
         *,
         eager_state: record.EagerWaveformState,
     ) -> None:
-        waveform_reader = eager_state.reader
         waveforms = eager_state.waveforms
         points_waveform_index = eager_state.points_waveform_index
 
         point_count = len(self.points)
-        wave_size_bytes = waveform_reader.wave_size_bytes
+        wave_size_bytes = waveforms.wave_size
         offsets = np.zeros(point_count, dtype=np.uint64)
         offsets[has_waveform_mask] = (
             np.asarray(points_waveform_index[has_waveform_mask], dtype=np.uint64)

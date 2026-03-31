@@ -253,7 +253,6 @@ class LasReader:
 
         points._set_waveform_state(
             record.EagerWaveformState(
-                self._waveform_source,
                 waveforms_record,
                 points_waveform_index,
             )

@@ -45,13 +45,12 @@ def make_waveform_record(values: list[list[int]]) -> WaveformRecord:
 def make_record_with_eager_waveforms() -> PackedPointRecord:
     point_format = PointFormat(0)
     array = np.zeros(4, point_format.dtype())
-    reader = DummyWaveformReader()
     waveforms = make_waveform_record([[10, 11], [20, 21], [30, 31]])
     points_waveform_index = np.array([0, 1, 1, 2], dtype=np.int64)
     return PackedPointRecord(
         array,
         point_format,
-        waveform_state=EagerWaveformState(reader, waveforms, points_waveform_index),
+        waveform_state=EagerWaveformState(waveforms, points_waveform_index),
     )
 
 
@@ -66,13 +65,12 @@ def make_waveform_capable_record_with_eager_waveforms() -> (
     array["wavepacket_index"] = 1
     array["wavepacket_size"] = waveforms.wave_size
     array["wavepacket_offset"] = np.array([0, 2, 2, 4], dtype=np.uint64)
-    reader = DummyWaveformReader(waveforms.samples)
     return (
         PackedPointRecord(
             array,
             point_format,
             waveform_state=EagerWaveformState(
-                reader, waveforms, expected_points_waveform_index
+                waveforms, expected_points_waveform_index
             ),
         ),
         expected_waveforms,

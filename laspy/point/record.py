@@ -48,7 +48,6 @@ class LazyWaveformState:
 
 @dataclass(frozen=True, slots=True)
 class EagerWaveformState:
-    reader: IWaveformReader
     waveforms: WaveformRecord
     points_waveform_index: np.ndarray[Any, np.dtype[np.int64]]
 
@@ -98,12 +97,10 @@ class PackedPointRecord:
     ) -> WaveformState | None:
         match waveform_state:
             case EagerWaveformState(
-                reader=reader,
                 waveforms=waveforms,
                 points_waveform_index=points_waveform_index,
             ):
                 return EagerWaveformState(
-                    reader,
                     waveforms,
                     np.asarray(points_waveform_index, dtype=np.int64),
                 )
@@ -130,7 +127,6 @@ class PackedPointRecord:
                 )
                 self._set_waveform_state(
                     EagerWaveformState(
-                        reader,
                         waveforms,
                         points_waveform_index,
                     )
@@ -215,12 +211,10 @@ class PackedPointRecord:
     def _copy_waveform_state(self) -> WaveformState | None:
         match self._waveform_state:
             case EagerWaveformState(
-                reader=reader,
                 waveforms=waveforms,
                 points_waveform_index=points_waveform_index,
             ):
                 return EagerWaveformState(
-                    reader,
                     WaveformRecord(
                         waveforms.samples.copy(), waveforms.sample_spacing_ps
                     ),
@@ -245,7 +239,6 @@ class PackedPointRecord:
         current_size = len(self.array)
         match self._waveform_state:
             case EagerWaveformState(
-                reader=reader,
                 waveforms=waveforms,
                 points_waveform_index=points_waveform_index,
             ):
@@ -267,7 +260,6 @@ class PackedPointRecord:
                     resized_index[current_size:] = len(waveforms)
 
                     return EagerWaveformState(
-                        reader,
                         WaveformRecord(resized_samples, waveforms.sample_spacing_ps),
                         resized_index,
                     )
@@ -310,7 +302,6 @@ class PackedPointRecord:
     ):
         match self._waveform_state:
             case EagerWaveformState(
-                reader=reader,
                 waveforms=waveforms,
                 points_waveform_index=points_waveform_index,
             ):
@@ -323,7 +314,6 @@ class PackedPointRecord:
                     waveforms.sample_spacing_ps,
                 )
                 waveform_state = EagerWaveformState(
-                    reader,
                     waveforms_subset,
                     inverse_indices,
                 )
