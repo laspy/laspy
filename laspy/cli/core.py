@@ -29,7 +29,6 @@ from laspy.header import Version
 
 from .. import PackedPointRecord, PointFormat
 from ..point import dims
-from ..vlrs.vlrlist import VLRList
 from . import copc
 
 DEFAULT_ITER_CHUNK_SIZE: int = 10_000_000

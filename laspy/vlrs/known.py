@@ -8,7 +8,6 @@ import abc
 import ctypes
 import logging
 import struct
-from copy import copy
 from typing import Any, TypeVar
 
 import numpy as np

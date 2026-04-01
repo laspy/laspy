@@ -2,7 +2,7 @@ import logging
 import pathlib
 import typing
 from copy import deepcopy
-from typing import Any, BinaryIO, Iterable, Sequence, overload
+from typing import BinaryIO, Iterable, Sequence, overload
 
 import numpy as np
 from numpy.typing import NDArray

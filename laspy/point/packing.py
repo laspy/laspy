@@ -1,7 +1,5 @@
 """This module contains functions to pack and unpack point dimensions"""
 
-import numpy as np
-
 
 def least_significant_bit_set(mask: int) -> int:
     """Return the least significant bit set

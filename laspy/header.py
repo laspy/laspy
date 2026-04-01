@@ -26,7 +26,6 @@ from .vlrs.geotiff import create_geotiff_projection_vlrs
 from .vlrs.known import (
     ExtraBytesStruct,
     ExtraBytesVlr,
-    GeoAsciiParamsVlr,
     GeoKeyDirectoryVlr,
     WktCoordinateSystemVlr,
 )
@@ -450,7 +449,6 @@ class LasHeader:
 
             Typically, if the CRS has an EPSG code it will be supported.
         """
-        import pyproj
 
         # check and remove any existing crs vlrs
         for crs_vlr_name in (
