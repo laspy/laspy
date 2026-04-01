@@ -189,7 +189,7 @@ def info(
                 if header:
                     rich.print(50 * "-")
 
-                table = Table(title=f"VLRs", show_header=True, box=None)
+                table = Table(title="VLRs", show_header=True, box=None)
                 table.add_column("User ID")
                 table.add_column("Record ID")
                 table.add_column("Description")
@@ -207,7 +207,7 @@ def info(
                 print_points_stats(reader)
 
             if evlrs and reader.header.evlrs is not None:
-                table = Table(title=f"EVLRs", show_header=True, box=None)
+                table = Table(title="EVLRs", show_header=True, box=None)
                 table.add_column("User ID")
                 table.add_column("Record ID")
                 table.add_column("Description")
@@ -359,7 +359,7 @@ def _copy_files(
             overall_progress.update(overall_task, advance=1)
 
         if num_fails == len(input_files):
-            overall_progress.update(overall_task, description=f"[red] Failed all tasks")
+            overall_progress.update(overall_task, description="[red] Failed all tasks")
             raise typer.Abort()
         elif num_fails == 0:
             overall_progress.update(
@@ -562,7 +562,7 @@ def convert(
     input_paths, output_paths = _list_input_and_ouput_files(input_path, output_path)
 
     if len(input_paths) > len(output_paths):
-        rich.print(f"[bold red]Cannot convert many files into one")
+        rich.print("[bold red]Cannot convert many files into one")
         raise typer.Exit(code=1)
 
     if len(input_paths) == 1 and input_paths[0] == output_paths[0]:
@@ -607,7 +607,7 @@ def convert(
                 num_fails += 1
 
         if num_fails == len(input_paths):
-            overall_progress.update(overall_task, description=f"[red] Failed all tasks")
+            overall_progress.update(overall_task, description="[red] Failed all tasks")
         elif num_fails == 0:
             overall_progress.update(
                 overall_task,
@@ -953,7 +953,7 @@ class FilteringAction:
             cmp_tok = next(tokens)
             value_tok = next(tokens)
         except StopIteration:
-            raise ValueError(f"'could not be parsed as a filtering action") from None
+            raise ValueError("'could not be parsed as a filtering action") from None
 
         if field_name_tok.kind != Token.Kind.LiteralStr:
             raise ValueError(f"expected field_name found '{field_name_tok.value}'")
@@ -1218,14 +1218,14 @@ def filter(
         filter_expression = FilteringExpression.parse_string(filter_expression)
     except Exception as e:
         print(str(e))
-        print(f"Failed to parse filter expression")
+        print("Failed to parse filter expression")
         raise typer.Abort()
 
     laz_backend = cli_name_to_backend[laz_backend] if laz_backend is not None else None
     input_paths, output_paths = _list_input_and_ouput_files(input_path, output_path)
 
     if len(input_paths) > len(output_paths):
-        rich.print(f"[bold red]Cannot filter many files into one")
+        rich.print("[bold red]Cannot filter many files into one")
         raise typer.Exit(code=1)
 
     if len(input_paths) == 1 and input_paths[0] == output_paths[0]:
@@ -1269,7 +1269,7 @@ def filter(
                 num_fails += 1
 
         if num_fails == len(input_paths):
-            overall_progress.update(overall_task, description=f"[red] Failed all tasks")
+            overall_progress.update(overall_task, description="[red] Failed all tasks")
         elif num_fails == 0:
             overall_progress.update(
                 overall_task,

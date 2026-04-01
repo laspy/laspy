@@ -962,7 +962,7 @@ class LasHeader:
 
         file_sig = header_bytes[: len(LAS_FILE_SIGNATURE)]
         if not file_sig:
-            raise LaspyException(f"Source is empty")
+            raise LaspyException("Source is empty")
         if file_sig != LAS_FILE_SIGNATURE:
             raise LaspyException(f'Invalid file signature "{file_sig}"')
         if len(header_bytes) < LAS_HEADERS_SIZE["1.1"]:

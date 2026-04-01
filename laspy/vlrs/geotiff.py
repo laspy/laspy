@@ -182,7 +182,7 @@ def parse_geo_tiff_keys_from_vlrs(vlr_list: vlrlist.VLRList) -> list[GeoTiffKey]
     List of GeoTiff keys parsed from the VLRs
     """
     warnings.warn(
-        f"parse_geo_tiff_keys_from_vlrs is deprecated, if you want the CRS/SRS from "
+        "parse_geo_tiff_keys_from_vlrs is deprecated, if you want the CRS/SRS from "
         "GeoTiff's VLR install pyproj and use `LasHead.parse_crs()`",
         DeprecationWarning,
     )
@@ -214,7 +214,7 @@ def parse_geo_tiff(
     ascii_vlr: GeoAsciiParamsVlr | None,
 ) -> list[GeoTiffKey]:
     warnings.warn(
-        f"parse_geo_tiff_keys_from_vlrs is deprecated, if you want the CRS/SRS from "
+        "parse_geo_tiff_keys_from_vlrs is deprecated, if you want the CRS/SRS from "
         "GeoTiff's VLR install pyproj and use `LasHead.parse_crs()`",
         DeprecationWarning,
     )

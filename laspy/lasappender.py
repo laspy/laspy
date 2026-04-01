@@ -128,7 +128,7 @@ class LasAppender:
         if last_error is not None:
             raise LaspyException(f"Could not initialize a laz backend: {last_error}")
         else:
-            raise LaspyException(f"No valid laz backend selected")
+            raise LaspyException("No valid laz backend selected")
 
     def __enter__(self) -> "LasAppender":
         return self
