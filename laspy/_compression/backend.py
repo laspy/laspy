@@ -1,6 +1,6 @@
 import enum
 from abc import ABCMeta
-from typing import Any, BinaryIO, Optional, Tuple
+from typing import Any, BinaryIO
 
 from .._pointappender import IPointAppender
 from .._pointreader import IPointReader
@@ -10,7 +10,7 @@ from .lazbackend import ILazBackend
 from .lazrsbackend import LazrsBackend
 from .selection import DecompressionSelection
 
-_DEFAULT_BACKENDS: Tuple[ILazBackend, ...] = (
+_DEFAULT_BACKENDS: tuple[ILazBackend, ...] = (
     LazrsBackend(parallel=True),
     LazrsBackend(parallel=False),
     LaszipBackend(),
@@ -56,7 +56,7 @@ class LazBackend(ILazBackend, enum.Enum, metaclass=ABCEnumMeta):
         self,
         source: Any,
         header: "LasHeader",
-        decompression_selection: Optional[DecompressionSelection] = None,
+        decompression_selection: DecompressionSelection | None = None,
     ) -> IPointReader:
         return self._get().create_reader(
             source, header, decompression_selection=decompression_selection
@@ -70,7 +70,7 @@ class LazBackend(ILazBackend, enum.Enum, metaclass=ABCEnumMeta):
         return self._get().create_writer(dest, header)
 
     @classmethod
-    def detect_available(cls) -> Tuple["LazBackend", ...]:
+    def detect_available(cls) -> tuple["LazBackend", ...]:
         """Returns a tuple containing the available backends in the current
         python environment
         """

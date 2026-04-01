@@ -11,14 +11,9 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    Dict,
     Generic,
     Iterable,
-    List,
-    Optional,
-    Tuple,
     TypeVar,
-    Union,
 )
 
 import numpy as np
@@ -141,16 +136,16 @@ def print_points_stats(reader: laspy.LasReader):
 @app.command()
 def info(
     file_path: Path,
-    header: Optional[bool] = typer.Option(
+    header: bool | None = typer.Option(
         None, "--header", help="Whether header information should be printed"
     ),
-    vlrs: Optional[bool] = typer.Option(
+    vlrs: bool | None = typer.Option(
         None, "--vlrs", help="Whether vlrs information should be printed"
     ),
-    points: Optional[bool] = typer.Option(
+    points: bool | None = typer.Option(
         None, "--points", help="Whether points information should be printed"
     ),
-    evlrs: Optional[bool] = typer.Option(
+    evlrs: bool | None = typer.Option(
         None, "--evlrs", help="Whether evlrs information should be printed"
     ),
 ):
@@ -233,7 +228,7 @@ def _copy_from_reader_to_writer(
     reader: laspy.LasReader,
     writer: laspy.LasWriter,
     iter_chunk_size: int,
-    progress_and_task: Optional[Tuple[Progress, TaskID]] = None,
+    progress_and_task: tuple[Progress, TaskID] | None = None,
 ):
     """
     Copies points from the reader to the writer
@@ -273,10 +268,10 @@ def _copy(
 
 def _list_input_and_ouput_files(
     input_path: Path,
-    output_path: Optional[Path] = None,
+    output_path: Path | None = None,
     glob_pattern: str = "*.la[sz]",
     output_ext: str = ".las",
-) -> Tuple[List[Path], List[Path]]:
+) -> tuple[list[Path], list[Path]]:
     """
     List some input LAS/LAZ file paths and their corresponding output LAS/LAZ paths.
 
@@ -305,8 +300,8 @@ def _list_input_and_ouput_files(
 def _copy_files(
     action: str,
     input_path: Path,
-    output_path: Optional[Path] = None,
-    laz_backend: laspy.LazBackend = Optional[None],
+    output_path: Path | None = None,
+    laz_backend: laspy.LazBackend = None,
     iter_chunk_size: int = DEFAULT_ITER_CHUNK_SIZE,
 ):
     if action == "compress":
@@ -378,7 +373,7 @@ def _copy_files(
             )
 
 
-backend_to_cli_name: Dict[laspy.LazBackend, str] = {
+backend_to_cli_name: dict[laspy.LazBackend, str] = {
     laspy.LazBackend.LazrsParallel: "lazrs-parallel",
     laspy.LazBackend.Lazrs: "lazrs",
     laspy.LazBackend.Laszip: "laszip",
@@ -396,7 +391,7 @@ CliLazBackend = Enum(
         for variant in laspy.LazBackend
     },
 )
-cli_name_to_backend: Dict[CliLazBackend, Optional[laspy.LazBackend]] = {
+cli_name_to_backend: dict[CliLazBackend, laspy.LazBackend | None] = {
     CliLazBackend.LazrsParallel: laspy.LazBackend.LazrsParallel,
     CliLazBackend.Lazrs: laspy.LazBackend.Lazrs,
     CliLazBackend.Laszip: laspy.LazBackend.Laszip,
@@ -410,11 +405,11 @@ def decompress(
         ...,
         help="Path to file or directory of files to decompress",
     ),
-    output_path: Optional[Path] = typer.Option(
+    output_path: Path | None = typer.Option(
         None,
         help="Directory where decompressed file will be written, or filename of the decompressed file",
     ),
-    laz_backend: Optional[CliLazBackend] = typer.Option(
+    laz_backend: CliLazBackend | None = typer.Option(
         None, help="The Laz backend to use."
     ),
     iter_chunk_size: int = ITER_CHUNK_SIZE_OPTION,
@@ -459,11 +454,11 @@ def compress(
         ...,
         help="Path to file or directory of files to compress",
     ),
-    output_path: Optional[Path] = typer.Option(
+    output_path: Path | None = typer.Option(
         None,
         help="Directory where decompressed file will be written, or filename of the decompressed file",
     ),
-    laz_backend: Optional[CliLazBackend] = typer.Option(
+    laz_backend: CliLazBackend | None = typer.Option(
         None, help="The Laz backend to use."
     ),
     iter_chunk_size: int = ITER_CHUNK_SIZE_OPTION,
@@ -481,9 +476,9 @@ def compress(
 def _convert_file_at_path(
     input_path: Path,
     output_path: Path,
-    point_format_id: Optional[int],
-    version: Optional[str],
-    laz_backend: Optional[CliLazBackend],
+    point_format_id: int | None,
+    version: str | None,
+    laz_backend: CliLazBackend | None,
     iter_chunk_size: int,
     progress: Progress,
     task: TaskID,
@@ -542,15 +537,15 @@ def convert(
         ...,
         help="Directory where converted file will be written, or filename of the converted file(s)",
     ),
-    point_format_id: Optional[int] = typer.Option(
+    point_format_id: int | None = typer.Option(
         None,
         help="The target point format id",
     ),
-    version: Optional[str] = typer.Option(
+    version: str | None = typer.Option(
         None,
         help="The target version",
     ),
-    laz_backend: Optional[CliLazBackend] = typer.Option(
+    laz_backend: CliLazBackend | None = typer.Option(
         None, help="The Laz backend to use."
     ),
     iter_chunk_size: int = ITER_CHUNK_SIZE_OPTION,
@@ -625,7 +620,7 @@ def convert(
             )
 
 
-def parse_float_or_int(string: str) -> Union[float, int]:
+def parse_float_or_int(string: str) -> float | int:
     """
     Parses an string as either an int or float.
     """
@@ -646,7 +641,7 @@ def parse_float_or_int(string: str) -> Union[float, int]:
     return value
 
 
-def parse_list_of_numbers(string: str) -> List[Union[float, int]]:
+def parse_list_of_numbers(string: str) -> list[float | int]:
     """
     Parses a string representing a list of number in the form
     "[1, 2]" or "(1, 2)".
@@ -772,7 +767,7 @@ class Lexer:
     filter expression into a list of tokens
     """
 
-    _keywords: Dict[str, Token] = {
+    _keywords: dict[str, Token] = {
         "and": Token(Token.Kind.And, "and"),
         "or": Token(Token.Kind.Or, "or"),
         "in": Token(Token.Kind.In, "in"),
@@ -781,16 +776,16 @@ class Lexer:
 
     def __init__(self, char_iter: PeekIterator[str]):
         self.char_iter: PeekIterator[str] = char_iter
-        self.tokens: List[Token] = []
+        self.tokens: list[Token] = []
         self.current_literal: str = ""
 
     @staticmethod
-    def tokenize_string(string: str) -> List[Token]:
+    def tokenize_string(string: str) -> list[Token]:
         lexer = Lexer(PeekIterator(string))
         return lexer.tokenize()
 
-    def tokenize(self) -> List[Token]:
-        new_token: Optional[Token] = None
+    def tokenize(self) -> list[Token]:
+        new_token: Token | None = None
         while (char := next(self.char_iter, None)) is not None:
             if char == " ":
                 self._flush_current_literal()
@@ -870,7 +865,7 @@ class Lexer:
         self.tokens.append(token)
 
 
-def tokenize(string: str) -> List[Token]:
+def tokenize(string: str) -> list[Token]:
     return Lexer.tokenize_string(string)
 
 
@@ -917,7 +912,7 @@ class FilteringAction:
     value: str  # Parsed to a concrete type when actually used
 
     # Translate some pdal names to laspy names
-    _pdal_name_to_laspy: ClassVar[Dict[str, str]] = {
+    _pdal_name_to_laspy: ClassVar[dict[str, str]] = {
         "Classification": "classification",
         "Intensity": "intensity",
         "PointSourceId": "point_source_id",
@@ -936,7 +931,7 @@ class FilteringAction:
     }
 
     # Translate a comparator token into the corresponding Comparator
-    _comparator_token_to_comparator: ClassVar[Dict[Token.Kind, Comparator]] = {
+    _comparator_token_to_comparator: ClassVar[dict[Token.Kind, Comparator]] = {
         Token.Kind.EqEq: Comparator.Equality,
         Token.Kind.NotEq: Comparator.Difference,
         Token.Kind.Less: Comparator.LessThan,
@@ -996,7 +991,7 @@ class FilteringAction:
             print(f"Available fields are {list(points.point_format.dimension_names)}")
             raise typer.Abort()
 
-        comparator_to_processing: Dict[Comparator, Callable[[Any, Any], np.array]] = {
+        comparator_to_processing: dict[Comparator, Callable[[Any, Any], np.array]] = {
             Comparator.Equality: np.equal,
             Comparator.Difference: np.not_equal,
             Comparator.LessThan: np.less,
@@ -1005,7 +1000,7 @@ class FilteringAction:
             Comparator.GreaterOrEqual: np.greater_equal,
             Comparator.In: np.isin,
         }
-        comparator_to_parse_func: Dict[Comparator, Callable[[str], Any]] = {
+        comparator_to_parse_func: dict[Comparator, Callable[[str], Any]] = {
             Comparator.Equality: parse_float_or_int,
             Comparator.Difference: parse_float_or_int,
             Comparator.LessThan: parse_float_or_int,
@@ -1049,7 +1044,7 @@ class FilteringExpressionKind(enum.IntEnum):
 @dataclass
 class FilteringExpression:
     kind: FilteringExpressionKind
-    data: Union[FilteringAction, NegatedFilteringExpression, BinaryFilteringExpression]
+    data: FilteringAction | NegatedFilteringExpression | BinaryFilteringExpression
 
     @classmethod
     def parse_string(cls, string: str) -> "FilteringExpression":
@@ -1059,7 +1054,7 @@ class FilteringExpression:
 
     @classmethod
     def parse_tokens(cls, tokens: PeekIterator[Token]) -> "FilteringExpression":
-        condition_tok_to_condition: Dict[Token.Kind, Condition] = {
+        condition_tok_to_condition: dict[Token.Kind, Condition] = {
             Token.Kind.AmpAmp: Condition.And,
             Token.Kind.PipePipe: Condition.Or,
             Token.Kind.And: Condition.And,
@@ -1161,7 +1156,7 @@ def _filter_file_at_path(
     input_path: Path,
     output_path: Path,
     filter_expression: FilteringExpression,
-    laz_backend: Optional[CliLazBackend],
+    laz_backend: CliLazBackend | None,
     iter_chunk_size: int,
     progress: Progress,
     task: TaskID,
@@ -1198,7 +1193,7 @@ def filter(
     filter_expression: str = typer.Argument(
         ..., help="The expresion to use as the filter"
     ),
-    laz_backend: Optional[CliLazBackend] = typer.Option(
+    laz_backend: CliLazBackend | None = typer.Option(
         None, help="The Laz backend to use."
     ),
     iter_chunk_size: int = ITER_CHUNK_SIZE_OPTION,
@@ -1303,7 +1298,7 @@ def version():
 
 @app.callback()
 def app_main(
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         callback=version_callback,

@@ -1,5 +1,5 @@
 import io
-from typing import Any, BinaryIO, Optional
+from typing import Any, BinaryIO
 
 import numpy as np
 
@@ -33,7 +33,7 @@ class LaszipBackend(ILazBackend):
         self,
         source: Any,
         header: LasHeader,
-        decompression_selection: Optional[DecompressionSelection] = None,
+        decompression_selection: DecompressionSelection | None = None,
     ) -> IPointReader:
         if decompression_selection is None:
             decompression_selection = DecompressionSelection.all()

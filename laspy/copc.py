@@ -2,13 +2,13 @@ import io
 import multiprocessing
 import os
 import struct
+from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from math import ceil, log2
 from operator import attrgetter
 from queue import Queue, SimpleQueue
 from threading import Thread
-from typing import Dict, Iterator, List, Optional, Tuple, Union
 
 try:
     import requests
@@ -288,7 +288,7 @@ class HierarchyPage:
     """
 
     def __init__(self) -> None:
-        self.entries: Dict[VoxelKey, Entry] = {}
+        self.entries: dict[VoxelKey, Entry] = {}
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "HierarchyPage":
@@ -346,7 +346,7 @@ class OctreeNode:
         self.point_count = 0
         # Childs of this node, since its an octree, there
         # are at most 8 childs
-        self.childs: List[OctreeNode] = []
+        self.childs: list[OctreeNode] = []
 
     def remove_child(self, child: "OctreeNode") -> None:
         idx = self.childs.index(child)
@@ -360,9 +360,9 @@ def load_octree_for_query(
     source,
     info: CopcInfoVlr,
     hierarchy_page: HierarchyPage,
-    query_bounds: Optional[Bounds] = None,
-    level_range: Optional[range] = None,
-) -> List[OctreeNode]:
+    query_bounds: Bounds | None = None,
+    level_range: range | None = None,
+) -> list[OctreeNode]:
     """
     Loads the nodes of the COPC octree from the `source` that
     satisfies the parameters `query_bounds` and `level_range`.
@@ -378,7 +378,7 @@ def load_octree_for_query(
     root_node.key.level = 0
 
     satisfying_nodes = []
-    nodes_to_load: List[OctreeNode] = [root_node]
+    nodes_to_load: list[OctreeNode] = [root_node]
     while nodes_to_load:
         current_node = nodes_to_load.pop()
         current_node.bounds = current_node.key.bounds(root_bounds)
@@ -461,7 +461,7 @@ class HttpFetcherThread(Thread):
 
 def http_queue_strategy(
     source: HttpRangeStream,
-    byte_queries: List[Tuple[int, int]],
+    byte_queries: list[tuple[int, int]],
     out_compressed_bytes: bytearray,
     num_threads: int,
 ) -> None:
@@ -492,7 +492,7 @@ def http_queue_strategy(
 
 def http_thread_executor_strategy(
     source: HttpRangeStream,
-    byte_queries: List[Tuple[int, int]],
+    byte_queries: list[tuple[int, int]],
     out_compressed_bytes: bytearray,
     num_threads: int,
 ) -> None:
@@ -643,7 +643,7 @@ class CopcReader:
     @classmethod
     def open(
         cls,
-        source: Union[str, os.PathLike, io.IOBase],
+        source: str | os.PathLike | io.IOBase,
         http_num_threads: int = DEFAULT_HTTP_WORKERS_NUM,
         _http_strategy: str = "queue",
         decompression_selection: DecompressionSelection = DecompressionSelection.all(),
@@ -710,9 +710,9 @@ class CopcReader:
 
     def query(
         self,
-        bounds: Optional[Bounds] = None,
-        resolution: Optional[Union[float, int]] = None,
-        level: Optional[Union[int, range]] = None,
+        bounds: Bounds | None = None,
+        resolution: float | int | None = None,
+        level: int | range | None = None,
     ) -> ScaleAwarePointRecord:
         """ "
         Query the COPC file to retrieve the points matching the
@@ -792,11 +792,11 @@ class CopcReader:
     def spatial_query(self, bounds: Bounds) -> ScaleAwarePointRecord:
         return self.query(bounds=bounds, level=None)
 
-    def level_query(self, level: Union[int, range]) -> ScaleAwarePointRecord:
+    def level_query(self, level: int | range) -> ScaleAwarePointRecord:
         return self.query(bounds=None, level=level)
 
     def _fetch_and_decompress_points_of_nodes(
-        self, nodes_to_read: List[OctreeNode]
+        self, nodes_to_read: list[OctreeNode]
     ) -> ScaleAwarePointRecord:
         if not nodes_to_read:
             return ScaleAwarePointRecord.empty(header=self.header)
@@ -805,8 +805,8 @@ class CopcReader:
         # so that we minimize the number of
         # read requests (seek + read) / http requests
         nodes_to_read = sorted(nodes_to_read, key=attrgetter("offset"))
-        grouped_nodes: List[List[OctreeNode]] = []
-        current_group: List[OctreeNode] = []
+        grouped_nodes: list[list[OctreeNode]] = []
+        current_group: list[OctreeNode] = []
         last_node_end = nodes_to_read[0].offset
         for node in nodes_to_read:
             if node.offset == last_node_end:
@@ -841,13 +841,13 @@ class CopcReader:
         return points
 
     def _fetch_all_chunks(
-        self, grouped_nodes: List[List[OctreeNode]]
-    ) -> Tuple[bytearray, int, List[Tuple[int, int]]]:
+        self, grouped_nodes: list[list[OctreeNode]]
+    ) -> tuple[bytearray, int, list[tuple[int, int]]]:
 
         num_points = 0
         num_compressed_bytes = 0
-        chunk_table: List[Tuple[int, int]] = []
-        byte_queries: List[Tuple[int, int]] = []
+        chunk_table: list[tuple[int, int]] = []
+        byte_queries: list[tuple[int, int]] = []
         for group in grouped_nodes:
             num_compressed_group_bytes = 0
             for node in group:

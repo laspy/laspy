@@ -2,7 +2,6 @@ import logging
 import warnings
 from collections import namedtuple
 from copy import copy
-from typing import List, Optional, Tuple
 
 from . import vlrlist
 from .known import (
@@ -102,7 +101,7 @@ PCSCitationGeoKey = GeoKeyEntryStruct(
 
 def create_geotiff_projection_vlrs(
     crs: "pyproj.CRS",
-) -> Tuple[GeoKeyDirectoryVlr, GeoAsciiParamsVlr]:
+) -> tuple[GeoKeyDirectoryVlr, GeoAsciiParamsVlr]:
     # 'Cookbook' from the geotiff spec
     # http://geotiff.maptools.org/spec/geotiff2.7.html#2.7
 
@@ -169,7 +168,7 @@ def create_geotiff_projection_vlrs(
 GeoTiffKey = namedtuple("GeoTiffKey", ("id", "value"))
 
 
-def parse_geo_tiff_keys_from_vlrs(vlr_list: vlrlist.VLRList) -> List[GeoTiffKey]:
+def parse_geo_tiff_keys_from_vlrs(vlr_list: vlrlist.VLRList) -> list[GeoTiffKey]:
     """Gets the 3 GeoTiff vlrs from the vlr_list and parse them into
     a nicer structure
     Parameters
@@ -211,9 +210,9 @@ def parse_geo_tiff_keys_from_vlrs(vlr_list: vlrlist.VLRList) -> List[GeoTiffKey]
 
 def parse_geo_tiff(
     key_dir_vlr: GeoKeyDirectoryVlr,
-    double_vlr: Optional[GeoDoubleParamsVlr],
-    ascii_vlr: Optional[GeoAsciiParamsVlr],
-) -> List[GeoTiffKey]:
+    double_vlr: GeoDoubleParamsVlr | None,
+    ascii_vlr: GeoAsciiParamsVlr | None,
+) -> list[GeoTiffKey]:
     warnings.warn(
         f"parse_geo_tiff_keys_from_vlrs is deprecated, if you want the CRS/SRS from "
         "GeoTiff's VLR install pyproj and use `LasHead.parse_crs()`",

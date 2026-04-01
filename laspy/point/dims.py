@@ -10,18 +10,11 @@ from collections import UserDict
 from enum import Enum
 from typing import (
     Any,
-    Dict,
     Generic,
     Iterable,
-    List,
     Mapping,
     NamedTuple,
-    Optional,
-    Set,
-    Tuple,
-    Type,
     TypeVar,
-    Union,
 )
 
 import numpy as np
@@ -38,7 +31,7 @@ class PointFormatDict(UserDict, Generic[ValueType]):
 
     """
 
-    def __init__(self, wrapped_dict: Dict[int, ValueType]):
+    def __init__(self, wrapped_dict: dict[int, ValueType]):
         super().__init__(wrapped_dict)
 
     def __getitem__(self, key: int) -> ValueType:
@@ -54,7 +47,8 @@ class SubField(NamedTuple):
 
 
 def _point_format_to_dtype(
-    point_format: Iterable[str], dimensions_to_type: Mapping[str, np.dtype]
+    point_format: Iterable[str],
+    dimensions_to_type: Mapping[str, np.dtype],
 ) -> np.dtype:
     """build the numpy.dtype for a point format
 
@@ -75,9 +69,9 @@ def _point_format_to_dtype(
 
 
 def _build_point_formats_dtypes(
-    point_format_dimensions: Mapping[int, Tuple[str]],
+    point_format_dimensions: Mapping[int, tuple[str]],
     dimensions_dict: Mapping[str, np.dtype],
-) -> Dict[int, np.dtype]:
+) -> dict[int, np.dtype]:
     """Builds the dict mapping point format id to numpy.dtype
     In the dtypes, bit fields are still packed, and need to be unpacked each time
     you want to access them
@@ -103,7 +97,7 @@ OLD_LASPY_NAMES = {
 
 # Definition of the points dimensions and formats
 # LAS version [1.0, 1.1, 1.2, 1.3, 1.4]
-DIMENSIONS_TO_TYPE: Dict[str, np.dtype] = {
+DIMENSIONS_TO_TYPE: dict[str, np.dtype] = {
     "X": np.dtype("i4"),
     "Y": np.dtype("i4"),
     "Z": np.dtype("i4"),
@@ -132,7 +126,7 @@ DIMENSIONS_TO_TYPE: Dict[str, np.dtype] = {
     "nir": np.dtype("u2"),
 }
 
-POINT_FORMAT_0: Tuple[str, ...] = (
+POINT_FORMAT_0: tuple[str, ...] = (
     "X",
     "Y",
     "Z",
@@ -144,7 +138,7 @@ POINT_FORMAT_0: Tuple[str, ...] = (
     "point_source_id",
 )
 
-POINT_FORMAT_6: Tuple[str, ...] = (
+POINT_FORMAT_6: tuple[str, ...] = (
     "X",
     "Y",
     "Z",
@@ -158,7 +152,7 @@ POINT_FORMAT_6: Tuple[str, ...] = (
     "gps_time",
 )
 
-WAVEFORM_FIELDS_NAMES: Tuple[str, ...] = (
+WAVEFORM_FIELDS_NAMES: tuple[str, ...] = (
     "wavepacket_index",
     "wavepacket_offset",
     "wavepacket_size",
@@ -168,7 +162,7 @@ WAVEFORM_FIELDS_NAMES: Tuple[str, ...] = (
     "z_t",
 )
 
-COLOR_FIELDS_NAMES: Tuple[str, ...] = ("red", "green", "blue")
+COLOR_FIELDS_NAMES: tuple[str, ...] = ("red", "green", "blue")
 
 POINT_FORMAT_DIMENSIONS = PointFormatDict(
     {
@@ -213,7 +207,7 @@ SCANNER_CHANNEL_MASK_6 = 0b00110000
 SCAN_DIRECTION_FLAG_MASK_6 = 0b01000000
 EDGE_OF_FLIGHT_LINE_MASK_6 = 0b10000000
 
-COMPOSED_FIELDS_0: Dict[str, List[SubField]] = {
+COMPOSED_FIELDS_0: dict[str, list[SubField]] = {
     "bit_fields": [
         SubField("return_number", RETURN_NUMBER_MASK_0),
         SubField("number_of_returns", NUMBER_OF_RETURNS_MASK_0),
@@ -228,7 +222,7 @@ COMPOSED_FIELDS_0: Dict[str, List[SubField]] = {
     ],
 }
 
-COMPOSED_FIELDS_6: Dict[str, List[SubField]] = {
+COMPOSED_FIELDS_6: dict[str, list[SubField]] = {
     "bit_fields": [
         SubField("return_number", RETURN_NUMBER_MASK_6),
         SubField("number_of_returns", NUMBER_OF_RETURNS_MASK_6),
@@ -261,7 +255,7 @@ COMPOSED_FIELDS = PointFormatDict(
     }
 )
 
-VERSION_TO_POINT_FMT: Dict[str, Tuple[int, ...]] = {
+VERSION_TO_POINT_FMT: dict[str, tuple[int, ...]] = {
     "1.1": (0, 1),
     "1.2": (0, 1, 2, 3),
     "1.3": (0, 1, 2, 3, 4, 5),
@@ -279,7 +273,7 @@ ALL_POINT_FORMATS_DIMENSIONS = PointFormatDict({**POINT_FORMAT_DIMENSIONS})
 ALL_POINT_FORMATS_DTYPE = PointFormatDict({**POINT_FORMATS_DTYPE})
 
 
-def get_sub_fields_dict(point_format_id: int) -> Dict[str, Tuple[str, SubField]]:
+def get_sub_fields_dict(point_format_id: int) -> dict[str, tuple[str, SubField]]:
     sub_fields_dict = {}
     for composed_dim_name, sub_fields in COMPOSED_FIELDS[point_format_id].items():
         for sub_field in sub_fields:
@@ -304,7 +298,7 @@ class DimensionKind(Enum):
         else:
             raise ValueError(f"Unknown type letter '{letter}'")
 
-    def letter(self) -> Optional[str]:
+    def letter(self) -> str | None:
         if self == DimensionKind.UnsignedInteger:
             return "u"
         elif self == DimensionKind.SignedInteger:
@@ -336,9 +330,9 @@ class DimensionInfo(NamedTuple):
     num_elements: int = 1
     is_standard: bool = True
     description: str = ""
-    offsets: Optional[np.ndarray] = None
-    scales: Optional[np.ndarray] = None
-    no_data: Optional[np.ndarray] = None
+    offsets: np.ndarray | None = None
+    scales: np.ndarray | None = None
+    no_data: np.ndarray | None = None
 
     @classmethod
     def from_extra_bytes_param(cls, params):
@@ -363,8 +357,8 @@ class DimensionInfo(NamedTuple):
         dtype: np.dtype,
         is_standard: bool = True,
         description: str = "",
-        offsets: Optional[np.ndarray] = None,
-        scales: Optional[np.ndarray] = None,
+        offsets: np.ndarray | None = None,
+        scales: np.ndarray | None = None,
     ) -> "DimensionInfo":
         if dtype.ndim != 0:
             num_elements = dtype.shape[0]
@@ -428,7 +422,7 @@ class DimensionInfo(NamedTuple):
         else:
             return np.iinfo(self.type_str()).min
 
-    def type_str(self) -> Optional[str]:
+    def type_str(self) -> str | None:
         if self.kind == DimensionKind.BitField:
             return None
 
@@ -439,7 +433,7 @@ class DimensionInfo(NamedTuple):
         )
 
     @property
-    def dtype(self) -> Optional[np.dtype]:
+    def dtype(self) -> np.dtype | None:
         type_str = self.type_str()
         if type_str is not None:
             return np.dtype(type_str)
@@ -507,12 +501,12 @@ def min_point_format_for_version(version: str) -> int:
     return VERSION_TO_POINT_FMT[version][0]
 
 
-def supported_versions() -> Set[str]:
+def supported_versions() -> set[str]:
     """Returns the set of supported file versions"""
     return set(VERSION_TO_POINT_FMT.keys())
 
 
-def supported_point_formats() -> Set[int]:
+def supported_point_formats() -> set[int]:
     """Returns a set of all the point formats supported in laspy"""
     return set(POINT_FORMAT_DIMENSIONS.keys())
 
@@ -537,8 +531,8 @@ def raise_if_version_not_compatible_with_fmt(point_format_id: int, file_version:
 
 
 def _convert_array_views_to_array(
-    view_class: Type, some_args: Union[List[Any], Tuple[Any, ...]]
-) -> List[Any]:
+    view_class: type, some_args: list[Any] | tuple[Any, ...]
+) -> list[Any]:
     converted_args = []
     for arg in some_args:
         if isinstance(arg, (list, tuple)):
@@ -702,8 +696,8 @@ class ScaledArrayView(ArrayView):
     def __init__(
         self,
         array: np.ndarray,
-        scale: Union[float, np.ndarray],
-        offset: Union[float, np.ndarray],
+        scale: float | np.ndarray,
+        offset: float | np.ndarray,
     ) -> None:
         super().__init__(array)
         self.scale = scale

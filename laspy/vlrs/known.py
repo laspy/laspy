@@ -9,7 +9,7 @@ import ctypes
 import logging
 import struct
 from copy import copy
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, TypeVar
 
 import numpy as np
 
@@ -46,7 +46,7 @@ class IKnownVLR(abc.ABC):
 
     @staticmethod
     @abstractmethod
-    def official_record_ids() -> Tuple[int, ...]:
+    def official_record_ids() -> tuple[int, ...]:
         """Shall return the official record_id for the VLR
 
         .. note::
@@ -118,7 +118,7 @@ class ClassificationLookupVlr(BaseKnownVLR):
 
     def __init__(self):
         super().__init__(description="Classification Lookup")
-        self.lookups: Dict[int, str] = {}
+        self.lookups: dict[int, str] = {}
 
     def parse_record_data(self, record_data: bytes) -> None:
         for class_id, desc in struct.iter_unpack("<B15s", record_data):
@@ -161,7 +161,7 @@ class ClassificationLookupVlr(BaseKnownVLR):
         return "LASF_Spec"
 
     @staticmethod
-    def official_record_ids() -> Tuple[int, ...]:
+    def official_record_ids() -> tuple[int, ...]:
         return (0,)
 
 
@@ -186,7 +186,7 @@ class LasZipVlr(BaseKnownVLR):
         return "laszip encoded"
 
     @staticmethod
-    def official_record_ids() -> Tuple[int, ...]:
+    def official_record_ids() -> tuple[int, ...]:
         return (22204,)
 
     @classmethod
@@ -223,14 +223,14 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
     def __init__(
         self,
         name: bytes,
-        data_type: Union[int, Tuple[int, int]],
+        data_type: int | tuple[int, int],
         description: bytes = b"",
-        scale: Optional[np.ndarray] = None,
-        offset: Optional[np.ndarray] = None,
-        no_data: Optional[np.ndarray] = None,
+        scale: np.ndarray | None = None,
+        offset: np.ndarray | None = None,
+        no_data: np.ndarray | None = None,
     ) -> None:
 
-        if isinstance(data_type, Tuple):
+        if isinstance(data_type, tuple):
             options = data_type[1]
             data_type = data_type[0]
         else:
@@ -327,7 +327,7 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
         return max
 
     @property
-    def offset(self) -> Optional[Any]:
+    def offset(self) -> Any | None:
         if self.options & self.OFFSET_BIT_MASK != 0:
             return self._offset[: self.num_elements()]
         return None
@@ -475,7 +475,7 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
 class ExtraBytesVlr(BaseKnownVLR):
     def __init__(self):
         super().__init__(description="Extra Bytes Record")
-        self.extra_bytes_structs: List[ExtraBytesStruct] = []
+        self.extra_bytes_structs: list[ExtraBytesStruct] = []
 
     def parse_record_data(self, data):
         if (len(data) % ExtraBytesStruct.size()) != 0:
@@ -496,8 +496,8 @@ class ExtraBytesVlr(BaseKnownVLR):
             bytes(extra_struct) for extra_struct in self.extra_bytes_structs
         )
 
-    def type_of_extra_dims(self) -> List[ExtraBytesParams]:
-        dim_info_list: List[ExtraBytesParams] = []
+    def type_of_extra_dims(self) -> list[ExtraBytesParams]:
+        dim_info_list: list[ExtraBytesParams] = []
         for eb_struct in self.extra_bytes_structs:
             num_elements = eb_struct.num_elements()
 

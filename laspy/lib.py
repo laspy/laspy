@@ -7,7 +7,6 @@ import io
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Union
 
 from .compression import DecompressionSelection, LazBackend
 from .errors import LaspyException
@@ -35,7 +34,7 @@ def open_las(
     read_evlrs: bool = True,
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
     fullwave: str = "never",
-) -> Union[LasReader, LasWriter, LasAppender]:
+) -> LasReader | LasWriter | LasAppender:
     """The laspy.open opens a LAS/LAZ file in one of the 3 supported
     mode:
 
@@ -279,8 +278,8 @@ def mmap_las(filename):
 
 def create_las(
     *,
-    point_format: Optional[Union[int, PointFormat]] = None,
-    file_version: Optional[Union[str, Version]] = None,
+    point_format: int | PointFormat | None = None,
+    file_version: str | Version | None = None,
 ):
     """Function to create a new empty las data object
 

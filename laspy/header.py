@@ -5,7 +5,7 @@ import struct
 import typing
 from copy import deepcopy
 from datetime import date, timedelta
-from typing import BinaryIO, Iterable, List, NamedTuple, Optional, Union
+from typing import BinaryIO, Iterable, NamedTuple
 from uuid import UUID
 
 import numpy as np
@@ -199,8 +199,8 @@ class LasHeader:
     def __init__(
         self,
         *,
-        version: Optional[Union[Version, str]] = None,
-        point_format: Optional[Union[PointFormat, int]] = None,
+        version: Version | str | None = None,
+        point_format: PointFormat | int | None = None,
     ) -> None:
         if isinstance(point_format, int):
             point_format = PointFormat(point_format)
@@ -227,13 +227,13 @@ class LasHeader:
         self._version: Version = version
         #: System identifier
         #: Initialized to 'OTHER'
-        self.system_identifier: Union[str, bytes] = "OTHER"
+        self.system_identifier: str | bytes = "OTHER"
         #: The software which generated the file
         #: Initialized to 'laspy'
-        self.generating_software: Union[str, bytes] = DEFAULT_GENERATING_SOFTWARE
+        self.generating_software: str | bytes = DEFAULT_GENERATING_SOFTWARE
         self._point_format: PointFormat = point_format
         #: Day the file was created, initialized to date.today
-        self.creation_date: Optional[date] = date.today()
+        self.creation_date: date | None = date.today()
         #: The number of points in the file
         self.point_count: int = 0
         #: The numbers used to scale the x,y,z coordinates
@@ -278,7 +278,7 @@ class LasHeader:
         #: part of the file we keep them in this class
         #: as they contain same information as vlr.
         #: None when the file does not support EVLR
-        self.evlrs: Optional[VLRList] = None
+        self.evlrs: VLRList | None = None
 
         # Info we keep because it's useful for us but not the user
         self.offset_to_point_data: int = 0
@@ -426,7 +426,7 @@ class LasHeader:
 
         self._sync_extra_bytes_vlr()
 
-    def add_extra_dims(self, params: List[ExtraBytesParams]) -> None:
+    def add_extra_dims(self, params: list[ExtraBytesParams]) -> None:
         for param in params:
             self.point_format.add_extra_dimension(param)
         self._sync_extra_bytes_vlr()
@@ -868,7 +868,7 @@ class LasHeader:
         stream.write(vlr_bytes)
         stream.write(self.extra_vlr_bytes)
 
-    def parse_crs(self, prefer_wkt=True) -> Optional["pyproj.CRS"]:
+    def parse_crs(self, prefer_wkt=True) -> "pyproj.CRS | None":
         """
         Method to parse OGC WKT or GeoTiff VLR keys into a pyproj CRS object
 
