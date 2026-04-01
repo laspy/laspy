@@ -744,9 +744,7 @@ class GeoDoubleParamsVlr(BaseKnownVLR):
         sizeof_double = ctypes.sizeof(ctypes.c_double)
         if len(record_data) % sizeof_double != 0:
             raise ValueError(
-                "GeoDoubleParams record data length () is not a multiple of sizeof(double) ()".format(
-                    len(record_data), sizeof_double
-                )
+                f"GeoDoubleParams record data length {len(record_data)} is not a multiple of sizeof(double) {sizeof_double}"
             )
         record_data = bytearray(record_data)
         num_doubles = len(record_data) // sizeof_double
