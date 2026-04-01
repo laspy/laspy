@@ -194,6 +194,7 @@ class LasZipVlr(BaseKnownVLR):
 
 
 class ExtraBytesStruct(ctypes.LittleEndianStructure):
+    _layout_ = "ms"
     _pack_ = 1
     _fields_ = [
         ("reserved", ctypes.c_uint8 * 2),
@@ -557,6 +558,7 @@ class WaveformPacketStruct(ctypes.LittleEndianStructure):
     temporal_sample_spacing: int
     digitizer_gain: float
     digitizer_offset: float
+    _layout_ = "ms"
     _pack_ = 1
     _fields_ = [
         ("bits_per_sample", ctypes.c_ubyte),
@@ -600,6 +602,7 @@ class WaveformPacketVlr(BaseKnownVLR):
 
 
 class GeoKeyEntryStruct(ctypes.LittleEndianStructure):
+    _layout_ = "ms"
     _pack_ = 1
     _fields_ = [
         # Id of the key
@@ -637,6 +640,7 @@ class GeoKeyEntryStruct(ctypes.LittleEndianStructure):
 
 
 class GeoKeysHeaderStructs(ctypes.LittleEndianStructure):
+    _layout_ = "ms"
     _pack_ = 1
     _fields_ = [
         ("key_directory_version", ctypes.c_uint16),
