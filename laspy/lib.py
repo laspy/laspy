@@ -7,6 +7,7 @@ import io
 import logging
 import os
 from pathlib import Path
+from typing import cast
 
 from .compression import DecompressionSelection, LazBackend
 from .errors import LaspyException
@@ -262,12 +263,14 @@ def read_las(
     """
     with open_las(
         source,
+        mode="r",
         closefd=closefd,
         laz_backend=laz_backend,
         decompression_selection=decompression_selection,
         encoding_errors=encoding_errors,
         fullwave=fullwave,
     ) as reader:
+        reader = cast(LasReader, reader)
         return reader.read()
 
 
