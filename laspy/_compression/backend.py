@@ -1,6 +1,6 @@
 import enum
 from abc import ABCMeta
-from typing import Any, BinaryIO
+from typing import TYPE_CHECKING, Any, BinaryIO
 
 from .._pointappender import IPointAppender
 from .._pointreader import IPointReader
@@ -9,6 +9,9 @@ from .laszipbackend import LaszipBackend
 from .lazbackend import ILazBackend
 from .lazrsbackend import LazrsBackend
 from .selection import DecompressionSelection
+
+if TYPE_CHECKING:
+    from ..header import LasHeader
 
 _DEFAULT_BACKENDS: tuple[ILazBackend, ...] = (
     LazrsBackend(parallel=True),

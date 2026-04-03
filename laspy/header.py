@@ -5,7 +5,7 @@ import struct
 import typing
 from copy import deepcopy
 from datetime import date, timedelta
-from typing import BinaryIO, Iterable, NamedTuple
+from typing import TYPE_CHECKING, BinaryIO, Iterable, NamedTuple
 from uuid import UUID
 
 import numpy as np
@@ -30,6 +30,9 @@ from .vlrs.known import (
     WktCoordinateSystemVlr,
 )
 from .vlrs.vlrlist import VLRList
+
+if TYPE_CHECKING:
+    import pyproj
 
 logger = logging.getLogger(__name__)
 
