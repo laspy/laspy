@@ -1,12 +1,12 @@
 from itertools import takewhile, zip_longest
-from typing import Iterable, List, Optional, Type, Union
+from typing import Iterable
 
 import numpy as np
 
 from ..errors import LaspyException
 from . import dims
 
-Number = Union[np.number, float, int]
+Number = np.number | float | int
 
 
 class ExtraBytesParams:
@@ -15,11 +15,11 @@ class ExtraBytesParams:
     def __init__(
         self,
         name: str,
-        type: Union[str, np.dtype, Type[np.uint8]],
+        type: str | np.dtype | type[np.uint8],
         description: str = "",
-        offsets: Optional[Iterable[Number]] = None,
-        scales: Optional[Iterable[Number]] = None,
-        no_data: Optional[Iterable[Number]] = None,
+        offsets: Iterable[Number] | None = None,
+        scales: Iterable[Number] | None = None,
+        no_data: Iterable[Number] | None = None,
     ) -> None:
         self.name = name
         """ The name of the extra dimension """
@@ -73,7 +73,7 @@ class PointFormat:
             point format id
         """
         self.id: int = point_format_id
-        self.dimensions: List[dims.DimensionInfo] = []
+        self.dimensions: list[dims.DimensionInfo] = []
         composed_dims = dims.COMPOSED_FIELDS[self.id]
         for dim_name in dims.ALL_POINT_FORMATS_DIMENSIONS[self.id]:
             try:

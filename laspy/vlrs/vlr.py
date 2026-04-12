@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Union
 
 
 class IVLR(ABC):
@@ -13,7 +12,7 @@ class IVLR(ABC):
 
     @property
     @abstractmethod
-    def description(self) -> Union[str, bytes]: ...
+    def description(self) -> str | bytes: ...
 
     @abstractmethod
     def record_data_bytes(self) -> bytes: ...
@@ -23,7 +22,7 @@ class BaseVLR(IVLR, ABC):
     def __init__(self, user_id, record_id, description=""):
         self._user_id: str = user_id
         self._record_id: int = record_id
-        self._description: Union[str, bytes] = description
+        self._description: str | bytes = description
 
     @property
     def user_id(self) -> str:
@@ -40,7 +39,7 @@ class BaseVLR(IVLR, ABC):
         return self._record_id
 
     @property
-    def description(self) -> Union[str, bytes]:
+    def description(self) -> str | bytes:
         """
         The description, cannot exceed 32 bytes
         """

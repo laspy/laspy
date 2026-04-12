@@ -2,7 +2,7 @@ import logging
 import pathlib
 import typing
 from copy import deepcopy
-from typing import Any, BinaryIO, Iterable, List, Optional, Sequence, Union, overload
+from typing import BinaryIO, Iterable, Sequence, overload
 
 import numpy as np
 from numpy.typing import NDArray
@@ -39,9 +39,7 @@ class LasData:
     def __init__(
         self,
         header: LasHeader,
-        points: Optional[
-            Union[record.PackedPointRecord, record.ScaleAwarePointRecord]
-        ] = None,
+        points: record.PackedPointRecord | record.ScaleAwarePointRecord | None = None,
     ) -> None:
         if points is None:
             points = record.ScaleAwarePointRecord.zeros(
@@ -114,7 +112,7 @@ class LasData:
         self.header.vlrs = vlrs
 
     @property
-    def evlrs(self) -> Optional[VLRList]:
+    def evlrs(self) -> VLRList | None:
         return self.header.evlrs
 
     @evlrs.setter
@@ -138,7 +136,7 @@ class LasData:
         """
         self.add_extra_dims([params])
 
-    def add_extra_dims(self, params: List[ExtraBytesParams]) -> None:
+    def add_extra_dims(self, params: list[ExtraBytesParams]) -> None:
         """Add multiple extra dimensions at once
 
         Parameters
@@ -234,8 +232,8 @@ class LasData:
     def write(
         self,
         destination: str,
-        do_compress: Optional[bool] = ...,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+        do_compress: bool | None = ...,
+        laz_backend: LazBackend | Sequence[LazBackend] | None = ...,
         *,
         waveform_chunksize: int = ...,
         waveforms: bool = ...,
@@ -245,8 +243,8 @@ class LasData:
     def write(
         self,
         destination: BinaryIO,
-        do_compress: Optional[bool] = ...,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+        do_compress: bool | None = ...,
+        laz_backend: LazBackend | Sequence[LazBackend] | None = ...,
         *,
         waveform_chunksize: int = ...,
         waveforms: bool = ...,
@@ -477,8 +475,8 @@ class LasData:
     def _write_to(
         self,
         out_stream: BinaryIO,
-        do_compress: Optional[bool] = None,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = None,
+        do_compress: bool | None = None,
+        laz_backend: LazBackend | Sequence[LazBackend] | None = None,
     ) -> None:
         with LasWriter(
             out_stream,
@@ -608,13 +606,11 @@ class LasData:
 
     @typing.overload
     def __getitem__(
-        self, item: Union[str, List[str]]
-    ) -> Union[np.ndarray, ScaledArrayView, SubFieldView]: ...
+        self, item: str | list[str]
+    ) -> np.ndarray | ScaledArrayView | SubFieldView: ...
 
     @typing.overload
-    def __getitem__(
-        self, item: Union[int, typing.Iterable[int], slice]
-    ) -> "LasData": ...
+    def __getitem__(self, item: int | typing.Iterable[int] | slice) -> "LasData": ...
 
     def __getitem__(self, item):
         try:

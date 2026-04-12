@@ -1,4 +1,4 @@
-from typing import BinaryIO, Union
+from typing import BinaryIO
 
 
 def encode_to_null_terminated(string: str, codec: str = "utf-8") -> bytes:
@@ -15,9 +15,7 @@ def encode_to_null_terminated(string: str, codec: str = "utf-8") -> bytes:
     return b
 
 
-def read_string(
-    stream: BinaryIO, length: int, encoding: str = "ascii "
-) -> Union[str, bytes]:
+def read_string(stream: BinaryIO, length: int, encoding: str = "ascii ") -> str | bytes:
     """
     Reads `length` bytes from the stream, and tries to decode it.
     If the decoding succeeds, returns the `str`. Otherwise the raw bytes
@@ -36,7 +34,7 @@ def read_string(
 
 def write_as_c_string(
     stream: BinaryIO,
-    string: Union[str, bytes],
+    string: str | bytes,
     max_length: int,
     encoding: str = "ascii",
     encoding_errors: str = "strict",
@@ -61,7 +59,7 @@ def write_as_c_string(
 
 def write_string(
     stream: BinaryIO,
-    string: Union[str, bytes],
+    string: str | bytes,
     max_length: int,
     encoding: str = "ascii",
     encoding_errors: str = "strict",
@@ -84,7 +82,7 @@ def write_string(
 
 
 def get_bytes_from_string(
-    string: Union[str, bytes], encoding: str, encoding_errors: str
+    string: str | bytes, encoding: str, encoding_errors: str
 ) -> bytes:
     if isinstance(string, str):
         raw_bytes = string.encode(encoding, errors=encoding_errors)

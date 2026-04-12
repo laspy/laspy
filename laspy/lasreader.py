@@ -2,7 +2,7 @@ import io
 import logging
 import os
 from pathlib import Path
-from typing import BinaryIO, Iterable, Optional, Union
+from typing import BinaryIO, Iterable
 
 import numpy as np
 
@@ -33,7 +33,7 @@ class LasReader:
         self,
         source: BinaryIO,
         closefd: bool = True,
-        laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
+        laz_backend: LazBackend | Iterable[LazBackend] | None = None,
         read_evlrs: bool = True,
         decompression_selection: DecompressionSelection = DecompressionSelection.all(),
         waveform_mode: WaveformMode = WaveformMode.NEVER,
@@ -68,16 +68,16 @@ class LasReader:
         # read informations that require to seek towards the end of
         # the file (eg: chunk table), and we prefer to limit opening
         # to reading the header
-        self._point_source: Optional["IPointReader"] = None
+        self._point_source: "IPointReader | None" = None
         self._source = source
 
         self.points_read = 0
         self._waveform_mode = WaveformMode(waveform_mode)
-        self._waveform_source: Optional[WaveReader] = None
+        self._waveform_source: WaveReader | None = None
         self._waveform_descriptors_registry = WaveformPacketDescriptorRegistry()
 
     @property
-    def evlrs(self) -> Optional[VLRList]:
+    def evlrs(self) -> VLRList | None:
         return self.header.evlrs
 
     @evlrs.setter
@@ -420,7 +420,7 @@ class LasReader:
         except TypeError:
             backends = (self.laz_backend,)
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for backend in backends:
             try:
                 if not backend.is_available():

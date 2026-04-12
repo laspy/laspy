@@ -1,5 +1,5 @@
 import io
-from typing import BinaryIO, Iterable, Optional, Union
+from typing import BinaryIO, Iterable
 
 from ._pointappender import IPointAppender
 from .compression import LazBackend
@@ -18,7 +18,7 @@ class LasAppender:
     def __init__(
         self,
         dest: BinaryIO,
-        laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
+        laz_backend: LazBackend | Iterable[LazBackend] | None = None,
         closefd: bool = True,
         encoding_errors: str = "strict",
     ) -> None:
@@ -49,13 +49,13 @@ class LasAppender:
             ), "The position is past the start of evlrs"
             pos = self.dest.tell()
             self.dest.seek(self.header.start_of_first_evlr, io.SEEK_SET)
-            self.evlrs: Optional[VLRList] = VLRList.read_from(
+            self.evlrs: VLRList | None = VLRList.read_from(
                 self.dest, self.header.number_of_evlrs, extended=True
             )
             dest.seek(self.header.start_of_first_evlr, io.SEEK_SET)
             self.dest.seek(pos, io.SEEK_SET)
         else:
-            self.evlrs: Optional[VLRList] = None
+            self.evlrs: VLRList | None = None
 
         self.closefd = closefd
         self.encoding_errors = encoding_errors
@@ -109,7 +109,7 @@ class LasAppender:
 
     def _create_laz_backend(
         self,
-        laz_backend: Union[LazBackend, Iterable[LazBackend]] = (
+        laz_backend: LazBackend | Iterable[LazBackend] = (
             LazBackend.LazrsParallel,
             LazBackend.Lazrs,
         ),
@@ -119,7 +119,7 @@ class LasAppender:
         except TypeError:
             laz_backend = (laz_backend,)
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for backend in laz_backend:
             try:
                 return backend.create_appender(self.dest, self.header)
@@ -128,7 +128,7 @@ class LasAppender:
         if last_error is not None:
             raise LaspyException(f"Could not initialize a laz backend: {last_error}")
         else:
-            raise LaspyException(f"No valid laz backend selected")
+            raise LaspyException("No valid laz backend selected")
 
     def __enter__(self) -> "LasAppender":
         return self

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, BinaryIO, Optional
+from typing import Any, BinaryIO
 
 from .._pointappender import IPointAppender
 from .._pointreader import IPointReader
@@ -24,7 +24,7 @@ class ILazBackend(ABC):
         self,
         source: Any,
         header: LasHeader,
-        decompression_selection: Optional[DecompressionSelection] = None,
+        decompression_selection: DecompressionSelection | None = None,
     ) -> IPointReader: ...
 
     @abstractmethod
