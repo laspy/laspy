@@ -24,10 +24,14 @@ class LasMMAP(lasdata.LasData):
         A LAZ (compressed LAS) cannot be mmapped
     """
 
-    def __init__(self, filename: PathLike) -> None:
-        fileref = open(filename, mode="r+b")
+    def __init__(self, filename: PathLike, read_only: bool = False) -> None:
+        fileref = open(filename, mode="rb" if read_only else "r+b")
 
-        m = mmap.mmap(fileref.fileno(), length=WHOLE_FILE, access=mmap.ACCESS_WRITE)
+        m = mmap.mmap(
+            fileref.fileno(),
+            length=WHOLE_FILE,
+            access=mmap.ACCESS_READ if read_only else mmap.ACCESS_WRITE,
+        )
         header = LasHeader.read_from(m)
         if header.are_points_compressed:
             raise ValueError("Cannot mmap a compressed LAZ file")
