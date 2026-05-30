@@ -286,9 +286,11 @@ class PackedPointRecord:
         if len(value) > len(self.array):
             self.resize(len(value))
 
-    def __eq__(self, other):
-        return self.point_format == other.point_format and np.all(
-            self.array == other.array
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, PackedPointRecord):
+            return NotImplemented
+        return self.point_format == other.point_format and bool(
+            np.all(self.array == other.array)
         )
 
     def __len__(self):

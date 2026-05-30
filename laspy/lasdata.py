@@ -59,7 +59,6 @@ class LasData:
             assert np.all(header.scales, points.scales)
             assert np.all(header.offsets, points.offsets)
         self.__dict__["_points"] = points
-        self.points: record.ScaleAwarePointRecord
         self.header: LasHeader = header
 
     @property
@@ -88,17 +87,27 @@ class LasData:
         self.points[("x", "y", "z")] = value
 
     @property
-    def points(self) -> record.PackedPointRecord:
+    def points(self) -> record.ScaleAwarePointRecord:
         """Returns the point record"""
         return self._points
 
     @points.setter
     def points(self, new_points: record.PackedPointRecord) -> None:
-        if new_points.point_format != self.point_format:
-            raise errors.IncompatibleDataFormat(
-                "Cannot set points with a different point format, convert first"
+        if not isinstance(new_points, record.ScaleAwarePointRecord):
+            new_points = record.ScaleAwarePointRecord(
+                new_points.array,
+                new_points.point_format,
+                scales=self.header.scales,
+                offsets=self.header.offsets,
+                waveform_state=new_points._waveform_state,
             )
-        self._points = new_points
+        if new_points.point_format != self.header.point_format:
+            self.header.point_format = new_points.point_format
+        if not np.array_equal(new_points.scales, self.header.scales):
+            self.header.scales = new_points.scales
+        if not np.array_equal(new_points.offsets, self.header.offsets):
+            self.header.offsets = new_points.offsets
+        self.__dict__["_points"] = new_points
         self.update_header()
         # make sure both point format point to the same object
         self._points.point_format = self.header.point_format

@@ -439,12 +439,15 @@ class DimensionInfo(NamedTuple):
             return np.dtype(type_str)
         return None
 
-    def __eq__(self, other: "DimensionInfo") -> bool:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DimensionInfo):
+            return NotImplemented
+
         # Named Tuple implements that for us, but
         # when scales and offset are not None (thus are array)
         # The default '==' won't work
         # (ValueError, value of an array with more than one element is ambiguous)
-        return (
+        return bool(
             self.name == other.name
             and self.kind == other.kind
             and self.num_bits == other.num_bits
@@ -454,7 +457,9 @@ class DimensionInfo(NamedTuple):
             and np.all(self.scales == other.scales)
         )
 
-    def __ne__(self, other: "DimensionInfo") -> bool:
+    def __ne__(self, other: object) -> bool:
+        if not isinstance(other, DimensionInfo):
+            return NotImplemented
         return not self == other
 
     def _validate(self):
