@@ -1,4 +1,4 @@
-from typing import Any, BinaryIO, List, Optional, Tuple, Union, cast
+from typing import Any, BinaryIO, cast
 
 import numpy as np
 
@@ -39,7 +39,7 @@ class LazrsBackend(ILazBackend):
         self,
         source: Any,
         header: LasHeader,
-        decompression_selection: Optional[DecompressionSelection] = None,
+        decompression_selection: DecompressionSelection | None = None,
     ) -> IPointReader:
         if decompression_selection is None:
             decompression_selection = DecompressionSelection.all()
@@ -98,7 +98,7 @@ class LazrsPointReader(IPointReader):
     def close(self) -> None:
         self.source.close()
 
-    def read_chunk_table_only(self) -> List[Tuple[int, int]]:
+    def read_chunk_table_only(self) -> list[tuple[int, int]]:
         """
         This function requires the source to be at the start of the chunk table
         """
@@ -128,9 +128,9 @@ class LazrsPointWriter(IPointWriter):
             point_format.id, point_format.num_extra_bytes
         )
         self.parallel = parallel
-        self.compressor: Optional[
-            Union[lazrs.ParLasZipCompressor, lazrs.LasZipCompressor]
-        ] = None
+        self.compressor: lazrs.ParLasZipCompressor | lazrs.LasZipCompressor | None = (
+            None
+        )
 
     def write_initial_header_and_vlrs(
         self, header: LasHeader, encoding_errors: str

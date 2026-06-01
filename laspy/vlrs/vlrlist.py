@@ -1,5 +1,5 @@
 import logging
-from typing import BinaryIO, List
+from typing import BinaryIO
 
 import numpy as np
 
@@ -70,7 +70,7 @@ class VLRList(list):
             and (record_ids == (None,) or vlr.record_id in record_ids)
         ]
 
-    def get(self, vlr_type: str) -> List[IKnownVLR]:
+    def get(self, vlr_type: str) -> list[IKnownVLR]:
         """Returns the list of vlrs of the requested type
         Always returns a list even if there is only one VLR of type vlr_type.
 
@@ -102,7 +102,7 @@ class VLRList(list):
         """
         return [v for v in self if v.__class__.__name__ == vlr_type]
 
-    def extract(self, vlr_type: str) -> List[IKnownVLR]:
+    def extract(self, vlr_type: str) -> list[IKnownVLR]:
         """Returns the list of vlrs of the requested type
         The difference with get is that the returned vlrs will be removed from the list
 

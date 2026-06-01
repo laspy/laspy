@@ -2,7 +2,7 @@ import logging
 import pathlib
 import typing
 from copy import deepcopy
-from typing import Any, BinaryIO, Iterable, List, Optional, Sequence, Union, overload
+from typing import BinaryIO, Iterable, Sequence, overload
 
 import numpy as np
 from numpy.typing import NDArray
@@ -39,9 +39,7 @@ class LasData:
     def __init__(
         self,
         header: LasHeader,
-        points: Optional[
-            Union[record.PackedPointRecord, record.ScaleAwarePointRecord]
-        ] = None,
+        points: record.PackedPointRecord | record.ScaleAwarePointRecord | None = None,
     ) -> None:
         if points is None:
             points = record.ScaleAwarePointRecord.zeros(
@@ -61,7 +59,6 @@ class LasData:
             assert np.all(header.scales, points.scales)
             assert np.all(header.offsets, points.offsets)
         self.__dict__["_points"] = points
-        self.points: record.ScaleAwarePointRecord
         self.header: LasHeader = header
 
     @property
@@ -90,17 +87,27 @@ class LasData:
         self.points[("x", "y", "z")] = value
 
     @property
-    def points(self) -> record.PackedPointRecord:
+    def points(self) -> record.ScaleAwarePointRecord:
         """Returns the point record"""
         return self._points
 
     @points.setter
     def points(self, new_points: record.PackedPointRecord) -> None:
-        if new_points.point_format != self.point_format:
-            raise errors.IncompatibleDataFormat(
-                "Cannot set points with a different point format, convert first"
+        if not isinstance(new_points, record.ScaleAwarePointRecord):
+            new_points = record.ScaleAwarePointRecord(
+                new_points.array,
+                new_points.point_format,
+                scales=self.header.scales,
+                offsets=self.header.offsets,
+                waveform_state=new_points._waveform_state,
             )
-        self._points = new_points
+        if new_points.point_format != self.header.point_format:
+            self.header.point_format = new_points.point_format
+        if not np.array_equal(new_points.scales, self.header.scales):
+            self.header.scales = new_points.scales
+        if not np.array_equal(new_points.offsets, self.header.offsets):
+            self.header.offsets = new_points.offsets
+        self.__dict__["_points"] = new_points
         self.update_header()
         # make sure both point format point to the same object
         self._points.point_format = self.header.point_format
@@ -114,7 +121,7 @@ class LasData:
         self.header.vlrs = vlrs
 
     @property
-    def evlrs(self) -> Optional[VLRList]:
+    def evlrs(self) -> VLRList | None:
         return self.header.evlrs
 
     @evlrs.setter
@@ -138,7 +145,7 @@ class LasData:
         """
         self.add_extra_dims([params])
 
-    def add_extra_dims(self, params: List[ExtraBytesParams]) -> None:
+    def add_extra_dims(self, params: list[ExtraBytesParams]) -> None:
         """Add multiple extra dimensions at once
 
         Parameters
@@ -234,8 +241,8 @@ class LasData:
     def write(
         self,
         destination: str,
-        do_compress: Optional[bool] = ...,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+        do_compress: bool | None = ...,
+        laz_backend: LazBackend | Sequence[LazBackend] | None = ...,
         *,
         waveform_chunksize: int = ...,
         waveforms: bool = ...,
@@ -245,8 +252,8 @@ class LasData:
     def write(
         self,
         destination: BinaryIO,
-        do_compress: Optional[bool] = ...,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = ...,
+        do_compress: bool | None = ...,
+        laz_backend: LazBackend | Sequence[LazBackend] | None = ...,
         *,
         waveform_chunksize: int = ...,
         waveforms: bool = ...,
@@ -477,8 +484,8 @@ class LasData:
     def _write_to(
         self,
         out_stream: BinaryIO,
-        do_compress: Optional[bool] = None,
-        laz_backend: Optional[Union[LazBackend, Sequence[LazBackend]]] = None,
+        do_compress: bool | None = None,
+        laz_backend: LazBackend | Sequence[LazBackend] | None = None,
     ) -> None:
         with LasWriter(
             out_stream,
@@ -608,13 +615,11 @@ class LasData:
 
     @typing.overload
     def __getitem__(
-        self, item: Union[str, List[str]]
-    ) -> Union[np.ndarray, ScaledArrayView, SubFieldView]: ...
+        self, item: str | list[str]
+    ) -> np.ndarray | ScaledArrayView | SubFieldView: ...
 
     @typing.overload
-    def __getitem__(
-        self, item: Union[int, typing.Iterable[int], slice]
-    ) -> "LasData": ...
+    def __getitem__(self, item: int | typing.Iterable[int] | slice) -> "LasData": ...
 
     def __getitem__(self, item):
         try:

@@ -180,7 +180,7 @@ class DecompressionSelection(enum.IntFlag):
         """
         return cls.XY_RETURNS_CHANNEL
 
-    def to_lazrs(self) -> "lazrs.DecompressionSelection":
+    def to_lazrs(self) -> "DecompressionSelection":
         import lazrs
 
         variant_mapping = {

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
 import typer
@@ -14,7 +13,7 @@ app = typer.Typer(help="COPC related commands")
 
 @dataclass
 class Level:
-    inner: Union[int, range]
+    inner: int | range
 
     @classmethod
     def parse(cls, value_string: str) -> "Level":
@@ -62,7 +61,7 @@ def query(
         dir_okay=False,
         resolve_path=True,
     ),
-    bounds: Optional[Bounds] = typer.Option(
+    bounds: Bounds | None = typer.Option(
         None,
         parser=parse_bounds,
         help="""
@@ -71,7 +70,7 @@ def query(
                 2D bounds are suported, (No point will be filtered on its Z coordinate)
 """,
     ),
-    resolution: Optional[float] = typer.Option(
+    resolution: float | None = typer.Option(
         None,
         help=""" Limits the octree levels to be queried in order to have
                 a point cloud with the requested resolution.
@@ -84,7 +83,7 @@ def query(
                 - Mutually exclusive with level parameter
 """,
     ),
-    level: Optional[Level] = typer.Option(
+    level: Level | None = typer.Option(
         None,
         parser=Level.parse,
         help=""" Level of detail (LOD)

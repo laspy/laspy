@@ -6,9 +6,10 @@ import numpy as np
 import pytest
 
 import laspy
-from laspy import LasHeader
+from laspy import LasHeader, PointFormat
 from laspy.header import GlobalEncoding, GpsTimeType
 from laspy.lib import write_then_read_again
+from laspy.point.record import PackedPointRecord, ScaleAwarePointRecord
 from tests import test_common
 
 all_las_but_1_4 = test_common.all_las_but_1_4
@@ -349,6 +350,48 @@ def test_update_header_empty_las_data():
         assert np.all(new_las.header.mins == [0.0, 0.0, 0.0])
         assert np.all(new_las.header.maxs == [0.0, 0.0, 0.0])
         assert np.sum(new_las.header.number_of_points_by_return) == 0
+
+
+def test_points_setter_packed_becomes_scale_aware():
+    las = laspy.read(test_common.simple_las)
+    packed = PackedPointRecord(las.points.array.copy(), las.point_format)
+    las.points = packed
+    assert isinstance(las.points, ScaleAwarePointRecord)
+    assert np.array_equal(las.points.scales, las.header.scales)
+    assert np.array_equal(las.points.offsets, las.header.offsets)
+
+
+def test_points_setter_accepts_different_point_format():
+    las = laspy.read(test_common.simple_las)  # point format 3
+    new_points = PackedPointRecord.from_point_record(las.points, PointFormat(0))
+    las.points = new_points
+    assert las.point_format.id == 0
+    assert las.header.point_format.id == 0
+    buf = io.BytesIO()
+    las.write(buf)
+    buf.seek(0)
+    reread = laspy.read(buf)
+    assert reread.point_format.id == 0
+
+
+def test_points_setter_scale_aware_updates_header_scales():
+    las = laspy.read(test_common.simple_las)
+    new_scales = np.array([0.001, 0.001, 0.001])
+    new_offsets = np.array([100.0, 200.0, 300.0])
+    scale_aware = ScaleAwarePointRecord(
+        las.points.array.copy(), las.point_format, new_scales, new_offsets
+    )
+    las.points = scale_aware
+    assert np.array_equal(las.header.scales, new_scales)
+    assert np.array_equal(las.header.offsets, new_offsets)
+
+
+def test_points_setter_rejects_incompatible_format_for_version():
+    las = laspy.read(test_common.simple_las)  # LAS 1.2, point format 3
+    assert str(las.header.version) == "1.2"
+    new_points = PackedPointRecord.from_point_record(las.points, PointFormat(6))
+    with pytest.raises(laspy.LaspyException):
+        las.points = new_points
 
 
 def test_global_encoding_waveform_external():

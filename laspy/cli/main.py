@@ -1,14 +1,11 @@
-try:
-    import rich
-    import typer
-
-    HAS_CLI_DEPDS = True
-except ModuleNotFoundError:
-    HAS_CLI_DEPDS = False
+import importlib
 
 
 def main():
-    if HAS_CLI_DEPDS:
+    has_rich = importlib.util.find_spec("rich") is not None
+    has_typer = importlib.util.find_spec("typer") is not None
+    has_cli_deps = has_rich and has_typer
+    if has_cli_deps:
         from .core import app
 
         app()

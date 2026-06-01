@@ -21,4 +21,35 @@ from .point.record import PackedPointRecord, ScaleAwarePointRecord
 from .vlrs import VLR
 from .waveform.mode import WaveformMode
 
+__all__ = [
+    "errors",
+    "file",
+    "vlrs",
+    "Bounds",
+    "CopcReader",
+    "LaspyException",
+    "LasHeader",
+    "LasData",
+    "LasReader",
+    "LasWriter",
+    "DecompressionSelection",
+    "LazBackend",
+    "convert",
+    "create",
+    "mmap",
+    "open",
+    "read",
+    "DimensionInfo",
+    "DimensionKind",
+    "ExtraBytesParams",
+    "PointFormat",
+    "supported_point_formats",
+    "supported_versions",
+    "lost_dimensions",
+    "PackedPointRecord",
+    "ScaleAwarePointRecord",
+    "VLR",
+    "WaveformMode",
+]
+
 logging.getLogger(__name__).addHandler(logging.NullHandler())

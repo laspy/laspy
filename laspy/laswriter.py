@@ -1,6 +1,6 @@
 import logging
 from copy import deepcopy
-from typing import BinaryIO, Iterable, Optional, Union
+from typing import BinaryIO, Iterable
 
 import numpy as np
 
@@ -24,8 +24,8 @@ class LasWriter:
         self,
         dest: BinaryIO,
         header: LasHeader,
-        do_compress: Optional[bool] = None,
-        laz_backend: Optional[Union[LazBackend, Iterable[LazBackend]]] = None,
+        do_compress: bool | None = None,
+        laz_backend: LazBackend | Iterable[LazBackend] | None = None,
         closefd: bool = True,
         encoding_errors: str = "strict",
     ) -> None:
@@ -204,14 +204,14 @@ class LasWriter:
         self.done = True
 
     def _create_laz_backend(
-        self, laz_backends: Union[LazBackend, Iterable[LazBackend]]
+        self, laz_backends: LazBackend | Iterable[LazBackend]
     ) -> "IPointWriter":
         try:
             laz_backends = iter(laz_backends)
         except TypeError:
             laz_backends = (laz_backends,)
 
-        last_error: Optional[Exception] = None
+        last_error: Exception | None = None
         for backend in laz_backends:
             try:
                 if not backend.is_available():

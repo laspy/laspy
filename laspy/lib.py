@@ -7,7 +7,7 @@ import io
 import logging
 import os
 from pathlib import Path
-from typing import Optional, Union
+from typing import cast
 
 from .compression import DecompressionSelection, LazBackend
 from .errors import LaspyException
@@ -35,7 +35,7 @@ def open_las(
     read_evlrs: bool = True,
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
     fullwave: str = "never",
-) -> Union[LasReader, LasWriter, LasAppender]:
+) -> LasReader | LasWriter | LasAppender:
     """The laspy.open opens a LAS/LAZ file in one of the 3 supported
     mode:
 
@@ -216,7 +216,6 @@ def read_las(
     closefd=True,
     laz_backend=LazBackend.detect_available(),
     decompression_selection: DecompressionSelection = DecompressionSelection.all(),
-    encoding_errors: str = "strict",
     fullwave: str = "never",
 ):
     """Entry point for reading las data in laspy
@@ -243,12 +242,6 @@ def read_las(
     decompression_selection: DecompressionSelection,
         see :func:`laspy.open`
 
-    encoding_errors: str, default 'strict'
-        Only used in writing and appending mode.
-        How encoding errors should be treated.
-        Possible values and their explanation can be seen here:
-        https://docs.python.org/3/library/codecs.html#error-handlers.
-
     Returns
     -------
     laspy.LasData
@@ -258,17 +251,16 @@ def read_las(
     .. versionadded:: 2.4
         The ``decompression_selection`` parameter.
 
-    .. versionadded:: 2.6
-        The ``encoding_errors`` parameter.
     """
     with open_las(
         source,
+        mode="r",
         closefd=closefd,
         laz_backend=laz_backend,
         decompression_selection=decompression_selection,
-        encoding_errors=encoding_errors,
         fullwave=fullwave,
     ) as reader:
+        reader = cast(LasReader, reader)
         return reader.read()
 
 
@@ -279,8 +271,8 @@ def mmap_las(filename):
 
 def create_las(
     *,
-    point_format: Optional[Union[int, PointFormat]] = None,
-    file_version: Optional[Union[str, Version]] = None,
+    point_format: int | PointFormat | None = None,
+    file_version: str | Version | None = None,
 ):
     """Function to create a new empty las data object
 
