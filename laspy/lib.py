@@ -157,7 +157,7 @@ def open_las(
                 decompression_selection=decompression_selection,
                 waveform_mode=waveform_mode,
             )
-        except:
+        except Exception:
             if closefd:
                 stream.close()
             raise
@@ -184,7 +184,7 @@ def open_las(
                 closefd=closefd,
                 encoding_errors=encoding_errors,
             )
-        except:
+        except Exception:
             if closefd:
                 stream.close()
             raise
@@ -203,7 +203,7 @@ def open_las(
                 laz_backend=laz_backend,
                 encoding_errors=encoding_errors,
             )
-        except:
+        except Exception:
             if closefd:
                 stream.close()
             raise
