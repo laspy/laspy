@@ -416,29 +416,27 @@ class ExtraBytesStruct(ctypes.LittleEndianStructure):
         long_type = self._long_type()
         no_data = self.no_data
 
+        if isinstance(pts, ScaledArrayView):
+            pts = pts.array
+        pts = pts.reshape(-1, num_elements)
+
         local_min = np.zeros(num_elements, dtype=long_type)
         local_max = np.zeros(num_elements, dtype=long_type)
 
         for i in range(num_elements):
             if no_data is not None:
                 valid_indices = pts[..., i] != no_data[i]
-                if valid_indices.ndim == 0:
+                if not valid_indices.any():
                     return
                 sub_pts = pts[valid_indices, i]
             else:
                 sub_pts = pts[..., i]
 
             if self.min_is_relevant():
-                if isinstance(sub_pts, ScaledArrayView):
-                    local_min[i] = sub_pts.array.min()
-                else:
-                    local_min[i] = sub_pts.min()
+                local_min[i] = sub_pts.min()
 
             if self.max_is_relevant():
-                if isinstance(sub_pts, ScaledArrayView):
-                    local_max[i] = sub_pts.array.max()
-                else:
-                    local_max[i] = sub_pts.max()
+                local_max[i] = sub_pts.max()
 
         if self.min_is_relevant():
             raw_min = self._raw_min()

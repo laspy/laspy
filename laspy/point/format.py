@@ -39,7 +39,7 @@ class ExtraBytesParams:
         self.scales = np.array(scales) if scales is not None else scales
         """ The scales to use if its a 'scaled dimension', can be none """
         self.no_data = np.array(no_data) if no_data is not None else no_data
-        """ The no data values, can be none """
+        """ The encoded no data values, can be none """
 
 
 class PointFormat:
