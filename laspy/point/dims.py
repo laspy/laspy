@@ -768,7 +768,7 @@ class ScaledArrayView(ArrayView):
             return self.__class__(self.array[item], self.scale, self.offset)
         else:
             sliced_array = self.array[item]
-            if len(item) == 2:
+            if isinstance(item, tuple) and len(item) == 2:
                 if item[1] is Ellipsis:
                     # item is (index, ...), it queries for all the dimensions
                     # of a point or set of point, so we don't slice the scales/offsets
@@ -805,12 +805,7 @@ class ScaledArrayView(ArrayView):
         if isinstance(value, ScaledArrayView):
             value = np.array(value)
 
-        try:
-            key_len = len(key)
-        except TypeError:
-            key_len = 1
-
-        if key_len == 2:
+        if isinstance(key, tuple) and len(key) == 2:
             self.array[key] = self._remove_scale(value, sub=key[1])
         else:
             self.array[key] = self._remove_scale(value)
