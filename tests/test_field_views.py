@@ -103,6 +103,29 @@ def test_scaled_array_view_indexing_with_array_or_list(simple_las_path):
     assert np.all(d == d2)
 
 
+@pytest.mark.parametrize(
+    "index",
+    [np.array([True, False]), np.array([1, 0]), [1, 0], np.array([1, 1])],
+    ids=["boolean-mask", "integer-ndarray", "integer-list", "repeated-index"],
+)
+def test_scaled_array_view_length_two_fancy_indexing(index):
+    view = ScaledArrayView(
+        np.array([10, 20], np.int32), np.float64(0.5), np.float64(1.0)
+    )
+
+    np.testing.assert_array_equal(np.asarray(view[index]), np.asarray(view)[index])
+
+
+def test_scaled_array_view_length_two_fancy_assignment():
+    view = ScaledArrayView(
+        np.array([10, 20], np.int32), np.float64(0.5), np.float64(1.0)
+    )
+
+    view[np.array([True, False])] = [7.0]
+
+    np.testing.assert_array_equal(np.asarray(view), [7.0, 11.0])
+
+
 def test_sub_field_view_with_self(simple_las_path):
     las = laspy.read(simple_las_path)
 
