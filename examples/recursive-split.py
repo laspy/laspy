@@ -35,7 +35,7 @@ def recursive_split(x_min, y_min, x_max, y_max, max_x_size, max_y_size):
 def tuple_size(string):
     try:
         return tuple(map(float, string.split("x")))
-    except:
+    except Exception:
         raise ValueError("Size must be in the form of numberxnumber eg: 50.0x65.14")
 
 
