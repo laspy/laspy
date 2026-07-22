@@ -756,7 +756,9 @@ class CopcReader:
             level = range(level, level + 1)
 
         if bounds is not None:
-            bounds = bounds.ensure_3d(self.header.mins, self.header.maxs)
+            cube_mins = self.copc_info.center - self.copc_info.halfsize
+            cube_maxs = self.copc_info.center + self.copc_info.halfsize
+            bounds = bounds.ensure_3d(cube_mins, cube_maxs)
 
         nodes = load_octree_for_query(
             self.source,
