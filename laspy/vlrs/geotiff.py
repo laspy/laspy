@@ -97,6 +97,24 @@ PCSCitationGeoKey = GeoKeyEntryStruct(
     tiff_tag_location=GeoAsciiParamsVlr.official_record_ids()[0],
 )
 
+# Vertical CS Parameter GeoKeys
+
+VerticalCSTypeGeoKey = GeoKeyEntryStruct(
+    id=4096,
+    tiff_tag_location=0,
+    count=1,
+)
+
+"""
+Units used for the vertical coordinate system.
+http://geotiff.maptools.org/spec/geotiff6.html#6.3.4.1
+"""
+VerticalUnitsGeoKey = GeoKeyEntryStruct(
+    id=4099,
+    tiff_tag_location=0,
+    count=1,
+)
+
 # Geographic CS Parameter GeoKeys
 
 
@@ -105,6 +123,34 @@ def create_geotiff_projection_vlrs(
 ) -> Tuple[GeoKeyDirectoryVlr, GeoAsciiParamsVlr]:
     # 'Cookbook' from the geotiff spec
     # http://geotiff.maptools.org/spec/geotiff2.7.html#2.7
+
+    if crs.is_compound:
+        horizontal_crs = next(
+            (
+                s
+                for s in crs.sub_crs_list
+                if s.is_projected or s.is_geographic or s.is_geocentric
+            ),
+            None,
+        )
+        vertical_crs = next(
+            (s for s in crs.sub_crs_list if s.is_vertical),
+            None,
+        )
+        if horizontal_crs is None:
+            raise RuntimeError("Compound CRS has no recognized horizontal component")
+
+        geo_key_vlr, ascii_vlr = create_geotiff_projection_vlrs(horizontal_crs)
+
+        if vertical_crs is not None:
+            vert_epsg = vertical_crs.to_epsg()
+            if vert_epsg is not None:
+                vert_cs_key = copy(VerticalCSTypeGeoKey)
+                vert_cs_key.value_offset = vert_epsg
+                geo_key_vlr.geo_keys = list(geo_key_vlr.geo_keys) + [vert_cs_key]
+                geo_key_vlr.geo_keys_header.number_of_keys = len(geo_key_vlr.geo_keys)
+
+        return geo_key_vlr, ascii_vlr
 
     if crs.is_projected:
         model_key = copy(GTModelTypeGeoKey)

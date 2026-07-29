@@ -698,10 +698,15 @@ class GeoKeyDirectoryVlr(BaseKnownVLR):
 
         # TODO import is done here to avoid cyclic import,
         # this should probably be fixed
-        from .geotiff import GeographicTypeGeoKey, ProjectedCSTypeGeoKey
+        from .geotiff import (
+            GeographicTypeGeoKey,
+            ProjectedCSTypeGeoKey,
+            VerticalCSTypeGeoKey,
+        )
 
         geographic_cs = None
         projected_cs = None
+        vertical_cs = None
         for key in self.geo_keys:
             if key.id == ProjectedCSTypeGeoKey.id:
                 if 1024 <= key.value_offset <= 32766:
@@ -713,12 +718,29 @@ class GeoKeyDirectoryVlr(BaseKnownVLR):
                 # GeodeticCRSGeoKey values in the range 1024-32766 SHALL be EPSG geographic 2D or geocentric CRS codes
                 if 1024 <= key.value_offset <= 32766:
                     geographic_cs = pyproj.CRS.from_epsg(key.value_offset)
+            elif key.id == VerticalCSTypeGeoKey.id:
+                # http://docs.opengeospatial.org/is/19-008r4/19-008r4.html#_requirements_class_verticalgeokey
+                # "VerticalGeoKey values in the range 1024-32766 SHALL be EPSG Vertical CRS Codes"
+                if 1024 <= key.value_offset <= 32766:
+                    vertical_cs = pyproj.CRS.from_epsg(key.value_offset)
 
         # Projected Coordinate Systems take precedence since,
         # if they are present, the Geographic CS is probably
         # redundant and the positioning information in the LAS
         # file is projected.
-        return projected_cs or geographic_cs
+        horizontal_cs = projected_cs or geographic_cs
+
+        # When a vertical CRS is also present, combine both components into a
+        # compound CRS to reflect the full georeferencing information.
+        if horizontal_cs is not None and vertical_cs is not None:
+            return pyproj.CRS(
+                pyproj.crs.CompoundCRS(
+                    name="{} + {}".format(horizontal_cs.name, vertical_cs.name),
+                    components=[horizontal_cs, vertical_cs],
+                )
+            )
+
+        return horizontal_cs
 
     def __repr__(self):
         return "<{}({} geo_keys)>".format(self.__class__.__name__, len(self.geo_keys))
