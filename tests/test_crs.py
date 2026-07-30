@@ -7,7 +7,11 @@ from typing import Dict
 import pytest
 
 import laspy
-from laspy.vlrs.geotiff import GeographicTypeGeoKey, ProjectedCSTypeGeoKey
+from laspy.vlrs.geotiff import (
+    GeographicTypeGeoKey,
+    ProjectedCSTypeGeoKey,
+    VerticalCSTypeGeoKey,
+)
 from laspy.vlrs.known import GeoKeyDirectoryVlr
 from tests.test_common import autzen_geo_proj_las, autzen_las, test1_4_las
 
@@ -194,6 +198,66 @@ def test_pdal_understands_our_geotiff_geographic_cs():
 def test_pdal_understands_our_geotiff_projected_cs():
     crs = pyproj.CRS.from_epsg(6432)
     geotiff_crs_pdal_test(crs)
+
+
+@pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
+def test_add_crs_geotiff_compound_projected():
+    """
+    Test that a compound CRS (projected + vertical) stores the horizontal
+    ProjectedCSTypeGeoKey and VerticalCSTypeGeoKey.
+    EPSG:5555 = ETRS89 / UTM zone 32N + DHHN92 height
+    """
+    crs = pyproj.CRS.from_epsg(5555)
+    header = laspy.LasHeader(point_format=3, version="1.2")
+    header.add_crs(crs)
+
+    geokeys = get_geokeys(header)
+
+    # Horizontal component: ETRS89 / UTM zone 32N = EPSG:25832
+    assert geokeys[ProjectedCSTypeGeoKey.id] == 25832
+    # Vertical component: DHHN92 height = EPSG:5783
+    assert geokeys[VerticalCSTypeGeoKey.id] == 5783
+
+
+@pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
+def test_add_crs_geotiff_compound_geographic():
+    """
+    Test that a compound CRS (geographic + vertical) stores the horizontal
+    GeographicTypeGeoKey and VerticalCSTypeGeoKey.
+    EPSG:9707 = WGS 84 + EGM96 height
+    """
+    crs = pyproj.CRS.from_epsg(9707)
+    header = laspy.LasHeader(point_format=3, version="1.2")
+    header.add_crs(crs)
+
+    geokeys = get_geokeys(header)
+
+    # Horizontal component: WGS 84 = EPSG:4326
+    assert geokeys[GeographicTypeGeoKey.id] == 4326
+    # Vertical component: EGM96 height = EPSG:5773
+    assert geokeys[VerticalCSTypeGeoKey.id] == 5773
+
+
+@pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")
+def test_add_crs_geotiff_compound_roundtrip():
+    """
+    Test that the vertical GeoKeys survive a write/read cycle and that
+    ``parse_crs`` reconstructs the compound CRS.
+    """
+    crs = pyproj.CRS.from_epsg(5555)
+    header = laspy.LasHeader(point_format=3, version="1.2")
+    header.add_crs(crs)
+
+    las = laspy.LasData(header=header)
+    las = laspy.lib.write_then_read_again(las)
+
+    geokeys = get_geokeys(las.header)
+    assert geokeys[ProjectedCSTypeGeoKey.id] == 25832
+    assert geokeys[VerticalCSTypeGeoKey.id] == 5783
+
+    parsed = las.header.parse_crs()
+    assert parsed.is_compound
+    assert parsed == crs
 
 
 @pytest.mark.skipif(not has_pyproj(), reason="pyproj not installed")

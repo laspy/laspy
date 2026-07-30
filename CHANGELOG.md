@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Support for compound CRS (horizontal + vertical) when writing GeoTIFF VLRs
+  with `LasHeader.add_crs`. The vertical component is stored as a
+  `VerticalCSTypeGeoKey` and read back by `parse_crs` as a compound CRS.
+
 ## Version 2.7.0 (14/01/2026)
 
 ### Added
