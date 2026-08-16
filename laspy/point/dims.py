@@ -735,12 +735,14 @@ class ScaledArrayView(ArrayView):
         return np.dtype(np.float64)
 
     def _do_comparison(self, other, op):
-        # The implementation of comparison by the base class
-        # does a conversion to np.array of self, which is not free
-        # we try to avoid that here
         if isinstance(other, (int, float, np.number)):
-            other = self._remove_scale(other)
-            return getattr(self.array, op)(other)
+            if op in ("__eq__", "__ne__"):
+                other = self._remove_scale(other)
+                return getattr(self.array, op)(other)
+
+            # Ordering comparisons must use the scaled values so that thresholds
+            # between two representable coordinates are not rounded to either one.
+            return getattr(self._apply_scale(self.array), op)(other)
         return getattr(super(), op)(other)
 
     def __ge__(self, other):

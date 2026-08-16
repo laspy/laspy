@@ -1,3 +1,5 @@
+import operator
+
 import numpy as np
 import pytest
 
@@ -165,6 +167,25 @@ def test_scaled_array_view():
 
     with pytest.raises(OverflowError):
         x[8] = np.finfo(np.float64).max
+
+
+@pytest.mark.parametrize(
+    ("raw_value", "comparison", "threshold"),
+    [
+        (36968592, operator.lt, 369685.9202),
+        (36970875, operator.le, 369708.7479),
+        (36968592, operator.ge, 369685.9202),
+        (36970875, operator.gt, 369708.7479),
+    ],
+)
+def test_scaled_array_view_scalar_ordering_comparison_matches_scaled_array(
+    raw_value, comparison, threshold
+):
+    view = ScaledArrayView(np.array([raw_value], dtype=np.int32), 0.01, 0.0)
+
+    expected = comparison(np.asarray(view), threshold)
+
+    np.testing.assert_array_equal(comparison(view, threshold), expected)
 
 
 def test_array_views_on_empty_things():
