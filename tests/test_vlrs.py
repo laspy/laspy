@@ -72,3 +72,21 @@ def test_cannot_write_vlrs_with_more_than_uint16_max_bytes():
     with pytest.raises(ValueError):
         with io.BytesIO() as output:
             las.write(output)
+
+
+def test_vlr_with_non_ascii_user_id_does_not_crash():
+    # a VLR whose user_id holds bytes that are not valid UTF-8 should not crash
+    # the reader; like the description field, an undecodable user_id comes back
+    # as raw bytes instead of raising UnicodeDecodeError
+    from laspy.vlrs.vlrlist import VLRList
+
+    # reserved(2) + user_id(16) + record_id(2) + record_len(2) + description(32)
+    record = (
+        b"\x00\x00"
+        + b"\xff\xfeBAD".ljust(16, b"\x00")
+        + b"\x00\x00"
+        + b"\x00\x00"
+        + b"\x00" * 32
+    )
+    vlrs = VLRList.read_from(io.BytesIO(record), 1, extended=False)
+    assert vlrs[0].user_id == b"\xff\xfeBAD"
