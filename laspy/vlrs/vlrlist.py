@@ -155,7 +155,7 @@ class VLRList(list):
         vlrlist = cls()
         for _ in range(num_to_read):
             data_stream.read(RESERVED_LEN)
-            user_id = data_stream.read(USER_ID_LEN).split(b"\0")[0].decode()
+            user_id = read_string(data_stream, USER_ID_LEN)
             record_id = int.from_bytes(
                 data_stream.read(2), byteorder="little", signed=False
             )
