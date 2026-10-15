@@ -169,6 +169,7 @@ class LasData:
         LaspyException: if you try to remove an extra dimension that do not exist.
 
         """
+        names = list(names)
         extra_dimension_names = list(self.point_format.extra_dimension_names)
         not_extra_dimension = [
             name for name in names if name not in extra_dimension_names
