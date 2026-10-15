@@ -725,10 +725,26 @@ class ScaledArrayView(ArrayView):
             return np.round((value - self.offset[sub]) / self.scale[sub])
 
     def max(self, *args, **kwargs):
-        return self._apply_scale(self.array.max(*args, **kwargs))
+        if (
+            not args
+            and not kwargs
+            and np.isscalar(self.scale)
+            and np.isscalar(self.offset)
+            and self.scale > 0
+        ):
+            return self._apply_scale(self.array.max())
+        return self.scaled_array().max(*args, **kwargs)
 
     def min(self, *args, **kwargs):
-        return self._apply_scale(self.array.min(*args, **kwargs))
+        if (
+            not args
+            and not kwargs
+            and np.isscalar(self.scale)
+            and np.isscalar(self.offset)
+            and self.scale > 0
+        ):
+            return self._apply_scale(self.array.min())
+        return self.scaled_array().min(*args, **kwargs)
 
     @property
     def dtype(self):

@@ -200,3 +200,34 @@ def test_scaled_point_record_set_x_y_z():
     assert np.all(record.x == 17.0)
     assert np.all(record.y == 17.12)
     assert np.all(record.z == 293090.812739)
+
+
+@pytest.mark.parametrize("operation", ["min", "max"])
+@pytest.mark.parametrize("axis", [None, 0, 1])
+@pytest.mark.parametrize("keepdims", [False, True])
+def test_scaled_vector_reductions(operation, axis, keepdims):
+    raw = np.array([[1, 20, 3], [4, 5, 60]], dtype=np.int32)
+    view = ScaledArrayView(
+        raw, scale=np.array([0.1, -2.0, 3.0]), offset=np.array([10.0, 20.0, 30.0])
+    )
+    expected = getattr(np.asarray(view), operation)(axis=axis, keepdims=keepdims)
+    actual = getattr(view, operation)(axis=axis, keepdims=keepdims)
+    np.testing.assert_array_equal(actual, expected)
+    assert actual.shape == expected.shape
+
+
+@pytest.mark.parametrize("operation", ["min", "max"])
+def test_scaled_reduction_out_and_initial(operation):
+    view = ScaledArrayView(np.array([1, 2, 3]), scale=0.5, offset=10.0)
+    initial = 100.0 if operation == "max" else -100.0
+    expected = getattr(np.asarray(view), operation)(initial=initial)
+    out = np.empty(())
+    actual = getattr(view, operation)(initial=initial, out=out)
+    assert actual is out
+    assert out == expected
+
+
+@pytest.mark.parametrize("operation", ["min", "max"])
+def test_scaled_scalar_negative_reduction(operation):
+    view = ScaledArrayView(np.array([1, 2, 3]), scale=-0.5, offset=10.0)
+    assert getattr(view, operation)() == getattr(np.asarray(view), operation)()
