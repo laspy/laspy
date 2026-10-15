@@ -438,3 +438,26 @@ def test_remove_some_extra_dimensions():
     assert new_las.point_format == las.point_format
     for name, copied_value in copied_standard_values:
         assert np.all(new_las[name] == copied_value)
+
+
+@pytest.mark.parametrize("make_names", [iter, lambda names: (name for name in names)])
+def test_remove_extra_dimensions_iterator(make_names):
+    las = laspy.read(EXTRA_BYTES_LAS_FILE_PATH)
+    before = las.points.array.copy()
+    names = ["Colors", "Flags"]
+    expected = [
+        name for name in las.point_format.extra_dimension_names if name not in names
+    ]
+    las.remove_extra_dims(make_names(names))
+    las = write_then_read_again(las)
+    assert list(las.point_format.extra_dimension_names) == expected
+    for name in las.points.array.dtype.names:
+        np.testing.assert_array_equal(las.points.array[name], before[name])
+
+
+def test_remove_extra_dimensions_invalid_iterator():
+    las = laspy.read(EXTRA_BYTES_LAS_FILE_PATH)
+    names = list(las.point_format.extra_dimension_names)
+    with pytest.raises(laspy.LaspyException, match="cannot be removed"):
+        las.remove_extra_dims(iter(["Colors", "not_an_extra_dimension"]))
+    assert list(las.point_format.extra_dimension_names) == names
