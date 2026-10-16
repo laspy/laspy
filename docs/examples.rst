@@ -15,10 +15,24 @@ We use the classification field to filter points, but this can work with the oth
 
     las = laspy.read('tests/data/simple.las')
 
-    new_file = laspy.create(point_format=las.header.point_format, file_version=las.header.version)
-    new_file.points = las.points[las.classification == 1]
+    new_file = las[las.classification == 1]
 
     new_file.write('extracted_points.las')
+
+Selecting from ``las`` copies its header, including the coordinate scales and
+offsets, VLRs (such as coordinate reference system information), and extra
+point-dimension definitions. The point count and bounds are updated for the
+selected points. Creating a new file with only the point format and version
+does not preserve the rest of this metadata.
+
+The boolean mask in this example also copies the selected point data, so
+editing the selected points or their dimension definitions does not change
+``las``. A slice such as ``las[:100]`` instead shares its point-data array with
+``las``; changes to those point values affect the original. The header is copied
+in both cases.
+
+Waveform samples are not loaded by default. If you need to preserve them too,
+see :doc:`waveform` for the loading modes and storage requirements.
 
 
 
