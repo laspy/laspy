@@ -69,6 +69,8 @@ class LasWriter:
 
         self.dest = dest
         self.done = False
+        self._evlrs_written = False
+        self._evlr_write_error: Optional[BaseException] = None
 
         dims.raise_if_version_not_compatible_with_fmt(
             header.point_format.id, str(self.header.version)
@@ -162,6 +164,9 @@ class LasWriter:
     def write_evlrs(self, evlrs: VLRList) -> None:
         """Writes the EVLRs to the file
 
+        Calling this method, including with an empty list, prevents inherited
+        ``header.evlrs`` from being written automatically on close.
+
         Parameters
         ----------
         evlrs: VLRList
@@ -183,16 +188,44 @@ class LasWriter:
             self.header.number_of_evlrs = len(evlrs)
             self.header.start_of_first_evlr = self.dest.tell()
             evlrs.write_to(self.dest, as_extended=True)
+        # An explicit empty list also opts out of inherited header EVLRs.
+        self._evlrs_written = True
 
     def close(self) -> None:
         """Closes the writer.
 
         flushes the points, updates the header, making it impossible
         to write points afterwards.
+
+        For LAS 1.4 and later, inherited ``header.evlrs`` are written unless
+        :meth:`write_evlrs` was called explicitly.
         """
+        if self._evlr_write_error is not None:
+            raise self._evlr_write_error
         if self.point_writer is not None:
             if not self.done:
-                self.point_writer.done()
+                if (
+                    not self._evlrs_written
+                    and self.header.version.minor >= 4
+                    and self.header.evlrs
+                ):
+                    try:
+                        self.write_evlrs(self.header.evlrs)
+                    except BaseException as error:
+                        # Do not later publish a successful header for a partial
+                        # EVLR write. Still retire the stream we own, preserving
+                        # the original write error if closing also fails.
+                        self._evlr_write_error = error
+                        if self.closefd:
+                            try:
+                                self.dest.close()
+                            except BaseException as close_error:
+                                error.add_note(
+                                    f"Also failed to close the output stream: {close_error!r}"
+                                )
+                        raise
+                else:
+                    self.point_writer.done()
 
             if self.header.point_count == 0:
                 self.header.maxs = [0.0, 0.0, 0.0]
