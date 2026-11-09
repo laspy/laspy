@@ -107,6 +107,13 @@ class BaseKnownVLR(BaseVLR, IKnownVLR, abc.ABC):
 class ClassificationLookupVlr(BaseKnownVLR):
     """This vlr maps class numbers to short descriptions / names
 
+    Repeated class IDs expose their last description in ``lookups``. While the
+    mapping's items and order match the parsed state, serialization preserves
+    the original records, including duplicates and unused string-field bytes.
+    Editing the mapping uses its existing dictionary serialization: one record
+    per ID, in mapping order, with NUL-padded ASCII descriptions. This also
+    normalizes duplicate records and padding when any mapping item is edited.
+
     >>> lookup = ClassificationLookupVlr()
     >>> lookup[0] = "never_classified"
     >>> lookup[2] = "ground"
@@ -119,18 +126,27 @@ class ClassificationLookupVlr(BaseKnownVLR):
     def __init__(self):
         super().__init__(description="Classification Lookup")
         self.lookups: Dict[int, str] = {}
+        self._original_record_data: Optional[bytes] = None
+        self._original_lookups: Tuple[Tuple[int, str], ...] = ()
 
     def parse_record_data(self, record_data: bytes) -> None:
-        for class_id, desc in struct.iter_unpack("<B15s", record_data):
-            # index using desc[i:i+1], because desc[i] gives an int, and we want a byte
-            description = b"".join(
-                desc[i : i + 1]
-                for i in range(len(desc))
-                if desc[i : i + 1].isalnum() or desc[i : i + 1] == b" "
-            ).decode()
-            self.lookups[class_id] = description
+        original = bytes(record_data)
+        lookups = {}
+        for class_id, desc in self._lookup_struct.iter_unpack(original):
+            lookups[class_id] = desc.split(NULL_BYTE, 1)[0].decode("ascii")
+        # Validate the complete input before replacing a previously parsed VLR.
+        self.lookups.clear()
+        self.lookups.update(lookups)
+        self._original_record_data = original
+        self._original_lookups = tuple(self.lookups.items())
 
     def record_data_bytes(self) -> bytes:
+        if (
+            self._original_record_data is not None
+            and tuple(self.lookups.items()) == self._original_lookups
+        ):
+            return self._original_record_data
+
         def lookup_converter(lookup_dict):
             for class_id, description in lookup_dict.items():
                 description_bytes = description.encode("ascii")
