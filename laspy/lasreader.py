@@ -487,13 +487,41 @@ class UncompressedPointReader(IPointReader):
     def source(self):
         return self._source
 
+    def _remaining_bytes(self) -> Optional[int]:
+        """Number of bytes left to read in the source, if it can be known.
+
+        Returns None when the source is not seekable (e.g. a stream),
+        in which case the caller cannot bound the read in advance.
+        """
+        try:
+            if not self.source.seekable():
+                return None
+            current_position = self.source.tell()
+            self.source.seek(0, os.SEEK_END)
+            end_position = self.source.tell()
+            self.source.seek(current_position, os.SEEK_SET)
+        except (AttributeError, OSError, ValueError):
+            return None
+        return max(0, end_position - current_position)
+
     def read_n_points(self, n: int) -> bytearray:
+        num_bytes = n * self.header.point_format.size
+        # The point count comes from the file header and is not trustworthy:
+        # a crafted file can claim far more points than it actually contains,
+        # and sizing the buffer from the claim alone lets a tiny file force
+        # a huge allocation (see #378). When the source is seekable, never
+        # allocate more than the number of bytes actually remaining in it.
+        # This does not change what is returned for truncated files: the
+        # short read was already truncated to the bytes available.
+        remaining_bytes = self._remaining_bytes()
+        if remaining_bytes is not None:
+            num_bytes = min(num_bytes, remaining_bytes)
         try:
             readinto = self.source.readinto
         except AttributeError:
-            data = bytearray(self.source.read(n * self.header.point_format.size))
+            data = bytearray(self.source.read(num_bytes))
         else:
-            data = bytearray(n * self.header.point_format.size)
+            data = bytearray(num_bytes)
             num_read = readinto(data)
             if num_read < len(data):
                 data = data[:num_read]
