@@ -1,9 +1,14 @@
+import ctypes
 import io
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 import laspy
+import laspy.vlrs.known as known_vlrs
 from tests import test_common
 
 
@@ -72,3 +77,46 @@ def test_cannot_write_vlrs_with_more_than_uint16_max_bytes():
     with pytest.raises(ValueError):
         with io.BytesIO() as output:
             las.write(output)
+
+
+def test_ctypes_packed_structures_declare_ms_layout():
+    repo_root = str(Path(__file__).resolve().parent.parent)
+    env = os.environ.copy()
+    existing_pythonpath = env.get("PYTHONPATH")
+    env["PYTHONPATH"] = (
+        f"{repo_root}{os.pathsep}{existing_pythonpath}"
+        if existing_pythonpath
+        else repo_root
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            "-W",
+            "error::DeprecationWarning",
+            "-c",
+            "import laspy.vlrs.known",
+        ],
+        check=True,
+        env=env,
+    )
+
+    packed_structs = [
+        value
+        for value in vars(known_vlrs).values()
+        if isinstance(value, type)
+        and issubclass(value, ctypes.Structure)
+        and hasattr(value, "_pack_")
+    ]
+    assert {cls.__name__ for cls in packed_structs} == {
+        "ExtraBytesStruct",
+        "WaveformPacketStruct",
+        "GeoKeyEntryStruct",
+        "GeoKeysHeaderStructs",
+    }
+    for cls in packed_structs:
+        assert getattr(cls, "_layout_", None) == "ms"
+
+    assert ctypes.sizeof(known_vlrs.ExtraBytesStruct) == 192
+    assert ctypes.sizeof(known_vlrs.WaveformPacketStruct) == 26
+    assert ctypes.sizeof(known_vlrs.GeoKeyEntryStruct) == 8
+    assert ctypes.sizeof(known_vlrs.GeoKeysHeaderStructs) == 8
