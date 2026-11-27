@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 
 import numpy as np
@@ -223,3 +224,34 @@ def test_seek_las(las_file_path):
 def test_seek_laz(laz_file_path, laz_backend):
     with laspy.open(laz_file_path, laz_backend=laz_backend) as reader:
         check_seeking_works(reader)
+
+
+def test_short_read_logs_source_name(tmp_path, caplog):
+    las = laspy.create()
+    las.x = [1.0, 2.0, 3.0]
+    buf = io.BytesIO()
+    las.write(buf)
+    data = buf.getvalue()
+    offset_to_point_data = int.from_bytes(data[96:100], "little")
+    # Truncate to header + 1 point so reading 3 points triggers a short read
+    truncated_bytes = data[: offset_to_point_data + las.header.point_format.size]
+
+    truncated_path = tmp_path / "truncated.las"
+    truncated_path.write_bytes(truncated_bytes)
+
+    caplog.set_level(logging.ERROR, logger="laspy.lasreader")
+    with laspy.open(truncated_path) as reader:
+        points = reader.read_points(3)
+        assert len(points) == 1
+
+    assert len(caplog.records) == 1
+    assert "Could only read 1 of the requested 3 points" in caplog.records[0].message
+    assert str(truncated_path) in caplog.records[0].message
+
+    caplog.clear()
+    with laspy.open(io.BytesIO(truncated_bytes)) as reader:
+        points = reader.read_points(3)
+        assert len(points) == 1
+
+    assert len(caplog.records) == 1
+    assert caplog.records[0].message == "Could only read 1 of the requested 3 points"

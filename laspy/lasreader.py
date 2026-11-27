@@ -122,7 +122,11 @@ class LasReader:
             self.point_source.read_n_points(n), self.header.point_format
         )
         if len(r) < n:
-            logger.error(f"Could only read {len(r)} of the requested {n} points")
+            msg = f"Could only read {len(r)} of the requested {n} points"
+            source_name = getattr(self.point_source.source, "name", None)
+            if source_name:
+                msg = f"{msg} from {source_name}"
+            logger.error(msg)
 
         points = record.ScaleAwarePointRecord(
             r.array, r.point_format, self.header.scales, self.header.offsets
