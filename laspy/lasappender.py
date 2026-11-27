@@ -24,7 +24,7 @@ class LasAppender:
     ) -> None:
         if not dest.seekable():
             raise TypeError("Expected the 'dest' to be a seekable file object")
-        header = LasHeader.read_from(dest)
+        header = LasHeader.read_from(dest, read_evlrs=True)
         if laz_backend is None:
             laz_backend = [
                 bck for bck in LazBackend.detect_available() if bck.supports_append
@@ -47,13 +47,7 @@ class LasAppender:
             assert (
                 self.dest.tell() <= self.header.start_of_first_evlr
             ), "The position is past the start of evlrs"
-            pos = self.dest.tell()
-            self.dest.seek(self.header.start_of_first_evlr, io.SEEK_SET)
-            self.evlrs: Optional[VLRList] = VLRList.read_from(
-                self.dest, self.header.number_of_evlrs, extended=True
-            )
-            dest.seek(self.header.start_of_first_evlr, io.SEEK_SET)
-            self.dest.seek(pos, io.SEEK_SET)
+            self.evlrs: Optional[VLRList] = header.evlrs
         else:
             self.evlrs: Optional[VLRList] = None
 
@@ -95,7 +89,7 @@ class LasAppender:
             and self.evlrs is not None
             and len(self.evlrs) > 0
         ):
-            self.header.number_of_evlr = len(self.evlrs)
+            self.header.number_of_evlrs = len(self.evlrs)
             self.header.start_of_first_evlr = self.dest.tell()
             self.evlrs.write_to(self.dest, as_extended=True)
 

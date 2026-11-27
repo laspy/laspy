@@ -192,7 +192,14 @@ class LasWriter:
         """
         if self.point_writer is not None:
             if not self.done:
-                self.point_writer.done()
+                if (
+                    self.header.version.minor >= 4
+                    and self.header.evlrs is not None
+                    and len(self.header.evlrs) > 0
+                ):
+                    self.write_evlrs(self.header.evlrs)
+                else:
+                    self.point_writer.done()
 
             if self.header.point_count == 0:
                 self.header.maxs = [0.0, 0.0, 0.0]

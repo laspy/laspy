@@ -2,6 +2,8 @@
 Tests related to extra bytes
 """
 
+import io
+
 import numpy as np
 import pytest
 
@@ -438,3 +440,82 @@ def test_remove_some_extra_dimensions():
     assert new_las.point_format == las.point_format
     for name, copied_value in copied_standard_values:
         assert np.all(new_las[name] == copied_value)
+
+
+def test_many_extra_dims_stored_in_evlr_for_las_1_4():
+    n_points = 5
+    n_features = 342
+    point_format = laspy.PointFormat(3)
+    header = laspy.LasHeader(version="1.4", point_format=point_format)
+    point_record = laspy.PackedPointRecord.zeros(n_points, point_format=point_format)
+    las = laspy.LasData(header, point_record)
+
+    feature_names = [f"feature_{i}" for i in range(n_features)]
+    rng = np.random.default_rng(42)
+    features = rng.standard_normal((n_points, n_features)).astype(np.float32)
+
+    las.add_extra_dims(
+        [laspy.ExtraBytesParams(name=name, type=np.float32) for name in feature_names]
+    )
+    for name, data in zip(feature_names, features.T):
+        las[name] = data
+
+    assert len(las.vlrs.get("ExtraBytesVlr")) == 0
+    assert las.evlrs is not None
+    assert len(las.evlrs.get("ExtraBytesVlr")) == 1
+
+    roundtrip = write_then_read_again(las)
+    assert list(roundtrip.point_format.extra_dimension_names) == feature_names
+    assert len(roundtrip.vlrs.get("ExtraBytesVlr")) == 0
+    assert roundtrip.evlrs is not None
+    assert len(roundtrip.evlrs.get("ExtraBytesVlr")) == 1
+    for name, data in zip(feature_names, features.T):
+        assert np.allclose(roundtrip[name], data)
+
+    eb_vlr = roundtrip.evlrs.get("ExtraBytesVlr")[0]
+    assert len(eb_vlr.extra_bytes_structs) == n_features
+    assert np.isclose(eb_vlr.extra_bytes_structs[0].min[0], float(features[0, 0]))
+    assert np.isclose(eb_vlr.extra_bytes_structs[0].max[0], float(features[0, 0]))
+
+    stream_buf = io.BytesIO()
+    with laspy.open(stream_buf, mode="w", header=las.header, closefd=False) as writer:
+        writer.write_points(las.points)
+    stream_buf.seek(0)
+    with laspy.open(stream_buf, mode="a", closefd=False) as appender:
+        appender.append_points(las.points)
+    stream_buf.seek(0)
+    appended = laspy.read(stream_buf)
+    assert len(appended.points) == 2 * n_points
+    assert list(appended.point_format.extra_dimension_names) == feature_names
+    assert np.allclose(appended[feature_names[0]][:n_points], features[:, 0])
+    assert np.allclose(appended[feature_names[0]][n_points:], features[:, 0])
+
+    converted = laspy.convert(roundtrip, point_format_id=6)
+    assert converted.evlrs is not None
+    assert len(converted.evlrs.get("ExtraBytesVlr")) == 1
+    converted_rt = write_then_read_again(converted)
+    assert list(converted_rt.point_format.extra_dimension_names) == feature_names
+
+    roundtrip.remove_extra_dims(feature_names[:2])
+    assert len(roundtrip.vlrs.get("ExtraBytesVlr")) == 1
+    assert len(roundtrip.evlrs.get("ExtraBytesVlr")) == 0
+    shrunk = write_then_read_again(roundtrip)
+    assert list(shrunk.point_format.extra_dimension_names) == feature_names[2:]
+
+
+def test_many_extra_dims_fail_on_las_1_2():
+    point_format = laspy.PointFormat(3)
+    header = laspy.LasHeader(version="1.2", point_format=point_format)
+    point_record = laspy.PackedPointRecord.zeros(2, point_format=point_format)
+    las = laspy.LasData(header, point_record)
+
+    las.add_extra_dims(
+        [
+            laspy.ExtraBytesParams(name=f"feature_{i}", type=np.float32)
+            for i in range(342)
+        ]
+    )
+
+    with pytest.raises(ValueError, match="exceeds the maximum length"):
+        with io.BytesIO() as out:
+            las.write(out)

@@ -401,27 +401,24 @@ def convert(source_las, *, point_format_id=None, file_version=None):
     point_format.dimensions.extend(source_las.point_format.extra_dimensions)
 
     header = copy.deepcopy(source_las.header)
+    if header.evlrs is not None and not isinstance(header.evlrs, VLRList):
+        header.evlrs = VLRList(header.evlrs)
     header.set_version_and_point_format(version, point_format)
 
-    if source_las.evlrs is not None:
-        evlrs = VLRList(source_las.evlrs.copy())
-    else:
-        evlrs = None
+    if file_version < "1.4":
+        if header.evlrs:
+            logger.warning(
+                "The source contained {} EVLRs,"
+                " they will be lost as version {} doest not support them".format(
+                    len(header.evlrs), file_version
+                )
+            )
+        header.evlrs = None
 
     points = record.PackedPointRecord.from_point_record(
         source_las.points, header.point_format
     )
     las = LasData(header=header, points=points)
-
-    if file_version < "1.4" and evlrs is not None and evlrs:
-        logger.warning(
-            "The source contained {} EVLRs,"
-            " they will be lost as version {} doest not support them".format(
-                len(evlrs), file_version
-            )
-        )
-    else:
-        las.evlrs = evlrs
 
     return las
 

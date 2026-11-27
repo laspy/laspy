@@ -310,6 +310,7 @@ class LasHeader:
             self.point_format.id, str(version)
         )
         self._version = version
+        self._sync_extra_bytes_vlr()
 
     # scale properties
     @property
@@ -501,11 +502,9 @@ class LasHeader:
         self.point_count = 0
         self.number_of_points_by_return = np.zeros(15, dtype=np.uint64)
 
-        try:
-            eb_vlr = self.vlrs.get("ExtraBytesVlr")[0]
+        eb_vlr = self._get_extra_bytes_vlr()
+        if eb_vlr is not None:
             eb_vlr.partial_reset()
-        except IndexError:
-            pass
 
     def update(self, points: PackedPointRecord) -> None:
         self.partial_reset()
@@ -559,9 +558,9 @@ class LasHeader:
         self.point_count += len(points)
 
         # grow extra bytes
-        vlrs = self.vlrs.get("ExtraBytesVlr")
-        if vlrs:
-            vlrs[0].grow(points)
+        eb_vlr = self._get_extra_bytes_vlr()
+        if eb_vlr is not None:
+            eb_vlr.grow(points)
 
     def set_compressed(self, state: bool) -> None:
         self.are_points_compressed = state
@@ -689,19 +688,20 @@ class LasHeader:
         header.are_points_compressed = is_point_format_compressed(point_format_id)
         point_format_id = compressed_id_to_uncompressed(point_format_id)
         point_format = PointFormat(point_format_id)
-        try:
-            extra_bytes_vlr = typing.cast(
-                ExtraBytesVlr, header._vlrs.get("ExtraBytesVlr")[0]
-            )
-        except IndexError:
-            pass
-        else:
+
+        if read_evlrs:
+            header.read_evlrs(original_stream)
+            stream.seek(header.offset_to_point_data)
+
+        found_eb_vlr = header._find_extra_bytes_vlr()
+        if found_eb_vlr is not None:
+            eb_vlr_container, extra_bytes_vlr = found_eb_vlr
             if point_size == point_format.size:
                 logger.warning(
                     "There is an ExtraByteVlr but the header.point_size matches the "
                     "point size without extra bytes. The extra bytes vlr info will be ignored"
                 )
-                header._vlrs.extract("ExtraBytesVlr")
+                eb_vlr_container.extract("ExtraBytesVlr")
             else:
                 for extra_dim_info in extra_bytes_vlr.type_of_extra_dims():
                     point_format.add_extra_dimension(extra_dim_info)
@@ -725,10 +725,6 @@ class LasHeader:
                 f"Incoherent point size, "
                 f"header says {point_size} point_format created says {point_format.size}"
             )
-
-        if read_evlrs:
-            header.read_evlrs(original_stream)
-            stream.seek(header.offset_to_point_data)
 
         return header
 
@@ -976,11 +972,28 @@ class LasHeader:
 
         return header_bytes + rest
 
+    def _find_extra_bytes_vlr(self) -> Optional[typing.Tuple[VLRList, ExtraBytesVlr]]:
+        for container in (self._vlrs, self.evlrs):
+            if container is not None:
+                vlrs = container.get("ExtraBytesVlr")
+                if vlrs:
+                    return container, typing.cast(ExtraBytesVlr, vlrs[0])
+        return None
+
+    def _get_extra_bytes_vlr(self) -> Optional[ExtraBytesVlr]:
+        found = self._find_extra_bytes_vlr()
+        return found[1] if found is not None else None
+
     def _sync_extra_bytes_vlr(self) -> None:
-        try:
-            self._vlrs.extract("ExtraBytesVlr")
-        except IndexError:
-            pass
+        extracted_from_evlrs = False
+        for container in (self._vlrs, self.evlrs):
+            if container is not None:
+                extracted = container.extract("ExtraBytesVlr")
+                if container is self.evlrs and extracted:
+                    extracted_from_evlrs = True
+
+        if self.version.minor < 4 and extracted_from_evlrs and not self.evlrs:
+            self.evlrs = None
 
         extra_dimensions = list(self.point_format.extra_dimensions)
         if not extra_dimensions:
@@ -1006,7 +1019,16 @@ class LasHeader:
             )
             eb_vlr.extra_bytes_structs.append(eb_struct)
 
-        self._vlrs.append(eb_vlr)
+        max_vlr_length = int(np.iinfo(np.uint16).max)
+        if (
+            len(eb_vlr.extra_bytes_structs) * ExtraBytesStruct.size() > max_vlr_length
+            and self.version.minor >= 4
+        ):
+            if self.evlrs is None:
+                self.evlrs = VLRList()
+            self.evlrs.append(eb_vlr)
+        else:
+            self._vlrs.append(eb_vlr)
 
     # To keep some kind of backward compatibility
     @property

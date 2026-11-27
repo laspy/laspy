@@ -488,8 +488,8 @@ class LasData:
             laz_backend=laz_backend,
         ) as writer:
             writer.write_points(self.points)
-            if self.header.version.minor >= 4 and self.evlrs is not None:
-                writer.write_evlrs(self.evlrs)
+            if self.header.version.minor >= 4 and writer.header.evlrs is not None:
+                writer.write_evlrs(writer.header.evlrs)
 
     def change_scaling(self, scales=None, offsets=None) -> None:
         """This changes the scales and/or offset used for the x,y,z
