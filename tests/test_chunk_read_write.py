@@ -4,11 +4,19 @@ Tests related to the 'chunked' reading and writing
 
 import io
 import math
+from pathlib import Path
 
 import numpy as np
 import pytest
 
 import laspy
+from laspy.vlrs.known import WktCoordinateSystemVlr
+from laspy.vlrs.vlrlist import VLRList
+
+try:
+    import pyproj
+except ModuleNotFoundError:
+    pyproj = None
 
 
 def check_chunked_reading_gives_expected_points(
@@ -111,3 +119,90 @@ def test_chunked_dimension_modification(file_path, backend):
 
     reader = laspy.open(mem_dest, laz_backend=backend)
     check_chunked_reading_gives_expected_points(ground_truth_las, reader, 42)
+
+
+def _stream_copy(source_path, dest, extra=None):
+    with laspy.open(source_path) as reader:
+        with laspy.open(dest, mode="w", header=reader.header, closefd=False) as writer:
+            for points in reader.chunk_iterator(50):
+                writer.write_points(points)
+            if extra is not None:
+                extra(writer)
+
+
+def test_chunked_writing_preserves_header_evlrs():
+    """
+    EVLRs carried by the header given to the streaming writer must be
+    written when the writer is closed, without an explicit write_evlrs call.
+    """
+    source_path = Path(__file__).parent / "data" / "1_4_w_evlr.las"
+    original_las = laspy.read(source_path)
+    assert len(original_las.header.evlrs) == 1
+
+    mem_dest = io.BytesIO()
+    _stream_copy(source_path, mem_dest)
+
+    mem_dest.seek(0)
+    written_las = laspy.read(mem_dest)
+    assert written_las.header.number_of_evlrs == 1
+    assert written_las.header.evlrs == original_las.header.evlrs
+
+
+def test_chunked_writing_does_not_duplicate_explicitly_written_evlrs():
+    """
+    When the caller already called write_evlrs, close() must not write
+    the header's EVLRs a second time.
+    """
+    source_path = Path(__file__).parent / "data" / "1_4_w_evlr.las"
+
+    explicit_evlr = laspy.VLR(
+        user_id="pylastest",
+        record_id=43,
+        description="explicitly written evlr",
+        record_data=b"written explicitly",
+    )
+
+    mem_dest = io.BytesIO()
+    _stream_copy(
+        source_path,
+        mem_dest,
+        extra=lambda writer: writer.write_evlrs(VLRList([explicit_evlr])),
+    )
+
+    mem_dest.seek(0)
+    written_las = laspy.read(mem_dest)
+    assert written_las.header.number_of_evlrs == 1
+    assert written_las.header.evlrs == [explicit_evlr]
+
+
+@pytest.mark.skipif(pyproj is None, reason="pyproj not installed")
+def test_chunked_writing_preserves_crs_stored_in_evlr(tmp_path):
+    """
+    A CRS stored in an EVLR (the only CRS record, with the header's
+    WKT global-encoding bit set) must survive a streaming copy:
+    parse_crs() on the output must not return None.
+    """
+    crs = pyproj.CRS.from_epsg(2903)
+
+    header = laspy.LasHeader(point_format=6, version="1.4")
+    header.offsets = np.array([0.0, 0.0, 0.0])
+    header.scales = np.array([0.001, 0.001, 0.001])
+    source_las = laspy.LasData(header=header)
+    source_las.x = np.array([1.0, 2.0, 3.0])
+    source_las.y = np.array([1.0, 2.0, 3.0])
+    source_las.z = np.array([1.0, 2.0, 3.0])
+    source_las.evlrs = VLRList([WktCoordinateSystemVlr(wkt_string=crs.to_wkt())])
+    source_las.header.global_encoding.wkt = True
+    source_path = tmp_path / "crs_in_evlr.las"
+    source_las.write(source_path)
+
+    mem_dest = io.BytesIO()
+    _stream_copy(source_path, mem_dest)
+
+    mem_dest.seek(0)
+    written_las = laspy.read(mem_dest)
+    assert written_las.header.global_encoding.wkt
+    assert written_las.header.number_of_evlrs == 1
+    parsed_crs = written_las.header.parse_crs()
+    assert parsed_crs is not None
+    assert parsed_crs.to_epsg() == 2903
