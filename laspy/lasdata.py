@@ -570,6 +570,12 @@ class LasData:
         The requested dimension if it exists
 
         """
+        # During unpickling / copy.deepcopy the instance is reconstructed
+        # before __init__ runs, so _points may not exist yet. Probing such
+        # an instance for special attributes must raise AttributeError
+        # instead of recursing through the points property.
+        if "_points" not in self.__dict__:
+            raise AttributeError(item)
         try:
             return self.points[item]
         except ValueError:
@@ -631,6 +637,27 @@ class LasData:
 
     def __setitem__(self, key, value):
         self.points[key] = value
+
+    def copy(self) -> "LasData":
+        """Returns an independent copy of this LasData.
+
+        The copy has its own header (including VLRs, EVLRs and point
+        format) and its own point array, so modifying the copy does not
+        modify the original, and vice versa.
+
+        This differs from indexing with a slice (e.g. ``las[:10]``),
+        which returns a LasData that shares the point array with the
+        original.
+        """
+        header = self.header.copy()
+        points = record.ScaleAwarePointRecord(
+            self.points.array.copy(),
+            header.point_format,
+            scales=header.scales,
+            offsets=header.offsets,
+            waveform_state=self.points._copy_waveform_state(),
+        )
+        return LasData(header, points=points)
 
     def __len__(self):
         return len(self.points)

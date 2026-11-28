@@ -520,3 +520,49 @@ def test_create_and_write_compressed_wavepackets_formats(backend):
         las = laspy.create(point_format=fmt)
 
         _ = write_then_read_again(las, do_compress=True, laz_backend=backend)
+
+
+def test_lasdata_copy_is_independent():
+    las = laspy.read(simple_las)
+    copied = las.copy()
+
+    assert copied is not las
+    assert copied.header is not las.header
+    assert copied.header.point_format is not las.header.point_format
+    assert not np.shares_memory(copied.points.array, las.points.array)
+    assert np.array_equal(copied.points.array, las.points.array)
+    assert list(copied.point_format.dimension_names) == list(
+        las.point_format.dimension_names
+    )
+
+    original_x = las.x.copy()
+    original_classification = las.classification.copy()
+    copied.x = np.full(len(copied), 9999.0)
+    copied.classification = np.full(len(copied), 7, dtype=np.uint8)
+    assert np.allclose(las.x, original_x)
+    assert np.array_equal(las.classification, original_classification)
+
+
+def test_lasdata_copy_with_extra_bytes_is_independent():
+    las = laspy.read(extra_bytes_las)
+    copied = las.copy()
+
+    assert not np.shares_memory(copied.points.array, las.points.array)
+    assert np.array_equal(copied.points.array, las.points.array)
+    assert list(copied.point_format.dimension_names) == list(
+        las.point_format.dimension_names
+    )
+
+
+def test_lasdata_deepcopy_is_independent():
+    import copy
+
+    las = laspy.read(simple_las)
+    copied = copy.deepcopy(las)
+
+    assert not np.shares_memory(copied.points.array, las.points.array)
+    assert np.array_equal(copied.points.array, las.points.array)
+
+    original_classification = las.classification.copy()
+    copied.classification = np.full(len(copied), 3, dtype=np.uint8)
+    assert np.array_equal(las.classification, original_classification)
