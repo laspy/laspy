@@ -413,6 +413,13 @@ class PackedPointRecord:
             self.array[key] = value
 
     def __getattr__(self, item):
+        # During unpickling / copy.deepcopy the instance is reconstructed
+        # before __init__ runs, so sub_fields_dict may not exist yet.
+        # Probing such an instance for special attributes (e.g.
+        # __setstate__ or __deepcopy__) must raise AttributeError
+        # instead of recursing through __getitem__.
+        if "sub_fields_dict" not in self.__dict__:
+            raise AttributeError(item)
         try:
             return self[item]
         except ValueError:
